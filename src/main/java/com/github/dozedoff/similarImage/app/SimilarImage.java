@@ -17,10 +17,25 @@
 */
 package com.github.dozedoff.similarImage.app;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.github.dozedoff.commonj.file.FilenameFilterVisitor;
+import com.github.dozedoff.commonj.filefilter.SimpleImageFilter;
 import com.github.dozedoff.similarImage.gui.SimilarImageGUI;
+import com.github.dozedoff.similarImage.hash.PhashWorker;
 
 public class SimilarImage {
 	SimilarImageGUI gui;
+	Logger logger = LoggerFactory.getLogger(SimilarImage.class);
 	
 	public static void main(String[] args) {
 		new SimilarImage().init();
@@ -31,6 +46,26 @@ public class SimilarImage {
 	}
 	
 	public void compareImages(String path) {
+		logger.info("Comparing images in {}", path);
+		List<Path> imagePaths = new LinkedList<Path>();
+		ArrayList<Long> pHashes;
 		
+		FilenameFilterVisitor visitor = new FilenameFilterVisitor(imagePaths, new SimpleImageFilter());
+		Path directoryToSearch = Paths.get(path);
+		try {
+			Files.walkFileTree(directoryToSearch, visitor);
+		} catch (IOException e) {
+			logger.error("Failed to walk file tree", e);
+			return;
+		}
+		
+		logger.info("Found {} images", imagePaths.size());
+		pHashes = new ArrayList<Long>(imagePaths.size());
+		calculateHashes(imagePaths, pHashes);
+	}
+	
+	private void calculateHashes(List<Path> imagePaths, List<Long> phashes) {
+		Thread worker = new PhashWorker(imagePaths, phashes);
+		worker.start();
 	}
 }
