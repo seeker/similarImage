@@ -49,11 +49,14 @@ public class ImagePHash {
         /**
          * 
          * @param is file to hash
-         * @return hash in as an integer
+         * @return hash in as long
+         * @throws IOException 
          */
-        public int getIntHash(InputStream is) {
-        	//TODO implement me
-        	return 0;
+        public long getLongHash(InputStream is) throws IOException {
+        	double[][] dct = calculateDctMap(is);
+        	double dctAvg = calcDctAverage(dct);
+        	long hash = convertToLong(dct, dctAvg);
+        	return hash;
         }
         
         /**
@@ -127,6 +130,20 @@ public class ImagePHash {
 			        for (int y = 0; y < smallerSize; y++) {
 			                if (x != 0 && y != 0) {
 			                        hash += (dctVals[x][y] > avg?"1":"0");
+			                }
+			        }
+			}
+			return hash;
+		}
+		
+		private long convertToLong(double[][] dctVals, double avg) {
+			long hash = 0;
+            
+			for (int x = 0; x < smallerSize; x++) {
+			        for (int y = 0; y < smallerSize; y++) {
+			                if (x != 0 && y != 0) {
+			                        hash += (dctVals[x][y] > avg? 1:0);
+			                        Long.rotateLeft(hash, 1);
 			                }
 			        }
 			}
