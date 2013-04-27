@@ -1,6 +1,11 @@
 package com.github.dozedoff.similarImage.hash;
 
-// Source:		http://pastebin.com/Pj9d8jt5#
+/*
+ *  Original Source:		http://pastebin.com/Pj9d8jt5#
+ *  
+ *  File modified to remove DCT reports
+ */
+
 
 import java.awt.Graphics2D;
 import java.awt.color.ColorSpace;
@@ -73,7 +78,7 @@ public class ImagePHash {
                  */
                 long start = System.currentTimeMillis();
                 double[][] dctVals = applyDCT(vals);
-                System.out.println("DCT: " + (System.currentTimeMillis() - start));
+//                System.out.println("DCT: " + (System.currentTimeMillis() - start));  // Removed to prevent system.out spam
                
                 /* 4. Reduce the DCT.
                  * This is the magic step. While the DCT is 32x32, just keep the
