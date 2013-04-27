@@ -143,7 +143,7 @@ public class ImagePHash {
 			        for (int y = 0; y < smallerSize; y++) {
 			                if (x != 0 && y != 0) {
 			                        hash += (dctVals[x][y] > avg? 1:0);
-			                        Long.rotateLeft(hash, 1);
+			                        hash = Long.rotateLeft(hash, 1);
 			                }
 			        }
 			}
