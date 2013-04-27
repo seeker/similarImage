@@ -48,7 +48,7 @@ public class Persistence {
 		}
 	}
 	
-	public static Persistence getInstance() {
+	public static synchronized Persistence getInstance() {
 		if (instance == null) {
 			instance = new Persistence();
 		}

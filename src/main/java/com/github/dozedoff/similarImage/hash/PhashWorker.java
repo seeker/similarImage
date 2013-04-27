@@ -24,62 +24,70 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.sql.SQLException;
-import java.util.List;
+import java.util.LinkedList;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.dozedoff.commonj.time.StopWatch;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 
 public class PhashWorker extends Thread {
 	private final static Logger logger = LoggerFactory.getLogger(PhashWorker.class);
 	private static int workerNumber = 0;
+	private int localWorkerNumber;
+	private final int MAX_WORK_BATCH_SIZE = 20;
 	
-	List<Path> imagePaths;
-	List<Long> phashes;
+	LinkedBlockingQueue<Path> imagePaths;
 	
-	public PhashWorker(List<Path> imagePaths, List<Long> phashes) {
+	public PhashWorker(LinkedBlockingQueue<Path> imagePaths) {
 		this.imagePaths = imagePaths;
-		this.phashes = phashes;
-		this.setName("pHashWorker " + workerNumber);
+		localWorkerNumber = workerNumber;
 		workerNumber++;
+		this.setName("pHashWorker " + localWorkerNumber);
+		
 	}
 	
 	@Override
 	public void run() {
-		calculateHashes(imagePaths, phashes);
+		calculateHashes(imagePaths);
 	}
 	
-	private void calculateHashes(List<Path> imagePaths, List<Long> phashes) {
-		logger.info("Hashing files...");
-		StopWatch sw = new StopWatch();
+	private void calculateHashes(LinkedBlockingQueue<Path> imagePaths) {
+		logger.info("pHash Worker {} started", localWorkerNumber);
 		Persistence persistence = Persistence.getInstance();
-		
-		sw.start();
 		ImagePHash phash = new ImagePHash(32,9);
+		LinkedList<Path> work = new LinkedList<Path>();
 		
-		for(Path path : imagePaths) {
-			try {
-				if(persistence.isPathRecorded(path)) {
-					continue;
-				}
-				
-				InputStream is = new BufferedInputStream(Files.newInputStream(path, StandardOpenOption.READ));
-				long hash = phash.getLongHash(is);
-				
-				ImageRecord record = new ImageRecord(path.toString(), hash);
-				
-				persistence.addRecord(record);
-			} catch (IOException e) {
-				logger.warn("Could not load file {}", path, e);
-			} catch (SQLException e) {
-				logger.warn("Database operation failed", e);
+		while(!isInterrupted()) {
+			if(imagePaths.isEmpty()) {
+				logger.info("No more work, pHash worker {} terminating...", localWorkerNumber);
+				break;
 			}
+			
+			imagePaths.drainTo(work, MAX_WORK_BATCH_SIZE);
+			
+			for (Path path : work) {
+				try {
+					if (persistence.isPathRecorded(path)) {
+						continue;
+					}
+
+					InputStream is = new BufferedInputStream(Files.newInputStream(path, StandardOpenOption.READ));
+					long hash = phash.getLongHash(is);
+
+					ImageRecord record = new ImageRecord(path.toString(), hash);
+
+					persistence.addRecord(record);
+				} catch (IOException e) {
+					logger.warn("Could not load file {}", path, e);
+				} catch (SQLException e) {
+					logger.warn("Database operation failed", e);
+				}
+			}
+			
+			work.clear();
 		}
-		sw.stop();
-		
-		logger.info("Finished hashing images, duration: {}", sw.getTime());
 	}
 }
