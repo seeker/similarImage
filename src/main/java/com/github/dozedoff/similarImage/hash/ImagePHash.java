@@ -11,6 +11,7 @@ import java.awt.Graphics2D;
 import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorConvertOp;
+import java.io.IOException;
 import java.io.InputStream;
  
 import javax.imageio.ImageIO;
@@ -44,9 +45,34 @@ public class ImagePHash {
                 }
                 return counter;
         }
+        
+        /**
+         * 
+         * @param is file to hash
+         * @return hash in as an integer
+         */
+        public int getIntHash(InputStream is) {
+        	//TODO implement me
+        	return 0;
+        }
+        
+        /**
+         * 
+         * @param is file to hash
+         * @return a 'binary string' (like. 001010111011100010) which is easy to do a hamming distance on.
+         * @throws IOException 
+         */
+        public String getHash(InputStream is) throws IOException {
+        	String hash;
+        	double[][] dct = calculateDctMap(is);
+        	double dctAvg = calcDctAverage(dct);
+        	hash = convertToBitString(dct, dctAvg);
+        	
+        	return hash;
+        }
        
-        // Returns a 'binary string' (like. 001010111011100010) which is easy to do a hamming distance on.
-        public String getHash(InputStream is) throws Exception {
+        
+        public double[][] calculateDctMap(InputStream is) throws IOException {
                 BufferedImage img = ImageIO.read(is);
                
                 /* 1. Reduce size.
@@ -76,54 +102,61 @@ public class ImagePHash {
                  * and scalars. While JPEG uses an 8x8 DCT, this algorithm uses
                  * a 32x32 DCT.
                  */
-                long start = System.currentTimeMillis();
+//                long start = System.currentTimeMillis();
                 double[][] dctVals = applyDCT(vals);
 //                System.out.println("DCT: " + (System.currentTimeMillis() - start));  // Removed to prevent system.out spam
                
-                /* 4. Reduce the DCT.
-                 * This is the magic step. While the DCT is 32x32, just keep the
-                 * top-left 8x8. Those represent the lowest frequencies in the
-                 * picture.
-                 */
-                /* 5. Compute the average value.
-                 * Like the Average Hash, compute the mean DCT value (using only
-                 * the 8x8 DCT low-frequency values and excluding the first term
-                 * since the DC coefficient can be significantly different from
-                 * the other values and will throw off the average).
-                 */
-                double total = 0;
-               
-                for (int x = 0; x < smallerSize; x++) {
-                        for (int y = 0; y < smallerSize; y++) {
-                                total += dctVals[x][y];
-                        }
-                }
-                total -= dctVals[0][0];
-               
-                double avg = total / (double) ((smallerSize * smallerSize) - 1);
-       
-                /* 6. Further reduce the DCT.
-                 * This is the magic step. Set the 64 hash bits to 0 or 1
-                 * depending on whether each of the 64 DCT values is above or
-                 * below the average value. The result doesn't tell us the
-                 * actual low frequencies; it just tells us the very-rough
-                 * relative scale of the frequencies to the mean. The result
-                 * will not vary as long as the overall structure of the image
-                 * remains the same; this can survive gamma and color histogram
-                 * adjustments without a problem.
-                 */
-                String hash = "";
-               
-                for (int x = 0; x < smallerSize; x++) {
-                        for (int y = 0; y < smallerSize; y++) {
-                                if (x != 0 && y != 0) {
-                                        hash += (dctVals[x][y] > avg?"1":"0");
-                                }
-                        }
-                }
-               
-                return hash;
+                return dctVals;
         }
+
+		private String convertToBitString(double[][] dctVals, double avg) {
+            /* 6. Further reduce the DCT.
+             * This is the magic step. Set the 64 hash bits to 0 or 1
+             * depending on whether each of the 64 DCT values is above or
+             * below the average value. The result doesn't tell us the
+             * actual low frequencies; it just tells us the very-rough
+             * relative scale of the frequencies to the mean. The result
+             * will not vary as long as the overall structure of the image
+             * remains the same; this can survive gamma and color histogram
+             * adjustments without a problem.
+             */
+			
+			String hash = "";
+            
+			for (int x = 0; x < smallerSize; x++) {
+			        for (int y = 0; y < smallerSize; y++) {
+			                if (x != 0 && y != 0) {
+			                        hash += (dctVals[x][y] > avg?"1":"0");
+			                }
+			        }
+			}
+			return hash;
+		}
+
+		private double calcDctAverage(double[][] dctVals) {
+            /* 4. Reduce the DCT.
+             * This is the magic step. While the DCT is 32x32, just keep the
+             * top-left 8x8. Those represent the lowest frequencies in the
+             * picture.
+             */
+            /* 5. Compute the average value.
+             * Like the Average Hash, compute the mean DCT value (using only
+             * the 8x8 DCT low-frequency values and excluding the first term
+             * since the DC coefficient can be significantly different from
+             * the other values and will throw off the average).
+             */
+			double total = 0;
+            
+			for (int x = 0; x < smallerSize; x++) {
+			        for (int y = 0; y < smallerSize; y++) {
+			                total += dctVals[x][y];
+			        }
+			}
+			total -= dctVals[0][0];
+            
+			double avg = total / (double) ((smallerSize * smallerSize) - 1);
+			return avg;
+		}
        
         private BufferedImage resize(BufferedImage image, int width,    int height) {
                 BufferedImage resizedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
