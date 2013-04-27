@@ -17,8 +17,46 @@
 */
 package com.github.dozedoff.similarImage.gui;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JTextField;
+
+import net.miginfocom.swing.MigLayout;
+
+import com.github.dozedoff.similarImage.app.SimilarImage;
 
 public class SimilarImageGUI extends JFrame {
-
+	private static final long serialVersionUID = 1L;
+	private SimilarImage parent;
+	
+	private JTextField path;
+	private JButton find;
+	
+	public SimilarImageGUI(SimilarImage parent) {
+		this.parent = parent;
+		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
+		this.setSize(500, 500);
+		this.setLayout(new MigLayout("wrap 1"));
+		setupComponents();
+		this.setVisible(true);
+	}
+	
+	private void setupComponents() {
+		path = new JTextField(20);
+		find = new JButton("Find");
+		
+		find.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				String userpath = path.getText();
+				parent.compareImages(userpath);
+			}
+		});
+		
+		this.add(path);
+		this.add(find);
+	}
 }

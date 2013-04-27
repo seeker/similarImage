@@ -17,6 +17,20 @@
 */
 package com.github.dozedoff.similarImage.app;
 
-public class SimilarImage {
+import com.github.dozedoff.similarImage.gui.SimilarImageGUI;
 
+public class SimilarImage {
+	SimilarImageGUI gui;
+	
+	public static void main(String[] args) {
+		new SimilarImage().init();
+	}
+	
+	public void init() {
+		gui = new SimilarImageGUI(this);
+	}
+	
+	public void compareImages(String path) {
+		
+	}
 }
