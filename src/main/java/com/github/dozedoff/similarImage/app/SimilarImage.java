@@ -45,10 +45,12 @@ public class SimilarImage {
 		gui = new SimilarImageGUI(this);
 	}
 	
-	public void compareImages(String path) {
-		logger.info("Comparing images in {}", path);
-		LinkedBlockingQueue<Path> imagePaths = new LinkedBlockingQueue<Path>();
-		
+	public void indexImages(String path) {
+		Thread t = new ImageIndexer(path);
+		t.start();
+	}
+	
+	private void findImages(String path, LinkedBlockingQueue<Path> imagePaths) {
 		FilenameFilterVisitor visitor = new FilenameFilterVisitor(imagePaths, new SimpleImageFilter());
 		Path directoryToSearch = Paths.get(path);
 		try {
@@ -59,7 +61,6 @@ public class SimilarImage {
 		}
 		
 		logger.info("Found {} images", imagePaths.size());
-		calculateHashes(imagePaths);
 	}
 	
 	private void calculateHashes(LinkedBlockingQueue<Path> imagePaths) {
@@ -77,6 +78,23 @@ public class SimilarImage {
 				logger.info("Stopping {}...", phw.getName());
 				phw.stopWorker();
 			}
+		}
+	}
+	
+	class ImageIndexer extends Thread {
+		String path;
+		
+		public ImageIndexer(String path) {
+			this.path = path;
+		}
+		
+		@Override
+		public void run() {
+			logger.info("Hashing images in {}", path);
+			LinkedBlockingQueue<Path> imagePaths = new LinkedBlockingQueue<Path>();
+			
+			findImages(path, imagePaths);
+			calculateHashes(imagePaths);
 		}
 	}
 }

@@ -54,7 +54,7 @@ public class SimilarImageGUI extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				String userpath = path.getText();
-				parent.compareImages(userpath);
+				parent.indexImages(userpath);
 			}
 		});
 		
