@@ -51,7 +51,7 @@ public class ImagePHash {
          * @return hash in as long
          * @throws IOException 
          */
-        public long getLongHash(InputStream is) throws IOException {
+        public long getLongHash(InputStream is) throws Exception {
         	double[][] dct = calculateDctMap(is);
         	double dctAvg = calcDctAverage(dct);
         	long hash = convertToLong(dct, dctAvg);

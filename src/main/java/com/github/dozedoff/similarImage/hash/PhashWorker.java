@@ -27,6 +27,8 @@ import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import javax.imageio.IIOException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,14 +87,19 @@ public class PhashWorker extends Thread {
 
 					InputStream is = new BufferedInputStream(Files.newInputStream(path, StandardOpenOption.READ));
 					long hash = phash.getLongHash(is);
+					is.close();
 
 					ImageRecord record = new ImageRecord(path.toString(), hash);
 
 					persistence.addRecord(record);
+				} catch (IIOException iioe) {
+					logger.warn("Unable to process image {} - {}", path, iioe.getMessage());
 				} catch (IOException e) {
-					logger.warn("Could not load file {}", path, e);
+					logger.warn("Could not load file {} - {}", path, e.getMessage());
 				} catch (SQLException e) {
 					logger.warn("Database operation failed", e);
+				} catch (Exception e) {
+					logger.warn("Failed to hash image {} - {}", path, e.getMessage());
 				}
 			}
 			
