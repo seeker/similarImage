@@ -33,7 +33,7 @@ import com.j256.ormlite.table.TableUtils;
 public class Persistence {
 	private static final Logger logger = LoggerFactory.getLogger(Persistence.class);
 	private static Persistence instance = null;
-	private final String dbUrl = "jdbc:sqlite:similaImage.db";
+	private final String dbUrl = "jdbc:sqlite:similarImage.db";
 
 	Dao<ImageRecord, String> imageRecordDao;
 
