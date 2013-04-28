@@ -38,6 +38,7 @@ public class PhashWorker extends Thread {
 	private static int workerNumber = 0;
 	private int localWorkerNumber;
 	private final int MAX_WORK_BATCH_SIZE = 20;
+	private boolean stop = false;
 	
 	LinkedBlockingQueue<Path> imagePaths;
 	
@@ -54,13 +55,17 @@ public class PhashWorker extends Thread {
 		calculateHashes(imagePaths);
 	}
 	
+	public void stopWorker() {
+		this.stop = true;
+	}
+	
 	private void calculateHashes(LinkedBlockingQueue<Path> imagePaths) {
 		logger.info("pHash Worker {} started", localWorkerNumber);
 		Persistence persistence = Persistence.getInstance();
 		ImagePHash phash = new ImagePHash(32,9);
 		LinkedList<Path> work = new LinkedList<Path>();
 		
-		while(!isInterrupted()) {
+		while(!stop) {
 			if(imagePaths.isEmpty()) {
 				logger.info("No more work, pHash worker {} terminating...", localWorkerNumber);
 				break;
