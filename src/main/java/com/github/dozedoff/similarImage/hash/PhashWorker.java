@@ -46,7 +46,7 @@ public class PhashWorker extends Thread {
 		this.imagePaths = imagePaths;
 		localWorkerNumber = workerNumber;
 		workerNumber++;
-		this.setName("pHashWorker " + localWorkerNumber);
+		this.setName("pHash worker " + localWorkerNumber);
 		
 	}
 	
@@ -60,14 +60,14 @@ public class PhashWorker extends Thread {
 	}
 	
 	private void calculateHashes(LinkedBlockingQueue<Path> imagePaths) {
-		logger.info("pHash Worker {} started", localWorkerNumber);
+		logger.info("{} started", this.getName());
 		Persistence persistence = Persistence.getInstance();
 		ImagePHash phash = new ImagePHash(32,9);
 		LinkedList<Path> work = new LinkedList<Path>();
 		
 		while(!stop) {
 			if(imagePaths.isEmpty()) {
-				logger.info("No more work, pHash worker {} terminating...", localWorkerNumber);
+				logger.info("No more work, {} terminating...", this.getName());
 				break;
 			}
 			
@@ -98,5 +98,7 @@ public class PhashWorker extends Thread {
 			
 			work.clear();
 		}
+		
+		logger.info("{} terminated", this.getName());
 	}
 }

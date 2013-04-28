@@ -64,9 +64,9 @@ public class SimilarImage {
 	
 	private void calculateHashes(LinkedBlockingQueue<Path> imagePaths) {
 		logger.info("Creating and starting workers...");
-		for(PhashWorker t : workers) {
-			t  = new PhashWorker(imagePaths);
-			t.start();
+		for(int i=0; i < WORKER_TREADS; i++) {
+			workers[i] = new PhashWorker(imagePaths);
+			workers[i].start();
 		}
 	}
 	
@@ -74,6 +74,7 @@ public class SimilarImage {
 		logger.info("Stopping all workers...");
 		for(PhashWorker phw : workers) {
 			if(phw != null) {
+				logger.info("Stopping {}...", phw.getName());
 				phw.stopWorker();
 			}
 		}
