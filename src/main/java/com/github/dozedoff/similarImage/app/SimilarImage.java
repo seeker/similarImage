@@ -35,6 +35,7 @@ public class SimilarImage {
 	SimilarImageGUI gui;
 	Logger logger = LoggerFactory.getLogger(SimilarImage.class);
 	private final int WORKER_TREADS = 4;
+	private PhashWorker workers[] = new PhashWorker[WORKER_TREADS];
 	
 	public static void main(String[] args) {
 		new SimilarImage().init();
@@ -62,10 +63,19 @@ public class SimilarImage {
 	}
 	
 	private void calculateHashes(LinkedBlockingQueue<Path> imagePaths) {
-		Thread workers[] = new Thread[WORKER_TREADS];
-		for(Thread t : workers) {
+		logger.info("Creating and starting workers...");
+		for(PhashWorker t : workers) {
 			t  = new PhashWorker(imagePaths);
 			t.start();
+		}
+	}
+	
+	public void stopWorkers() {
+		logger.info("Stopping all workers...");
+		for(PhashWorker phw : workers) {
+			if(phw != null) {
+				phw.stopWorker();
+			}
 		}
 	}
 }

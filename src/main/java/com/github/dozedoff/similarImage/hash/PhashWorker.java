@@ -74,6 +74,10 @@ public class PhashWorker extends Thread {
 			imagePaths.drainTo(work, MAX_WORK_BATCH_SIZE);
 			
 			for (Path path : work) {
+				if(stop) {
+					break;
+				}
+				
 				try {
 					if (persistence.isPathRecorded(path)) {
 						continue;

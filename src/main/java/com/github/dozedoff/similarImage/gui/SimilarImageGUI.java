@@ -33,7 +33,7 @@ public class SimilarImageGUI extends JFrame {
 	private SimilarImage parent;
 	
 	private JTextField path;
-	private JButton find;
+	private JButton find, stop;
 	
 	public SimilarImageGUI(SimilarImage parent) {
 		this.parent = parent;
@@ -47,6 +47,8 @@ public class SimilarImageGUI extends JFrame {
 	private void setupComponents() {
 		path = new JTextField(20);
 		find = new JButton("Find");
+		stop = new JButton("Stop");
+		
 		
 		find.addActionListener(new ActionListener() {
 			@Override
@@ -56,7 +58,15 @@ public class SimilarImageGUI extends JFrame {
 			}
 		});
 		
+		stop.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				parent.stopWorkers();
+			}
+		});
+		
 		this.add(path);
 		this.add(find);
+		this.add(stop);
 	}
 }
