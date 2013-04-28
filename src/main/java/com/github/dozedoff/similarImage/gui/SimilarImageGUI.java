@@ -22,6 +22,7 @@ import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JTextField;
 
 import net.miginfocom.swing.MigLayout;
@@ -34,6 +35,7 @@ public class SimilarImageGUI extends JFrame {
 	
 	private JTextField path;
 	private JButton find, stop;
+	private JLabel status;
 	
 	public SimilarImageGUI(SimilarImage parent) {
 		this.parent = parent;
@@ -44,10 +46,17 @@ public class SimilarImageGUI extends JFrame {
 		this.setVisible(true);
 	}
 	
+	public void setStatus(String statusMsg){
+		if(status != null) {
+			status.setText(statusMsg);
+		}
+	}
+	
 	private void setupComponents() {
 		path = new JTextField(20);
 		find = new JButton("Find");
 		stop = new JButton("Stop");
+		status = new JLabel("Idle");
 		
 		
 		find.addActionListener(new ActionListener() {
@@ -66,6 +75,7 @@ public class SimilarImageGUI extends JFrame {
 		});
 		
 		this.add(path);
+		this.add(status);
 		this.add(find);
 		this.add(stop);
 	}

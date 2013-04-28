@@ -69,6 +69,14 @@ public class SimilarImage {
 			workers[i] = new PhashWorker(imagePaths);
 			workers[i].start();
 		}
+		
+		for(int i=0; i < WORKER_TREADS; i++) {
+			try {
+				workers[i].join();
+			} catch (InterruptedException e) {
+				logger.info("Interrupted waiting for {}", workers[i].getName());
+			}
+		}
 	}
 	
 	public void stopWorkers() {
@@ -90,11 +98,15 @@ public class SimilarImage {
 		
 		@Override
 		public void run() {
+			gui.setStatus("Running...");
 			logger.info("Hashing images in {}", path);
 			LinkedBlockingQueue<Path> imagePaths = new LinkedBlockingQueue<Path>();
 			
+			gui.setStatus("Looking for images...");
 			findImages(path, imagePaths);
+			gui.setStatus("Hashing images...");
 			calculateHashes(imagePaths);
+			gui.setStatus("Done");
 		}
 	}
 }
