@@ -13,7 +13,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ColorConvertOp;
 import java.io.IOException;
 import java.io.InputStream;
- 
+
 import javax.imageio.ImageIO;
 /*
  * pHash-like image hash.
@@ -21,7 +21,6 @@ import javax.imageio.ImageIO;
  * Based On: http://www.hackerfactor.com/blog/index.php?/archives/432-Looks-Like-It.html
  */
 public class ImagePHash {
- 
         private int size = 32;
         private int smallerSize = 8;
        
@@ -137,6 +136,10 @@ public class ImagePHash {
 		}
 		
 		private long convertToLong(double[][] dctVals, double avg) {
+			if(smallerSize > 9) {
+				throw new IllegalArgumentException("The selected smallerSize value is to big for the long datatype");
+			}
+			
 			long hash = 0;
             
 			for (int x = 0; x < smallerSize; x++) {
