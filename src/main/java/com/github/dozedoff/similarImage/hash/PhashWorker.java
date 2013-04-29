@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.gui.IGUIevent;
 
 public class PhashWorker extends Thread {
 	private final static Logger logger = LoggerFactory.getLogger(PhashWorker.class);
@@ -41,15 +42,16 @@ public class PhashWorker extends Thread {
 	private int localWorkerNumber;
 	private final int MAX_WORK_BATCH_SIZE = 20;
 	private boolean stop = false;
+	private IGUIevent guiEvent;
 	
 	LinkedBlockingQueue<Path> imagePaths;
 	
-	public PhashWorker(LinkedBlockingQueue<Path> imagePaths) {
+	public PhashWorker(LinkedBlockingQueue<Path> imagePaths, IGUIevent guiEvent) {
 		this.imagePaths = imagePaths;
 		localWorkerNumber = workerNumber;
 		workerNumber++;
 		this.setName("pHash worker " + localWorkerNumber);
-		
+		this.guiEvent = guiEvent;
 	}
 	
 	@Override
@@ -102,7 +104,7 @@ public class PhashWorker extends Thread {
 					logger.warn("Failed to hash image {} - {}", path, e.getMessage());
 				}
 			}
-			
+			guiEvent.progressUpdate(work.size());
 			work.clear();
 		}
 		

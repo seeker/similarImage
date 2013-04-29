@@ -19,10 +19,12 @@ package com.github.dozedoff.similarImage.gui;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 
 import net.miginfocom.swing.MigLayout;
@@ -36,6 +38,9 @@ public class SimilarImageGUI extends JFrame {
 	private JTextField path;
 	private JButton find, stop;
 	private JLabel status;
+	private JProgressBar progress;
+	
+	private AtomicInteger currentProgress = new AtomicInteger();
 	
 	public SimilarImageGUI(SimilarImage parent) {
 		this.parent = parent;
@@ -58,7 +63,8 @@ public class SimilarImageGUI extends JFrame {
 		find = new JButton("Find");
 		stop = new JButton("Stop");
 		status = new JLabel("Idle");
-		
+		progress = new JProgressBar();
+		progress.setStringPainted(true);
 		
 		find.addActionListener(new ActionListener() {
 			@Override
@@ -79,5 +85,21 @@ public class SimilarImageGUI extends JFrame {
 		this.add(find);
 		this.add(stop);
 		this.add(status);
+		this.add(progress);
+	}
+	
+	public void clearProgress() {
+		currentProgress.set(0);
+		progress.setMaximum(0);
+		progress.setValue(0);
+	}
+	
+	public void setTotalFiles(int numOfFiles) {
+		progress.setMaximum(numOfFiles);
+	}
+	
+	public void addDelta(int numOfFiles) {
+		currentProgress.addAndGet(numOfFiles);
+		progress.setValue(currentProgress.get());
 	}
 }

@@ -28,10 +28,11 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.file.FilenameFilterVisitor;
 import com.github.dozedoff.commonj.filefilter.SimpleImageFilter;
+import com.github.dozedoff.similarImage.gui.IGUIevent;
 import com.github.dozedoff.similarImage.gui.SimilarImageGUI;
 import com.github.dozedoff.similarImage.hash.PhashWorker;
 
-public class SimilarImage {
+public class SimilarImage implements IGUIevent{
 	SimilarImageGUI gui;
 	Logger logger = LoggerFactory.getLogger(SimilarImage.class);
 	private final int WORKER_TREADS = 4;
@@ -61,12 +62,13 @@ public class SimilarImage {
 		}
 		
 		logger.info("Found {} images", imagePaths.size());
+		gui.setTotalFiles(imagePaths.size());
 	}
 	
 	private void calculateHashes(LinkedBlockingQueue<Path> imagePaths) {
 		logger.info("Creating and starting workers...");
 		for(int i=0; i < WORKER_TREADS; i++) {
-			workers[i] = new PhashWorker(imagePaths);
+			workers[i] = new PhashWorker(imagePaths, this);
 			workers[i].start();
 		}
 		
@@ -87,6 +89,8 @@ public class SimilarImage {
 				phw.stopWorker();
 			}
 		}
+		
+		gui.clearProgress();
 	}
 	
 	class ImageIndexer extends Thread {
@@ -108,5 +112,10 @@ public class SimilarImage {
 			calculateHashes(imagePaths);
 			gui.setStatus("Done");
 		}
+	}
+
+	@Override
+	public void progressUpdate(int update) {
+		gui.addDelta(update);
 	}
 }
