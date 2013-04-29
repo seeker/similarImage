@@ -41,7 +41,8 @@ public class SimilarImageGUI extends JFrame {
 		this.parent = parent;
 		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
 		this.setSize(500, 500);
-		this.setLayout(new MigLayout("wrap 1"));
+		this.setTitle("Similar Image");
+		this.setLayout(new MigLayout("wrap 4"));
 		setupComponents();
 		this.setVisible(true);
 	}
@@ -75,8 +76,8 @@ public class SimilarImageGUI extends JFrame {
 		});
 		
 		this.add(path);
-		this.add(status);
 		this.add(find);
 		this.add(stop);
+		this.add(status);
 	}
 }
