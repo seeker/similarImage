@@ -102,6 +102,7 @@ public class SimilarImage implements IGUIevent{
 		
 		@Override
 		public void run() {
+			gui.clearProgress();
 			gui.setStatus("Running...");
 			logger.info("Hashing images in {}", path);
 			LinkedBlockingQueue<Path> imagePaths = new LinkedBlockingQueue<Path>();
