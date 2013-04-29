@@ -36,7 +36,7 @@ public class SimilarImageGUI extends JFrame {
 	private SimilarImage parent;
 	
 	private JTextField path;
-	private JButton find, stop;
+	private JButton find, stop, sort;
 	private JLabel status;
 	private JProgressBar progress;
 	
@@ -65,6 +65,7 @@ public class SimilarImageGUI extends JFrame {
 		status = new JLabel("Idle");
 		progress = new JProgressBar();
 		progress.setStringPainted(true);
+		sort = new JButton("Sort");
 		
 		find.addActionListener(new ActionListener() {
 			@Override
@@ -81,11 +82,19 @@ public class SimilarImageGUI extends JFrame {
 			}
 		});
 		
+		sort.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				parent.sortDuplicates();
+			}
+		});
+		
 		this.add(path);
 		this.add(find);
 		this.add(stop);
 		this.add(status);
 		this.add(progress);
+		this.add(sort);
 	}
 	
 	public void clearProgress() {

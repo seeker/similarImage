@@ -23,6 +23,7 @@ import java.sql.SQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.j256.ormlite.dao.CloseableWrappedIterable;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
@@ -92,5 +93,9 @@ public class Persistence {
 		} else {
 			return true;
 		}
+	}
+	
+	public CloseableWrappedIterable<ImageRecord> getImageRecordIterator() {
+		return imageRecordDao.getWrappedIterable();
 	}
 }

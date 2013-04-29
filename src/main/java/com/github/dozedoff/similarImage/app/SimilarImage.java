@@ -28,9 +28,13 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.file.FilenameFilterVisitor;
 import com.github.dozedoff.commonj.filefilter.SimpleImageFilter;
+import com.github.dozedoff.similarImage.db.ImageRecord;
+import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.duplicate.SortSimilar;
 import com.github.dozedoff.similarImage.gui.IGUIevent;
 import com.github.dozedoff.similarImage.gui.SimilarImageGUI;
 import com.github.dozedoff.similarImage.hash.PhashWorker;
+import com.j256.ormlite.dao.CloseableWrappedIterable;
 
 public class SimilarImage implements IGUIevent{
 	SimilarImageGUI gui;
@@ -48,6 +52,11 @@ public class SimilarImage implements IGUIevent{
 	
 	public void indexImages(String path) {
 		Thread t = new ImageIndexer(path);
+		t.start();
+	}
+	
+	public void sortDuplicates() {
+		Thread t = new ImageSorter();
 		t.start();
 	}
 	
@@ -112,6 +121,17 @@ public class SimilarImage implements IGUIevent{
 			gui.setStatus("Hashing images...");
 			calculateHashes(imagePaths);
 			gui.setStatus("Done");
+		}
+	}
+	
+	class ImageSorter extends Thread {
+		@Override
+		public void run() {
+			gui.setStatus("Sorting...");
+			CloseableWrappedIterable<ImageRecord> records = Persistence.getInstance().getImageRecordIterator();
+			SortSimilar sorter = new SortSimilar();
+			sorter.sort(0, records);
+			gui.setStatus("" + sorter.getNumberOfDuplicateGroups() + " Groups");
 		}
 	}
 
