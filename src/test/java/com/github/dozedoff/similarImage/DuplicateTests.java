@@ -22,9 +22,11 @@ import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
 import com.github.dozedoff.similarImage.duplicate.CompareTest;
+import com.github.dozedoff.similarImage.duplicate.SortSimilarTest;
 
 @RunWith(Suite.class)
 @SuiteClasses({
-	CompareTest.class
+	CompareTest.class,
+	SortSimilarTest.class
 })
 public class DuplicateTests {}

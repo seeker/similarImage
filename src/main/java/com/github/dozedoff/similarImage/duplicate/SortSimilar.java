@@ -50,6 +50,10 @@ public class SortSimilar {
 		}
 	}
 	
+	public LinkedList<ImageRecord> getGroup(long pHash) {
+		return sorted.get(pHash);
+	}
+	
 	public void sortExactMatch(CloseableWrappedIterable<ImageRecord> records) {
 		try {
 			for (ImageRecord ir : records) {

@@ -25,6 +25,6 @@ import org.junit.runners.Suite.SuiteClasses;
 @SuiteClasses({
 	DuplicateTests.class
 })
-public class AllTests {
+public class AllTestsSimilarImage {
 
 }

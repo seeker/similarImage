@@ -45,4 +45,23 @@ public class ImageRecord {
 	public long getpHash() {
 		return pHash;
 	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if(!(obj instanceof ImageRecord)) {
+			return false;
+		}
+		
+		ImageRecord toComapre = (ImageRecord)obj;
+		
+		if((this.pHash == toComapre.getpHash()) && samePath(toComapre)) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	private boolean samePath(ImageRecord rec) {
+		return this.getPath().equals(rec.getPath());
+	}
 }
