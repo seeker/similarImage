@@ -32,10 +32,25 @@ public class SortSimilar {
 	private static final Logger logger = LoggerFactory.getLogger(SortSimilar.class);
 	HashMap<Long, LinkedList<ImageRecord>> sorted = new HashMap<Long, LinkedList<ImageRecord>>();
 	
+	/**
+	 * Use {@link #sortHammingDistance(int, CloseableWrappedIterable)} instead.
+	 * @param hammingDistance
+	 * @param records
+	 */
+	@Deprecated
 	public void sort(int hammingDistance, CloseableWrappedIterable<ImageRecord> records) {
-		
+		sortHammingDistance(hammingDistance, records);
+	}
+	
+	public void sortHammingDistance(int hammingDistance, CloseableWrappedIterable<ImageRecord> records) {
 		//TODO create buckets for hamming distance
 		
+		if(hammingDistance == 0) {
+			sortExactMatch(records);
+		}
+	}
+	
+	public void sortExactMatch(CloseableWrappedIterable<ImageRecord> records) {
 		try {
 			for (ImageRecord ir : records) {
 				long key = ir.getpHash();
