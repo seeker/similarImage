@@ -43,6 +43,8 @@ public class Persistence {
 			ConnectionSource cs = new JdbcConnectionSource(dbUrl);
 			setupDatabase(cs);
 			setupDAO(cs);
+			long recordCount = imageRecordDao.countOf();
+			logger.info("Loaded database with {} entries", recordCount);
 		} catch (SQLException e) {
 			logger.error("Failed to setup database {}", dbUrl, e);
 			System.exit(1);
