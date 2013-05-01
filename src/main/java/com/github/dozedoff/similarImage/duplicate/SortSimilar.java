@@ -87,6 +87,20 @@ public class SortSimilar {
 		return duplicateGroups;
 	}
 	
+	public LinkedList<Long> getDuplicateGroups() {
+		Collection<LinkedList<ImageRecord>> buckets = sorted.values();
+		LinkedList<Long> duplicateGroups = new LinkedList<Long>();
+
+		for(LinkedList<ImageRecord> irl : buckets) {
+			if(irl.size() > 1) {
+				long groupNo = irl.getFirst().getpHash();
+				duplicateGroups.add(groupNo);
+			}
+		}
+		
+		return duplicateGroups;
+	}
+	
 	public int getNumberOfGroups() {
 		return sorted.size();
 	}

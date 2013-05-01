@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.slf4j.Logger;
@@ -41,13 +42,14 @@ public class SimilarImage implements IGUIevent{
 	Logger logger = LoggerFactory.getLogger(SimilarImage.class);
 	private final int WORKER_TREADS = 4;
 	private PhashWorker workers[] = new PhashWorker[WORKER_TREADS];
+	private SortSimilar sorter = new SortSimilar();
 	
 	public static void main(String[] args) {
 		new SimilarImage().init();
 	}
 	
 	public void init() {
-		gui = new SimilarImageGUI(this);
+		gui = new SimilarImageGUI(this, sorter);
 	}
 	
 	public void indexImages(String path) {
@@ -127,11 +129,13 @@ public class SimilarImage implements IGUIevent{
 	class ImageSorter extends Thread {
 		@Override
 		public void run() {
+			sorter.clear();
 			gui.setStatus("Sorting...");
 			CloseableWrappedIterable<ImageRecord> records = Persistence.getInstance().getImageRecordIterator();
-			SortSimilar sorter = new SortSimilar();
-			sorter.sort(0, records);
+			sorter.sortExactMatch(records);
 			gui.setStatus("" + sorter.getNumberOfDuplicateGroups() + " Groups");
+			List<Long> groups = sorter.getDuplicateGroups();
+			gui.populateGroupList(groups);
 		}
 	}
 

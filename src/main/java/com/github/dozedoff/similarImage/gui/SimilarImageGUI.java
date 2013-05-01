@@ -19,31 +19,44 @@ package com.github.dozedoff.similarImage.gui;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JProgressBar;
+import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 
 import net.miginfocom.swing.MigLayout;
 
 import com.github.dozedoff.similarImage.app.SimilarImage;
+import com.github.dozedoff.similarImage.db.ImageRecord;
+import com.github.dozedoff.similarImage.duplicate.SortSimilar;
 
 public class SimilarImageGUI extends JFrame {
 	private static final long serialVersionUID = 1L;
 	private SimilarImage parent;
+	private SortSimilar sorter;
 	
 	private JTextField path;
 	private JButton find, stop, sort;
 	private JLabel status;
 	private JProgressBar progress;
+	private JList<Long> groups;
+	private DefaultListModel<Long> groupListModel;
+	private JScrollPane groupScrollPane;
+	
 	
 	private AtomicInteger currentProgress = new AtomicInteger();
 	
-	public SimilarImageGUI(SimilarImage parent) {
+	public SimilarImageGUI(SimilarImage parent, SortSimilar sorter) {
 		this.parent = parent;
+		this.sorter = sorter;
 		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
 		this.setSize(500, 500);
 		this.setTitle("Similar Image");
@@ -66,6 +79,10 @@ public class SimilarImageGUI extends JFrame {
 		progress = new JProgressBar();
 		progress.setStringPainted(true);
 		sort = new JButton("Sort");
+		
+		groupListModel = new DefaultListModel<Long>();
+		groups = new JList<Long>(groupListModel);
+		groupScrollPane = new JScrollPane(groups);
 		
 		find.addActionListener(new ActionListener() {
 			@Override
@@ -94,7 +111,8 @@ public class SimilarImageGUI extends JFrame {
 		this.add(stop);
 		this.add(status);
 		this.add(progress);
-		this.add(sort);
+		this.add(sort, "wrap");
+		this.add(groupScrollPane, "growy");
 	}
 	
 	public void clearProgress() {
@@ -110,5 +128,26 @@ public class SimilarImageGUI extends JFrame {
 	public void addDelta(int numOfFiles) {
 		currentProgress.addAndGet(numOfFiles);
 		progress.setValue(currentProgress.get());
+	}
+	
+	public void populateGroupList(List<Long> groups) {
+		SwingUtilities.invokeLater(new GroupListPopulator(groups));
+	}
+	
+	class GroupListPopulator implements Runnable {
+		private List<Long> groups;
+		
+		public GroupListPopulator(List<Long> groups) {
+			this.groups = groups;
+		}
+
+		@Override
+		public void run() {
+			groupListModel.clear();
+			
+			for(Long g : groups) {
+				groupListModel.addElement(g);
+			}
+		}
 	}
 }
