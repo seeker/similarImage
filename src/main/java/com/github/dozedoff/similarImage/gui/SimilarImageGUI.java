@@ -31,17 +31,16 @@ import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 import net.miginfocom.swing.MigLayout;
 
 import com.github.dozedoff.similarImage.app.SimilarImage;
-import com.github.dozedoff.similarImage.db.ImageRecord;
-import com.github.dozedoff.similarImage.duplicate.SortSimilar;
 
 public class SimilarImageGUI extends JFrame {
 	private static final long serialVersionUID = 1L;
 	private SimilarImage parent;
-	private SortSimilar sorter;
 	
 	private JTextField path;
 	private JButton find, stop, sort;
@@ -54,9 +53,8 @@ public class SimilarImageGUI extends JFrame {
 	
 	private AtomicInteger currentProgress = new AtomicInteger();
 	
-	public SimilarImageGUI(SimilarImage parent, SortSimilar sorter) {
+	public SimilarImageGUI(SimilarImage parent) {
 		this.parent = parent;
-		this.sorter = sorter;
 		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
 		this.setSize(500, 500);
 		this.setTitle("Similar Image");
@@ -103,6 +101,22 @@ public class SimilarImageGUI extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				parent.sortDuplicates();
+			}
+		});
+		
+		groups.addListSelectionListener(new ListSelectionListener() {
+			@Override
+			public void valueChanged(ListSelectionEvent event) {
+				if(event.getValueIsAdjusting()) {
+					return; // Still adjusting, do nothing...
+				}
+				
+				int index = groups.getSelectedIndex();
+				if(index > -1 && index < groupListModel.size()) {
+					long group = groupListModel.get(index);
+					parent.displayGroup(group);
+				}
+				
 			}
 		});
 		

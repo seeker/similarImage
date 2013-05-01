@@ -17,30 +17,42 @@
 */
 package com.github.dozedoff.similarImage.app;
 
+import java.awt.Dimension;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
+
+import javax.swing.JLabel;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import sun.awt.image.ImageFormatException;
+
 import com.github.dozedoff.commonj.file.FilenameFilterVisitor;
 import com.github.dozedoff.commonj.filefilter.SimpleImageFilter;
+import com.github.dozedoff.commonj.image.SubsamplingImageLoader;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.SortSimilar;
+import com.github.dozedoff.similarImage.gui.DisplayGroup;
 import com.github.dozedoff.similarImage.gui.IGUIevent;
 import com.github.dozedoff.similarImage.gui.SimilarImageGUI;
 import com.github.dozedoff.similarImage.hash.PhashWorker;
 import com.j256.ormlite.dao.CloseableWrappedIterable;
 
+@SuppressWarnings("restriction")
 public class SimilarImage implements IGUIevent{
 	SimilarImageGUI gui;
+	DisplayGroup displayGroup;
+	
 	Logger logger = LoggerFactory.getLogger(SimilarImage.class);
 	private final int WORKER_TREADS = 4;
+	private final int THUMBNAIL_DIMENSION = 500;
 	private PhashWorker workers[] = new PhashWorker[WORKER_TREADS];
 	private SortSimilar sorter = new SortSimilar();
 	
@@ -49,7 +61,8 @@ public class SimilarImage implements IGUIevent{
 	}
 	
 	public void init() {
-		gui = new SimilarImageGUI(this, sorter);
+		gui = new SimilarImageGUI(this);
+		displayGroup = new DisplayGroup();
 	}
 	
 	public void indexImages(String path) {
@@ -102,6 +115,28 @@ public class SimilarImage implements IGUIevent{
 		}
 		
 		gui.clearProgress();
+	}
+	
+	public void displayGroup(long group) {
+		LinkedList<ImageRecord> grouplist = sorter.getGroup(group);
+		LinkedList<JLabel> images = new LinkedList<JLabel>();
+		Dimension imageDim = new Dimension(THUMBNAIL_DIMENSION, THUMBNAIL_DIMENSION);
+		
+		logger.info("Loading {} thumbnails for group {}", grouplist.size(), group);
+		
+		for(ImageRecord rec : grouplist) {
+			Path path = Paths.get(rec.getPath());
+			try {
+				JLabel image = SubsamplingImageLoader.loadAsLabel(path, imageDim);
+				images.add(image);
+			} catch (ImageFormatException e) {
+				logger.warn("Unable to process image {}", path, e);
+			} catch (IOException e) {
+				logger.warn("Unable to load file {}", path, e);
+			}
+		}
+		
+		displayGroup.displayImages(group, images);
 	}
 	
 	class ImageIndexer extends Thread {
