@@ -17,8 +17,10 @@
 */
 package com.github.dozedoff.similarImage.gui;
 
+import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -38,16 +40,18 @@ public class DisplayGroup extends JFrame {
 		this.setFocusableWindowState(false);
 	}
 
-	public void displayImages(long group, List<JLabel> images) {
+	public void displayImages(long group, Map<Path,JLabel> pairs) {
 		removeOldImages();
 		this.dispose();
 		this.setTitle("" + group);
 		
-		for(JLabel image : images) {
+		for(Path path : pairs.keySet()) {
+			JLabel image = pairs.get(path);
+			image.setToolTipText(path.toString());
 			this.add(image);
 		}
 		
-		currentImages.addAll(images);
+		currentImages.addAll(pairs.values());
 		
 		this.validate();
 		this.pack();

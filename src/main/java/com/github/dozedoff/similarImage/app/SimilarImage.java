@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.LinkedList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -120,7 +120,7 @@ public class SimilarImage implements IGUIevent{
 	
 	public void displayGroup(long group) {
 		Set<ImageRecord> grouplist = sorter.getGroup(group);
-		LinkedList<JLabel> images = new LinkedList<JLabel>();
+		HashMap<Path, JLabel> images = new HashMap<Path, JLabel>();
 		Dimension imageDim = new Dimension(THUMBNAIL_DIMENSION, THUMBNAIL_DIMENSION);
 		
 		logger.info("Loading {} thumbnails for group {}", grouplist.size(), group);
@@ -129,7 +129,7 @@ public class SimilarImage implements IGUIevent{
 			Path path = Paths.get(rec.getPath());
 			try {
 				JLabel image = SubsamplingImageLoader.loadAsLabel(path, imageDim);
-				images.add(image);
+				images.put(path,image);
 			} catch (ImageFormatException e) {
 				logger.warn("Unable to process image {}", path, e);
 			} catch (IOException e) {
