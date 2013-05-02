@@ -108,5 +108,10 @@
 			<artifactId>sqlite-jdbc</artifactId>
 			<version>3.7.2</version>
 		</dependency>
+		<dependency>
+			<groupId>org.everpeace.search</groupId>
+			<artifactId>bk-tree</artifactId>
+			<version>1.0-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 </project>

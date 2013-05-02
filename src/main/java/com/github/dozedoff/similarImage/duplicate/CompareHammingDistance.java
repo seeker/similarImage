@@ -17,7 +17,7 @@
 */
 package com.github.dozedoff.similarImage.duplicate;
 
-public class Compare {
+public class CompareHammingDistance {
 	public static int getHammingDistance(long a, long b) {
 		long xor = a^b;
 		int distance = Long.bitCount(xor);
