@@ -24,6 +24,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.swing.JLabel;
@@ -118,7 +119,7 @@ public class SimilarImage implements IGUIevent{
 	}
 	
 	public void displayGroup(long group) {
-		LinkedList<ImageRecord> grouplist = sorter.getGroup(group);
+		Set<ImageRecord> grouplist = sorter.getGroup(group);
 		LinkedList<JLabel> images = new LinkedList<JLabel>();
 		Dimension imageDim = new Dimension(THUMBNAIL_DIMENSION, THUMBNAIL_DIMENSION);
 		

@@ -26,6 +26,7 @@ import static org.mockito.Mockito.when;
 import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Set;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -66,10 +67,10 @@ public class SortSimilarTest {
 		ImageRecord testRecords[] = {new ImageRecord("/foo/bar/1", 3), new ImageRecord("/foo/foo/1", 3)};
 		ImageRecord testRecords2[] = {new ImageRecord("/foo/bar/3", 5), new ImageRecord("/foo/foo/5", 5)};
 		
-		LinkedList<ImageRecord> records = sort.getGroup(3);
+		Set<ImageRecord> records = sort.getGroup(3);
 		assertThat(records, hasItems(testRecords));
 		
-		LinkedList<ImageRecord> records2 = sort.getGroup(5);
+		Set<ImageRecord> records2 = sort.getGroup(5);
 		assertThat(records2, hasItems(testRecords2));
 	}
 

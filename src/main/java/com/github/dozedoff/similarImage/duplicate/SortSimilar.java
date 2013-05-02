@@ -20,6 +20,7 @@ package com.github.dozedoff.similarImage.duplicate;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
 
@@ -33,7 +34,7 @@ import com.j256.ormlite.dao.CloseableWrappedIterable;
 
 public class SortSimilar {
 	private static final Logger logger = LoggerFactory.getLogger(SortSimilar.class);
-	HashMap<Long, LinkedList<ImageRecord>> sorted = new HashMap<Long, LinkedList<ImageRecord>>();
+	HashMap<Long, Set<ImageRecord>> sorted = new HashMap<Long, Set<ImageRecord>>();
 	CompareHammingDistance compareHamming = new CompareHammingDistance();
 	
 	/**
@@ -66,9 +67,11 @@ public class SortSimilar {
 	
 	private void createSimilar(int hammingDistance, ImageRecord root) {
 		long pHash = root.getpHash();
+		
 		if(sorted.containsKey(pHash)) {
 			return;		// prevent duplicates
 		}
+		
 		createBucket(pHash, root);
 		BKTree<ImageRecord> bkTree = new BKTree<ImageRecord>(compareHamming, root);
 		CloseableWrappedIterable<ImageRecord> records = Persistence.getInstance().getImageRecordIterator();
@@ -88,7 +91,7 @@ public class SortSimilar {
 		}
 	}
 	
-	public LinkedList<ImageRecord> getGroup(long pHash) {
+	public Set<ImageRecord> getGroup(long pHash) {
 		return sorted.get(pHash);
 	}
 	
@@ -113,10 +116,10 @@ public class SortSimilar {
 	}
 	
 	public int getNumberOfDuplicateGroups() {
-		Collection<LinkedList<ImageRecord>> buckets = sorted.values();
+		Collection<Set<ImageRecord>> buckets = sorted.values();
 		int duplicateGroups = 0;
 
-		for(LinkedList<ImageRecord> irl : buckets) {
+		for(Set<ImageRecord> irl : buckets) {
 			if(irl.size() > 1) {
 				duplicateGroups++;
 			}
@@ -126,12 +129,13 @@ public class SortSimilar {
 	}
 	
 	public LinkedList<Long> getDuplicateGroups() {
-		Collection<LinkedList<ImageRecord>> buckets = sorted.values();
+		Collection<Set<ImageRecord>> buckets = sorted.values();
 		LinkedList<Long> duplicateGroups = new LinkedList<Long>();
 
-		for(LinkedList<ImageRecord> irl : buckets) {
+		for(Set<ImageRecord> irl : buckets) {
 			if(irl.size() > 1) {
-				long groupNo = irl.getFirst().getpHash();
+				ImageRecord entry = irl.iterator().next(); 
+				long groupNo = entry.getpHash();
 				duplicateGroups.add(groupNo);
 			}
 		}
@@ -149,17 +153,17 @@ public class SortSimilar {
 	
 	public void clear() {
 		sorted.clear();
-		sorted = new HashMap<Long, LinkedList<ImageRecord>>();
+		sorted = new HashMap<Long, Set<ImageRecord>>();
 	}
 	
 	private void createBucket(long key, ImageRecord record) {
-		LinkedList<ImageRecord> value = new LinkedList<ImageRecord>();
+		Set<ImageRecord> value = new HashSet<ImageRecord>();
 		value.add(record);
 		sorted.put(key, value);
 	}
 	
 	private void addToBucket(long key, ImageRecord value) {
-		LinkedList<ImageRecord> bucket = sorted.get(key);
+		Set<ImageRecord> bucket = sorted.get(key);
 		bucket.add(value);
 	}
 }
