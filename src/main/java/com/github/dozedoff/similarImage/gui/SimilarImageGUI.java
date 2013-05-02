@@ -19,6 +19,8 @@ package com.github.dozedoff.similarImage.gui;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -28,6 +30,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JProgressBar;
+import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
@@ -44,11 +47,12 @@ public class SimilarImageGUI extends JFrame {
 	
 	private JTextField path;
 	private JButton find, stop, sortExact, sortSimilar;
-	private JLabel status;
+	private JLabel status, hammingValue;
 	private JProgressBar progress;
 	private JList<Long> groups;
 	private DefaultListModel<Long> groupListModel;
 	private JScrollPane groupScrollPane;
+	private JScrollBar hammingDistance;
 	
 	
 	private AtomicInteger currentProgress = new AtomicInteger();
@@ -60,6 +64,7 @@ public class SimilarImageGUI extends JFrame {
 		this.setTitle("Similar Image");
 		this.setLayout(new MigLayout("wrap 4"));
 		setupComponents();
+		updateHammingDisplay();
 		this.setVisible(true);
 	}
 	
@@ -82,6 +87,8 @@ public class SimilarImageGUI extends JFrame {
 		groupListModel = new DefaultListModel<Long>();
 		groups = new JList<Long>(groupListModel);
 		groupScrollPane = new JScrollPane(groups);
+		hammingDistance = new JScrollBar(JScrollBar.HORIZONTAL, 0, 2, 0, 64);
+		hammingValue = new JLabel();
 		
 		find.addActionListener(new ActionListener() {
 			@Override
@@ -108,7 +115,7 @@ public class SimilarImageGUI extends JFrame {
 		sortSimilar.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				parent.sortDuplicates(4);
+				parent.sortDuplicates(hammingDistance.getValue());
 			}
 		});
 		
@@ -128,6 +135,15 @@ public class SimilarImageGUI extends JFrame {
 			}
 		});
 		
+		hammingDistance.addAdjustmentListener(new AdjustmentListener() {
+			@Override
+			public void adjustmentValueChanged(AdjustmentEvent event) {
+				if(! event.getValueIsAdjusting()) {
+					updateHammingDisplay();
+				}
+			}
+		});
+		
 		this.add(path);
 		this.add(find);
 		this.add(stop);
@@ -136,6 +152,12 @@ public class SimilarImageGUI extends JFrame {
 		this.add(sortExact, "wrap");
 		this.add(sortSimilar, "wrap");
 		this.add(groupScrollPane, "growy");
+		this.add(hammingDistance, "growx");
+		this.add(hammingValue);
+	}
+	
+	private void updateHammingDisplay() {
+		hammingValue.setText("" + hammingDistance.getValue());
 	}
 	
 	public void clearProgress() {
