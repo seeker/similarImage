@@ -43,7 +43,7 @@ public class SimilarImageGUI extends JFrame {
 	private SimilarImage parent;
 	
 	private JTextField path;
-	private JButton find, stop, sort;
+	private JButton find, stop, sortExact, sortSimilar;
 	private JLabel status;
 	private JProgressBar progress;
 	private JList<Long> groups;
@@ -76,7 +76,8 @@ public class SimilarImageGUI extends JFrame {
 		status = new JLabel("Idle");
 		progress = new JProgressBar();
 		progress.setStringPainted(true);
-		sort = new JButton("Sort");
+		sortExact = new JButton("Sort exact");
+		sortSimilar = new JButton("Sort similar");
 		
 		groupListModel = new DefaultListModel<Long>();
 		groups = new JList<Long>(groupListModel);
@@ -97,10 +98,17 @@ public class SimilarImageGUI extends JFrame {
 			}
 		});
 		
-		sort.addActionListener(new ActionListener() {
+		sortExact.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				parent.sortDuplicates();
+				parent.sortDuplicates(0);
+			}
+		});
+		
+		sortSimilar.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				parent.sortDuplicates(4);
 			}
 		});
 		
@@ -125,7 +133,8 @@ public class SimilarImageGUI extends JFrame {
 		this.add(stop);
 		this.add(status);
 		this.add(progress);
-		this.add(sort, "wrap");
+		this.add(sortExact, "wrap");
+		this.add(sortSimilar, "wrap");
 		this.add(groupScrollPane, "growy");
 	}
 	

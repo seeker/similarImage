@@ -21,16 +21,20 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Set;
 
+import org.everpeace.search.BKTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
+import com.github.dozedoff.similarImage.db.Persistence;
 import com.j256.ormlite.dao.CloseableWrappedIterable;
 
 public class SortSimilar {
 	private static final Logger logger = LoggerFactory.getLogger(SortSimilar.class);
 	HashMap<Long, LinkedList<ImageRecord>> sorted = new HashMap<Long, LinkedList<ImageRecord>>();
+	CompareHammingDistance compareHamming = new CompareHammingDistance();
 	
 	/**
 	 * Use {@link #sortHammingDistance(int, CloseableWrappedIterable)} instead.
@@ -43,10 +47,44 @@ public class SortSimilar {
 	}
 	
 	public void sortHammingDistance(int hammingDistance, CloseableWrappedIterable<ImageRecord> records) {
-		//TODO create buckets for hamming distance
-		
 		if(hammingDistance == 0) {
 			sortExactMatch(records);
+		}
+		
+		try {
+			for (ImageRecord ir : records) {
+				createSimilar(hammingDistance, ir);
+			}
+		} finally {
+			try {
+				records.close();
+			} catch (SQLException e) {
+				logger.warn("Failed to close ImageRecord iterator", e);
+			}
+		}
+	}
+	
+	private void createSimilar(int hammingDistance, ImageRecord root) {
+		long pHash = root.getpHash();
+		if(sorted.containsKey(pHash)) {
+			return;		// prevent duplicates
+		}
+		createBucket(pHash, root);
+		BKTree<ImageRecord> bkTree = new BKTree<ImageRecord>(compareHamming, root);
+		CloseableWrappedIterable<ImageRecord> records = Persistence.getInstance().getImageRecordIterator();
+		
+		for (ImageRecord ir : records) {
+			bkTree.insert(ir);
+		}
+		
+		Set<ImageRecord> similar = bkTree.searchWithin(root, (double)hammingDistance);
+		
+		for(ImageRecord ir : similar) {
+			if(ir.equals(root)) {
+				continue;
+			}
+			
+			addToBucket(pHash, ir);
 		}
 	}
 	

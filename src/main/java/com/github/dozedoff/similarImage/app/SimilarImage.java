@@ -70,8 +70,8 @@ public class SimilarImage implements IGUIevent{
 		t.start();
 	}
 	
-	public void sortDuplicates() {
-		Thread t = new ImageSorter();
+	public void sortDuplicates(int hammingDistance) {
+		Thread t = new ImageSorter(hammingDistance);
 		t.start();
 	}
 	
@@ -162,12 +162,23 @@ public class SimilarImage implements IGUIevent{
 	}
 	
 	class ImageSorter extends Thread {
+		int hammingDistance = 0;
+		
+		public ImageSorter(int hammingDistance) {
+			super();
+			this.hammingDistance = hammingDistance;
+		}
+
 		@Override
 		public void run() {
 			sorter.clear();
 			gui.setStatus("Sorting...");
 			CloseableWrappedIterable<ImageRecord> records = Persistence.getInstance().getImageRecordIterator();
-			sorter.sortExactMatch(records);
+			if (hammingDistance == 0) {
+				sorter.sortExactMatch(records);
+			} else {
+				sorter.sortHammingDistance(hammingDistance, records);
+			}
 			gui.setStatus("" + sorter.getNumberOfDuplicateGroups() + " Groups");
 			List<Long> groups = sorter.getDuplicateGroups();
 			gui.populateGroupList(groups);
