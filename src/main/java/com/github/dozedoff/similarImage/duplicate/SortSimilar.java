@@ -36,6 +36,7 @@ public class SortSimilar {
 	private static final Logger logger = LoggerFactory.getLogger(SortSimilar.class);
 	HashMap<Long, Set<ImageRecord>> sorted = new HashMap<Long, Set<ImageRecord>>();
 	CompareHammingDistance compareHamming = new CompareHammingDistance();
+	LinkedList<Set<ImageRecord>> processedSets;
 	
 	/**
 	 * Use {@link #sortHammingDistance(int, CloseableWrappedIterable)} instead.
@@ -52,6 +53,8 @@ public class SortSimilar {
 			sortExactMatch(records);
 		}
 		
+		processedSets = new LinkedList<Set<ImageRecord>>();
+		
 		try {
 			for (ImageRecord ir : records) {
 				createSimilar(hammingDistance, ir);
@@ -63,6 +66,8 @@ public class SortSimilar {
 				logger.warn("Failed to close ImageRecord iterator", e);
 			}
 		}
+		
+		processedSets = null;
 	}
 	
 	private void createSimilar(int hammingDistance, ImageRecord root) {
@@ -82,12 +87,10 @@ public class SortSimilar {
 		
 		Set<ImageRecord> similar = bkTree.searchWithin(root, (double)hammingDistance);
 		
-		for(ImageRecord ir : similar) {
-			if(ir.equals(root)) {
-				continue;
-			}
-			
-			addToBucket(pHash, ir);
+		//TODO use arraylist & binary search for this
+		if(! processedSets.contains(similar)) {
+			createBucket(pHash, similar);
+			processedSets.add(similar);
 		}
 	}
 	
@@ -160,6 +163,10 @@ public class SortSimilar {
 		Set<ImageRecord> value = new HashSet<ImageRecord>();
 		value.add(record);
 		sorted.put(key, value);
+	}
+	
+	private void createBucket(long key, Set<ImageRecord> records) {
+		sorted.put(key, records);
 	}
 	
 	private void addToBucket(long key, ImageRecord value) {
