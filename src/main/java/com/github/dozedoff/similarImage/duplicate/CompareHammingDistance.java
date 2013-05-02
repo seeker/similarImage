@@ -17,10 +17,21 @@
 */
 package com.github.dozedoff.similarImage.duplicate;
 
-public class CompareHammingDistance {
-	public static int getHammingDistance(long a, long b) {
+import org.everpeace.search.Distance;
+import com.github.dozedoff.similarImage.db.ImageRecord;
+
+public class CompareHammingDistance implements Distance<ImageRecord>{
+	protected static int getHammingDistance(long a, long b) {
 		long xor = a^b;
 		int distance = Long.bitCount(xor);
+		return distance;
+	}
+
+	@Override
+	public double eval(ImageRecord e1, ImageRecord e2) {
+		long hashE1 = e1.getpHash();
+		long hashE2 = e2.getpHash();
+		int distance = getHammingDistance(hashE1, hashE2);
 		return distance;
 	}
 }
