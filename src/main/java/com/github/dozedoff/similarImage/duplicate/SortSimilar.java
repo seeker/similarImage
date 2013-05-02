@@ -77,7 +77,6 @@ public class SortSimilar {
 			return;		// prevent duplicates
 		}
 		
-		createBucket(pHash, root);
 		BKTree<ImageRecord> bkTree = new BKTree<ImageRecord>(compareHamming, root);
 		CloseableWrappedIterable<ImageRecord> records = Persistence.getInstance().getImageRecordIterator();
 		
