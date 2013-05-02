@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -182,6 +183,7 @@ public class SimilarImage implements IGUIevent{
 			}
 			gui.setStatus("" + sorter.getNumberOfDuplicateGroups() + " Groups");
 			List<Long> groups = sorter.getDuplicateGroups();
+			Collections.sort(groups);
 			gui.populateGroupList(groups);
 		}
 	}
