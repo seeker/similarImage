@@ -134,7 +134,7 @@ public class SimilarImage implements IGUIevent{
 			} catch (ImageFormatException e) {
 				logger.warn("Unable to process image {}", path, e);
 			} catch (IOException e) {
-				logger.warn("Unable to load file {}", path, e);
+				logger.warn("Unable to load file {}", path);
 			}
 		}
 		
