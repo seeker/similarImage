@@ -53,6 +53,8 @@ public class SimilarImage implements IGUIevent{
 	DisplayGroup displayGroup;
 	
 	Logger logger = LoggerFactory.getLogger(SimilarImage.class);
+	
+	private final String PROPERTIES_FILENAME = "similarImage.properties";
 	private final int WORKER_TREADS = 4;
 	private final int THUMBNAIL_DIMENSION = 500;
 	private PhashWorker workers[] = new PhashWorker[WORKER_TREADS];
@@ -63,6 +65,9 @@ public class SimilarImage implements IGUIevent{
 	}
 	
 	public void init() {
+		Settings settings = new Settings(new SettingsValidator());
+		settings.loadPropertiesFromFile(PROPERTIES_FILENAME);
+		
 		gui = new SimilarImageGUI(this);
 		displayGroup = new DisplayGroup();
 	}
