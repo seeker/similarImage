@@ -141,14 +141,14 @@ public class SortSimilar {
 	}
 	
 	public LinkedList<Long> getDuplicateGroups() {
-		Collection<Set<ImageRecord>> buckets = sorted.values();
+		Set<Long> keys = sorted.keySet();
 		LinkedList<Long> duplicateGroups = new LinkedList<Long>();
 
-		for(Set<ImageRecord> irl : buckets) {
-			if(irl.size() > 1) {
-				ImageRecord entry = irl.iterator().next(); 
-				long groupNo = entry.getpHash();
-				duplicateGroups.add(groupNo);
+		for(long key : keys) {
+			Set<ImageRecord> irs = sorted.get(key);
+			
+			if(irs.size() > 1) {
+				duplicateGroups.add(key);
 			}
 		}
 		
