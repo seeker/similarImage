@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 
 import org.slf4j.Logger;
@@ -120,7 +121,7 @@ public class SimilarImage implements IGUIevent{
 	
 	public void displayGroup(long group) {
 		Set<ImageRecord> grouplist = sorter.getGroup(group);
-		HashMap<Path, JLabel> images = new HashMap<Path, JLabel>();
+		HashMap<Path, JComponent> images = new HashMap<Path, JComponent>();
 		Dimension imageDim = new Dimension(THUMBNAIL_DIMENSION, THUMBNAIL_DIMENSION);
 		
 		logger.info("Loading {} thumbnails for group {}", grouplist.size(), group);

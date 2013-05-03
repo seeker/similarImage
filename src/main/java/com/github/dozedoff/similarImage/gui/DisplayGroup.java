@@ -22,8 +22,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.JComponent;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import net.miginfocom.swing.MigLayout;
@@ -31,7 +31,7 @@ import net.miginfocom.swing.MigLayout;
 public class DisplayGroup extends JFrame {
 	private static final long serialVersionUID = 1L;
 	JPanel imagePannel;
-	List<JLabel> currentImages = new LinkedList<JLabel>(); 
+	List<JComponent> currentImages = new LinkedList<JComponent>(); 
 	
 	public DisplayGroup() {
 		this.setSize(500,500);
@@ -40,13 +40,13 @@ public class DisplayGroup extends JFrame {
 		this.setFocusableWindowState(false);
 	}
 
-	public void displayImages(long group, Map<Path,JLabel> pairs) {
+	public void displayImages(long group, Map<Path,JComponent> pairs) {
 		removeOldImages();
 		this.dispose();
 		this.setTitle("" + group);
 		
 		for(Path path : pairs.keySet()) {
-			JLabel image = pairs.get(path);
+			JComponent image = pairs.get(path);
 			image.setToolTipText(path.toString());
 			this.add(image);
 		}
@@ -59,7 +59,7 @@ public class DisplayGroup extends JFrame {
 	}
 	
 	private void removeOldImages() {
-		for(JLabel image : currentImages) {
+		for(JComponent image : currentImages) {
 			this.remove(image);
 		}
 		
