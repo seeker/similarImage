@@ -19,6 +19,7 @@ package com.github.dozedoff.similarImage.db;
 
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,5 +100,9 @@ public class Persistence {
 	
 	public CloseableWrappedIterable<ImageRecord> getImageRecordIterator() {
 		return imageRecordDao.getWrappedIterable();
+	}
+	
+	public List<ImageRecord> getAllRecords() throws SQLException {
+		return imageRecordDao.queryForAll();
 	}
 }

@@ -18,11 +18,15 @@
 package com.github.dozedoff.similarImage.duplicate;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.everpeace.search.BKTree;
 import org.slf4j.Logger;
@@ -33,10 +37,12 @@ import com.github.dozedoff.similarImage.db.Persistence;
 import com.j256.ormlite.dao.CloseableWrappedIterable;
 
 public class SortSimilar {
+	private final int SORT_WORKERS =  4;
+	private final int INITIAL_CAPACITY = 16;
+	private final float LOAD_FACTOR = 0.75f;
 	private static final Logger logger = LoggerFactory.getLogger(SortSimilar.class);
-	HashMap<Long, Set<ImageRecord>> sorted = new HashMap<Long, Set<ImageRecord>>();
+	ConcurrentHashMap<Long, Set<ImageRecord>> sorted = new ConcurrentHashMap<Long, Set<ImageRecord>>(INITIAL_CAPACITY, LOAD_FACTOR, SORT_WORKERS+1);
 	CompareHammingDistance compareHamming = new CompareHammingDistance();
-	LinkedList<Set<ImageRecord>> processedSets;
 	
 	/**
 	 * Use {@link #sortHammingDistance(int, CloseableWrappedIterable)} instead.
@@ -45,32 +51,42 @@ public class SortSimilar {
 	 */
 	@Deprecated
 	public void sort(int hammingDistance, CloseableWrappedIterable<ImageRecord> records) {
-		sortHammingDistance(hammingDistance, records);
-	}
-	
-	public void sortHammingDistance(int hammingDistance, CloseableWrappedIterable<ImageRecord> records) {
 		if(hammingDistance == 0) {
 			sortExactMatch(records);
+		}else{
+			sortHammingDistance(hammingDistance);
 		}
-		
-		processedSets = new LinkedList<Set<ImageRecord>>();
-		
-		try {
-			for (ImageRecord ir : records) {
-				createSimilar(hammingDistance, ir);
-			}
-		} finally {
-			try {
-				records.close();
-			} catch (SQLException e) {
-				logger.warn("Failed to close ImageRecord iterator", e);
-			}
-		}
-		
-		processedSets = null;
 	}
 	
-	private void createSimilar(int hammingDistance, ImageRecord root) {
+	public void sortHammingDistance(int hammingDistance) {
+		
+		try {
+			List<ImageRecord> dBrecords = Persistence.getInstance().getAllRecords();
+			ArrayList<ImageRecord> records = new ArrayList<ImageRecord>(dBrecords);
+			LinkedBlockingQueue<ImageRecord> workQueue = new LinkedBlockingQueue<ImageRecord>(dBrecords);
+			
+			Thread workers[] = new Thread[SORT_WORKERS];
+			
+			for(int i = 0; i < SORT_WORKERS; i++) {
+				Thread t = new SortWorker(i, hammingDistance, records, workQueue);
+				workers[i] = t;
+				t.start();
+			}
+			
+			for(int i = 0; i < SORT_WORKERS; i++) {
+				try {
+					workers[i].join();
+				} catch (InterruptedException e) {
+					logger.info("Interrupted while waiting for {}", workers[i].getName());
+				}
+			}
+		} catch (SQLException e) {
+			logger.error("Failed to load records - {}", e.getMessage());
+		}
+		
+	}
+	
+	private void createSimilar(int hammingDistance, ImageRecord root, List<ImageRecord> records) {
 		long pHash = root.getpHash();
 		
 		if(sorted.containsKey(pHash)) {
@@ -78,19 +94,13 @@ public class SortSimilar {
 		}
 		
 		BKTree<ImageRecord> bkTree = new BKTree<ImageRecord>(compareHamming, root);
-		CloseableWrappedIterable<ImageRecord> records = Persistence.getInstance().getImageRecordIterator();
 		
 		for (ImageRecord ir : records) {
 			bkTree.insert(ir);
 		}
 		
 		Set<ImageRecord> similar = bkTree.searchWithin(root, (double)hammingDistance);
-		
-		//TODO use arraylist & binary search for this
-		if(! processedSets.contains(similar)) {
-			createBucket(pHash, similar);
-			processedSets.add(similar);
-		}
+		sorted.put(pHash, similar);
 	}
 	
 	public Set<ImageRecord> getGroup(long pHash) {
@@ -155,7 +165,7 @@ public class SortSimilar {
 	
 	public void clear() {
 		sorted.clear();
-		sorted = new HashMap<Long, Set<ImageRecord>>();
+		sorted = new ConcurrentHashMap<Long, Set<ImageRecord>>(INITIAL_CAPACITY, LOAD_FACTOR, SORT_WORKERS+1);
 	}
 	
 	private void createBucket(long key, ImageRecord record) {
@@ -171,5 +181,33 @@ public class SortSimilar {
 	private void addToBucket(long key, ImageRecord value) {
 		Set<ImageRecord> bucket = sorted.get(key);
 		bucket.add(value);
+	}
+	
+	class SortWorker extends Thread {
+		private final static int BATCH_SIZE = 20;
+		
+		private final LinkedList<ImageRecord> work = new LinkedList<ImageRecord>();
+		private final LinkedBlockingQueue<ImageRecord> workQueue;
+		private final ArrayList<ImageRecord> records;
+		private final int hammingDistance;
+		
+		public SortWorker(int workerNumber, int hammingDistance, ArrayList<ImageRecord> records, LinkedBlockingQueue<ImageRecord> workQueue) {
+			super();
+			this.setName("Sort worker " + workerNumber);
+			this.hammingDistance = hammingDistance;
+			this.workQueue = workQueue;
+			this.records = records;
+		}
+		
+		@Override
+		public void run() {
+			while(! workQueue.isEmpty()) {
+				workQueue.drainTo(work, BATCH_SIZE);
+				
+				for(ImageRecord rec : work) {
+					createSimilar(hammingDistance, rec, records);
+				}
+			}
+		}
 	}
 }

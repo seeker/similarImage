@@ -175,11 +175,11 @@ public class SimilarImage implements IGUIevent{
 		public void run() {
 			sorter.clear();
 			gui.setStatus("Sorting...");
-			CloseableWrappedIterable<ImageRecord> records = Persistence.getInstance().getImageRecordIterator();
 			if (hammingDistance == 0) {
+				CloseableWrappedIterable<ImageRecord> records = Persistence.getInstance().getImageRecordIterator();
 				sorter.sortExactMatch(records);
 			} else {
-				sorter.sortHammingDistance(hammingDistance, records);
+				sorter.sortHammingDistance(hammingDistance);
 			}
 			gui.setStatus("" + sorter.getNumberOfDuplicateGroups() + " Groups");
 			List<Long> groups = sorter.getDuplicateGroups();
