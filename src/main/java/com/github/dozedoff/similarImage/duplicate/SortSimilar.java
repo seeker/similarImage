@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -153,7 +154,25 @@ public class SortSimilar {
 		}
 		
 		Collections.sort(duplicateGroups);
+		removeIdenticalSets(duplicateGroups);
 		return duplicateGroups;
+	}
+	
+	private void removeIdenticalSets(LinkedList<Long> duplicateGroups) {
+		LinkedList<Set<ImageRecord>> processedRecords = new LinkedList<Set<ImageRecord>>();
+		
+		Iterator<Long> ite = duplicateGroups.iterator();
+		
+		while(ite.hasNext()) {
+			long group = ite.next();
+			Set<ImageRecord> set = sorted.get(group);
+			
+			if(processedRecords.contains(set)) {
+				ite.remove();
+			} else {
+				processedRecords.add(set);
+			}
+		}
 	}
 	
 	public int getNumberOfGroups() {
