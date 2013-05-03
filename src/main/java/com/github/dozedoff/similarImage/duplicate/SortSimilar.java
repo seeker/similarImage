@@ -20,7 +20,7 @@ package com.github.dozedoff.similarImage.duplicate;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -152,6 +152,7 @@ public class SortSimilar {
 			}
 		}
 		
+		Collections.sort(duplicateGroups);
 		return duplicateGroups;
 	}
 	
@@ -165,17 +166,13 @@ public class SortSimilar {
 	
 	public void clear() {
 		sorted.clear();
-		sorted = new ConcurrentHashMap<Long, Set<ImageRecord>>(INITIAL_CAPACITY, LOAD_FACTOR, SORT_WORKERS+1);
+		sorted =  new ConcurrentHashMap<Long, Set<ImageRecord>>(INITIAL_CAPACITY, LOAD_FACTOR, SORT_WORKERS+1);
 	}
 	
 	private void createBucket(long key, ImageRecord record) {
 		Set<ImageRecord> value = new HashSet<ImageRecord>();
 		value.add(record);
 		sorted.put(key, value);
-	}
-	
-	private void createBucket(long key, Set<ImageRecord> records) {
-		sorted.put(key, records);
 	}
 	
 	private void addToBucket(long key, ImageRecord value) {
