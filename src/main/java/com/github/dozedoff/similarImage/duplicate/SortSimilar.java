@@ -83,6 +83,7 @@ public class SortSimilar {
 		
 		try {
 			List<ImageRecord> dBrecords = Persistence.getInstance().getAllRecords();
+			dBrecords.removeAll(ignoredImages);
 			List<FilterRecord> filter = Persistence.getInstance().getAllFilters();
 			BKTree<ImageRecord> bkTree = BKTree.build(dBrecords, compareHamming);
 			
@@ -192,7 +193,9 @@ public class SortSimilar {
 	}
 	
 	public void ignore(ImageRecord toIgnore) {
-		ignoredImages.add(toIgnore);
+		if (!ignoredImages.contains(toIgnore)) {
+			ignoredImages.add(toIgnore);
+		}
 	}
 	
 	public void clearIgnored() {
