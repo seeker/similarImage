@@ -31,6 +31,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.image.SubsamplingImageLoader;
+import com.github.dozedoff.similarImage.app.SimilarImage;
+import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.gui.OperationsMenu;
 
 public class DuplicateEntry extends JPanel {
@@ -39,10 +41,12 @@ public class DuplicateEntry extends JPanel {
 	private final ImageInfo imageInfo;
 	private JLabel image;
 	private final Path imagePath;
+	private final SimilarImage parent;
 	
-	public DuplicateEntry(Path imagePath, Dimension thumbDimension) {
+	public DuplicateEntry(SimilarImage parent, Path imagePath, Dimension thumbDimension) {
 		super();
 		this.imagePath = imagePath;
+		this.parent = parent;
 		this.setLayout(new MigLayout("wrap"));
 		image = new JLabel("NO IMAGE");
 		imageInfo = new ImageInfo(imagePath);
@@ -80,5 +84,10 @@ public class DuplicateEntry extends JPanel {
 	
 	public ImageInfo getImageInfo() {
 		return imageInfo;
+	}
+	
+	public void ignore() {
+		ImageRecord ir = new ImageRecord(imagePath.toString(), imageInfo.getpHash());
+		parent.ignoreImage(ir);
 	}
 }

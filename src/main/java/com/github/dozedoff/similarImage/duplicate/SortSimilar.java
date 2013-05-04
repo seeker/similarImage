@@ -40,6 +40,7 @@ public class SortSimilar {
 	private static final Logger logger = LoggerFactory.getLogger(SortSimilar.class);
 	HashMap<Long, Set<ImageRecord>> sorted = new HashMap<Long, Set<ImageRecord>>();
 	CompareHammingDistance compareHamming = new CompareHammingDistance();
+	LinkedList<ImageRecord> ignoredImages = new LinkedList<ImageRecord>();
 	
 	/**
 	 * Use {@link #sortHammingDistance(int, CloseableWrappedIterable)} instead.
@@ -59,6 +60,7 @@ public class SortSimilar {
 		clear();
 		try {
 			List<ImageRecord> dBrecords = Persistence.getInstance().getAllRecords();
+			dBrecords.removeAll(ignoredImages);
 			BKTree<ImageRecord> bkTree = BKTree.build(dBrecords, compareHamming);
 			
 			for(ImageRecord ir : dBrecords) {
@@ -109,6 +111,10 @@ public class SortSimilar {
 		try {
 			for (ImageRecord ir : records) {
 				long key = ir.getpHash();
+				
+				if(ignoredImages.contains(ir)) {
+					continue;
+				}
 				
 				if(sorted.containsKey(key)) {
 					addToBucket(key, ir);
@@ -183,6 +189,14 @@ public class SortSimilar {
 	public void clear() {
 		sorted.clear();
 		sorted =  new HashMap<Long, Set<ImageRecord>>();
+	}
+	
+	public void ignore(ImageRecord toIgnore) {
+		ignoredImages.add(toIgnore);
+	}
+	
+	public void clearIgnored() {
+		ignoredImages.clear();
 	}
 	
 	private void createBucket(long key, ImageRecord record) {

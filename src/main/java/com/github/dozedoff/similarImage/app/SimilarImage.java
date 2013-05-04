@@ -129,14 +129,16 @@ public class SimilarImage implements IGUIevent{
 
 		for (ImageRecord rec : grouplist) {
 			Path path = Paths.get(rec.getPath());
-			DuplicateEntry entry = new DuplicateEntry(path, imageDim);
+			DuplicateEntry entry = new DuplicateEntry(this, path, imageDim);
 			images.add(entry);
 		}
 		
 		displayGroup.displayImages(group, images);
 	}
 	
-
+	public void ignoreImage(ImageRecord toIgnore) {
+		sorter.ignore(toIgnore);
+	}
 	
 	class ImageIndexer extends Thread {
 		String path;
