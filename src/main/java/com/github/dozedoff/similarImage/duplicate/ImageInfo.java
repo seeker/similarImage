@@ -40,6 +40,7 @@ public class ImageInfo {
 	private Dimension dimension = new Dimension();
 	private long size = -1;
 	private long pHash = 0;
+	private double sizePerPixel = 0;
 	
 	public ImageInfo(Path path) {
 		this.path = path;
@@ -56,11 +57,28 @@ public class ImageInfo {
 			size = Files.size(path);
 			ImageRecord record = Persistence.getInstance().getRecord(path);
 			pHash = record.getpHash();
+			calculateSpp();
 		} catch (IOException e) {
 			logger.warn("Unable to get info for file {} - {}", path, e.getMessage());
 		} catch (SQLException e) {
 			logger.warn("Failed to get pHash for image {} - {}", path, e.getMessage());
 		}
+	}
+	
+	private void calculateSpp(){
+		double height = dimension.getHeight();
+		double width = dimension.getWidth();
+		
+		if(height < 1 || width < 1) {
+			return;
+		}
+		
+		if(size == 0) {
+			return;
+		}
+		
+		double area = height * width;
+		sizePerPixel = size/area;
 	}
 
 	public Path getPath() {
@@ -77,5 +95,9 @@ public class ImageInfo {
 	
 	public long getpHash() {
 		return pHash;
+	}
+	
+	public double getSizePerPixel() {
+		return sizePerPixel;
 	}
 }

@@ -158,6 +158,7 @@ public class SimilarImage implements IGUIevent{
 		Dimension dim = iInfo.getDimension();
 		components.add(new JLabel("Dimension: " + dim.getWidth() + "x" + dim.getHeight()));
 		components.add(new JLabel("pHash: " + iInfo.getpHash()));
+		components.add(new JLabel("Size per Pixel: " + iInfo.getSizePerPixel()));
 		
 		for (JComponent jc : components) {
 			panel.add(jc);
