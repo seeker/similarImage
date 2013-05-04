@@ -22,29 +22,21 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-
-import net.miginfocom.swing.MigLayout;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import sun.awt.image.ImageFormatException;
-
 import com.github.dozedoff.commonj.file.FilenameFilterVisitor;
 import com.github.dozedoff.commonj.filefilter.SimpleImageFilter;
-import com.github.dozedoff.commonj.image.SubsamplingImageLoader;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
-import com.github.dozedoff.similarImage.duplicate.ImageInfo;
+import com.github.dozedoff.similarImage.duplicate.DuplicateEntry;
 import com.github.dozedoff.similarImage.duplicate.SortSimilar;
 import com.github.dozedoff.similarImage.gui.DisplayGroup;
 import com.github.dozedoff.similarImage.gui.IGUIevent;
@@ -52,7 +44,6 @@ import com.github.dozedoff.similarImage.gui.SimilarImageGUI;
 import com.github.dozedoff.similarImage.hash.PhashWorker;
 import com.j256.ormlite.dao.CloseableWrappedIterable;
 
-@SuppressWarnings("restriction")
 public class SimilarImage implements IGUIevent{
 	SimilarImageGUI gui;
 	DisplayGroup displayGroup;
@@ -126,44 +117,21 @@ public class SimilarImage implements IGUIevent{
 	
 	public void displayGroup(long group) {
 		Set<ImageRecord> grouplist = sorter.getGroup(group);
-		HashMap<Path, JComponent> images = new HashMap<Path, JComponent>();
+		LinkedList<JComponent> images = new LinkedList<JComponent>();
 		Dimension imageDim = new Dimension(THUMBNAIL_DIMENSION, THUMBNAIL_DIMENSION);
 		
 		logger.info("Loading {} thumbnails for group {}", grouplist.size(), group);
-		
-		for(ImageRecord rec : grouplist) {
+
+		for (ImageRecord rec : grouplist) {
 			Path path = Paths.get(rec.getPath());
-			try {
-				JPanel duplicate = new JPanel(new MigLayout("wrap"));
-				JLabel image = SubsamplingImageLoader.loadAsLabel(path, imageDim);
-				duplicate.add(image, "spanx");
-				addImageInfo(duplicate, path);
-				images.put(path,duplicate);
-			} catch (ImageFormatException e) {
-				logger.warn("Unable to process image {}", path, e);
-			} catch (IOException e) {
-				logger.warn("Unable to load file {}", path);
-			}
+			DuplicateEntry entry = new DuplicateEntry(path, imageDim);
+			images.add(entry);
 		}
 		
 		displayGroup.displayImages(group, images);
 	}
 	
-	private void addImageInfo(JPanel panel, Path path) {
-		LinkedList<JComponent> components = new LinkedList<JComponent>();
-		
-		ImageInfo iInfo = new ImageInfo(path);
-		components.add(new JLabel("Path: " + iInfo.getPath()));
-		components.add(new JLabel("Size: " + iInfo.getSize()/1024 + " kb"));
-		Dimension dim = iInfo.getDimension();
-		components.add(new JLabel("Dimension: " + dim.getWidth() + "x" + dim.getHeight()));
-		components.add(new JLabel("pHash: " + iInfo.getpHash()));
-		components.add(new JLabel("Size per Pixel: " + iInfo.getSizePerPixel()));
-		
-		for (JComponent jc : components) {
-			panel.add(jc);
-		}
-	}
+
 	
 	class ImageIndexer extends Thread {
 		String path;
