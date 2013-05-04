@@ -17,13 +17,11 @@
 */
 package com.github.dozedoff.similarImage.gui;
 
-import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
+import javax.swing.JComponent;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import net.miginfocom.swing.MigLayout;
@@ -31,7 +29,7 @@ import net.miginfocom.swing.MigLayout;
 public class DisplayGroup extends JFrame {
 	private static final long serialVersionUID = 1L;
 	JPanel imagePannel;
-	List<JLabel> currentImages = new LinkedList<JLabel>(); 
+	List<JComponent> currentDuplicates = new LinkedList<JComponent>(); 
 	
 	public DisplayGroup() {
 		this.setSize(500,500);
@@ -40,18 +38,16 @@ public class DisplayGroup extends JFrame {
 		this.setFocusableWindowState(false);
 	}
 
-	public void displayImages(long group, Map<Path,JLabel> pairs) {
+	public void displayImages(long group, List<JComponent> duplicates) {
 		removeOldImages();
 		this.dispose();
 		this.setTitle("" + group);
 		
-		for(Path path : pairs.keySet()) {
-			JLabel image = pairs.get(path);
-			image.setToolTipText(path.toString());
-			this.add(image);
+		for(JComponent entry : duplicates) {
+			this.add(entry);
 		}
 		
-		currentImages.addAll(pairs.values());
+		currentDuplicates.addAll(duplicates);
 		
 		this.validate();
 		this.pack();
@@ -59,10 +55,10 @@ public class DisplayGroup extends JFrame {
 	}
 	
 	private void removeOldImages() {
-		for(JLabel image : currentImages) {
-			this.remove(image);
+		for(JComponent duplicate : currentDuplicates) {
+			this.remove(duplicate);
 		}
 		
-		currentImages.clear();
+		currentDuplicates.clear();
 	}
 }

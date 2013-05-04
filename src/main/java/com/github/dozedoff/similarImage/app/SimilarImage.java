@@ -22,24 +22,21 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import javax.swing.JLabel;
+import javax.swing.JComponent;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import sun.awt.image.ImageFormatException;
-
 import com.github.dozedoff.commonj.file.FilenameFilterVisitor;
 import com.github.dozedoff.commonj.filefilter.SimpleImageFilter;
-import com.github.dozedoff.commonj.image.SubsamplingImageLoader;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.duplicate.DuplicateEntry;
 import com.github.dozedoff.similarImage.duplicate.SortSimilar;
 import com.github.dozedoff.similarImage.gui.DisplayGroup;
 import com.github.dozedoff.similarImage.gui.IGUIevent;
@@ -47,7 +44,6 @@ import com.github.dozedoff.similarImage.gui.SimilarImageGUI;
 import com.github.dozedoff.similarImage.hash.PhashWorker;
 import com.j256.ormlite.dao.CloseableWrappedIterable;
 
-@SuppressWarnings("restriction")
 public class SimilarImage implements IGUIevent{
 	SimilarImageGUI gui;
 	DisplayGroup displayGroup;
@@ -121,25 +117,21 @@ public class SimilarImage implements IGUIevent{
 	
 	public void displayGroup(long group) {
 		Set<ImageRecord> grouplist = sorter.getGroup(group);
-		HashMap<Path, JLabel> images = new HashMap<Path, JLabel>();
+		LinkedList<JComponent> images = new LinkedList<JComponent>();
 		Dimension imageDim = new Dimension(THUMBNAIL_DIMENSION, THUMBNAIL_DIMENSION);
 		
 		logger.info("Loading {} thumbnails for group {}", grouplist.size(), group);
-		
-		for(ImageRecord rec : grouplist) {
+
+		for (ImageRecord rec : grouplist) {
 			Path path = Paths.get(rec.getPath());
-			try {
-				JLabel image = SubsamplingImageLoader.loadAsLabel(path, imageDim);
-				images.put(path,image);
-			} catch (ImageFormatException e) {
-				logger.warn("Unable to process image {}", path, e);
-			} catch (IOException e) {
-				logger.warn("Unable to load file {}", path);
-			}
+			DuplicateEntry entry = new DuplicateEntry(path, imageDim);
+			images.add(entry);
 		}
 		
 		displayGroup.displayImages(group, images);
 	}
+	
+
 	
 	class ImageIndexer extends Thread {
 		String path;
@@ -175,15 +167,14 @@ public class SimilarImage implements IGUIevent{
 		public void run() {
 			sorter.clear();
 			gui.setStatus("Sorting...");
-			CloseableWrappedIterable<ImageRecord> records = Persistence.getInstance().getImageRecordIterator();
 			if (hammingDistance == 0) {
+				CloseableWrappedIterable<ImageRecord> records = Persistence.getInstance().getImageRecordIterator();
 				sorter.sortExactMatch(records);
 			} else {
-				sorter.sortHammingDistance(hammingDistance, records);
+				sorter.sortHammingDistance(hammingDistance);
 			}
 			gui.setStatus("" + sorter.getNumberOfDuplicateGroups() + " Groups");
 			List<Long> groups = sorter.getDuplicateGroups();
-			Collections.sort(groups);
 			gui.populateGroupList(groups);
 		}
 	}
