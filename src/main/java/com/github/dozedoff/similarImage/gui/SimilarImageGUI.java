@@ -46,7 +46,7 @@ public class SimilarImageGUI extends JFrame {
 	private SimilarImage parent;
 	
 	private JTextField path;
-	private JButton find, stop, sortExact, sortSimilar;
+	private JButton find, stop, sortSimilar, sortFilter;
 	private JLabel status, hammingValue;
 	private JProgressBar progress;
 	private JList<Long> groups;
@@ -81,8 +81,8 @@ public class SimilarImageGUI extends JFrame {
 		status = new JLabel("Idle");
 		progress = new JProgressBar();
 		progress.setStringPainted(true);
-		sortExact = new JButton("Sort exact");
 		sortSimilar = new JButton("Sort similar");
+		sortFilter = new JButton("Sort filter");
 		
 		groupListModel = new DefaultListModel<Long>();
 		groups = new JList<Long>(groupListModel);
@@ -105,17 +105,18 @@ public class SimilarImageGUI extends JFrame {
 			}
 		});
 		
-		sortExact.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				parent.sortDuplicates(0);
-			}
-		});
-		
 		sortSimilar.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				parent.sortDuplicates(hammingDistance.getValue());
+			}
+		});
+		
+		sortFilter.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				//TODO display option dialog to select reason - null or empty mean all
+				parent.sortFilter(hammingDistance.getValue(), null);
 			}
 		});
 		
@@ -149,8 +150,8 @@ public class SimilarImageGUI extends JFrame {
 		this.add(stop);
 		this.add(status);
 		this.add(progress);
-		this.add(sortExact, "wrap");
 		this.add(sortSimilar, "wrap");
+		this.add(sortFilter, "wrap");
 		this.add(groupScrollPane, "growy");
 		this.add(hammingDistance, "growx");
 		this.add(hammingValue);

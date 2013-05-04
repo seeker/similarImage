@@ -73,6 +73,11 @@ public class SimilarImage implements IGUIevent{
 		t.start();
 	}
 	
+	public void sortFilter(int hammingDistance, String reason) {
+		Thread t = new FilterSorter(hammingDistance, reason);
+		t.start();
+	}
+	
 	private void findImages(String path, LinkedBlockingQueue<Path> imagePaths) {
 		FilenameFilterVisitor visitor = new FilenameFilterVisitor(imagePaths, new SimpleImageFilter());
 		Path directoryToSearch = Paths.get(path);
@@ -173,6 +178,25 @@ public class SimilarImage implements IGUIevent{
 			} else {
 				sorter.sortHammingDistance(hammingDistance);
 			}
+			gui.setStatus("" + sorter.getNumberOfDuplicateGroups() + " Groups");
+			List<Long> groups = sorter.getDuplicateGroups();
+			gui.populateGroupList(groups);
+		}
+	}
+	
+	class FilterSorter extends Thread {
+		int hammingDistance = 0;
+		String reason;
+		
+		public FilterSorter(int hammingDistance, String reason) {
+			this.hammingDistance = hammingDistance;
+			this.reason = reason;
+		}
+
+		@Override
+		public void run() {
+			gui.setStatus("Sorting...");
+			sorter.sortFilter(hammingDistance, reason);
 			gui.setStatus("" + sorter.getNumberOfDuplicateGroups() + " Groups");
 			List<Long> groups = sorter.getDuplicateGroups();
 			gui.populateGroupList(groups);

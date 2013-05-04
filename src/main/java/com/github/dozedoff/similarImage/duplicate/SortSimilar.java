@@ -31,6 +31,7 @@ import org.everpeace.search.BKTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.j256.ormlite.dao.CloseableWrappedIterable;
@@ -56,7 +57,6 @@ public class SortSimilar {
 	
 	public void sortHammingDistance(int hammingDistance) {
 		clear();
-		
 		try {
 			List<ImageRecord> dBrecords = Persistence.getInstance().getAllRecords();
 			BKTree<ImageRecord> bkTree = BKTree.build(dBrecords, compareHamming);
@@ -69,6 +69,31 @@ public class SortSimilar {
 				}
 				
 				Set<ImageRecord> similar = bkTree.searchWithin(ir, (double)hammingDistance);
+				sorted.put(pHash, similar);
+			}
+		} catch (SQLException e) {
+			logger.error("Failed to load records - {}", e.getMessage());
+		}
+	}
+	
+	public void sortFilter(int hammingDistance, String reason) {
+		clear();
+		
+		try {
+			List<ImageRecord> dBrecords = Persistence.getInstance().getAllRecords();
+			List<FilterRecord> filter = Persistence.getInstance().getAllFilters();
+			BKTree<ImageRecord> bkTree = BKTree.build(dBrecords, compareHamming);
+			
+			for(FilterRecord fr : filter) {
+				long pHash = fr.getpHash();
+				
+				if(sorted.containsKey(pHash)) {
+					return;		// prevent duplicates
+				}
+				
+				ImageRecord query = new ImageRecord(null, pHash);
+				
+				Set<ImageRecord> similar = bkTree.searchWithin(query, (double)hammingDistance);
 				sorted.put(pHash, similar);
 			}
 		} catch (SQLException e) {

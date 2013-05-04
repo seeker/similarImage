@@ -19,6 +19,7 @@ package com.github.dozedoff.similarImage.db;
 
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -130,5 +131,31 @@ public class Persistence {
 	
 	public FilterRecord getFilter(long pHash) throws SQLException {
 		return filterRecordDao.queryForId(pHash);
+	}
+	
+	public List<FilterRecord> getAllFilters() throws SQLException {
+		return filterRecordDao.queryForAll();
+	}
+	
+	public List<String> getFilterReasons() {
+		List<String> reasons = new LinkedList<String>();
+		
+		CloseableWrappedIterable<FilterRecord> iterator = filterRecordDao.getWrappedIterable();
+		
+		for(FilterRecord fr : iterator) {
+			String reason = fr.getReason();
+			
+			if(!reasons.contains(reason)) {
+				reasons.add(reason);
+			}
+		}
+		
+		try {
+			iterator.close();
+		} catch (SQLException e) {
+			logger.warn("Failed to close iterator", e);
+		}
+		
+		return reasons;
 	}
 }
