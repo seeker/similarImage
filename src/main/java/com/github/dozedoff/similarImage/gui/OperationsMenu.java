@@ -31,7 +31,7 @@ import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 
 public class OperationsMenu extends JPopupMenu{
 	private static final long serialVersionUID = 1L;
-	private enum Operations {Delete};
+	private enum Operations {Delete, MarkDNW};
 	private final DuplicateEntry parent;
 	
 	public OperationsMenu(DuplicateEntry parent) {
@@ -42,19 +42,31 @@ public class OperationsMenu extends JPopupMenu{
 	
 	private void setupPopupMenu() {
 		HashMap<Operations, ActionListener> actions = new HashMap<OperationsMenu.Operations, ActionListener>();
-		final DuplicateOperations dupeOps = new DuplicateOperations();
 		
 		actions.put(Operations.Delete, new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				ImageInfo ii = parent.getImageInfo();
-				Path path = ii.getPath();
-				dupeOps.deleteFile(path);
+				Path path = getPath();
+				DuplicateOperations.deleteFile(path);
+			}
+		});
+		
+		actions.put(Operations.MarkDNW, new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Path path = getPath();
+				DuplicateOperations.markAsDnw(path);
 			}
 		});
 		
 		createMenuItems(actions);
 		parent.setComponentPopupMenu(this);
+	}
+	
+	private Path getPath() {
+		ImageInfo ii = parent.getImageInfo();
+		Path path = ii.getPath();
+		return path;
 	}
 	
 	private void createMenuItems(HashMap<Operations, ActionListener> actions) {

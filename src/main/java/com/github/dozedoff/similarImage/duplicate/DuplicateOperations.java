@@ -25,6 +25,7 @@ import java.sql.SQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 
@@ -36,8 +37,9 @@ public class DuplicateOperations {
 		//TODO code me
 	}
 	
-	public void deleteFile(Path path) {
+	public static void deleteFile(Path path) {
 		try {
+			logger.info("Deleting file {}", path);
 			Files.delete(path);
 			ImageRecord ir = new ImageRecord(path.toString(), 0);
 			Persistence.getInstance().deleteRecord(ir);
@@ -45,6 +47,28 @@ public class DuplicateOperations {
 			logger.warn("Failed to delete {} - {}", path, e.getMessage());
 		} catch (SQLException e) {
 			logger.warn("Failed to remove {} from database - {}", path, e.getMessage());
+		}
+	}
+	
+	public static void markAsDnw(Path path) {
+		//TODO do this with transaction
+		//TODO get "Mark as" strings from options
+		final String dnw = "DNW";
+		try {
+			ImageRecord ir = Persistence.getInstance().getRecord(path);
+			long pHash = ir.getpHash();
+			logger.info("Adding pHash {} to filter, reason {}", pHash, dnw);
+			FilterRecord fr = Persistence.getInstance().getFilter(pHash);
+			
+			if(fr != null) {
+				fr.setReason(dnw);
+			} else {
+				fr = new FilterRecord(pHash, dnw);
+			}
+			
+			Persistence.getInstance().addFilter(fr);
+		} catch (SQLException e) {
+			logger.warn("DNW operation failed for {} - {}", path, e.getMessage());
 		}
 	}
 }

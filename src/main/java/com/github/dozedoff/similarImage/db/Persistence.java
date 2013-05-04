@@ -38,6 +38,7 @@ public class Persistence {
 	private final String dbUrl = "jdbc:sqlite:similarImage.db";
 
 	Dao<ImageRecord, String> imageRecordDao;
+	Dao<FilterRecord, Long> filterRecordDao;
 
 	private Persistence() {
 		try {
@@ -45,7 +46,8 @@ public class Persistence {
 			setupDatabase(cs);
 			setupDAO(cs);
 			long recordCount = imageRecordDao.countOf();
-			logger.info("Loaded database with {} entries", recordCount);
+			long filterCount = filterRecordDao.countOf();
+			logger.info("Loaded database with {} image and {} filter records", recordCount, filterCount);
 		} catch (SQLException e) {
 			logger.error("Failed to setup database {}", dbUrl, e);
 			System.exit(1);
@@ -72,11 +74,13 @@ public class Persistence {
 		
 		logger.info("Setting up database tables...");
 		TableUtils.createTableIfNotExists(cs, ImageRecord.class);
+		TableUtils.createTableIfNotExists(cs, FilterRecord.class);
 	}
 
 	private void setupDAO(ConnectionSource cs) throws SQLException {
 		logger.info("Setting up DAO...");
 		imageRecordDao = DaoManager.createDao(cs, ImageRecord.class);
+		filterRecordDao = DaoManager.createDao(cs, FilterRecord.class);
 	}
 
 	public void addRecord(ImageRecord record) throws SQLException {
@@ -108,5 +112,23 @@ public class Persistence {
 	
 	public List<ImageRecord> getAllRecords() throws SQLException {
 		return imageRecordDao.queryForAll();
+	}
+	
+	public void addFilter(FilterRecord filter) throws SQLException {
+		filterRecordDao.createOrUpdate(filter);
+	}
+
+	public boolean filterExists(long pHash) throws SQLException {
+		FilterRecord filter = filterRecordDao.queryForId(pHash);
+
+		if (filter != null) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	public FilterRecord getFilter(long pHash) throws SQLException {
+		return filterRecordDao.queryForId(pHash);
 	}
 }
