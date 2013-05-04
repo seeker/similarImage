@@ -154,7 +154,7 @@ public class SimilarImage implements IGUIevent{
 		
 		ImageInfo iInfo = new ImageInfo(path);
 		components.add(new JLabel("Path: " + iInfo.getPath()));
-		components.add(new JLabel("Size: " + iInfo.getSize()));
+		components.add(new JLabel("Size: " + iInfo.getSize()/1024 + " kb"));
 		Dimension dim = iInfo.getDimension();
 		components.add(new JLabel("Dimension: " + dim.getWidth() + "x" + dim.getHeight()));
 		components.add(new JLabel("pHash: " + iInfo.getpHash()));
