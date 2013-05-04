@@ -48,11 +48,16 @@ public class ImageInfo {
 	}
 	
 	private void getImageData() {
-		InputStream is;
+		InputStream is = null;
 		try {
 			is = new BufferedInputStream(Files.newInputStream(path));
 			BufferedImage img = ImageIO.read(is);
-			
+
+			if (img == null) {
+				logger.warn("Failed to process image {}", path);
+				return;
+			}
+
 			dimension.setSize(img.getWidth(), img.getHeight());
 			size = Files.size(path);
 			ImageRecord record = Persistence.getInstance().getRecord(path);
@@ -61,7 +66,16 @@ public class ImageInfo {
 		} catch (IOException e) {
 			logger.warn("Unable to get info for file {} - {}", path, e.getMessage());
 		} catch (SQLException e) {
-			logger.warn("Failed to get pHash for image {} - {}", path, e.getMessage());
+			logger.warn("Failed to get pHash for image {} - {}", path,
+					e.getMessage());
+		} finally {
+			try {
+				if (is != null) {
+					is.close();
+				}
+			} catch (IOException e) {
+				logger.warn("Unable to close input stream - {}", e.getMessage());
+			}
 		}
 	}
 	
