@@ -17,48 +17,42 @@
 */
 package com.github.dozedoff.similarImage.gui;
 
-import java.util.LinkedList;
 import java.util.List;
 
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 
 import net.miginfocom.swing.MigLayout;
 
 public class DisplayGroup extends JFrame {
 	private static final long serialVersionUID = 1L;
-	JPanel imagePannel;
-	List<JComponent> currentDuplicates = new LinkedList<JComponent>(); 
+	private JPanel content = new JPanel();
+	private JScrollPane scroll = new JScrollPane(content);
 	
 	public DisplayGroup() {
 		this.setSize(500,500);
 		this.setDefaultCloseOperation(HIDE_ON_CLOSE);
-		this.setLayout(new MigLayout("wrap 4"));
 		this.setFocusableWindowState(false);
 	}
 
 	public void displayImages(long group, List<JComponent> duplicates) {
-		removeOldImages();
+		this.remove(scroll);
 		this.dispose();
 		this.setTitle("" + group);
+		content = new JPanel(new MigLayout("wrap 4"));
 		
 		for(JComponent entry : duplicates) {
-			this.add(entry);
+			content.add(entry);
 		}
 		
-		currentDuplicates.addAll(duplicates);
+		scroll = new JScrollPane(content);
+		this.add(scroll);
 		
 		this.validate();
 		this.pack();
+		this.repaint();
 		this.setVisible(true);
-	}
-	
-	private void removeOldImages() {
-		for(JComponent duplicate : currentDuplicates) {
-			this.remove(duplicate);
-		}
-		
-		currentDuplicates.clear();
 	}
 }
