@@ -31,31 +31,36 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.image.SubsamplingImageLoader;
+import com.github.dozedoff.similarImage.gui.OperationsMenu;
 
 public class DuplicateEntry extends JPanel {
 	private static final long serialVersionUID = 1L;
 	private static final Logger logger = LoggerFactory.getLogger(DuplicateEntry.class);
-	private ImageInfo iInfo;
+	private final ImageInfo imageInfo;
 	private JLabel image;
+	private final Path imagePath;
 	
 	public DuplicateEntry(Path imagePath, Dimension thumbDimension) {
+		super();
+		this.imagePath = imagePath;
 		this.setLayout(new MigLayout("wrap"));
 		image = new JLabel("NO IMAGE");
+		imageInfo = new ImageInfo(imagePath);
 		
 		try {
 			this.image = SubsamplingImageLoader.loadAsLabel(imagePath, thumbDimension);
 		} catch (Exception e) {
-			logger.warn("Could not load image thumbnail for {} - {}", iInfo.getPath(), e.getMessage());
+			logger.warn("Could not load image thumbnail for {} - {}", imageInfo.getPath(), e.getMessage());
 		}
 		
-		iInfo = new ImageInfo(imagePath);
 		add(image);
 		addImageInfo();
+		new OperationsMenu(this);
 	}
 	
 	private void addImageInfo() {
 		LinkedList<JComponent> components = new LinkedList<JComponent>();
-		Path path = iInfo.getPath();
+		Path path = imageInfo.getPath();
 		ImageInfo iInfo = new ImageInfo(path);
 		components.add(new JLabel("Path: " + iInfo.getPath()));
 		components.add(new JLabel("Size: " + iInfo.getSize()/1024 + " kb"));
@@ -67,5 +72,13 @@ public class DuplicateEntry extends JPanel {
 		for (JComponent jc : components) {
 			this.add(jc);
 		}
+	}
+	
+	public Path getImagePath() {
+		return imagePath;
+	}
+	
+	public ImageInfo getImageInfo() {
+		return imageInfo;
 	}
 }
