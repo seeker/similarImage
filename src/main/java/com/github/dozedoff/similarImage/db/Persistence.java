@@ -82,6 +82,10 @@ public class Persistence {
 	public void addRecord(ImageRecord record) throws SQLException {
 		imageRecordDao.createIfNotExists(record);
 	}
+	
+	public ImageRecord getRecord(Path path) throws SQLException {
+		return imageRecordDao.queryForId(path.toString());
+	}
 
 	public void deleteRecord(ImageRecord record) throws SQLException {
 		imageRecordDao.delete(record);

@@ -24,17 +24,22 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.SQLException;
 
 import javax.imageio.ImageIO;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.dozedoff.similarImage.db.ImageRecord;
+import com.github.dozedoff.similarImage.db.Persistence;
+
 public class ImageInfo {
 	private final static Logger logger = LoggerFactory.getLogger(ImageInfo.class);
 	private Path path;
 	private Dimension dimension = new Dimension();
 	private long size = -1;
+	private long pHash = 0;
 	
 	public ImageInfo(Path path) {
 		this.path = path;
@@ -49,8 +54,12 @@ public class ImageInfo {
 			
 			dimension.setSize(img.getWidth(), img.getHeight());
 			size = Files.size(path);
+			ImageRecord record = Persistence.getInstance().getRecord(path);
+			pHash = record.getpHash();
 		} catch (IOException e) {
 			logger.warn("Unable to get info for file {} - {}", path, e.getMessage());
+		} catch (SQLException e) {
+			logger.warn("Failed to get pHash for image {} - {}", path, e.getMessage());
 		}
 	}
 
@@ -64,5 +73,9 @@ public class ImageInfo {
 
 	public long getSize() {
 		return size;
+	}
+	
+	public long getpHash() {
+		return pHash;
 	}
 }
