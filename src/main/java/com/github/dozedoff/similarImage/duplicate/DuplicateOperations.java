@@ -17,6 +17,7 @@
 */
 package com.github.dozedoff.similarImage.duplicate;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -56,6 +57,11 @@ public class DuplicateOperations {
 		final String dnw = "DNW";
 		try {
 			ImageRecord ir = Persistence.getInstance().getRecord(path);
+			if(ir == null) {
+				logger.warn("No record found for {}", path);
+				return;
+			}
+			
 			long pHash = ir.getpHash();
 			logger.info("Adding pHash {} to filter, reason {}", pHash, dnw);
 			FilterRecord fr = Persistence.getInstance().getFilter(pHash);
@@ -70,5 +76,21 @@ public class DuplicateOperations {
 		} catch (SQLException e) {
 			logger.warn("DNW operation failed for {} - {}", path, e.getMessage());
 		}
+	}
+	
+	public static void markDirectoryDnw(Path directory) {
+		if(directory == null || !Files.exists(directory) || !Files.isDirectory(directory)) {
+			logger.warn("Directory {} not valid, aborting.", directory);
+			return;
+		}
+		
+		File dir = directory.toFile();
+		File files[] = dir.listFiles();
+		
+		for(File f : files){
+			markAsDnw(f.toPath());
+		}
+		
+		logger.info("Added {} images from {} to filter list", files.length, directory);
 	}
 }

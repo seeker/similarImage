@@ -21,14 +21,21 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
@@ -40,6 +47,7 @@ import javax.swing.event.ListSelectionListener;
 import net.miginfocom.swing.MigLayout;
 
 import com.github.dozedoff.similarImage.app.SimilarImage;
+import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 
 public class SimilarImageGUI extends JFrame {
 	private static final long serialVersionUID = 1L;
@@ -64,6 +72,7 @@ public class SimilarImageGUI extends JFrame {
 		this.setTitle("Similar Image");
 		this.setLayout(new MigLayout("wrap 4"));
 		setupComponents();
+		setupMenu();
 		updateHammingDisplay();
 		this.setVisible(true);
 	}
@@ -155,6 +164,35 @@ public class SimilarImageGUI extends JFrame {
 		this.add(groupScrollPane, "growy");
 		this.add(hammingDistance, "growx");
 		this.add(hammingValue);
+	}
+	
+	private void setupMenu() {
+		JMenuBar menuBar = new JMenuBar();
+		JMenu file;
+		JMenuItem folderDnw;
+		
+		file = new JMenu("File");
+		folderDnw = new JMenuItem("Add folder as dnw");
+		
+		folderDnw.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				JTextField directory = new JTextField(20);
+				Object[] message = {"Directory: ", directory};
+				JOptionPane pane = new JOptionPane(message,  JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+				JDialog getTopicDialog =  pane.createDialog(null, "Select directory");
+				getTopicDialog.setVisible(true);
+				
+				if(pane.getValue() != null && (Integer)pane.getValue() == JOptionPane.OK_OPTION) {
+					Path path = Paths.get(directory.getText());
+					DuplicateOperations.markDirectoryDnw(path);
+				}
+			}
+		});
+		
+		file.add(folderDnw);
+		menuBar.add(file);
+		this.setJMenuBar(menuBar);
 	}
 	
 	private void updateHammingDisplay() {
