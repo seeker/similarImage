@@ -29,6 +29,8 @@ import com.j256.ormlite.dao.CloseableWrappedIterable;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
+import com.j256.ormlite.stmt.PreparedQuery;
+import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.support.DatabaseConnection;
 import com.j256.ormlite.table.TableUtils;
@@ -162,5 +164,11 @@ public class Persistence {
 		}
 		
 		return reasons;
+	}
+	
+	public List<ImageRecord> filterByPath(Path directory) throws SQLException {
+		QueryBuilder<ImageRecord, String> qb = imageRecordDao.queryBuilder();
+		PreparedQuery<ImageRecord> prep = qb.where().like("path", directory.toString()).prepare();
+		return imageRecordDao.query(prep);
 	}
 }

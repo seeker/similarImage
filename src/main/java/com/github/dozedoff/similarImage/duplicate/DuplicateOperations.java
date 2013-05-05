@@ -21,7 +21,13 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.SQLException;
+import java.util.LinkedList;
+import java.util.List;
+
+import javax.swing.JDialog;
+import javax.swing.JOptionPane;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,7 +85,7 @@ public class DuplicateOperations {
 	}
 	
 	public static void markDirectoryDnw(Path directory) {
-		if(directory == null || !Files.exists(directory) || !Files.isDirectory(directory)) {
+		if(! isDirectory(directory)) {
 			logger.warn("Directory {} not valid, aborting.", directory);
 			return;
 		}
@@ -92,5 +98,47 @@ public class DuplicateOperations {
 		}
 		
 		logger.info("Added {} images from {} to filter list", files.length, directory);
+	}
+	
+	private static boolean isDirectory(Path directory) {
+		return directory != null && Files.exists(directory) && Files.isDirectory(directory);
+	}
+	
+	public static void pruneRecords(Path directory) {
+		if (! isDirectory(directory)) {
+			logger.warn("Directory {} not valid, aborting.", directory);
+			return;
+		}
+		
+		try {
+			List<ImageRecord> records = Persistence.getInstance().filterByPath(directory);
+			LinkedList<Path> toPrune = new LinkedList<Path>();
+			
+			for(ImageRecord ir : records) {
+				Path path = Paths.get(ir.getPath());
+				
+				if(! Files.exists(path)){
+					toPrune.add(path);
+				}
+			}
+			
+			logger.info("Found {} non-existant records", toPrune.size());
+			
+			Object options[] = {"Prune " + toPrune.size() + " records?"};
+			JOptionPane pane = new JOptionPane(options, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+			JDialog dialog = pane.createDialog("Prune records");
+			dialog.setVisible(true);
+			
+			if(pane.getValue() != null && (Integer)pane.getValue() == JOptionPane.OK_OPTION) {
+				for(Path path : toPrune) {
+					ImageRecord ir = new ImageRecord(path.toString(), 0);
+					Persistence.getInstance().deleteRecord(ir);
+				}
+			} else {
+				logger.info("User aborted prune operation for {}", directory);
+			}
+		} catch (SQLException e) {
+			logger.warn("Failed to prune records for {} - {}", directory, e.getMessage());
+		}
 	}
 }

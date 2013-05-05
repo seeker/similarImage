@@ -169,10 +169,12 @@ public class SimilarImageGUI extends JFrame {
 	private void setupMenu() {
 		JMenuBar menuBar = new JMenuBar();
 		JMenu file;
-		JMenuItem folderDnw;
+		JMenuItem folderDnw, pruneRecords;
 		
 		file = new JMenu("File");
+		
 		folderDnw = new JMenuItem("Add folder as dnw");
+		pruneRecords = new JMenuItem("Prune records");
 		
 		folderDnw.addActionListener(new ActionListener() {
 			@Override
@@ -190,7 +192,16 @@ public class SimilarImageGUI extends JFrame {
 			}
 		});
 		
+		pruneRecords.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				DuplicateOperations.pruneRecords(Paths.get(path.getText()));
+			}
+		});
+		
 		file.add(folderDnw);
+		file.add(pruneRecords);
+		
 		menuBar.add(file);
 		this.setJMenuBar(menuBar);
 	}
