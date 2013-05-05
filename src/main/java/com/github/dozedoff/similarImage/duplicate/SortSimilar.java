@@ -96,7 +96,7 @@ public class SortSimilar {
 				long pHash = fr.getpHash();
 				
 				if(sorted.containsKey(pHash)) {
-					return;		// prevent duplicates
+					continue;		// prevent duplicates
 				}
 				
 				ImageRecord query = new ImageRecord(null, pHash);
