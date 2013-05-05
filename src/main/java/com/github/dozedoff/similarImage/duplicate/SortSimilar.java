@@ -81,6 +81,11 @@ public class SortSimilar {
 	public void sortFilter(int hammingDistance, String reason) {
 		clear();
 		
+		if(hammingDistance == 0) {
+			sortFilterExact(hammingDistance, reason);
+			return;
+		}
+		
 		try {
 			List<ImageRecord> dBrecords = Persistence.getInstance().getAllRecords();
 			dBrecords.removeAll(ignoredImages);
@@ -104,6 +109,25 @@ public class SortSimilar {
 		}
 	}
 	
+	private void sortFilterExact(int hammingDistance, String reason) {
+		// TODO add filtering regarding reason
+		List<FilterRecord> filters;
+		try {
+			filters = Persistence.getInstance().getAllFilters();
+
+			for (FilterRecord filter : filters) {
+				long pHash = filter.getpHash();
+				
+				if (!sorted.containsKey(pHash)) {
+					List<ImageRecord> records = Persistence.getInstance().getRecords(pHash);
+					sorted.put(pHash, new HashSet<ImageRecord>(records));
+				}
+			}
+		} catch (SQLException e) {
+			logger.warn("Failed to load filter records - {}", e.getMessage());
+		}
+	}
+
 	public Set<ImageRecord> getGroup(long pHash) {
 		return sorted.get(pHash);
 	}
