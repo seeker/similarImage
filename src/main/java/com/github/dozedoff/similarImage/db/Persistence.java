@@ -168,7 +168,7 @@ public class Persistence {
 	
 	public List<ImageRecord> filterByPath(Path directory) throws SQLException {
 		QueryBuilder<ImageRecord, String> qb = imageRecordDao.queryBuilder();
-		PreparedQuery<ImageRecord> prep = qb.where().like("path", directory.toString()).prepare();
+		PreparedQuery<ImageRecord> prep = qb.where().like("path", directory.toString() + "%").prepare();
 		return imageRecordDao.query(prep);
 	}
 }
