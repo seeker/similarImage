@@ -18,12 +18,16 @@
 package com.github.dozedoff.similarImage.duplicate;
 
 import java.awt.Dimension;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.nio.file.Path;
 import java.util.LinkedList;
 
 import javax.swing.JComponent;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -60,6 +64,7 @@ public class DuplicateEntry extends JPanel {
 		add(image);
 		addImageInfo();
 		new OperationsMenu(this);
+		this.addMouseListener(new ClickListener());
 	}
 	
 	private void addImageInfo() {
@@ -89,5 +94,34 @@ public class DuplicateEntry extends JPanel {
 	public void ignore() {
 		ImageRecord ir = new ImageRecord(imagePath.toString(), imageInfo.getpHash());
 		parent.ignoreImage(ir);
+	}
+	
+	private void displayFullImage() {
+		JPanel imagePanel = new JPanel(new MigLayout());
+		JScrollPane scroll = new JScrollPane(imagePanel);
+		
+		JFrame imageFrame = new JFrame(imagePath.toString());
+		imageFrame.setLayout(new MigLayout());
+		JLabel largeImage = new JLabel("No Image");
+		
+		try {
+			largeImage = SubsamplingImageLoader.loadAsLabel(imagePath, new Dimension(4000, 4000));
+		} catch (Exception e) {
+			logger.warn("Unable to load full image {} - {}", imagePath, e.getMessage());
+		}
+		
+		imagePanel.add(largeImage);
+		imageFrame.add(scroll);
+		imageFrame.pack();
+		imageFrame.setVisible(true);
+	}
+	
+	class ClickListener extends MouseAdapter {
+		@Override
+		public void mouseClicked(MouseEvent e) {
+			if(e.getButton() == MouseEvent.BUTTON1){
+				displayFullImage();
+			}
+		}
 	}
 }
