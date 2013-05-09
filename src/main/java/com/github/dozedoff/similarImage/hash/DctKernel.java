@@ -20,17 +20,22 @@ package com.github.dozedoff.similarImage.hash;
 import com.amd.aparapi.Kernel;
 
 public class DctKernel extends Kernel {
-	private final double PI = Math.PI;
-	private final double[] coeff;
-	private final int size;
-	private final double data[];
-	private final double dct[];
+	private double PI = Math.PI;
+	private double[] coeff_$constant$;
+	private int size;
+	private double data[];
+	private double dct[];
 	
 	
 	
 	public DctKernel(double[] coeff, int size, double[] data, double[] dct) {
-		this.coeff = coeff;
+		this.coeff_$constant$ = coeff;
 		this.size = size;
+		this.data = data;
+		this.dct = dct;
+	}
+	
+	public void setup(double data[], double dct[]) {
 		this.data = data;
 		this.dct = dct;
 	}
@@ -38,6 +43,7 @@ public class DctKernel extends Kernel {
 	public void run() {
 		int u = getGlobalId(0);
 		int v = getGlobalId(1);
+		
 		double sum = 0.0;
 		for (int i = 0; i < size; i++) {
 			for (int j = 0; j < size; j++) {
@@ -46,7 +52,7 @@ public class DctKernel extends Kernel {
 						* (data[dimConversion(i, j)]);
 			}
 		}
-		sum *= ((coeff[u] * coeff[v]) / 4.0);
+		sum *= ((coeff_$constant$[u] * coeff_$constant$[v]) / 4.0);
 		dct[dimConversion(u, v)] = sum;
 	}
 	

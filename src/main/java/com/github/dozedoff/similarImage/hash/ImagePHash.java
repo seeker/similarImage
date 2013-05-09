@@ -16,9 +16,8 @@ import java.io.InputStream;
 
 import javax.imageio.ImageIO;
 
-import com.amd.aparapi.Kernel;
-import com.amd.aparapi.Range;
 import com.amd.aparapi.Kernel.EXECUTION_MODE;
+import com.amd.aparapi.Range;
 /*
  * pHash-like image hash.
  * Author: Elliot Shepherd (elliot@jarofworms.com
@@ -27,9 +26,14 @@ import com.amd.aparapi.Kernel.EXECUTION_MODE;
 public class ImagePHash {
         private int size = 32;
         private int smallerSize = 8;
-       
+        
+		final double PI = Math.PI;
+		private DctKernel dctKernel;
+		private Range range;
+		
         public ImagePHash() {
                 initCoefficients();
+                setupKernel();
         }
        
         public ImagePHash(int size, int smallerSize) {
@@ -37,6 +41,7 @@ public class ImagePHash {
                 this.smallerSize = smallerSize;
                
                 initCoefficients();
+                setupKernel();
         }
        
         public int distance(String s1, String s2) {
@@ -47,6 +52,11 @@ public class ImagePHash {
                         }
                 }
                 return counter;
+        }
+        
+        private void setupKernel() {
+        	dctKernel = new DctKernel(c, size, null, null);
+        	range = Range.create2D(size, size);
         }
         
         /**
@@ -287,39 +297,12 @@ public class ImagePHash {
 	}
 	
 	private double[][] applyDCTGPU(double[][] f){
-		final int SIZE = size;
-		final double[] coeff = c;
-		final double PI = Math.PI;
+		double data[] = unwrap2dArray(f);
+		double dct[] = new double[size * size]; //result
 		
-		final double dataFlat[] = unwrap2dArray(f);
-		final double dct[] = new double[SIZE * SIZE]; //result
-		
-		Kernel dctKernel = new Kernel() {
-			@Override
-			public void run() {
-				int u = getGlobalId(0);
-				int v = getGlobalId(1);
-				double sum = 0.0;
-				for (int i = 0; i < SIZE; i++) {
-					for (int j = 0; j < SIZE; j++) {
-						sum += cos(((2 * i + 1) / (2.0 * SIZE)) * u * PI)
-								* cos(((2 * j + 1) / (2.0 * SIZE)) * v * PI)
-								* (dataFlat[dimConversion(i, j)]);
-					}
-				}
-				sum *= ((coeff[u] * coeff[v]) / 4.0);
-				dct[dimConversion(u, v)] = sum;
-			}
-			
-			private int dimConversion(int x, int y) {
-				return x + y*SIZE;
-			}
-		};
-		
-		Range range = Range.create2D(SIZE, SIZE);
+		dctKernel.setup(data, dct);
 		dctKernel.setExecutionMode(EXECUTION_MODE.GPU);
 		dctKernel.execute(range);
-		dctKernel.dispose();
 		
 		return wrap1dArray(dct, size);
 	}
