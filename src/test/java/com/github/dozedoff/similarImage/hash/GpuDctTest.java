@@ -21,6 +21,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,10 +35,6 @@ public class GpuDctTest {
 	private final int SAMPLE_SIZE = 2000000;
 	private final int LOOP_SIZE = 5000;
 	
-	@Before
-	public void setUp() throws Exception {
-	}
-
 	private float[] generateFloatArray(int size){
 		float result[] = new float[size];
 		
@@ -46,7 +43,20 @@ public class GpuDctTest {
 		}
 		return result;
 	}
+	
+	private float[][] generateFloatGrid(int size) {
+		float data[][] = new float[size][size];
+		
+		for(int i = 0; i < size; i++){
+			for(int j = 0; j < size; j++){
+				data[i][j] = (float) Math.random();
+			}
+		}
+		
+		return data;
+	}
 
+	//@Ignore
 	@Test
 	public void addFloatsTest() {
 		final float[] floatA = generateFloatArray(SAMPLE_SIZE);
@@ -71,8 +81,12 @@ public class GpuDctTest {
 			@Override
 			public void run() {
 				int i = getGlobalId();
+				calc(i);
+			}
+			
+			private void calc(int id) {
 				for (int j = 0; j < LOOP_SIZE; j++) {
-					resultGPU[i] += floatA[i];
+					resultGPU[id] += floatA[id];
 				}
 			}
 		};
@@ -88,5 +102,36 @@ public class GpuDctTest {
 		for(int i=0; i < SAMPLE_SIZE; i++){
 			assertThat(resultGPU[i], is(resultCPU[i]));
 		}
+	}
+	
+	@Ignore("Multi-dim arrays do not work")
+	@Test
+	public void dctAvgTest() {
+		final int ARRAY_DIM = 8;
+		
+		final float dctData[][] = generateFloatGrid(ARRAY_DIM);
+		final float rowSum[] = new float[ARRAY_DIM];
+		float total = 0;
+		
+		Kernel kernel = new Kernel() {
+			@Override
+			public void run() {
+				int i = getGlobalId();
+				for (int j = 0; j < ARRAY_DIM; j++) {
+					rowSum[i] += dctData[i][j];
+				}
+			}
+		};
+		
+		
+		Range range = Range.create(rowSum.length);
+		
+		kernel.execute(range);
+		kernel.dispose();
+		
+		total -= dctData[0][0];
+        
+		double avg = total / (double) ((8 * 8) - 1);
+		logger.info("DCT avg is {}", avg);
 	}
 }
