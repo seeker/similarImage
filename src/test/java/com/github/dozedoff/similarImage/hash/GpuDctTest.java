@@ -55,6 +55,17 @@ public class GpuDctTest {
 		
 		return data;
 	}
+	
+	private double[] initCoefficients(int size) {
+		double c[] = new double[size];
+
+		for (int i = 1; i < size; i++) {
+			c[i] = 1;
+		}
+		c[0] = 1 / Math.sqrt(2.0);
+
+		return c;
+	}
 
 	@Ignore
 	@Test
@@ -106,7 +117,9 @@ public class GpuDctTest {
 	
 	@Test
 	public void dctTest() {
-
+		final int SIZE = 8;
+		final double[] coeff = initCoefficients(SIZE);
+		
 	}
 	
 	@Test
@@ -124,5 +137,6 @@ public class GpuDctTest {
 		
 		kernel.setExecutionMode(EXECUTION_MODE.GPU);
 		kernel.execute(SAMPLE_SIZE);
+		kernel.dispose();
 	}
 }
