@@ -149,22 +149,26 @@ public class GpuDctTest {
 		double data[][] = generateDoubleGrid(SIZE);
 		
 		final double dataFlat[] = unwrap2dArray(data);
-		final double dct[] = new double[SIZE * SIZE]; //result
+		final double dctGpu[] = new double[SIZE * SIZE]; //result
+		final double dctCpu[] = new double[SIZE * SIZE]; //result
 		
-		Kernel dctKernel = new DctKernel(coeff, SIZE, dataFlat, dct);
+		Kernel dctKernel = new DctKernel(coeff, SIZE, dataFlat, dctGpu);
 		
 		Range range = Range.create2D(SIZE, SIZE);
 		dctKernel.setExecutionMode(EXECUTION_MODE.GPU);
 		dctKernel.execute(range);
 		dctKernel.dispose();
 		
-		ImagePHash phash = new ImagePHash(SIZE, 9);
-		double cpuDct[][] = phash.applyDCT(data);
-		double cpu[] = unwrap2dArray(cpuDct);
+		dctKernel = new DctKernel(coeff, SIZE, dataFlat, dctCpu);
+		
+		range = Range.create2D(SIZE, SIZE);
+		dctKernel.setExecutionMode(EXECUTION_MODE.CPU);
+		dctKernel.execute(range);
+		dctKernel.dispose();
 		
 		int runLenght = SIZE * SIZE;
 		for(int i = 0; i < runLenght; i++){
-			assertThat(dct[i], is(cpu[i]));
+			assertThat(dctGpu[i], is(dctCpu[i]));
 		}
 	}
 	
