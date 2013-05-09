@@ -20,13 +20,13 @@ package com.github.dozedoff.similarImage.hash;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.amd.aparapi.Kernel;
+import com.amd.aparapi.Kernel.EXECUTION_MODE;
 import com.amd.aparapi.Range;
 import com.github.dozedoff.commonj.time.StopWatch;
 
@@ -56,7 +56,7 @@ public class GpuDctTest {
 		return data;
 	}
 
-	//@Ignore
+	@Ignore
 	@Test
 	public void addFloatsTest() {
 		final float[] floatA = generateFloatArray(SAMPLE_SIZE);
@@ -104,34 +104,25 @@ public class GpuDctTest {
 		}
 	}
 	
-	@Ignore("Multi-dim arrays do not work")
 	@Test
-	public void dctAvgTest() {
-		final int ARRAY_DIM = 8;
-		
-		final float dctData[][] = generateFloatGrid(ARRAY_DIM);
-		final float rowSum[] = new float[ARRAY_DIM];
-		float total = 0;
+	public void dctTest() {
+
+	}
+	
+	@Test
+	public void doubleSupportTest() {
+		final double test[] = new double[SAMPLE_SIZE];
 		
 		Kernel kernel = new Kernel() {
+			 
 			@Override
 			public void run() {
 				int i = getGlobalId();
-				for (int j = 0; j < ARRAY_DIM; j++) {
-					rowSum[i] += dctData[i][j];
-				}
+				test[i]++;
 			}
 		};
 		
-		
-		Range range = Range.create(rowSum.length);
-		
-		kernel.execute(range);
-		kernel.dispose();
-		
-		total -= dctData[0][0];
-        
-		double avg = total / (double) ((8 * 8) - 1);
-		logger.info("DCT avg is {}", avg);
+		kernel.setExecutionMode(EXECUTION_MODE.GPU);
+		kernel.execute(SAMPLE_SIZE);
 	}
 }
