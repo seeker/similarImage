@@ -149,8 +149,8 @@ public class GpuDctTest {
 		final double PI = Math.PI;
 		double data[][] = generateDoubleGrid(SIZE);
 		
-		final double f[] = unwrap2dArray(data);
-		final double F[] = new double[SIZE * SIZE]; //result
+		final double dataFlat[] = unwrap2dArray(data);
+		final double dct[] = new double[SIZE * SIZE]; //result
 		
 		Kernel dctKernel = new Kernel() {
 			@Override
@@ -162,11 +162,11 @@ public class GpuDctTest {
 					for (int j = 0; j < SIZE; j++) {
 						sum += cos(((2 * i + 1) / (2.0 * SIZE)) * u * PI)
 								* cos(((2 * j + 1) / (2.0 * SIZE)) * v * PI)
-								* (f[dimConversion(i, j)]);
+								* (dataFlat[dimConversion(i, j)]);
 					}
 				}
 				sum *= ((coeff[u] * coeff[v]) / 4.0);
-				F[dimConversion(u, v)] = sum;
+				dct[dimConversion(u, v)] = sum;
 			}
 			
 			private int dimConversion(int x, int y) {
@@ -185,7 +185,7 @@ public class GpuDctTest {
 		
 		int runLenght = SIZE * SIZE;
 		for(int i = 0; i < runLenght; i++){
-			assertThat(F[i], is(cpu[i]));
+			assertThat(dct[i], is(cpu[i]));
 		}
 	}
 	
