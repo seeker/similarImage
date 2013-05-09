@@ -66,7 +66,7 @@ public class PhashWorker extends Thread {
 	private void calculateHashes(LinkedBlockingQueue<Path> imagePaths) {
 		logger.info("{} started", this.getName());
 		Persistence persistence = Persistence.getInstance();
-		ImagePHash phash = new ImagePHash(32,9);
+		ImagePHashGPU phash = new ImagePHashGPU(32,9);
 		LinkedList<Path> work = new LinkedList<Path>();
 		
 		while(!stop) {
@@ -88,7 +88,7 @@ public class PhashWorker extends Thread {
 					}
 
 					InputStream is = new BufferedInputStream(Files.newInputStream(path, StandardOpenOption.READ));
-					long hash = phash.getLongHashGPU(is);
+					long hash = phash.getLongHash(is);
 					is.close();
 					
 					ImageRecord record = new ImageRecord(path.toString(), hash);
