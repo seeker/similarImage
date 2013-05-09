@@ -87,8 +87,13 @@ public class ImagePHashGPU {
         	return hash;
         }
         
+        private BufferedImage loadImage(InputStream is) throws IOException {
+        	BufferedImage img = ImageIO.read(is);
+        	return img;
+        }
+        
         public double[][] calculateDctMap(InputStream is) throws IOException {
-                BufferedImage img = ImageIO.read(is);
+                BufferedImage img = loadImage(is);
                
                 /* 1. Reduce size.
                  * Like Average Hash, pHash starts with a small image.
