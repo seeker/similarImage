@@ -56,6 +56,18 @@ public class GpuDctTest {
 		return data;
 	}
 	
+	private double[][] generateDoubleGrid(int size) {
+		double data[][] = new double[size][size];
+		
+		for(int i = 0; i < size; i++){
+			for(int j = 0; j < size; j++){
+				data[i][j] = Math.random();
+			}
+		}
+		
+		return data;
+	}
+	
 	private double[] initCoefficients(int size) {
 		double c[] = new double[size];
 
@@ -65,6 +77,21 @@ public class GpuDctTest {
 		c[0] = 1 / Math.sqrt(2.0);
 
 		return c;
+	}
+	
+	private double[] unwrap2dArray(double array[][]) {
+		int size = array.length * array[0].length;
+		double flatArray[] = new double[size];
+		int pointer = 0;
+		
+		for(int i = 0; i < array.length; i++) {
+			for(int j = 0; j < array[0].length; j++) {
+				flatArray[pointer] = array[i][j];
+				pointer++;
+			}
+		}
+		
+		return flatArray;
 	}
 
 	@Ignore
@@ -117,9 +144,49 @@ public class GpuDctTest {
 	
 	@Test
 	public void dctTest() {
-		final int SIZE = 8;
+		final int SIZE = 32;
 		final double[] coeff = initCoefficients(SIZE);
+		final double PI = Math.PI;
+		double data[][] = generateDoubleGrid(SIZE);
 		
+		final double f[] = unwrap2dArray(data);
+		final double F[] = new double[SIZE * SIZE]; //result
+		
+		Kernel dctKernel = new Kernel() {
+			@Override
+			public void run() {
+				int u = getGlobalId(0);
+				int v = getGlobalId(1);
+				double sum = 0.0;
+				for (int i = 0; i < SIZE; i++) {
+					for (int j = 0; j < SIZE; j++) {
+						sum += cos(((2 * i + 1) / (2.0 * SIZE)) * u * PI)
+								* cos(((2 * j + 1) / (2.0 * SIZE)) * v * PI)
+								* (f[dimConversion(i, j)]);
+					}
+				}
+				sum *= ((coeff[u] * coeff[v]) / 4.0);
+				F[dimConversion(u, v)] = sum;
+			}
+			
+			private int dimConversion(int x, int y) {
+				return x + y*SIZE;
+			}
+		};
+		
+		Range range = Range.create2D(SIZE, SIZE);
+		dctKernel.setExecutionMode(EXECUTION_MODE.GPU);
+		dctKernel.execute(range);
+		dctKernel.dispose();
+		
+		ImagePHash phash = new ImagePHash(SIZE, 9);
+		double cpuDct[][] = phash.applyDCT(data);
+		double cpu[] = unwrap2dArray(cpuDct);
+		
+		int runLenght = SIZE * SIZE;
+		for(int i = 0; i < runLenght; i++){
+			assertThat(F[i], is(cpu[i]));
+		}
 	}
 	
 	@Test

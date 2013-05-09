@@ -209,7 +209,7 @@ public class ImagePHash {
         c[0]=1/Math.sqrt(2.0);
     }
        
-        private double[][] applyDCT(double[][] f) {
+        public double[][] applyDCT(double[][] f) {
                 int N = size;
                
         double[][] F = new double[N][N];
