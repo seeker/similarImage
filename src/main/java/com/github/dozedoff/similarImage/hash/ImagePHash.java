@@ -119,7 +119,13 @@ public class ImagePHash {
                  * a 32x32 DCT.
                  */
 //                long start = System.currentTimeMillis();
-                double[][] dctVals = applyDCT(vals);
+                double[][] dctVals;
+                
+                if(useGpu){
+                	dctVals = applyDCTGPU(vals);
+                } else {
+                	dctVals = applyDCT(vals);
+                }
 //                System.out.println("DCT: " + (System.currentTimeMillis() - start));  // Removed to prevent system.out spam
                
                 return dctVals;

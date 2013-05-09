@@ -88,9 +88,9 @@ public class PhashWorker extends Thread {
 					}
 
 					InputStream is = new BufferedInputStream(Files.newInputStream(path, StandardOpenOption.READ));
-					long hash = phash.getLongHash(is);
+					long hash = phash.getLongHashGPU(is);
 					is.close();
-
+					
 					ImageRecord record = new ImageRecord(path.toString(), hash);
 
 					persistence.addRecord(record);
