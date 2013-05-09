@@ -15,6 +15,10 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import javax.imageio.ImageIO;
+
+import com.amd.aparapi.Kernel;
+import com.amd.aparapi.Range;
+import com.amd.aparapi.Kernel.EXECUTION_MODE;
 /*
  * pHash-like image hash.
  * Author: Elliot Shepherd (elliot@jarofworms.com
@@ -58,6 +62,13 @@ public class ImagePHash {
         	return hash;
         }
         
+        public long getLongHashGPU(InputStream is) throws Exception {
+        	double[][] dct = calculateDctMap(is,true);
+        	double dctAvg = calcDctAverage(dct);
+        	long hash = convertToLong(dct, dctAvg);
+        	return hash;
+        }
+        
         /**
          * 
          * @param is file to hash
@@ -72,9 +83,12 @@ public class ImagePHash {
         	
         	return hash;
         }
-       
         
         public double[][] calculateDctMap(InputStream is) throws IOException {
+        	return calculateDctMap(is, false);
+        }
+        
+        public double[][] calculateDctMap(InputStream is, boolean useGpu) throws IOException {
                 BufferedImage img = ImageIO.read(is);
                
                 /* 1. Reduce size.
@@ -199,35 +213,110 @@ public class ImagePHash {
        
         // DCT function stolen from http://stackoverflow.com/questions/4240490/problems-with-dct-and-idct-algorithm-in-java
  
-        private double[] c;
-        private void initCoefficients() {
-                c = new double[size];
-               
-        for (int i=1;i<size;i++) {
-            c[i]=1;
-        }
-        c[0]=1/Math.sqrt(2.0);
-    }
-       
-        public double[][] applyDCT(double[][] f) {
-                int N = size;
-               
-        double[][] F = new double[N][N];
-        for (int u=0;u<N;u++) {
-          for (int v=0;v<N;v++) {
-            double sum = 0.0;
-            for (int i=0;i<N;i++) {
-              for (int j=0;j<N;j++) {
-                sum+=Math.cos(((2*i+1)/(2.0*N))*u*Math.PI)*Math.cos(((2*j+1)/(2.0*N))*v*Math.PI)*(f[i][j]);
-              }
-            }
-            sum*=((c[u]*c[v])/4.0);
-            F[u][v] = sum;
-          }
-        }
-        return F;
-    }
- 
+	private double[] c;
+
+	private void initCoefficients() {
+		c = new double[size];
+
+		for (int i = 1; i < size; i++) {
+			c[i] = 1;
+		}
+		c[0] = 1 / Math.sqrt(2.0);
+	}
+
+	public double[][] applyDCT(double[][] f) {
+		int N = size;
+
+		double[][] F = new double[N][N];
+		for (int u = 0; u < N; u++) {
+			for (int v = 0; v < N; v++) {
+				double sum = 0.0;
+				for (int i = 0; i < N; i++) {
+					for (int j = 0; j < N; j++) {
+						sum += Math
+								.cos(((2 * i + 1) / (2.0 * N)) * u * Math.PI)
+								* Math.cos(((2 * j + 1) / (2.0 * N)) * v
+										* Math.PI) * (f[i][j]);
+					}
+				}
+				sum *= ((c[u] * c[v]) / 4.0);
+				F[u][v] = sum;
+			}
+		}
+		return F;
+	}
+
+	private double[] unwrap2dArray(double array[][]) {
+		int size = array.length * array[0].length;
+		double flatArray[] = new double[size];
+		int pointer = 0;
+
+		for (int i = 0; i < array.length; i++) {
+			for (int j = 0; j < array[0].length; j++) {
+				flatArray[pointer] = array[i][j];
+				pointer++;
+			}
+		}
+
+		return flatArray;
+	}
+	
+	private double[][] wrap1dArray(double array[], int size) {
+		double array2d[][] = new double[size][size];
+		
+		for (int i = 0; i < array.length; i++) {
+			int x = i%size;
+			int y = 0;
+			
+			if(i == 0) {
+				y = 0;
+			} else {
+				y = i / size;
+			}
+			
+			array2d[x][y] = array[i];
+		}
+
+		return array2d;
+	}
+	
+	private double[][] applyDCTGPU(double[][] f){
+		final int SIZE = size;
+		final double[] coeff = c;
+		final double PI = Math.PI;
+		
+		final double dataFlat[] = unwrap2dArray(f);
+		final double dct[] = new double[SIZE * SIZE]; //result
+		
+		Kernel dctKernel = new Kernel() {
+			@Override
+			public void run() {
+				int u = getGlobalId(0);
+				int v = getGlobalId(1);
+				double sum = 0.0;
+				for (int i = 0; i < SIZE; i++) {
+					for (int j = 0; j < SIZE; j++) {
+						sum += cos(((2 * i + 1) / (2.0 * SIZE)) * u * PI)
+								* cos(((2 * j + 1) / (2.0 * SIZE)) * v * PI)
+								* (dataFlat[dimConversion(i, j)]);
+					}
+				}
+				sum *= ((coeff[u] * coeff[v]) / 4.0);
+				dct[dimConversion(u, v)] = sum;
+			}
+			
+			private int dimConversion(int x, int y) {
+				return x + y*SIZE;
+			}
+		};
+		
+		Range range = Range.create2D(SIZE, SIZE);
+		dctKernel.setExecutionMode(EXECUTION_MODE.GPU);
+		dctKernel.execute(range);
+		dctKernel.dispose();
+		
+		return wrap1dArray(dct, size);
+	}
 }
 
 
