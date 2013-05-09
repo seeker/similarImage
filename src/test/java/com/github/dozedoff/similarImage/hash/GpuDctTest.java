@@ -146,33 +146,12 @@ public class GpuDctTest {
 	public void dctTest() {
 		final int SIZE = 32;
 		final double[] coeff = initCoefficients(SIZE);
-		final double PI = Math.PI;
 		double data[][] = generateDoubleGrid(SIZE);
 		
 		final double dataFlat[] = unwrap2dArray(data);
 		final double dct[] = new double[SIZE * SIZE]; //result
 		
-		Kernel dctKernel = new Kernel() {
-			@Override
-			public void run() {
-				int u = getGlobalId(0);
-				int v = getGlobalId(1);
-				double sum = 0.0;
-				for (int i = 0; i < SIZE; i++) {
-					for (int j = 0; j < SIZE; j++) {
-						sum += cos(((2 * i + 1) / (2.0 * SIZE)) * u * PI)
-								* cos(((2 * j + 1) / (2.0 * SIZE)) * v * PI)
-								* (dataFlat[dimConversion(i, j)]);
-					}
-				}
-				sum *= ((coeff[u] * coeff[v]) / 4.0);
-				dct[dimConversion(u, v)] = sum;
-			}
-			
-			private int dimConversion(int x, int y) {
-				return x + y*SIZE;
-			}
-		};
+		Kernel dctKernel = new DctKernel(coeff, SIZE, dataFlat, dct);
 		
 		Range range = Range.create2D(SIZE, SIZE);
 		dctKernel.setExecutionMode(EXECUTION_MODE.GPU);
