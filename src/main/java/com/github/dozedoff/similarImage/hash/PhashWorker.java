@@ -18,6 +18,7 @@
 package com.github.dozedoff.similarImage.hash;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -88,7 +89,7 @@ public class PhashWorker extends Thread {
 						continue;
 					}
 
-					InputStream is = new BufferedInputStream(Files.newInputStream(path, StandardOpenOption.READ));
+					InputStream is = new ByteArrayInputStream(Files.readAllBytes(path));
 					long hash = phash.getLongHash(is);
 					is.close();
 					
