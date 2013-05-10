@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,6 +89,18 @@ public class Persistence {
 
 	public void addRecord(ImageRecord record) throws SQLException {
 		imageRecordDao.createIfNotExists(record);
+	}
+	
+	public void batchAddRecord(final List<ImageRecord> record) throws Exception {
+		imageRecordDao.callBatchTasks(new Callable<Void>() {
+			@Override
+			public Void call() throws Exception {
+				for(ImageRecord ir : record){
+					imageRecordDao.createIfNotExists(ir);
+				}
+				return null;
+			}
+		});
 	}
 	
 	public ImageRecord getRecord(Path path) throws SQLException {

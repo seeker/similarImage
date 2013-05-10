@@ -68,6 +68,7 @@ public class PhashWorker extends Thread {
 		Persistence persistence = Persistence.getInstance();
 		ImagePHash phash = new ImagePHash(32,9);
 		LinkedList<Path> work = new LinkedList<Path>();
+		LinkedList<ImageRecord> newRecords = new LinkedList<ImageRecord>();
 		
 		while(!stop) {
 			if(imagePaths.isEmpty()) {
@@ -92,8 +93,7 @@ public class PhashWorker extends Thread {
 					is.close();
 
 					ImageRecord record = new ImageRecord(path.toString(), hash);
-
-					persistence.addRecord(record);
+					newRecords.add(record);
 				} catch (IIOException iioe) {
 					logger.warn("Unable to process image {} - {}", path, iioe.getMessage());
 				} catch (IOException e) {
@@ -104,6 +104,13 @@ public class PhashWorker extends Thread {
 					logger.warn("Failed to hash image {} - {}", path, e.getMessage());
 				}
 			}
+			try {
+				Persistence.getInstance().batchAddRecord(newRecords);
+				newRecords.clear();
+			} catch (Exception e) {
+				logger.warn("Batch add failed - {}", e.getMessage());
+			}
+			
 			guiEvent.progressUpdate(work.size());
 			work.clear();
 		}
