@@ -18,6 +18,7 @@
 package com.github.dozedoff.similarImage.hash;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.*;
 import static org.junit.Assert.assertThat;
 
 import org.junit.Ignore;
@@ -187,6 +188,9 @@ public class GpuDctTest {
 		
 		kernel.setExecutionMode(EXECUTION_MODE.GPU);
 		kernel.execute(SAMPLE_SIZE);
+		if(kernel.getExecutionMode() != EXECUTION_MODE.GPU) {
+			fail("Kernel did not execute on GPU");
+		}
 		kernel.dispose();
 	}
 }
