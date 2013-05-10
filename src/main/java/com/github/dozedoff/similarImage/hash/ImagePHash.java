@@ -26,6 +26,7 @@ public class ImagePHash {
        
         public ImagePHash() {
                 initCoefficients();
+                ImageIO.setUseCache(false);
         }
        
         public ImagePHash(int size, int smallerSize) {
@@ -33,6 +34,7 @@ public class ImagePHash {
                 this.smallerSize = smallerSize;
                
                 initCoefficients();
+                ImageIO.setUseCache(false);
         }
        
         public int distance(String s1, String s2) {
