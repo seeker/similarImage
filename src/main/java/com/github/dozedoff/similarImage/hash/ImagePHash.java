@@ -26,6 +26,7 @@ public class ImagePHash {
        
         public ImagePHash() {
                 initCoefficients();
+                ImageIO.setUseCache(false);
         }
        
         public ImagePHash(int size, int smallerSize) {
@@ -33,6 +34,7 @@ public class ImagePHash {
                 this.smallerSize = smallerSize;
                
                 initCoefficients();
+                ImageIO.setUseCache(false);
         }
        
         public int distance(String s1, String s2) {
@@ -72,10 +74,26 @@ public class ImagePHash {
         	
         	return hash;
         }
+        
+	private BufferedImage readImage(InputStream is) throws IOException {
+		return ImageIO.read(is);
+	}
+
+	private double[][] reduceColor(BufferedImage img) {
+		double values[][] = new double[size][size];
+
+		for (int x = 0; x < img.getWidth(); x++) {
+			for (int y = 0; y < img.getHeight(); y++) {
+				values[x][y] = getBlue(img, x, y);
+			}
+		}
+
+		return values;
+	}
        
         
         public double[][] calculateDctMap(InputStream is) throws IOException {
-                BufferedImage img = ImageIO.read(is);
+                BufferedImage img = readImage(is);
                
                 /* 1. Reduce size.
                  * Like Average Hash, pHash starts with a small image.
@@ -91,13 +109,7 @@ public class ImagePHash {
                  */
                 img = grayscale(img);
                
-                double[][] vals = new double[size][size];
-               
-                for (int x = 0; x < img.getWidth(); x++) {
-                        for (int y = 0; y < img.getHeight(); y++) {
-                                vals[x][y] = getBlue(img, x, y);
-                        }
-                }
+                double[][] vals = reduceColor(img);
                
                 /* 3. Compute the DCT.
                  * The DCT separates the image into a collection of frequencies
@@ -178,36 +190,40 @@ public class ImagePHash {
 			return avg;
 		}
        
-        private BufferedImage resize(BufferedImage image, int width,    int height) {
-                BufferedImage resizedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-                Graphics2D g = resizedImage.createGraphics();
-                g.drawImage(image, 0, 0, width, height, null);
-                g.dispose();
-                return resizedImage;
-        }
-       
-        private ColorConvertOp colorConvert = new ColorConvertOp(ColorSpace.getInstance(ColorSpace.CS_GRAY), null);
- 
-        private BufferedImage grayscale(BufferedImage img) {
-        colorConvert.filter(img, img);
-        return img;
-    }
+	private BufferedImage resize(BufferedImage image, int width, int height) {
+		BufferedImage resizedImage = new BufferedImage(width, height,
+				BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g = resizedImage.createGraphics();
+		g.drawImage(image, 0, 0, width, height, null);
+		g.dispose();
+		return resizedImage;
+	}
+
+	private ColorConvertOp colorConvert = new ColorConvertOp(
+			ColorSpace.getInstance(ColorSpace.CS_GRAY), null);
+
+	private BufferedImage grayscale(BufferedImage img) {
+		colorConvert.filter(img, img);
+		return img;
+	}
        
         private static int getBlue(BufferedImage img, int x, int y) {
                 return (img.getRGB(x, y)) & 0xff;
         }
        
         // DCT function stolen from http://stackoverflow.com/questions/4240490/problems-with-dct-and-idct-algorithm-in-java
- 
-        private double[] c;
-        private void initCoefficients() {
-                c = new double[size];
-               
-        for (int i=1;i<size;i++) {
-            c[i]=1;
-        }
-        c[0]=1/Math.sqrt(2.0);
-    }
+
+	private double[] c;
+
+	private void initCoefficients() {
+		c = new double[size];
+
+		for (int i = 1; i < size; i++) {
+			c[i] = 1;
+		}
+		
+		c[0] = 1 / Math.sqrt(2.0);
+	}
        
         private double[][] applyDCT(double[][] f) {
                 int N = size;
@@ -227,7 +243,6 @@ public class ImagePHash {
         }
         return F;
     }
- 
 }
 
 

@@ -17,12 +17,11 @@
 */
 package com.github.dozedoff.similarImage.hash;
 
-import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -88,7 +87,7 @@ public class PhashWorker extends Thread {
 						continue;
 					}
 
-					InputStream is = new BufferedInputStream(Files.newInputStream(path, StandardOpenOption.READ));
+					InputStream is = loadData(path);
 					long hash = phash.getLongHash(is);
 					is.close();
 
@@ -116,5 +115,10 @@ public class PhashWorker extends Thread {
 		}
 		
 		logger.info("{} terminated", this.getName());
+	}
+	
+	private InputStream loadData(Path path) throws IOException {
+		byte[] data = Files.readAllBytes(path);
+		return new ByteArrayInputStream(data);
 	}
 }
