@@ -53,7 +53,7 @@ public class SimilarImage implements IGUIevent{
 	Logger logger = LoggerFactory.getLogger(SimilarImage.class);
 	private final int WORKER_TREADS = 4;
 	private final int THUMBNAIL_DIMENSION = 500;
-	private final int PRODUCER_QUEUE_SIZE = 100;
+	private final int PRODUCER_QUEUE_SIZE = 200;
 	
 	private ImageProducer producer;
 	private PhashWorker workers[] = new PhashWorker[WORKER_TREADS];
@@ -65,6 +65,8 @@ public class SimilarImage implements IGUIevent{
 	
 	public void init() {
 		producer = new ImageProducer(PRODUCER_QUEUE_SIZE);
+		producer.startLoader();
+		
 		gui = new SimilarImageGUI(this);
 		displayGroup = new DisplayGroup();
 	}
