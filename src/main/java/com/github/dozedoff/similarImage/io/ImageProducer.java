@@ -18,6 +18,7 @@
 package com.github.dozedoff.similarImage.io;
 
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -57,9 +58,10 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 				return;
 			}
 			
-			InputStream is = Files.newInputStream(next);
+			byte[] data = Files.readAllBytes(next);
+			InputStream is = new ByteArrayInputStream(data);
 			BufferedImage img = ImageIO.read(is);
-			is.close();
+
 			Pair<Path, BufferedImage> pair = new Pair<Path, BufferedImage>(next, img);
 			output.put(pair);
 
