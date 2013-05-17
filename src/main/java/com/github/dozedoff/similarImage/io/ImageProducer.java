@@ -27,6 +27,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.imageio.IIOException;
 import javax.imageio.ImageIO;
 import javax.swing.JProgressBar;
 
@@ -35,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.io.DataProducer;
 import com.github.dozedoff.commonj.util.Pair;
+import com.github.dozedoff.similarImage.db.BadFileRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 
 public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>> {
@@ -81,9 +83,11 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 	
 	@Override
 	protected void loaderDoWork() throws InterruptedException {
+		Path next = null;
+		
 		try {
-			Path next = input.take();
-			if (persistence.isPathRecorded(next)) {
+			next = input.take();
+			if (persistence.isBadFile(next) || persistence.isPathRecorded(next)) {
 				processed.addAndGet(1);
 				totalProgress.setValue(processed.get());
 				return;
@@ -95,12 +99,24 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 
 			Pair<Path, BufferedImage> pair = new Pair<Path, BufferedImage>(next, img);
 			output.put(pair);
+		} catch (IIOException e) {
+			logger.warn("Failed to process image(IIO) - {}", e.getMessage());
+			try {
+				persistence.addBadFile(new BadFileRecord(next));
+			} catch (SQLException e1) {
+				logger.warn("Failed to add bad file record for {} - {}", next, e.getMessage());
+			}
 		} catch (IOException e) {
 			logger.warn("Failed to load file - {}", e.getMessage());
 		} catch (SQLException e) {
 			logger.warn("Failed to query database - {}", e.getMessage());
 		} catch (Exception e) {
-			logger.warn("Failed to process image - {}", e.getMessage());
+			logger.warn("Failed to process image(other) - {}", e.getMessage());
+			try {
+				persistence.addBadFile(new BadFileRecord(next));
+			} catch (SQLException e1) {
+				logger.warn("Failed to add bad file record for {} - {}", next, e.getMessage());
+			}
 		}
 		
 		processed.addAndGet(1);

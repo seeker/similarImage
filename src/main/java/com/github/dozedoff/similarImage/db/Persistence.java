@@ -43,6 +43,7 @@ public class Persistence {
 
 	Dao<ImageRecord, String> imageRecordDao;
 	Dao<FilterRecord, Long> filterRecordDao;
+	Dao<BadFileRecord, String> badFileRecordDao;
 
 	private Persistence() {
 		try {
@@ -79,12 +80,14 @@ public class Persistence {
 		logger.info("Setting up database tables...");
 		TableUtils.createTableIfNotExists(cs, ImageRecord.class);
 		TableUtils.createTableIfNotExists(cs, FilterRecord.class);
+		TableUtils.createTableIfNotExists(cs, BadFileRecord.class);
 	}
 
 	private void setupDAO(ConnectionSource cs) throws SQLException {
 		logger.info("Setting up DAO...");
 		imageRecordDao = DaoManager.createDao(cs, ImageRecord.class);
 		filterRecordDao = DaoManager.createDao(cs, FilterRecord.class);
+		badFileRecordDao = DaoManager.createDao(cs, BadFileRecord.class);
 	}
 
 	public void addRecord(ImageRecord record) throws SQLException {
@@ -127,6 +130,17 @@ public class Persistence {
 		}
 	}
 	
+	public boolean isBadFile(Path path) throws SQLException{
+		String id = path.toString();
+		BadFileRecord record = badFileRecordDao.queryForId(id);
+
+		if (record == null) {
+			return false;
+		} else {
+			return true;
+		}
+	}
+	
 	public CloseableWrappedIterable<ImageRecord> getImageRecordIterator() {
 		return imageRecordDao.getWrappedIterable();
 	}
@@ -137,6 +151,10 @@ public class Persistence {
 	
 	public void addFilter(FilterRecord filter) throws SQLException {
 		filterRecordDao.createOrUpdate(filter);
+	}
+	
+	public void addBadFile(BadFileRecord badFile) throws SQLException {
+		badFileRecordDao.createOrUpdate(badFile);
 	}
 
 	public boolean filterExists(long pHash) throws SQLException {
