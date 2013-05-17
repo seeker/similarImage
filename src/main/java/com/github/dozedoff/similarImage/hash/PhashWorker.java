@@ -102,6 +102,12 @@ public class PhashWorker extends Thread {
 				newRecords.clear();
 			} catch (Exception e) {
 				logger.warn("Batch add failed - {}", e.getMessage());
+				
+				if(logger.isDebugEnabled()) {
+					for(ImageRecord ir : newRecords) {
+						logger.debug("{} -- {}",ir.getPath(), ir.getpHash());
+					}
+				}
 			}
 			
 			work.clear();
