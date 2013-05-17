@@ -53,6 +53,7 @@ public class SimilarImage {
 	private final int WORKER_TREADS = 4;
 	private final int THUMBNAIL_DIMENSION = 500;
 	private final int PRODUCER_QUEUE_SIZE = 200;
+	private final int LOADER_PRIORITY = 3;
 	
 	private ImageProducer producer;
 	private PhashWorker workers[] = new PhashWorker[WORKER_TREADS];
@@ -64,6 +65,7 @@ public class SimilarImage {
 	
 	public void init() {
 		producer = new ImageProducer(PRODUCER_QUEUE_SIZE);
+		producer.setThreadPriority(LOADER_PRIORITY);
 		producer.startLoader();
 		
 		gui = new SimilarImageGUI(this);
