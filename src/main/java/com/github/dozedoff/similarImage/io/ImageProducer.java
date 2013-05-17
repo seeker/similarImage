@@ -59,6 +59,7 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 			
 			InputStream is = Files.newInputStream(next);
 			BufferedImage img = ImageIO.read(is);
+			is.close();
 			Pair<Path, BufferedImage> pair = new Pair<Path, BufferedImage>(next, img);
 			output.put(pair);
 
