@@ -57,6 +57,7 @@ public class SimilarImageGUI extends JFrame {
 	private JButton find, stop, sortSimilar, sortFilter;
 	private JLabel status, hammingValue;
 	private JProgressBar progress;
+	private JProgressBar bufferLevel;
 	private JList<Long> groups;
 	private DefaultListModel<Long> groupListModel;
 	private JScrollPane groupScrollPane;
@@ -92,6 +93,7 @@ public class SimilarImageGUI extends JFrame {
 		progress.setStringPainted(true);
 		sortSimilar = new JButton("Sort similar");
 		sortFilter = new JButton("Sort filter");
+		bufferLevel = parent.getBufferLevel();
 		
 		groupListModel = new DefaultListModel<Long>();
 		groups = new JList<Long>(groupListModel);
@@ -160,6 +162,7 @@ public class SimilarImageGUI extends JFrame {
 		this.add(status);
 		this.add(progress);
 		this.add(sortSimilar, "wrap");
+		this.add(bufferLevel);
 		this.add(sortFilter, "wrap");
 		this.add(groupScrollPane, "growy");
 		this.add(hammingDistance, "growx");

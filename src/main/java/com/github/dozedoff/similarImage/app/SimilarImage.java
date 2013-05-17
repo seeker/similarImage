@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.swing.JComponent;
+import javax.swing.JProgressBar;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +55,7 @@ public class SimilarImage implements IGUIevent{
 	private final int THUMBNAIL_DIMENSION = 500;
 	private final int PRODUCER_QUEUE_SIZE = 100;
 	
-	private ImageProducer producer = new ImageProducer(PRODUCER_QUEUE_SIZE);
+	private ImageProducer producer;
 	private PhashWorker workers[] = new PhashWorker[WORKER_TREADS];
 	private SortSimilar sorter = new SortSimilar();
 	
@@ -63,8 +64,13 @@ public class SimilarImage implements IGUIevent{
 	}
 	
 	public void init() {
+		producer = new ImageProducer(PRODUCER_QUEUE_SIZE);
 		gui = new SimilarImageGUI(this);
 		displayGroup = new DisplayGroup();
+	}
+	
+	public JProgressBar getBufferLevel() {
+		return producer.getBufferLevel();
 	}
 	
 	public void indexImages(String path) {

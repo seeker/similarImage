@@ -24,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import javax.imageio.ImageIO;
+import javax.swing.JProgressBar;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,9 +34,17 @@ import com.github.dozedoff.commonj.util.Pair;
 
 public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>> {
 	private static final Logger logger = LoggerFactory.getLogger(ImageProducer.class);
+	private final JProgressBar bufferLevel;
 	
 	public ImageProducer(int maxOutputQueueSize) {
 		super(maxOutputQueueSize);
+		
+		bufferLevel = new JProgressBar(0, maxOutputQueueSize);
+		bufferLevel.setStringPainted(true);
+	}
+	
+	public JProgressBar getBufferLevel() {
+		return bufferLevel;
 	}
 	
 	@Override
@@ -49,5 +58,10 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 		} catch (IOException e) {
 			logger.warn("Failed to load file - {}", e.getMessage());
 		}
+	}
+	
+	@Override
+	protected void outputQueueChanged() {
+		bufferLevel.setValue(output.size());
 	}
 }
