@@ -17,36 +17,34 @@
 */
 package com.github.dozedoff.similarImage.hash;
 
-import java.io.ByteArrayInputStream;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.LinkedList;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.imageio.IIOException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.dozedoff.commonj.util.Pair;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.gui.IGUIevent;
+import com.github.dozedoff.similarImage.io.ImageProducer;
 
 public class PhashWorker extends Thread {
 	private final static Logger logger = LoggerFactory.getLogger(PhashWorker.class);
 	private static int workerNumber = 0;
 	private int localWorkerNumber;
 	private final int MAX_WORK_BATCH_SIZE = 20;
-	private boolean stop = false;
 	private IGUIevent guiEvent;
 	
-	LinkedBlockingQueue<Path> imagePaths;
+	ImageProducer producer;
 	
-	public PhashWorker(LinkedBlockingQueue<Path> imagePaths, IGUIevent guiEvent) {
-		this.imagePaths = imagePaths;
+	public PhashWorker(ImageProducer producer, IGUIevent guiEvent) {
+		this.producer = producer;
 		localWorkerNumber = workerNumber;
 		workerNumber++;
 		this.setName("pHash worker " + localWorkerNumber);
@@ -55,41 +53,41 @@ public class PhashWorker extends Thread {
 	
 	@Override
 	public void run() {
-		calculateHashes(imagePaths);
+		calculateHashes(producer);
 	}
 	
 	public void stopWorker() {
-		this.stop = true;
+		interrupt();
 	}
 	
-	private void calculateHashes(LinkedBlockingQueue<Path> imagePaths) {
+	private void calculateHashes(ImageProducer producer) {
 		logger.info("{} started", this.getName());
 		Persistence persistence = Persistence.getInstance();
 		ImagePHash phash = new ImagePHash(32,9);
-		LinkedList<Path> work = new LinkedList<Path>();
+		LinkedList<Pair<Path, BufferedImage>> work = new LinkedList<Pair<Path, BufferedImage>>();
 		LinkedList<ImageRecord> newRecords = new LinkedList<ImageRecord>();
 		
-		while(!stop) {
-			if(imagePaths.isEmpty()) {
-				logger.info("No more work, {} terminating...", this.getName());
-				break;
+		while(! isInterrupted()) {
+			try {
+				producer.drainTo(work, MAX_WORK_BATCH_SIZE);
+			} catch (InterruptedException e1) {
+				interrupt();
 			}
 			
-			imagePaths.drainTo(work, MAX_WORK_BATCH_SIZE);
-			
-			for (Path path : work) {
-				if(stop) {
+			for (Pair<Path, BufferedImage> pair : work) {
+				if(isInterrupted()) {
 					break;
 				}
+				
+				Path path = pair.getLeft();
 				
 				try {
 					if (persistence.isPathRecorded(path)) {
 						continue;
 					}
 
-					InputStream is = loadData(path);
-					long hash = phash.getLongHash(is);
-					is.close();
+					BufferedImage img = pair.getRight();
+					long hash = phash.getLongHash(img);
 
 					ImageRecord record = new ImageRecord(path.toString(), hash);
 					newRecords.add(record);
@@ -115,10 +113,5 @@ public class PhashWorker extends Thread {
 		}
 		
 		logger.info("{} terminated", this.getName());
-	}
-	
-	private InputStream loadData(Path path) throws IOException {
-		byte[] data = Files.readAllBytes(path);
-		return new ByteArrayInputStream(data);
 	}
 }

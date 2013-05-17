@@ -60,6 +60,13 @@ public class ImagePHash {
         	return hash;
         }
         
+        public long getLongHash(BufferedImage img) throws Exception {
+        	double[][] dct = calculateDctMap(img);
+        	double dctAvg = calcDctAverage(dct);
+        	long hash = convertToLong(dct, dctAvg);
+        	return hash;
+        }
+        
         /**
          * 
          * @param is file to hash
@@ -90,10 +97,14 @@ public class ImagePHash {
 
 		return values;
 	}
+	
+	public double[][] calculateDctMap(InputStream is) throws IOException {
+		BufferedImage img = readImage(is);
+		return calculateDctMap(img);
+	}
        
         
-        public double[][] calculateDctMap(InputStream is) throws IOException {
-                BufferedImage img = readImage(is);
+        public double[][] calculateDctMap(BufferedImage img) throws IOException {
                
                 /* 1. Reduce size.
                  * Like Average Hash, pHash starts with a small image.

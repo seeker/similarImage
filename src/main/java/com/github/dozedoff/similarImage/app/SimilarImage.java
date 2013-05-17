@@ -25,7 +25,6 @@ import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.swing.JComponent;
 
@@ -42,6 +41,7 @@ import com.github.dozedoff.similarImage.gui.DisplayGroup;
 import com.github.dozedoff.similarImage.gui.IGUIevent;
 import com.github.dozedoff.similarImage.gui.SimilarImageGUI;
 import com.github.dozedoff.similarImage.hash.PhashWorker;
+import com.github.dozedoff.similarImage.io.ImageProducer;
 import com.j256.ormlite.dao.CloseableWrappedIterable;
 
 public class SimilarImage implements IGUIevent{
@@ -51,6 +51,9 @@ public class SimilarImage implements IGUIevent{
 	Logger logger = LoggerFactory.getLogger(SimilarImage.class);
 	private final int WORKER_TREADS = 4;
 	private final int THUMBNAIL_DIMENSION = 500;
+	private final int PRODUCER_QUEUE_SIZE = 100;
+	
+	private ImageProducer producer = new ImageProducer(PRODUCER_QUEUE_SIZE);
 	private PhashWorker workers[] = new PhashWorker[WORKER_TREADS];
 	private SortSimilar sorter = new SortSimilar();
 	
@@ -78,7 +81,7 @@ public class SimilarImage implements IGUIevent{
 		t.start();
 	}
 	
-	private void findImages(String path, LinkedBlockingQueue<Path> imagePaths) {
+	private void findImages(String path, LinkedList<Path> imagePaths) {
 		FilenameFilterVisitor visitor = new FilenameFilterVisitor(imagePaths, new SimpleImageFilter());
 		Path directoryToSearch = Paths.get(path);
 		try {
@@ -92,12 +95,15 @@ public class SimilarImage implements IGUIevent{
 		gui.setTotalFiles(imagePaths.size());
 	}
 	
-	private void calculateHashes(LinkedBlockingQueue<Path> imagePaths) {
+	private void calculateHashes(List<Path> imagePaths) {
 		logger.info("Creating and starting workers...");
 		for(int i=0; i < WORKER_TREADS; i++) {
-			workers[i] = new PhashWorker(imagePaths, this);
+			workers[i] = new PhashWorker(producer, this);
 			workers[i].start();
 		}
+		
+		logger.info("Adding paths to ImageProducer");
+		producer.addToLoad(imagePaths);
 		
 		for(int i=0; i < WORKER_TREADS; i++) {
 			try {
@@ -152,7 +158,7 @@ public class SimilarImage implements IGUIevent{
 			gui.clearProgress();
 			gui.setStatus("Running...");
 			logger.info("Hashing images in {}", path);
-			LinkedBlockingQueue<Path> imagePaths = new LinkedBlockingQueue<Path>();
+			LinkedList<Path> imagePaths = new LinkedList<Path>();
 			
 			gui.setStatus("Looking for images...");
 			findImages(path, imagePaths);
