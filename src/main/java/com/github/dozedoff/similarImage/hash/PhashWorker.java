@@ -31,7 +31,6 @@ import org.slf4j.LoggerFactory;
 import com.github.dozedoff.commonj.util.Pair;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
-import com.github.dozedoff.similarImage.gui.IGUIevent;
 import com.github.dozedoff.similarImage.io.ImageProducer;
 
 public class PhashWorker extends Thread {
@@ -39,16 +38,14 @@ public class PhashWorker extends Thread {
 	private static int workerNumber = 0;
 	private int localWorkerNumber;
 	private final int MAX_WORK_BATCH_SIZE = 20;
-	private IGUIevent guiEvent;
 	
 	ImageProducer producer;
 	
-	public PhashWorker(ImageProducer producer, IGUIevent guiEvent) {
+	public PhashWorker(ImageProducer producer) {
 		this.producer = producer;
 		localWorkerNumber = workerNumber;
 		workerNumber++;
 		this.setName("pHash worker " + localWorkerNumber);
-		this.guiEvent = guiEvent;
 	}
 	
 	@Override
@@ -107,7 +104,6 @@ public class PhashWorker extends Thread {
 				logger.warn("Batch add failed - {}", e.getMessage());
 			}
 			
-			guiEvent.progressUpdate(work.size());
 			work.clear();
 		}
 		

@@ -24,6 +24,8 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.imageio.ImageIO;
 import javax.swing.JProgressBar;
@@ -37,11 +39,15 @@ import com.github.dozedoff.similarImage.db.Persistence;
 
 public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>> {
 	private static final Logger logger = LoggerFactory.getLogger(ImageProducer.class);
-	private final JProgressBar bufferLevel;
+	private final JProgressBar bufferLevel, totalProgress;
 	private final Persistence persistence = Persistence.getInstance();
+	private final AtomicInteger total = new AtomicInteger();
+	private final AtomicInteger processed = new AtomicInteger();
 	
 	public ImageProducer(int maxOutputQueueSize) {
 		super(maxOutputQueueSize);
+		totalProgress = new JProgressBar(processed.get(),total.get());
+		totalProgress.setStringPainted(true);
 		bufferLevel = new JProgressBar(0, maxOutputQueueSize);
 		bufferLevel.setStringPainted(true);
 	}
@@ -51,10 +57,35 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 	}
 	
 	@Override
+	public void addToLoad(List<Path> paths) {
+		total.addAndGet(paths.size());
+		super.addToLoad(paths);
+	}
+	
+	@Override
+	public void addToLoad(Path... paths) {
+		total.addAndGet(paths.length);
+		super.addToLoad(paths);
+	}
+	
+	@Override
+	public void clear() {
+		super.clear();
+		processed.set(0);
+		total.set(0);
+	}
+	
+	public JProgressBar getTotalProgress() {
+		return totalProgress;
+	}
+	
+	@Override
 	protected void loaderDoWork() throws InterruptedException {
 		try {
 			Path next = input.take();
 			if (persistence.isPathRecorded(next)) {
+				processed.addAndGet(1);
+				totalProgress.setValue(processed.get());
 				return;
 			}
 			
@@ -64,7 +95,6 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 
 			Pair<Path, BufferedImage> pair = new Pair<Path, BufferedImage>(next, img);
 			output.put(pair);
-
 		} catch (IOException e) {
 			logger.warn("Failed to load file - {}", e.getMessage());
 		} catch (SQLException e) {
@@ -72,6 +102,9 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 		} catch (Exception e) {
 			logger.warn("Failed to process image - {}", e.getMessage());
 		}
+		
+		processed.addAndGet(1);
+		totalProgress.setValue(processed.get());
 	}
 
 	@Override

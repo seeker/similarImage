@@ -40,13 +40,12 @@ import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.DuplicateEntry;
 import com.github.dozedoff.similarImage.duplicate.SortSimilar;
 import com.github.dozedoff.similarImage.gui.DisplayGroup;
-import com.github.dozedoff.similarImage.gui.IGUIevent;
 import com.github.dozedoff.similarImage.gui.SimilarImageGUI;
 import com.github.dozedoff.similarImage.hash.PhashWorker;
 import com.github.dozedoff.similarImage.io.ImageProducer;
 import com.j256.ormlite.dao.CloseableWrappedIterable;
 
-public class SimilarImage implements IGUIevent{
+public class SimilarImage {
 	SimilarImageGUI gui;
 	DisplayGroup displayGroup;
 	
@@ -110,7 +109,7 @@ public class SimilarImage implements IGUIevent{
 		sw.start();
 		logger.info("Creating and starting workers...");
 		for(int i=0; i < WORKER_TREADS; i++) {
-			workers[i] = new PhashWorker(producer, this);
+			workers[i] = new PhashWorker(producer);
 			workers[i].start();
 		}
 		
@@ -131,14 +130,13 @@ public class SimilarImage implements IGUIevent{
 	
 	public void stopWorkers() {
 		logger.info("Stopping all workers...");
+		producer.clear();
 		for(PhashWorker phw : workers) {
 			if(phw != null) {
 				logger.info("Stopping {}...", phw.getName());
 				phw.stopWorker();
 			}
 		}
-		
-		gui.clearProgress();
 	}
 	
 	public void displayGroup(long group) {
@@ -170,7 +168,7 @@ public class SimilarImage implements IGUIevent{
 		
 		@Override
 		public void run() {
-			gui.clearProgress();
+			producer.clear();
 			gui.setStatus("Running...");
 			logger.info("Hashing images in {}", path);
 			LinkedList<Path> imagePaths = new LinkedList<Path>();
@@ -226,8 +224,7 @@ public class SimilarImage implements IGUIevent{
 		}
 	}
 
-	@Override
-	public void progressUpdate(int update) {
-		gui.addDelta(update);
+	public JProgressBar getTotalProgress() {
+		return producer.getTotalProgress();
 	}
 }

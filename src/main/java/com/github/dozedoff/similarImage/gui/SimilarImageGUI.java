@@ -24,7 +24,6 @@ import java.awt.event.AdjustmentListener;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -63,9 +62,6 @@ public class SimilarImageGUI extends JFrame {
 	private JScrollPane groupScrollPane;
 	private JScrollBar hammingDistance;
 	
-	
-	private AtomicInteger currentProgress = new AtomicInteger();
-	
 	public SimilarImageGUI(SimilarImage parent) {
 		this.parent = parent;
 		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -89,8 +85,7 @@ public class SimilarImageGUI extends JFrame {
 		find = new JButton("Find");
 		stop = new JButton("Stop");
 		status = new JLabel("Idle");
-		progress = new JProgressBar();
-		progress.setStringPainted(true);
+		progress = parent.getTotalProgress();
 		sortSimilar = new JButton("Sort similar");
 		sortFilter = new JButton("Sort filter");
 		bufferLevel = parent.getBufferLevel();
@@ -213,19 +208,8 @@ public class SimilarImageGUI extends JFrame {
 		hammingValue.setText("" + hammingDistance.getValue());
 	}
 	
-	public void clearProgress() {
-		currentProgress.set(0);
-		progress.setMaximum(0);
-		progress.setValue(0);
-	}
-	
 	public void setTotalFiles(int numOfFiles) {
 		progress.setMaximum(numOfFiles);
-	}
-	
-	public void addDelta(int numOfFiles) {
-		currentProgress.addAndGet(numOfFiles);
-		progress.setValue(currentProgress.get());
 	}
 	
 	public void populateGroupList(List<Long> groups) {
