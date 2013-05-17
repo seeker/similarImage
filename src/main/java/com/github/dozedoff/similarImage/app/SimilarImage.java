@@ -50,13 +50,15 @@ public class SimilarImage {
 	DisplayGroup displayGroup;
 	
 	Logger logger = LoggerFactory.getLogger(SimilarImage.class);
-	private final int WORKER_TREADS = 4;
+	private final int WORKER_THREADS = 6;
+	private final int LOADER_THREADS = 2;
+	private final int LOADER_PRIORITY = 2;
+	
 	private final int THUMBNAIL_DIMENSION = 500;
 	private final int PRODUCER_QUEUE_SIZE = 200;
-	private final int LOADER_PRIORITY = 3;
 	
 	private ImageProducer producer;
-	private PhashWorker workers[] = new PhashWorker[WORKER_TREADS];
+	private PhashWorker workers[] = new PhashWorker[WORKER_THREADS];
 	private SortSimilar sorter = new SortSimilar();
 	
 	public static void main(String[] args) {
@@ -66,7 +68,7 @@ public class SimilarImage {
 	public void init() {
 		producer = new ImageProducer(PRODUCER_QUEUE_SIZE);
 		producer.setThreadPriority(LOADER_PRIORITY);
-		producer.startLoader();
+		producer.startLoader(LOADER_THREADS);
 		
 		gui = new SimilarImageGUI(this);
 		displayGroup = new DisplayGroup();
@@ -110,7 +112,7 @@ public class SimilarImage {
 		
 		sw.start();
 		logger.info("Creating and starting workers...");
-		for(int i=0; i < WORKER_TREADS; i++) {
+		for(int i=0; i < WORKER_THREADS; i++) {
 			workers[i] = new PhashWorker(producer);
 			workers[i].start();
 		}
@@ -118,7 +120,7 @@ public class SimilarImage {
 		logger.info("Adding paths to ImageProducer");
 		producer.addToLoad(imagePaths);
 		
-		for(int i=0; i < WORKER_TREADS; i++) {
+		for(int i=0; i < WORKER_THREADS; i++) {
 			try {
 				workers[i].join();
 			} catch (InterruptedException e) {
