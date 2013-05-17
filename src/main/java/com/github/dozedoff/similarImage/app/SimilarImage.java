@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.file.FilenameFilterVisitor;
 import com.github.dozedoff.commonj.filefilter.SimpleImageFilter;
+import com.github.dozedoff.commonj.time.StopWatch;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.DuplicateEntry;
@@ -96,6 +97,9 @@ public class SimilarImage implements IGUIevent{
 	}
 	
 	private void calculateHashes(List<Path> imagePaths) {
+		StopWatch sw = new StopWatch();
+		
+		sw.start();
 		logger.info("Creating and starting workers...");
 		for(int i=0; i < WORKER_TREADS; i++) {
 			workers[i] = new PhashWorker(producer, this);
@@ -112,6 +116,9 @@ public class SimilarImage implements IGUIevent{
 				logger.info("Interrupted waiting for {}", workers[i].getName());
 			}
 		}
+		
+		sw.stop();
+		logger.info("Took {} to process {} images", sw.getTime(), imagePaths.size());
 	}
 	
 	public void stopWorkers() {
