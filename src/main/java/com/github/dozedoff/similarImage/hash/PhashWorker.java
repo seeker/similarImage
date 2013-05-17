@@ -62,7 +62,6 @@ public class PhashWorker extends Thread {
 	
 	private void calculateHashes(ImageProducer producer) {
 		logger.info("{} started", this.getName());
-		Persistence persistence = Persistence.getInstance();
 		ImagePHash phash = new ImagePHash(32,9);
 		LinkedList<Pair<Path, BufferedImage>> work = new LinkedList<Pair<Path, BufferedImage>>();
 		LinkedList<ImageRecord> newRecords = new LinkedList<ImageRecord>();
@@ -86,10 +85,6 @@ public class PhashWorker extends Thread {
 				Path path = pair.getLeft();
 				
 				try {
-					if (persistence.isPathRecorded(path)) {
-						continue;
-					}
-
 					BufferedImage img = pair.getRight();
 					long hash = phash.getLongHash(img);
 
