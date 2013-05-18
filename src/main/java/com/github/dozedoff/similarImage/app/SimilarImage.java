@@ -54,7 +54,7 @@ public class SimilarImage {
 	private final int LOADER_PRIORITY = 2;
 	
 	private final int THUMBNAIL_DIMENSION = 500;
-	private final int PRODUCER_QUEUE_SIZE = 200;
+	private final int PRODUCER_QUEUE_SIZE = 400;
 	
 	SimilarImageGUI gui;
 	DisplayGroup displayGroup;

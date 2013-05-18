@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -49,6 +50,7 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 	private final int maxOutputQueueSize;
 	
 	private final int MAX_WAIT_TIME = 10000;
+	private final int WORK_BATCH_SIZE = 20;
 	
 	public ImageProducer(int maxOutputQueueSize) {
 		super(maxOutputQueueSize);
@@ -88,47 +90,60 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 	
 	@Override
 	protected void loaderDoWork() throws InterruptedException {
-		Path next = null;
+		Path n = null;
+		ArrayList<Path> work = new ArrayList<Path>(WORK_BATCH_SIZE + 1);
 		
-		if(isBufferFilled()) {
+		if(isBufferFilled() || input.isEmpty()) {
 			synchronized (output) {
 				output.notifyAll();
 			}
 		}
 		
-		try {
-			next = input.take();
-			if (persistence.isBadFile(next) || persistence.isPathRecorded(next)) {
-				processed.addAndGet(1);
-				totalProgress.setValue(processed.get());
-				return;
-			}
-			
-			byte[] data = Files.readAllBytes(next);
-			InputStream is = new ByteArrayInputStream(data);
-			BufferedImage img = ImageIO.read(is);
-
-			Pair<Path, BufferedImage> pair = new Pair<Path, BufferedImage>(next, img);
-			output.put(pair);
-		} catch (IIOException e) {
-			logger.warn("Failed to process image(IIO) - {}", e.getMessage());
+		n = input.take();
+		work.add(n);
+		input.drainTo(work,WORK_BATCH_SIZE);
+		
+		for (Path p : work) {
 			try {
-				persistence.addBadFile(new BadFileRecord(next));
-			} catch (SQLException e1) {
-				logger.warn("Failed to add bad file record for {} - {}", next, e.getMessage());
-			}
-		} catch (IOException e) {
-			logger.warn("Failed to load file - {}", e.getMessage());
-		} catch (SQLException e) {
-			logger.warn("Failed to query database - {}", e.getMessage());
-		} catch (Exception e) {
-			logger.warn("Failed to process image(other) - {}", e.getMessage());
-			try {
-				persistence.addBadFile(new BadFileRecord(next));
-			} catch (SQLException e1) {
-				logger.warn("Failed to add bad file record for {} - {}", next, e.getMessage());
+				processFile(p);
+			} catch (IIOException e) {
+				logger.warn("Failed to process image(IIO) - {}", e.getMessage());
+				try {
+					persistence.addBadFile(new BadFileRecord(p));
+				} catch (SQLException e1) {
+					logger.warn("Failed to add bad file record for {} - {}",
+							p, e.getMessage());
+				}
+			} catch (IOException e) {
+				logger.warn("Failed to load file - {}", e.getMessage());
+			} catch (SQLException e) {
+				logger.warn("Failed to query database - {}", e.getMessage());
+			} catch (Exception e) {
+				logger.warn("Failed to process image(other) - {}",
+						e.getMessage());
+				try {
+					persistence.addBadFile(new BadFileRecord(p));
+				} catch (SQLException e1) {
+					logger.warn("Failed to add bad file record for {} - {}",
+							p, e.getMessage());
+				}
 			}
 		}
+	}
+	
+	private void processFile(Path next) throws SQLException, IOException, InterruptedException {
+		if (persistence.isBadFile(next) || persistence.isPathRecorded(next)) {
+			processed.addAndGet(1);
+			totalProgress.setValue(processed.get());
+			return;
+		}
+		
+		byte[] data = Files.readAllBytes(next);
+		InputStream is = new ByteArrayInputStream(data);
+		BufferedImage img = ImageIO.read(is);
+
+		Pair<Path, BufferedImage> pair = new Pair<Path, BufferedImage>(next, img);
+		output.put(pair);
 		
 		processed.addAndGet(1);
 		totalProgress.setValue(processed.get());
@@ -163,6 +178,6 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 	}
 	
 	private boolean isBufferFilled() {
-		return output.size() == maxOutputQueueSize;
+		return output.size() > (float)maxOutputQueueSize*0.90f;
 	}
 }
