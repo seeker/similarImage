@@ -29,8 +29,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.util.Pair;
+import com.github.dozedoff.similarImage.db.DBWriter;
 import com.github.dozedoff.similarImage.db.ImageRecord;
-import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.io.ImageProducer;
 
 public class PhashWorker extends Thread {
@@ -39,10 +39,12 @@ public class PhashWorker extends Thread {
 	private int localWorkerNumber;
 	private final int MAX_WORK_BATCH_SIZE = 20;
 	
-	ImageProducer producer;
+	private final ImageProducer producer;
+	private final DBWriter dbWriter;
 	
-	public PhashWorker(ImageProducer producer) {
+	public PhashWorker(ImageProducer producer, DBWriter dbWriter) {
 		this.producer = producer;
+		this.dbWriter = dbWriter;
 		localWorkerNumber = workerNumber;
 		workerNumber++;
 		this.setName("pHash worker " + localWorkerNumber);
@@ -50,14 +52,14 @@ public class PhashWorker extends Thread {
 	
 	@Override
 	public void run() {
-		calculateHashes(producer);
+		calculateHashes();
 	}
 	
 	public void stopWorker() {
 		interrupt();
 	}
 	
-	private void calculateHashes(ImageProducer producer) {
+	private void calculateHashes() {
 		logger.info("{} started", this.getName());
 		ImagePHash phash = new ImagePHash(32,9);
 		LinkedList<Pair<Path, BufferedImage>> work = new LinkedList<Pair<Path, BufferedImage>>();
@@ -97,20 +99,9 @@ public class PhashWorker extends Thread {
 					logger.warn("Failed to hash image {} - {}", path, e.getMessage());
 				}
 			}
-			try {
-				Persistence.getInstance().batchAddRecord(newRecords);
-				newRecords.clear();
-			} catch (Exception e) {
-				logger.warn("Batch add failed - {}", e.getMessage());
-				
-				if(logger.isDebugEnabled()) {
-					for(ImageRecord ir : newRecords) {
-						logger.debug("{} -- {}",ir.getPath(), ir.getpHash());
-					}
-					
-					logger.debug("", e);
-				}
-			}
+			
+			dbWriter.add(newRecords);
+			newRecords = new LinkedList<ImageRecord>();
 			
 			work.clear();
 		}

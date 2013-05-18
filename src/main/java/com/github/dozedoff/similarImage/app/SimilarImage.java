@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import com.github.dozedoff.commonj.file.FilenameFilterVisitor;
 import com.github.dozedoff.commonj.filefilter.SimpleImageFilter;
 import com.github.dozedoff.commonj.time.StopWatch;
+import com.github.dozedoff.similarImage.db.DBWriter;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.DuplicateEntry;
@@ -46,10 +47,8 @@ import com.github.dozedoff.similarImage.io.ImageProducer;
 import com.j256.ormlite.dao.CloseableWrappedIterable;
 
 public class SimilarImage {
-	SimilarImageGUI gui;
-	DisplayGroup displayGroup;
+	private final static Logger logger = LoggerFactory.getLogger(SimilarImage.class);
 	
-	Logger logger = LoggerFactory.getLogger(SimilarImage.class);
 	private final int WORKER_THREADS = 6;
 	private final int LOADER_THREADS = 2;
 	private final int LOADER_PRIORITY = 2;
@@ -57,9 +56,13 @@ public class SimilarImage {
 	private final int THUMBNAIL_DIMENSION = 500;
 	private final int PRODUCER_QUEUE_SIZE = 200;
 	
+	SimilarImageGUI gui;
+	DisplayGroup displayGroup;
+	
 	private ImageProducer producer;
 	private PhashWorker workers[] = new PhashWorker[WORKER_THREADS];
 	private SortSimilar sorter = new SortSimilar();
+	private DBWriter dbWriter = new DBWriter();
 	
 	public static void main(String[] args) {
 		new SimilarImage().init();
@@ -113,7 +116,7 @@ public class SimilarImage {
 		sw.start();
 		logger.info("Creating and starting workers...");
 		for(int i=0; i < WORKER_THREADS; i++) {
-			workers[i] = new PhashWorker(producer);
+			workers[i] = new PhashWorker(producer, dbWriter);
 			workers[i].start();
 		}
 		
