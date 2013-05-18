@@ -48,6 +48,8 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 	private final AtomicInteger processed = new AtomicInteger();
 	private final int maxOutputQueueSize;
 	
+	private final int MAX_WAIT_TIME = 10000;
+	
 	public ImageProducer(int maxOutputQueueSize) {
 		super(maxOutputQueueSize);
 		this.maxOutputQueueSize = maxOutputQueueSize;
@@ -142,7 +144,14 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 		if(isBufferLow() && (! input.isEmpty())) {
 			synchronized (output) {
 				logger.debug("Low buffer, suspending drain");
-				output.wait();
+
+				try {
+					output.wait(MAX_WAIT_TIME);
+				} catch (InterruptedException e) {
+					logger.debug("Max wait has timed out, resuming drain");
+					return;
+				}
+				
 				logger.debug("Buffer re-filled, resuming drain");
 			}
 		}
