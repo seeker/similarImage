@@ -107,6 +107,8 @@ public class PhashWorker extends Thread {
 					for(ImageRecord ir : newRecords) {
 						logger.debug("{} -- {}",ir.getPath(), ir.getpHash());
 					}
+					
+					logger.debug("", e);
 				}
 			}
 			
