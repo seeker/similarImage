@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -45,9 +46,11 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 	private final Persistence persistence = Persistence.getInstance();
 	private final AtomicInteger total = new AtomicInteger();
 	private final AtomicInteger processed = new AtomicInteger();
+	private final int maxOutputQueueSize;
 	
 	public ImageProducer(int maxOutputQueueSize) {
 		super(maxOutputQueueSize);
+		this.maxOutputQueueSize = maxOutputQueueSize;
 		totalProgress = new JProgressBar(processed.get(),total.get());
 		totalProgress.setStringPainted(true);
 		bufferLevel = new JProgressBar(0, maxOutputQueueSize);
@@ -84,6 +87,12 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 	@Override
 	protected void loaderDoWork() throws InterruptedException {
 		Path next = null;
+		
+		if(isBufferFilled()) {
+			synchronized (output) {
+				output.notifyAll();
+			}
+		}
 		
 		try {
 			next = input.take();
@@ -126,5 +135,25 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 	@Override
 	protected void outputQueueChanged() {
 		bufferLevel.setValue(output.size());
+	}
+	
+	@Override
+	public void drainTo(Collection<Pair<Path, BufferedImage>> drainTo, int maxElements) throws InterruptedException {
+		if(isBufferLow() && (! input.isEmpty())) {
+			synchronized (output) {
+				logger.debug("Low buffer, suspending drain");
+				output.wait();
+				logger.debug("Buffer re-filled, resuming drain");
+			}
+		}
+		super.drainTo(drainTo, maxElements);
+	}
+	
+	private boolean isBufferLow(){
+		return output.size() < (float)maxOutputQueueSize*0.10f;
+	}
+	
+	private boolean isBufferFilled() {
+		return output.size() == maxOutputQueueSize;
 	}
 }
