@@ -24,7 +24,7 @@ import com.github.dozedoff.commonj.string.Convert;
 public class Settings extends AbstractSettings {
 	private static Settings instance = null;
 	
-	private enum Parameters {phash_workers, data_loaders, data_loader_priority, thumbnail_dimension, loader_out_queue_size}
+	public enum Parameters {phash_workers, data_loaders, data_loader_priority, thumbnail_dimension, loader_out_queue_size}
 	
 	private final int DEFAULT_PHASH_WORKERS = 2;
 	private final int DEFAULT_DATA_LOADERS = 1;

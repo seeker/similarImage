@@ -17,16 +17,50 @@
 */
 package com.github.dozedoff.similarImage.app;
 
-import java.util.Properties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.github.dozedoff.commonj.settings.AbstractSettings;
 import com.github.dozedoff.commonj.settings.ISettingsValidator;
+import com.github.dozedoff.similarImage.app.Settings.Parameters;
 
 public class SettingsValidator implements ISettingsValidator {
-
+	private static final Logger logger = LoggerFactory.getLogger(SettingsValidator.class);
+	private boolean allOk = true;
+	
 	@Override
-	public boolean validate(Properties settings) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean validate(AbstractSettings settings) {
+		if (!(settings instanceof Settings)) {
+			return false;
+		}
+
+		Settings set = (Settings) settings;
+
+		checkRange(Parameters.data_loader_priority, set.getDataLoaderPriority(), Thread.MIN_PRIORITY, Thread.MAX_PRIORITY);
+		checkGreaterZero(Parameters.data_loaders, set.getDataLoaders());
+		checkGreaterZero(Parameters.loader_out_queue_size, set.getLoaderOutQueueSize());
+		checkGreaterZero(Parameters.phash_workers, set.getpHashWorkers());
+		checkGreaterZero(Parameters.thumbnail_dimension, set.getThumbnailDimension());
+
+		return allOk;
+	}
+	
+	private void checkGreaterZero(Parameters param, int value) {
+		if (!(value > 0)) {
+			setOk(false);
+			logger.warn("Value for {} must be greater than 0, currently set to {}", param.toString(), value);
+		}
+	}
+	
+	private void checkRange(Parameters param, int value, int min, int max) {
+		if(! ((value >= min) && (value <= max))){
+			setOk(false);
+			Object loggerData[] = {param.toString(), };
+			logger.warn("Value for {} must be between {} and {}, currently set to {}", loggerData);
+		}
 	}
 
+	private void setOk(boolean ok) {
+		allOk &= ok;
+	}
 }
