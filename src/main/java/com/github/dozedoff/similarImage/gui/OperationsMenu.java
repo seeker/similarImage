@@ -31,7 +31,7 @@ import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 
 public class OperationsMenu extends JPopupMenu{
 	private static final long serialVersionUID = 1L;
-	private enum Operations {Delete, MarkAndDeleteDNW, Ignore};
+	private enum Operations {Delete, MarkAndDeleteDNW, MarkBlocked, Ignore};
 	private final DuplicateEntry parent;
 	
 	public OperationsMenu(DuplicateEntry parent) {
@@ -57,6 +57,14 @@ public class OperationsMenu extends JPopupMenu{
 				Path path = getPath();
 				DuplicateOperations.markAsDnw(path);
 				DuplicateOperations.deleteFile(path);
+			}
+		});
+		
+		actions.put(Operations.MarkBlocked, new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Path path = getPath();
+				DuplicateOperations.markAs(path, "BLOCK");
 			}
 		});
 		

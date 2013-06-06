@@ -57,6 +57,7 @@ public class DuplicateOperations {
 		}
 	}
 	
+	@Deprecated
 	public static void markAsDnw(Path path) {
 		//TODO do this with transaction
 		//TODO get "Mark as" strings from options
@@ -84,6 +85,33 @@ public class DuplicateOperations {
 		}
 	}
 	
+	public static void markAs(Path path, String reason) {
+		//TODO do this with transaction
+		//TODO get "Mark as" strings from options
+		try {
+			ImageRecord ir = Persistence.getInstance().getRecord(path);
+			if(ir == null) {
+				logger.warn("No record found for {}", path);
+				return;
+			}
+			
+			long pHash = ir.getpHash();
+			logger.info("Adding pHash {} to filter, reason {}", pHash, reason);
+			FilterRecord fr = Persistence.getInstance().getFilter(pHash);
+			
+			if(fr != null) {
+				fr.setReason(reason);
+			} else {
+				fr = new FilterRecord(pHash, reason);
+			}
+			
+			Persistence.getInstance().addFilter(fr);
+		} catch (SQLException e) {
+			logger.warn("Add filter operation failed for {} - {}", path, e.getMessage());
+		}
+	}
+	
+	@Deprecated
 	public static void markDirectoryDnw(Path directory) {
 		if(! isDirectory(directory)) {
 			logger.warn("Directory {} not valid, aborting.", directory);
@@ -95,6 +123,22 @@ public class DuplicateOperations {
 		
 		for(File f : files){
 			markAsDnw(f.toPath());
+		}
+		
+		logger.info("Added {} images from {} to filter list", files.length, directory);
+	}
+	
+	public static void markDirectoryAs(Path directory, String reason) {
+		if(! isDirectory(directory)) {
+			logger.warn("Directory {} not valid, aborting.", directory);
+			return;
+		}
+		
+		File dir = directory.toFile();
+		File files[] = dir.listFiles();
+		
+		for(File f : files){
+			markAs(f.toPath(), reason);
 		}
 		
 		logger.info("Added {} images from {} to filter list", files.length, directory);

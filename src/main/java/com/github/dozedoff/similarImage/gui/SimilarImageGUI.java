@@ -167,11 +167,12 @@ public class SimilarImageGUI extends JFrame {
 	private void setupMenu() {
 		JMenuBar menuBar = new JMenuBar();
 		JMenu file;
-		JMenuItem folderDnw, pruneRecords;
+		JMenuItem folderDnw, folderBlock, pruneRecords;
 		
 		file = new JMenu("File");
 		
 		folderDnw = new JMenuItem("Add folder as dnw");
+		folderBlock = new JMenuItem("Add folder as block");
 		pruneRecords = new JMenuItem("Prune records");
 		
 		folderDnw.addActionListener(new ActionListener() {
@@ -190,6 +191,22 @@ public class SimilarImageGUI extends JFrame {
 			}
 		});
 		
+		folderBlock.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				JTextField directory = new JTextField(20);
+				Object[] message = {"Directory: ", directory};
+				JOptionPane pane = new JOptionPane(message,  JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+				JDialog getTopicDialog =  pane.createDialog(null, "Select directory");
+				getTopicDialog.setVisible(true);
+				
+				if(pane.getValue() != null && (Integer)pane.getValue() == JOptionPane.OK_OPTION) {
+					Path path = Paths.get(directory.getText());
+					DuplicateOperations.markDirectoryAs(path, "BLOCK");
+				}
+			}
+		});
+		
 		pruneRecords.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
@@ -198,6 +215,7 @@ public class SimilarImageGUI extends JFrame {
 		});
 		
 		file.add(folderDnw);
+		file.add(folderBlock);
 		file.add(pruneRecords);
 		
 		menuBar.add(file);
