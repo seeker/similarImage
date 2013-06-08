@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -36,6 +37,7 @@ import com.github.dozedoff.commonj.file.FilenameFilterVisitor;
 import com.github.dozedoff.commonj.filefilter.SimpleImageFilter;
 import com.github.dozedoff.commonj.time.StopWatch;
 import com.github.dozedoff.similarImage.db.DBWriter;
+import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.DuplicateEntry;
@@ -198,13 +200,22 @@ public class SimilarImage {
 
 		@Override
 		public void run() {
+			List<ImageRecord> dBrecords = new LinkedList<ImageRecord>();
+			
 			sorter.clear();
 			gui.setStatus("Sorting...");
+			
+			try {
+				dBrecords = Persistence.getInstance().getAllRecords();
+			} catch (SQLException e) {
+				logger.warn("Failed to load records - {}", e.getMessage());
+			}
+			
 			if (hammingDistance == 0) {
 				CloseableWrappedIterable<ImageRecord> records = Persistence.getInstance().getImageRecordIterator();
 				sorter.sortExactMatch(records);
 			} else {
-				sorter.sortHammingDistance(hammingDistance);
+				sorter.sortHammingDistance(hammingDistance, dBrecords);
 			}
 			gui.setStatus("" + sorter.getNumberOfDuplicateGroups() + " Groups");
 			List<Long> groups = sorter.getDuplicateGroups();
@@ -215,8 +226,11 @@ public class SimilarImage {
 	class FilterSorter extends Thread {
 		int hammingDistance = 0;
 		String reason;
+		List<ImageRecord> dBrecords = new LinkedList<ImageRecord>();
+		List<FilterRecord> filterRecords = new LinkedList<FilterRecord>();
 		
 		public FilterSorter(int hammingDistance, String reason) {
+			super();
 			this.hammingDistance = hammingDistance;
 			this.reason = reason;
 		}
@@ -224,7 +238,15 @@ public class SimilarImage {
 		@Override
 		public void run() {
 			gui.setStatus("Sorting...");
-			sorter.sortFilter(hammingDistance, reason);
+			
+			try {
+				dBrecords = Persistence.getInstance().getAllRecords();
+				filterRecords = Persistence.getInstance().getAllFilters(reason);
+			} catch (SQLException e) {
+				logger.warn("Failed to load from database - {}", e.getMessage());
+			}
+			
+			sorter.sortFilter(hammingDistance, reason, dBrecords, filterRecords);
 			gui.setStatus("" + sorter.getNumberOfDuplicateGroups() + " Groups");
 			List<Long> groups = sorter.getDuplicateGroups();
 			gui.populateGroupList(groups);

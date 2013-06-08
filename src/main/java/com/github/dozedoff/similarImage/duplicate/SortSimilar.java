@@ -42,70 +42,47 @@ public class SortSimilar {
 	CompareHammingDistance compareHamming = new CompareHammingDistance();
 	LinkedList<ImageRecord> ignoredImages = new LinkedList<ImageRecord>();
 	
-	/**
-	 * Use {@link #sortHammingDistance(int, CloseableWrappedIterable)} instead.
-	 * @param hammingDistance
-	 * @param records
-	 */
-	@Deprecated
-	public void sort(int hammingDistance, CloseableWrappedIterable<ImageRecord> records) {
-		if(hammingDistance == 0) {
-			sortExactMatch(records);
-		}else{
-			sortHammingDistance(hammingDistance);
-		}
-	}
-	
-	public void sortHammingDistance(int hammingDistance) {
+	public void sortHammingDistance(int hammingDistance, List<ImageRecord> dBrecords) {
 		clear();
-		try {
-			List<ImageRecord> dBrecords = Persistence.getInstance().getAllRecords();
-			dBrecords.removeAll(ignoredImages);
-			BKTree<ImageRecord> bkTree = BKTree.build(dBrecords, compareHamming);
-			
-			for(ImageRecord ir : dBrecords) {
-				long pHash = ir.getpHash();
-				
-				if(sorted.containsKey(pHash)) {
-					return;		// prevent duplicates
-				}
-				
-				Set<ImageRecord> similar = bkTree.searchWithin(ir, (double)hammingDistance);
-				sorted.put(pHash, similar);
+		dBrecords.removeAll(ignoredImages);
+		BKTree<ImageRecord> bkTree = BKTree.build(dBrecords, compareHamming);
+
+		for (ImageRecord ir : dBrecords) {
+			long pHash = ir.getpHash();
+
+			if (sorted.containsKey(pHash)) {
+				return; // prevent duplicates
 			}
-		} catch (SQLException e) {
-			logger.error("Failed to load records - {}", e.getMessage());
+
+			Set<ImageRecord> similar = bkTree.searchWithin(ir,
+					(double) hammingDistance);
+			sorted.put(pHash, similar);
 		}
 	}
 	
-	public void sortFilter(int hammingDistance, String reason) {
+	public void sortFilter(int hammingDistance, String reason, List<ImageRecord> dBrecords, List<FilterRecord> filter) {
 		clear();
-		
-		if(hammingDistance == 0) {
+
+		if (hammingDistance == 0) {
 			sortFilterExact(hammingDistance, reason);
 			return;
 		}
-		
-		try {
-			List<ImageRecord> dBrecords = Persistence.getInstance().getAllRecords();
-			dBrecords.removeAll(ignoredImages);
-			List<FilterRecord> filter = Persistence.getInstance().getAllFilters(reason);
-			BKTree<ImageRecord> bkTree = BKTree.build(dBrecords, compareHamming);
-			
-			for(FilterRecord fr : filter) {
-				long pHash = fr.getpHash();
-				
-				if(sorted.containsKey(pHash)) {
-					continue;		// prevent duplicates
-				}
-				
-				ImageRecord query = new ImageRecord(null, pHash);
-				
-				Set<ImageRecord> similar = bkTree.searchWithin(query, (double)hammingDistance);
-				sorted.put(pHash, similar);
+
+		dBrecords.removeAll(ignoredImages);
+		BKTree<ImageRecord> bkTree = BKTree.build(dBrecords, compareHamming);
+
+		for (FilterRecord fr : filter) {
+			long pHash = fr.getpHash();
+
+			if (sorted.containsKey(pHash)) {
+				continue; // prevent duplicates
 			}
-		} catch (SQLException e) {
-			logger.error("Failed to load records - {}", e.getMessage());
+
+			ImageRecord query = new ImageRecord(null, pHash);
+
+			Set<ImageRecord> similar = bkTree.searchWithin(query,
+					(double) hammingDistance);
+			sorted.put(pHash, similar);
 		}
 	}
 	
