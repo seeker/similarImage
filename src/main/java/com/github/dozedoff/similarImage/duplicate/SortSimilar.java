@@ -89,7 +89,7 @@ public class SortSimilar {
 		try {
 			List<ImageRecord> dBrecords = Persistence.getInstance().getAllRecords();
 			dBrecords.removeAll(ignoredImages);
-			List<FilterRecord> filter = Persistence.getInstance().getAllFilters();
+			List<FilterRecord> filter = Persistence.getInstance().getAllFilters(reason);
 			BKTree<ImageRecord> bkTree = BKTree.build(dBrecords, compareHamming);
 			
 			for(FilterRecord fr : filter) {
@@ -113,7 +113,7 @@ public class SortSimilar {
 		// TODO add filtering regarding reason
 		List<FilterRecord> filters;
 		try {
-			filters = Persistence.getInstance().getAllFilters();
+			filters = Persistence.getInstance().getAllFilters(reason);
 
 			for (FilterRecord filter : filters) {
 				long pHash = filter.getpHash();

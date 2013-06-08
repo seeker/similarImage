@@ -175,6 +175,11 @@ public class Persistence {
 		return filterRecordDao.queryForAll();
 	}
 	
+	public List<FilterRecord> getAllFilters(String reason) throws SQLException {
+		FilterRecord query = new FilterRecord(0, reason);
+		return filterRecordDao.queryForMatching(query);
+	}
+	
 	public List<String> getFilterReasons() {
 		List<String> reasons = new LinkedList<String>();
 		

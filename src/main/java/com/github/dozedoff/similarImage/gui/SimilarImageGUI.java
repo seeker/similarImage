@@ -122,7 +122,16 @@ public class SimilarImageGUI extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				//TODO display option dialog to select reason - null or empty mean all
-				parent.sortFilter(hammingDistance.getValue(), null);
+				JTextField reason = new JTextField(20);
+				Object[] message = {"Reason: ", reason};
+				JOptionPane pane = new JOptionPane(message,  JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+				JDialog getTopicDialog =  pane.createDialog(null, "Select directory");
+				getTopicDialog.setVisible(true);
+				
+				if(pane.getValue() != null && (Integer)pane.getValue() == JOptionPane.OK_OPTION) {
+					String r = reason.getText();
+					parent.sortFilter(hammingDistance.getValue(), r);
+				}
 			}
 		});
 		
