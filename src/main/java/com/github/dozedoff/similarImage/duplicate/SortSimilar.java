@@ -62,6 +62,14 @@ public class SortSimilar {
 	
 	public void sortFilter(int hammingDistance, String reason, List<ImageRecord> dBrecords, List<FilterRecord> filter) {
 		clear();
+		String logReason = reason;
+		
+		if (logReason == null || logReason.equals("")) {
+			logReason = "*";
+		}
+		
+		Object[] logData = {dBrecords.size(), filter.size(), logReason, hammingDistance};
+		logger.info("Matching {} image records against {} filter records (reason: {}), with a distance of {}", logData);
 
 		if (hammingDistance == 0) {
 			sortFilterExact(hammingDistance, reason);
