@@ -59,7 +59,7 @@ public class OperationsMenu extends JPopupMenu {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				Path path = getPath();
-				DuplicateOperations.markAsDnw(path);
+				DuplicateOperations.markAs(path, DuplicateOperations.Tags.DNW.toString());
 				DuplicateOperations.deleteFile(path);
 			}
 		});

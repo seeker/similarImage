@@ -39,6 +39,10 @@ import com.github.dozedoff.similarImage.db.Persistence;
 public class DuplicateOperations {
 	private static final Logger logger = LoggerFactory.getLogger(DuplicateOperations.class);
 
+	public enum Tags {
+		DNW, BLOCK
+	}
+
 	public void moveToDnw(Path path) {
 		logger.info("Method not implemented");
 		// TODO code me
@@ -54,34 +58,6 @@ public class DuplicateOperations {
 			logger.warn("Failed to delete {} - {}", path, e.getMessage());
 		} catch (SQLException e) {
 			logger.warn("Failed to remove {} from database - {}", path, e.getMessage());
-		}
-	}
-
-	@Deprecated
-	public static void markAsDnw(Path path) {
-		// TODO do this with transaction
-		// TODO get "Mark as" strings from options
-		final String dnw = "DNW";
-		try {
-			ImageRecord ir = Persistence.getInstance().getRecord(path);
-			if (ir == null) {
-				logger.warn("No record found for {}", path);
-				return;
-			}
-
-			long pHash = ir.getpHash();
-			logger.info("Adding pHash {} to filter, reason {}", pHash, dnw);
-			FilterRecord fr = Persistence.getInstance().getFilter(pHash);
-
-			if (fr != null) {
-				fr.setReason(dnw);
-			} else {
-				fr = new FilterRecord(pHash, dnw);
-			}
-
-			Persistence.getInstance().addFilter(fr);
-		} catch (SQLException e) {
-			logger.warn("DNW operation failed for {} - {}", path, e.getMessage());
 		}
 	}
 
@@ -109,23 +85,6 @@ public class DuplicateOperations {
 		} catch (SQLException e) {
 			logger.warn("Add filter operation failed for {} - {}", path, e.getMessage());
 		}
-	}
-
-	@Deprecated
-	public static void markDirectoryDnw(Path directory) {
-		if (!isDirectory(directory)) {
-			logger.warn("Directory {} not valid, aborting.", directory);
-			return;
-		}
-
-		File dir = directory.toFile();
-		File files[] = dir.listFiles();
-
-		for (File f : files) {
-			markAsDnw(f.toPath());
-		}
-
-		logger.info("Added {} images from {} to filter list", files.length, directory);
 	}
 
 	public static void markDirectoryAs(Path directory, String reason) {

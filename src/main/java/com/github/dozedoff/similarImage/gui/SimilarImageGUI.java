@@ -196,7 +196,7 @@ public class SimilarImageGUI extends JFrame {
 
 				if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION) {
 					Path path = Paths.get(directory.getText());
-					DuplicateOperations.markDirectoryDnw(path);
+					DuplicateOperations.markDirectoryAs(path, DuplicateOperations.Tags.DNW.toString());
 				}
 			}
 		});
