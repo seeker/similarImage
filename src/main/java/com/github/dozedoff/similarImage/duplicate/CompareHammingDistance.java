@@ -14,15 +14,16 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 package com.github.dozedoff.similarImage.duplicate;
 
 import org.everpeace.search.Distance;
+
 import com.github.dozedoff.similarImage.db.ImageRecord;
 
-public class CompareHammingDistance implements Distance<ImageRecord>{
+public class CompareHammingDistance implements Distance<ImageRecord> {
 	protected static int getHammingDistance(long a, long b) {
-		long xor = a^b;
+		long xor = a ^ b;
 		int distance = Long.bitCount(xor);
 		return distance;
 	}

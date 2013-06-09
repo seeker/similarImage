@@ -14,7 +14,7 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 package com.github.dozedoff.similarImage.duplicate;
 
 import java.awt.Dimension;
@@ -41,12 +41,12 @@ public class ImageInfo {
 	private long size = -1;
 	private long pHash = 0;
 	private double sizePerPixel = 0;
-	
+
 	public ImageInfo(Path path) {
 		this.path = path;
 		getImageData();
 	}
-	
+
 	private void getImageData() {
 		InputStream is = null;
 		try {
@@ -66,8 +66,7 @@ public class ImageInfo {
 		} catch (IOException e) {
 			logger.warn("Unable to get info for file {} - {}", path, e.getMessage());
 		} catch (SQLException e) {
-			logger.warn("Failed to get pHash for image {} - {}", path,
-					e.getMessage());
+			logger.warn("Failed to get pHash for image {} - {}", path, e.getMessage());
 		} finally {
 			try {
 				if (is != null) {
@@ -78,21 +77,21 @@ public class ImageInfo {
 			}
 		}
 	}
-	
-	private void calculateSpp(){
+
+	private void calculateSpp() {
 		double height = dimension.getHeight();
 		double width = dimension.getWidth();
-		
-		if(height < 1 || width < 1) {
+
+		if (height < 1 || width < 1) {
 			return;
 		}
-		
-		if(size == 0) {
+
+		if (size == 0) {
 			return;
 		}
-		
+
 		double area = height * width;
-		sizePerPixel = size/area;
+		sizePerPixel = size / area;
 	}
 
 	public Path getPath() {
@@ -106,11 +105,11 @@ public class ImageInfo {
 	public long getSize() {
 		return size;
 	}
-	
+
 	public long getpHash() {
 		return pHash;
 	}
-	
+
 	public double getSizePerPixel() {
 		return sizePerPixel;
 	}

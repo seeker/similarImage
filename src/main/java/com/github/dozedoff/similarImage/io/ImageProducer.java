@@ -14,7 +14,7 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 package com.github.dozedoff.similarImage.io;
 
 import java.awt.image.BufferedImage;
@@ -48,61 +48,61 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 	private final AtomicInteger total = new AtomicInteger();
 	private final AtomicInteger processed = new AtomicInteger();
 	private final int maxOutputQueueSize;
-	
+
 	private final int MAX_WAIT_TIME = 10000;
 	private final int WORK_BATCH_SIZE = 20;
-	
+
 	public ImageProducer(int maxOutputQueueSize) {
 		super(maxOutputQueueSize);
 		this.maxOutputQueueSize = maxOutputQueueSize;
-		totalProgress = new JProgressBar(processed.get(),total.get());
+		totalProgress = new JProgressBar(processed.get(), total.get());
 		totalProgress.setStringPainted(true);
 		bufferLevel = new JProgressBar(0, maxOutputQueueSize);
 		bufferLevel.setStringPainted(true);
 	}
-	
+
 	public JProgressBar getBufferLevel() {
 		return bufferLevel;
 	}
-	
+
 	@Override
 	public void addToLoad(List<Path> paths) {
 		total.addAndGet(paths.size());
 		super.addToLoad(paths);
 	}
-	
+
 	@Override
 	public void addToLoad(Path... paths) {
 		total.addAndGet(paths.length);
 		super.addToLoad(paths);
 	}
-	
+
 	@Override
 	public void clear() {
 		super.clear();
 		processed.set(0);
 		total.set(0);
 	}
-	
+
 	public JProgressBar getTotalProgress() {
 		return totalProgress;
 	}
-	
+
 	@Override
 	protected void loaderDoWork() throws InterruptedException {
 		Path n = null;
 		ArrayList<Path> work = new ArrayList<Path>(WORK_BATCH_SIZE + 1);
-		
-		if(isBufferFilled() || input.isEmpty()) {
+
+		if (isBufferFilled() || input.isEmpty()) {
 			synchronized (output) {
 				output.notifyAll();
 			}
 		}
-		
+
 		n = input.take();
 		work.add(n);
-		input.drainTo(work,WORK_BATCH_SIZE);
-		
+		input.drainTo(work, WORK_BATCH_SIZE);
+
 		for (Path p : work) {
 			try {
 				processFile(p);
@@ -111,40 +111,37 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 				try {
 					persistence.addBadFile(new BadFileRecord(p));
 				} catch (SQLException e1) {
-					logger.warn("Failed to add bad file record for {} - {}",
-							p, e.getMessage());
+					logger.warn("Failed to add bad file record for {} - {}", p, e.getMessage());
 				}
 			} catch (IOException e) {
 				logger.warn("Failed to load file - {}", e.getMessage());
 			} catch (SQLException e) {
 				logger.warn("Failed to query database - {}", e.getMessage());
 			} catch (Exception e) {
-				logger.warn("Failed to process image(other) - {}",
-						e.getMessage());
+				logger.warn("Failed to process image(other) - {}", e.getMessage());
 				try {
 					persistence.addBadFile(new BadFileRecord(p));
 				} catch (SQLException e1) {
-					logger.warn("Failed to add bad file record for {} - {}",
-							p, e.getMessage());
+					logger.warn("Failed to add bad file record for {} - {}", p, e.getMessage());
 				}
 			}
 		}
 	}
-	
+
 	private void processFile(Path next) throws SQLException, IOException, InterruptedException {
 		if (persistence.isBadFile(next) || persistence.isPathRecorded(next)) {
 			processed.addAndGet(1);
 			totalProgress.setValue(processed.get());
 			return;
 		}
-		
+
 		byte[] data = Files.readAllBytes(next);
 		InputStream is = new ByteArrayInputStream(data);
 		BufferedImage img = ImageIO.read(is);
 
 		Pair<Path, BufferedImage> pair = new Pair<Path, BufferedImage>(next, img);
 		output.put(pair);
-		
+
 		processed.addAndGet(1);
 		totalProgress.setValue(processed.get());
 	}
@@ -153,10 +150,10 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 	protected void outputQueueChanged() {
 		bufferLevel.setValue(output.size());
 	}
-	
+
 	@Override
 	public void drainTo(Collection<Pair<Path, BufferedImage>> drainTo, int maxElements) throws InterruptedException {
-		if(isBufferLow() && (! input.isEmpty())) {
+		if (isBufferLow() && (!input.isEmpty())) {
 			synchronized (output) {
 				logger.debug("Low buffer, suspending drain");
 
@@ -166,18 +163,18 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 					logger.debug("Max wait has timed out, resuming drain");
 					return;
 				}
-				
+
 				logger.debug("Buffer re-filled, resuming drain");
 			}
 		}
 		super.drainTo(drainTo, maxElements);
 	}
-	
-	private boolean isBufferLow(){
-		return output.size() < (float)maxOutputQueueSize*0.10f;
+
+	private boolean isBufferLow() {
+		return output.size() < (float) maxOutputQueueSize * 0.10f;
 	}
-	
+
 	private boolean isBufferFilled() {
-		return output.size() > (float)maxOutputQueueSize*0.90f;
+		return output.size() > (float) maxOutputQueueSize * 0.90f;
 	}
 }

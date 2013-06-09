@@ -14,7 +14,7 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 package com.github.dozedoff.similarImage.db;
 
 import java.util.List;
@@ -25,12 +25,11 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.util.Pair;
 
-
 public class DBWriter {
 	private final static Logger logger = LoggerFactory.getLogger(DBWriter.class);
-	
+
 	private final int MAX_RETRY = 3;
-	
+
 	LinkedBlockingQueue<Pair<List<ImageRecord>, Integer>> pendingWrites = new LinkedBlockingQueue<Pair<List<ImageRecord>, Integer>>();
 
 	public DBWriter() {
@@ -38,21 +37,21 @@ public class DBWriter {
 		t.setDaemon(true);
 		t.start();
 	}
-	
+
 	public void add(List<ImageRecord> records) {
 		pendingWrites.offer(new Pair<List<ImageRecord>, Integer>(records, 0));
 	}
-	
+
 	private class DBWriterDaemon extends Thread {
 		private final Persistence persitence = Persistence.getInstance();
-		
+
 		public DBWriterDaemon() {
 			setName("DBWriter daemon");
 		}
-		
+
 		@Override
 		public void run() {
-			while(! isInterrupted()) {
+			while (!isInterrupted()) {
 				try {
 					Pair<List<ImageRecord>, Integer> work = pendingWrites.take();
 					List<ImageRecord> records = work.getLeft();
@@ -70,13 +69,13 @@ public class DBWriter {
 		private void reQueue(Pair<List<ImageRecord>, Integer> work) {
 			int retryCount = work.getRight();
 			List<ImageRecord> records = work.getLeft();
-			
-			if(retryCount >= MAX_RETRY) {
+
+			if (retryCount >= MAX_RETRY) {
 				logger.warn("Giving up on adding list with {} entries", records.size());
-				
-				if(logger.isDebugEnabled()) {
-					for(ImageRecord ir : records) {
-						logger.debug("{} -- {}",ir.getPath(), ir.getpHash());
+
+				if (logger.isDebugEnabled()) {
+					for (ImageRecord ir : records) {
+						logger.debug("{} -- {}", ir.getPath(), ir.getpHash());
 					}
 				}
 			} else {

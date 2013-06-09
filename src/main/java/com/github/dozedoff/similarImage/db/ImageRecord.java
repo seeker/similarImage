@@ -14,7 +14,7 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 package com.github.dozedoff.similarImage.db;
 
 import com.j256.ormlite.field.DatabaseField;
@@ -22,16 +22,17 @@ import com.j256.ormlite.table.DatabaseTable;
 
 @DatabaseTable
 public class ImageRecord {
-	@DatabaseField(id=true, canBeNull=false)
+	@DatabaseField(id = true, canBeNull = false)
 	String path;
-	@DatabaseField(canBeNull=false)
+	@DatabaseField(canBeNull = false)
 	long pHash;
-	
+
 	/**
 	 * Intended for DAO
 	 */
 	@Deprecated
-	public ImageRecord() {}
+	public ImageRecord() {
+	}
 
 	public ImageRecord(String path, long pHash) {
 		this.path = path;
@@ -45,22 +46,22 @@ public class ImageRecord {
 	public long getpHash() {
 		return pHash;
 	}
-	
+
 	@Override
 	public boolean equals(Object obj) {
-		if(!(obj instanceof ImageRecord)) {
+		if (!(obj instanceof ImageRecord)) {
 			return false;
 		}
-		
-		ImageRecord toComapre = (ImageRecord)obj;
-		
-		if((this.pHash == toComapre.getpHash()) && samePath(toComapre)) {
+
+		ImageRecord toComapre = (ImageRecord) obj;
+
+		if ((this.pHash == toComapre.getpHash()) && samePath(toComapre)) {
 			return true;
 		} else {
 			return false;
 		}
 	}
-	
+
 	private boolean samePath(ImageRecord rec) {
 		return this.getPath().equals(rec.getPath());
 	}

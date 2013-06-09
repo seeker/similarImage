@@ -14,7 +14,7 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 package com.github.dozedoff.similarImage.hash;
 
 import java.awt.image.BufferedImage;
@@ -38,10 +38,10 @@ public class PhashWorker extends Thread {
 	private static int workerNumber = 0;
 	private int localWorkerNumber;
 	private final int MAX_WORK_BATCH_SIZE = 20;
-	
+
 	private final ImageProducer producer;
 	private final DBWriter dbWriter;
-	
+
 	public PhashWorker(ImageProducer producer, DBWriter dbWriter) {
 		this.producer = producer;
 		this.dbWriter = dbWriter;
@@ -49,40 +49,40 @@ public class PhashWorker extends Thread {
 		workerNumber++;
 		this.setName("pHash worker " + localWorkerNumber);
 	}
-	
+
 	@Override
 	public void run() {
 		calculateHashes();
 	}
-	
+
 	public void stopWorker() {
 		interrupt();
 	}
-	
+
 	private void calculateHashes() {
 		logger.info("{} started", this.getName());
-		ImagePHash phash = new ImagePHash(32,9);
+		ImagePHash phash = new ImagePHash(32, 9);
 		LinkedList<Pair<Path, BufferedImage>> work = new LinkedList<Pair<Path, BufferedImage>>();
 		LinkedList<ImageRecord> newRecords = new LinkedList<ImageRecord>();
-		
-		while(! isInterrupted()) {
+
+		while (!isInterrupted()) {
 			try {
-				if(! producer.hasWork()){
+				if (!producer.hasWork()) {
 					break;
 				}
-				
+
 				producer.drainTo(work, MAX_WORK_BATCH_SIZE);
 			} catch (InterruptedException e1) {
 				interrupt();
 			}
-			
+
 			for (Pair<Path, BufferedImage> pair : work) {
-				if(isInterrupted()) {
+				if (isInterrupted()) {
 					break;
 				}
-				
+
 				Path path = pair.getLeft();
-				
+
 				try {
 					BufferedImage img = pair.getRight();
 					long hash = phash.getLongHash(img);
@@ -99,13 +99,13 @@ public class PhashWorker extends Thread {
 					logger.warn("Failed to hash image {} - {}", path, e.getMessage());
 				}
 			}
-			
+
 			dbWriter.add(newRecords);
 			newRecords = new LinkedList<ImageRecord>();
-			
+
 			work.clear();
 		}
-		
+
 		logger.info("{} terminated", this.getName());
 	}
 }

@@ -14,7 +14,7 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 package com.github.dozedoff.similarImage.db;
 
 import com.j256.ormlite.field.DatabaseField;
@@ -22,16 +22,17 @@ import com.j256.ormlite.table.DatabaseTable;
 
 @DatabaseTable
 public class FilterRecord {
-	@DatabaseField(id=true, canBeNull=false)
+	@DatabaseField(id = true, canBeNull = false)
 	private long pHash;
-	@DatabaseField(canBeNull=false)
+	@DatabaseField(canBeNull = false)
 	private String reason;
-	
+
 	/**
 	 * Intended for DAO only
 	 */
 	@Deprecated
-	public FilterRecord() {}
+	public FilterRecord() {
+	}
 
 	public FilterRecord(long pHash, String reason) {
 		super();

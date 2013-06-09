@@ -14,7 +14,7 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 package com.github.dozedoff.similarImage.duplicate;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -23,21 +23,19 @@ import static org.junit.Assert.assertThat;
 import org.junit.Test;
 
 public class CompareTest {
-
 	@Test
 	public void testGetHammingDistanceZero() {
 		int distance = CompareHammingDistance.getHammingDistance(0, 0);
 		assertThat(distance, is(0));
 	}
-	
+
 	public void testGetHammingDistanceMax() {
 		int distance = CompareHammingDistance.getHammingDistance(Long.MIN_VALUE, Long.MIN_VALUE);
 		assertThat(distance, is(0));
 	}
-	
+
 	public void testGetHammingDistance() {
 		int distance = CompareHammingDistance.getHammingDistance(5, 6);
 		assertThat(distance, is(2));
 	}
-
 }

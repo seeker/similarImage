@@ -14,7 +14,7 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 package com.github.dozedoff.similarImage.db;
 
 import java.nio.file.Path;
@@ -24,15 +24,16 @@ import com.j256.ormlite.table.DatabaseTable;
 
 @DatabaseTable
 public class BadFileRecord {
-	@DatabaseField(id=true, canBeNull=false)
+	@DatabaseField(id = true, canBeNull = false)
 	private String path;
-	
+
 	/**
 	 * Intended for DAO use.
 	 */
 	@Deprecated
-	public BadFileRecord() {}
-	
+	public BadFileRecord() {
+	}
+
 	public BadFileRecord(Path path) {
 		this.path = path.toString();
 	}

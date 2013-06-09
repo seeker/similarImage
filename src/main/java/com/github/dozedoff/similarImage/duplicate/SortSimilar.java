@@ -14,7 +14,7 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 package com.github.dozedoff.similarImage.duplicate;
 
 import java.sql.SQLException;
@@ -41,7 +41,7 @@ public class SortSimilar {
 	HashMap<Long, Set<ImageRecord>> sorted = new HashMap<Long, Set<ImageRecord>>();
 	CompareHammingDistance compareHamming = new CompareHammingDistance();
 	LinkedList<ImageRecord> ignoredImages = new LinkedList<ImageRecord>();
-	
+
 	public void sortHammingDistance(int hammingDistance, List<ImageRecord> dBrecords) {
 		clear();
 		dBrecords.removeAll(ignoredImages);
@@ -54,21 +54,20 @@ public class SortSimilar {
 				return; // prevent duplicates
 			}
 
-			Set<ImageRecord> similar = bkTree.searchWithin(ir,
-					(double) hammingDistance);
+			Set<ImageRecord> similar = bkTree.searchWithin(ir, (double) hammingDistance);
 			sorted.put(pHash, similar);
 		}
 	}
-	
+
 	public void sortFilter(int hammingDistance, String reason, List<ImageRecord> dBrecords, List<FilterRecord> filter) {
 		clear();
 		String logReason = reason;
-		
+
 		if (logReason == null || logReason.equals("")) {
 			logReason = "*";
 		}
-		
-		Object[] logData = {dBrecords.size(), filter.size(), logReason, hammingDistance};
+
+		Object[] logData = { dBrecords.size(), filter.size(), logReason, hammingDistance };
 		logger.info("Matching {} image records against {} filter records (reason: {}), with a distance of {}", logData);
 
 		if (hammingDistance == 0) {
@@ -88,12 +87,11 @@ public class SortSimilar {
 
 			ImageRecord query = new ImageRecord(null, pHash);
 
-			Set<ImageRecord> similar = bkTree.searchWithin(query,
-					(double) hammingDistance);
+			Set<ImageRecord> similar = bkTree.searchWithin(query, (double) hammingDistance);
 			sorted.put(pHash, similar);
 		}
 	}
-	
+
 	private void sortFilterExact(int hammingDistance, String reason) {
 		// TODO add filtering regarding reason
 		List<FilterRecord> filters;
@@ -102,7 +100,7 @@ public class SortSimilar {
 
 			for (FilterRecord filter : filters) {
 				long pHash = filter.getpHash();
-				
+
 				if (!sorted.containsKey(pHash)) {
 					List<ImageRecord> records = Persistence.getInstance().getRecords(pHash);
 					sorted.put(pHash, new HashSet<ImageRecord>(records));
@@ -116,17 +114,17 @@ public class SortSimilar {
 	public Set<ImageRecord> getGroup(long pHash) {
 		return sorted.get(pHash);
 	}
-	
+
 	public void sortExactMatch(CloseableWrappedIterable<ImageRecord> records) {
 		try {
 			for (ImageRecord ir : records) {
 				long key = ir.getpHash();
-				
-				if(ignoredImages.contains(ir)) {
+
+				if (ignoredImages.contains(ir)) {
 					continue;
 				}
-				
-				if(sorted.containsKey(key)) {
+
+				if (sorted.containsKey(key)) {
 					addToBucket(key, ir);
 				} else {
 					createBucket(key, ir);
@@ -140,83 +138,83 @@ public class SortSimilar {
 			}
 		}
 	}
-	
+
 	public int getNumberOfDuplicateGroups() {
 		Collection<Set<ImageRecord>> buckets = sorted.values();
 		int duplicateGroups = 0;
 
-		for(Set<ImageRecord> irl : buckets) {
-			if(irl.size() > 1) {
+		for (Set<ImageRecord> irl : buckets) {
+			if (irl.size() > 1) {
 				duplicateGroups++;
 			}
 		}
-		
+
 		return duplicateGroups;
 	}
-	
+
 	public LinkedList<Long> getDuplicateGroups() {
 		Set<Long> keys = sorted.keySet();
 		LinkedList<Long> duplicateGroups = new LinkedList<Long>();
 
-		for(long key : keys) {
+		for (long key : keys) {
 			Set<ImageRecord> irs = sorted.get(key);
-			
-			if(irs.size() > 1) {
+
+			if (irs.size() > 1) {
 				duplicateGroups.add(key);
 			}
 		}
-		
+
 		Collections.sort(duplicateGroups);
 		removeIdenticalSets(duplicateGroups);
 		return duplicateGroups;
 	}
-	
+
 	private void removeIdenticalSets(LinkedList<Long> duplicateGroups) {
 		LinkedList<Set<ImageRecord>> processedRecords = new LinkedList<Set<ImageRecord>>();
-		
+
 		Iterator<Long> ite = duplicateGroups.iterator();
-		
-		while(ite.hasNext()) {
+
+		while (ite.hasNext()) {
 			long group = ite.next();
 			Set<ImageRecord> set = sorted.get(group);
-			
-			if(processedRecords.contains(set)) {
+
+			if (processedRecords.contains(set)) {
 				ite.remove();
 			} else {
 				processedRecords.add(set);
 			}
 		}
 	}
-	
+
 	public int getNumberOfGroups() {
 		return sorted.size();
 	}
-	
+
 	public boolean isEmpty() {
 		return sorted.isEmpty();
 	}
-	
+
 	public void clear() {
 		sorted.clear();
-		sorted =  new HashMap<Long, Set<ImageRecord>>();
+		sorted = new HashMap<Long, Set<ImageRecord>>();
 	}
-	
+
 	public void ignore(ImageRecord toIgnore) {
 		if (!ignoredImages.contains(toIgnore)) {
 			ignoredImages.add(toIgnore);
 		}
 	}
-	
+
 	public void clearIgnored() {
 		ignoredImages.clear();
 	}
-	
+
 	private void createBucket(long key, ImageRecord record) {
 		Set<ImageRecord> value = new HashSet<ImageRecord>();
 		value.add(record);
 		sorted.put(key, value);
 	}
-	
+
 	private void addToBucket(long key, ImageRecord value) {
 		Set<ImageRecord> bucket = sorted.get(key);
 		bucket.add(value);

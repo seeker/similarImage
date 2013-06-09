@@ -14,7 +14,7 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 package com.github.dozedoff.similarImage.duplicate;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -39,19 +39,19 @@ public class SortSimilarTest {
 	SortSimilar sort;
 	CloseableWrappedIterable<ImageRecord> dummy;
 	LinkedList<ImageRecord> testRecords;
-	
+
 	@Before
 	public void setUp() throws Exception {
 		sort = new SortSimilar();
 		dummy = mock(DummyIterator.class);
 		createTestRecords();
-		
+
 		when(dummy.iterator()).thenReturn(testRecords.iterator());
 	}
-	
+
 	private void createTestRecords() {
 		testRecords = new LinkedList<ImageRecord>();
-		
+
 		testRecords.add(new ImageRecord("/foo/bar/1", 3));
 		testRecords.add(new ImageRecord("/foo/bar/2", 4));
 		testRecords.add(new ImageRecord("/foo/bar/3", 5));
@@ -63,13 +63,13 @@ public class SortSimilarTest {
 	@Test
 	public void testSortExactMatch() {
 		sort.sortExactMatch(dummy);
-		
-		ImageRecord testRecords[] = {new ImageRecord("/foo/bar/1", 3), new ImageRecord("/foo/foo/1", 3)};
-		ImageRecord testRecords2[] = {new ImageRecord("/foo/bar/3", 5), new ImageRecord("/foo/foo/5", 5)};
-		
+
+		ImageRecord testRecords[] = { new ImageRecord("/foo/bar/1", 3), new ImageRecord("/foo/foo/1", 3) };
+		ImageRecord testRecords2[] = { new ImageRecord("/foo/bar/3", 5), new ImageRecord("/foo/foo/5", 5) };
+
 		Set<ImageRecord> records = sort.getGroup(3);
 		assertThat(records, hasItems(testRecords));
-		
+
 		Set<ImageRecord> records2 = sort.getGroup(5);
 		assertThat(records2, hasItems(testRecords2));
 	}
@@ -100,7 +100,7 @@ public class SortSimilarTest {
 		sort.clear();
 		assertThat(sort.isEmpty(), is(true));
 	}
-	
+
 	class DummyIterator implements CloseableWrappedIterable<ImageRecord> {
 
 		@Override
@@ -115,7 +115,7 @@ public class SortSimilarTest {
 
 		@Override
 		public void close() throws SQLException {
-			
+
 		}
 	}
 }

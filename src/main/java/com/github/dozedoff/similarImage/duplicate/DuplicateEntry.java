@@ -14,7 +14,7 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 package com.github.dozedoff.similarImage.duplicate;
 
 import java.awt.Dimension;
@@ -46,7 +46,7 @@ public class DuplicateEntry extends JPanel {
 	private JLabel image;
 	private final Path imagePath;
 	private final SimilarImage parent;
-	
+
 	public DuplicateEntry(SimilarImage parent, Path imagePath, Dimension thumbDimension) {
 		super();
 		this.imagePath = imagePath;
@@ -54,72 +54,72 @@ public class DuplicateEntry extends JPanel {
 		this.setLayout(new MigLayout("wrap"));
 		image = new JLabel("NO IMAGE");
 		imageInfo = new ImageInfo(imagePath);
-		
+
 		try {
 			this.image = SubsamplingImageLoader.loadAsLabel(imagePath, thumbDimension);
 		} catch (Exception e) {
 			logger.warn("Could not load image thumbnail for {} - {}", imageInfo.getPath(), e.getMessage());
 		}
-		
+
 		add(image);
 		addImageInfo();
 		new OperationsMenu(this);
 		this.addMouseListener(new ClickListener());
 	}
-	
+
 	private void addImageInfo() {
 		LinkedList<JComponent> components = new LinkedList<JComponent>();
 		Path path = imageInfo.getPath();
 		ImageInfo iInfo = new ImageInfo(path);
 		components.add(new JLabel("Path: " + iInfo.getPath()));
-		components.add(new JLabel("Size: " + iInfo.getSize()/1024 + " kb"));
+		components.add(new JLabel("Size: " + iInfo.getSize() / 1024 + " kb"));
 		Dimension dim = iInfo.getDimension();
 		components.add(new JLabel("Dimension: " + dim.getWidth() + "x" + dim.getHeight()));
 		components.add(new JLabel("pHash: " + iInfo.getpHash()));
 		components.add(new JLabel("Size per Pixel: " + iInfo.getSizePerPixel()));
-		
+
 		for (JComponent jc : components) {
 			this.add(jc);
 		}
 	}
-	
+
 	public Path getImagePath() {
 		return imagePath;
 	}
-	
+
 	public ImageInfo getImageInfo() {
 		return imageInfo;
 	}
-	
+
 	public void ignore() {
 		ImageRecord ir = new ImageRecord(imagePath.toString(), imageInfo.getpHash());
 		parent.ignoreImage(ir);
 	}
-	
+
 	private void displayFullImage() {
 		JPanel imagePanel = new JPanel(new MigLayout());
 		JScrollPane scroll = new JScrollPane(imagePanel);
-		
+
 		JFrame imageFrame = new JFrame(imagePath.toString());
 		imageFrame.setLayout(new MigLayout());
 		JLabel largeImage = new JLabel("No Image");
-		
+
 		try {
 			largeImage = SubsamplingImageLoader.loadAsLabel(imagePath, new Dimension(4000, 4000));
 		} catch (Exception e) {
 			logger.warn("Unable to load full image {} - {}", imagePath, e.getMessage());
 		}
-		
+
 		imagePanel.add(largeImage);
 		imageFrame.add(scroll);
 		imageFrame.pack();
 		imageFrame.setVisible(true);
 	}
-	
+
 	class ClickListener extends MouseAdapter {
 		@Override
 		public void mouseClicked(MouseEvent e) {
-			if(e.getButton() == MouseEvent.BUTTON1){
+			if (e.getButton() == MouseEvent.BUTTON1) {
 				displayFullImage();
 			}
 		}

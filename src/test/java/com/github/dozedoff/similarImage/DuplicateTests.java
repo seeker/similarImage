@@ -14,7 +14,7 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 package com.github.dozedoff.similarImage;
 
 import org.junit.runner.RunWith;
@@ -25,8 +25,6 @@ import com.github.dozedoff.similarImage.duplicate.CompareTest;
 import com.github.dozedoff.similarImage.duplicate.SortSimilarTest;
 
 @RunWith(Suite.class)
-@SuiteClasses({
-	CompareTest.class,
-	SortSimilarTest.class
-})
-public class DuplicateTests {}
+@SuiteClasses({ CompareTest.class, SortSimilarTest.class })
+public class DuplicateTests {
+}

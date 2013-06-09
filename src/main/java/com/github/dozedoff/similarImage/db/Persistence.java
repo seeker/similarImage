@@ -14,7 +14,7 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 package com.github.dozedoff.similarImage.db;
 
 import java.nio.file.Path;
@@ -58,7 +58,7 @@ public class Persistence {
 			System.exit(1);
 		}
 	}
-	
+
 	public static synchronized Persistence getInstance() {
 		if (instance == null) {
 			instance = new Persistence();
@@ -76,7 +76,7 @@ public class Persistence {
 		dbConn.executeStatement("PRAGMA synchronous=NORMAL;", DatabaseConnection.DEFAULT_RESULT_FLAGS);
 		dbConn.executeStatement("PRAGMA temp_store = MEMORY;", DatabaseConnection.DEFAULT_RESULT_FLAGS);
 		dbConn.executeStatement("PRAGMA journal_mode=MEMORY;", DatabaseConnection.DEFAULT_RESULT_FLAGS);
-		
+
 		logger.info("Setting up database tables...");
 		TableUtils.createTableIfNotExists(cs, ImageRecord.class);
 		TableUtils.createTableIfNotExists(cs, FilterRecord.class);
@@ -93,24 +93,24 @@ public class Persistence {
 	public void addRecord(ImageRecord record) throws SQLException {
 		imageRecordDao.createIfNotExists(record);
 	}
-	
+
 	public void batchAddRecord(final List<ImageRecord> record) throws Exception {
 		imageRecordDao.callBatchTasks(new Callable<Void>() {
 			@Override
 			public Void call() throws Exception {
-				for(ImageRecord ir : record){
+				for (ImageRecord ir : record) {
 					imageRecordDao.createIfNotExists(ir);
 				}
 				return null;
 			}
 		});
 	}
-	
+
 	public ImageRecord getRecord(Path path) throws SQLException {
 		return imageRecordDao.queryForId(path.toString());
 	}
-	
-	public List<ImageRecord> getRecords(long pHash) throws SQLException{
+
+	public List<ImageRecord> getRecords(long pHash) throws SQLException {
 		ImageRecord searchRecord = new ImageRecord(null, pHash);
 		return imageRecordDao.queryForMatching(searchRecord);
 	}
@@ -129,8 +129,8 @@ public class Persistence {
 			return true;
 		}
 	}
-	
-	public boolean isBadFile(Path path) throws SQLException{
+
+	public boolean isBadFile(Path path) throws SQLException {
 		String id = path.toString();
 		BadFileRecord record = badFileRecordDao.queryForId(id);
 
@@ -140,19 +140,19 @@ public class Persistence {
 			return true;
 		}
 	}
-	
+
 	public CloseableWrappedIterable<ImageRecord> getImageRecordIterator() {
 		return imageRecordDao.getWrappedIterable();
 	}
-	
+
 	public List<ImageRecord> getAllRecords() throws SQLException {
 		return imageRecordDao.queryForAll();
 	}
-	
+
 	public void addFilter(FilterRecord filter) throws SQLException {
 		filterRecordDao.createOrUpdate(filter);
 	}
-	
+
 	public void addBadFile(BadFileRecord badFile) throws SQLException {
 		badFileRecordDao.createOrUpdate(badFile);
 	}
@@ -166,42 +166,42 @@ public class Persistence {
 			return false;
 		}
 	}
-	
+
 	public FilterRecord getFilter(long pHash) throws SQLException {
 		return filterRecordDao.queryForId(pHash);
 	}
-	
+
 	public List<FilterRecord> getAllFilters() throws SQLException {
 		return filterRecordDao.queryForAll();
 	}
-	
+
 	public List<FilterRecord> getAllFilters(String reason) throws SQLException {
 		FilterRecord query = new FilterRecord(0, reason);
 		return filterRecordDao.queryForMatching(query);
 	}
-	
+
 	public List<String> getFilterReasons() {
 		List<String> reasons = new LinkedList<String>();
-		
+
 		CloseableWrappedIterable<FilterRecord> iterator = filterRecordDao.getWrappedIterable();
-		
-		for(FilterRecord fr : iterator) {
+
+		for (FilterRecord fr : iterator) {
 			String reason = fr.getReason();
-			
-			if(!reasons.contains(reason)) {
+
+			if (!reasons.contains(reason)) {
 				reasons.add(reason);
 			}
 		}
-		
+
 		try {
 			iterator.close();
 		} catch (SQLException e) {
 			logger.warn("Failed to close iterator", e);
 		}
-		
+
 		return reasons;
 	}
-	
+
 	public List<ImageRecord> filterByPath(Path directory) throws SQLException {
 		QueryBuilder<ImageRecord, String> qb = imageRecordDao.queryBuilder();
 		PreparedQuery<ImageRecord> prep = qb.where().like("path", directory.toString() + "%").prepare();

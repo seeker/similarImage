@@ -14,7 +14,7 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 package com.github.dozedoff.similarImage.gui;
 
 import java.awt.event.ActionEvent;
@@ -51,7 +51,7 @@ import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 public class SimilarImageGUI extends JFrame {
 	private static final long serialVersionUID = 1L;
 	private SimilarImage parent;
-	
+
 	private JTextField path;
 	private JButton find, stop, sortSimilar, sortFilter;
 	private JLabel status, hammingValue;
@@ -61,7 +61,7 @@ public class SimilarImageGUI extends JFrame {
 	private DefaultListModel<Long> groupListModel;
 	private JScrollPane groupScrollPane;
 	private JScrollBar hammingDistance;
-	
+
 	public SimilarImageGUI(SimilarImage parent) {
 		this.parent = parent;
 		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -73,13 +73,13 @@ public class SimilarImageGUI extends JFrame {
 		updateHammingDisplay();
 		this.setVisible(true);
 	}
-	
-	public void setStatus(String statusMsg){
-		if(status != null) {
+
+	public void setStatus(String statusMsg) {
+		if (status != null) {
 			status.setText(statusMsg);
 		}
 	}
-	
+
 	private void setupComponents() {
 		path = new JTextField(20);
 		find = new JButton("Find");
@@ -89,13 +89,13 @@ public class SimilarImageGUI extends JFrame {
 		sortSimilar = new JButton("Sort similar");
 		sortFilter = new JButton("Sort filter");
 		bufferLevel = parent.getBufferLevel();
-		
+
 		groupListModel = new DefaultListModel<Long>();
 		groups = new JList<Long>(groupListModel);
 		groupScrollPane = new JScrollPane(groups);
 		hammingDistance = new JScrollBar(JScrollBar.HORIZONTAL, 0, 2, 0, 64);
 		hammingValue = new JLabel();
-		
+
 		find.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
@@ -103,63 +103,64 @@ public class SimilarImageGUI extends JFrame {
 				parent.indexImages(userpath);
 			}
 		});
-		
+
 		stop.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				parent.stopWorkers();
 			}
 		});
-		
+
 		sortSimilar.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				parent.sortDuplicates(hammingDistance.getValue());
 			}
 		});
-		
+
 		sortFilter.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				//TODO display option dialog to select reason - null or empty mean all
+				// TODO display option dialog to select reason - null or empty
+				// mean all
 				JTextField reason = new JTextField(20);
-				Object[] message = {"Reason: ", reason};
-				JOptionPane pane = new JOptionPane(message,  JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
-				JDialog getTopicDialog =  pane.createDialog(null, "Select directory");
+				Object[] message = { "Reason: ", reason };
+				JOptionPane pane = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+				JDialog getTopicDialog = pane.createDialog(null, "Select directory");
 				getTopicDialog.setVisible(true);
-				
-				if(pane.getValue() != null && (Integer)pane.getValue() == JOptionPane.OK_OPTION) {
+
+				if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION) {
 					String r = reason.getText();
 					parent.sortFilter(hammingDistance.getValue(), r);
 				}
 			}
 		});
-		
+
 		groups.addListSelectionListener(new ListSelectionListener() {
 			@Override
 			public void valueChanged(ListSelectionEvent event) {
-				if(event.getValueIsAdjusting()) {
+				if (event.getValueIsAdjusting()) {
 					return; // Still adjusting, do nothing...
 				}
-				
+
 				int index = groups.getSelectedIndex();
-				if(index > -1 && index < groupListModel.size()) {
+				if (index > -1 && index < groupListModel.size()) {
 					long group = groupListModel.get(index);
 					parent.displayGroup(group);
 				}
-				
+
 			}
 		});
-		
+
 		hammingDistance.addAdjustmentListener(new AdjustmentListener() {
 			@Override
 			public void adjustmentValueChanged(AdjustmentEvent event) {
-				if(! event.getValueIsAdjusting()) {
+				if (!event.getValueIsAdjusting()) {
 					updateHammingDisplay();
 				}
 			}
 		});
-		
+
 		this.add(path);
 		this.add(find);
 		this.add(stop);
@@ -172,80 +173,80 @@ public class SimilarImageGUI extends JFrame {
 		this.add(hammingDistance, "growx");
 		this.add(hammingValue);
 	}
-	
+
 	private void setupMenu() {
 		JMenuBar menuBar = new JMenuBar();
 		JMenu file;
 		JMenuItem folderDnw, folderBlock, pruneRecords;
-		
+
 		file = new JMenu("File");
-		
+
 		folderDnw = new JMenuItem("Add folder as dnw");
 		folderBlock = new JMenuItem("Add folder as block");
 		pruneRecords = new JMenuItem("Prune records");
-		
+
 		folderDnw.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				JTextField directory = new JTextField(20);
-				Object[] message = {"Directory: ", directory};
-				JOptionPane pane = new JOptionPane(message,  JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
-				JDialog getTopicDialog =  pane.createDialog(null, "Select directory");
+				Object[] message = { "Directory: ", directory };
+				JOptionPane pane = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+				JDialog getTopicDialog = pane.createDialog(null, "Select directory");
 				getTopicDialog.setVisible(true);
-				
-				if(pane.getValue() != null && (Integer)pane.getValue() == JOptionPane.OK_OPTION) {
+
+				if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION) {
 					Path path = Paths.get(directory.getText());
 					DuplicateOperations.markDirectoryDnw(path);
 				}
 			}
 		});
-		
+
 		folderBlock.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				JTextField directory = new JTextField(20);
-				Object[] message = {"Directory: ", directory};
-				JOptionPane pane = new JOptionPane(message,  JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
-				JDialog getTopicDialog =  pane.createDialog(null, "Select directory");
+				Object[] message = { "Directory: ", directory };
+				JOptionPane pane = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+				JDialog getTopicDialog = pane.createDialog(null, "Select directory");
 				getTopicDialog.setVisible(true);
-				
-				if(pane.getValue() != null && (Integer)pane.getValue() == JOptionPane.OK_OPTION) {
+
+				if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION) {
 					Path path = Paths.get(directory.getText());
 					DuplicateOperations.markDirectoryAs(path, "BLOCK");
 				}
 			}
 		});
-		
+
 		pruneRecords.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				DuplicateOperations.pruneRecords(Paths.get(path.getText()));
 			}
 		});
-		
+
 		file.add(folderDnw);
 		file.add(folderBlock);
 		file.add(pruneRecords);
-		
+
 		menuBar.add(file);
 		this.setJMenuBar(menuBar);
 	}
-	
+
 	private void updateHammingDisplay() {
 		hammingValue.setText("" + hammingDistance.getValue());
 	}
-	
+
 	public void setTotalFiles(int numOfFiles) {
 		progress.setMaximum(numOfFiles);
 	}
-	
+
 	public void populateGroupList(List<Long> groups) {
 		SwingUtilities.invokeLater(new GroupListPopulator(groups));
 	}
-	
+
 	class GroupListPopulator implements Runnable {
 		private List<Long> groups;
-		
+
 		public GroupListPopulator(List<Long> groups) {
 			this.groups = groups;
 		}
@@ -253,8 +254,8 @@ public class SimilarImageGUI extends JFrame {
 		@Override
 		public void run() {
 			groupListModel.clear();
-			
-			for(Long g : groups) {
+
+			for (Long g : groups) {
 				groupListModel.addElement(g);
 			}
 		}

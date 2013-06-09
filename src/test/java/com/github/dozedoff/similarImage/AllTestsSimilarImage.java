@@ -14,7 +14,7 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 package com.github.dozedoff.similarImage;
 
 import org.junit.runner.RunWith;
@@ -22,9 +22,6 @@ import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
 @RunWith(Suite.class)
-@SuiteClasses({
-	DuplicateTests.class
-})
+@SuiteClasses({ DuplicateTests.class })
 public class AllTestsSimilarImage {
-
 }

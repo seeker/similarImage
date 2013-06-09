@@ -14,7 +14,7 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 package com.github.dozedoff.similarImage.gui;
 
 import java.util.List;
@@ -30,9 +30,9 @@ public class DisplayGroup extends JFrame {
 	private static final long serialVersionUID = 1L;
 	private JPanel content = new JPanel();
 	private JScrollPane scroll = new JScrollPane(content);
-	
+
 	public DisplayGroup() {
-		this.setSize(500,500);
+		this.setSize(500, 500);
 		this.setDefaultCloseOperation(HIDE_ON_CLOSE);
 		this.setFocusableWindowState(false);
 	}
@@ -42,14 +42,14 @@ public class DisplayGroup extends JFrame {
 		this.dispose();
 		this.setTitle("" + group);
 		content = new JPanel(new MigLayout("wrap 4"));
-		
-		for(JComponent entry : duplicates) {
+
+		for (JComponent entry : duplicates) {
 			content.add(entry);
 		}
-		
+
 		scroll = new JScrollPane(content);
 		this.add(scroll);
-		
+
 		this.validate();
 		this.pack();
 		this.repaint();

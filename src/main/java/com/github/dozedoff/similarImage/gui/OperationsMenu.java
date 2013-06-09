@@ -14,7 +14,7 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 package com.github.dozedoff.similarImage.gui;
 
 import java.awt.event.ActionEvent;
@@ -29,20 +29,24 @@ import com.github.dozedoff.similarImage.duplicate.DuplicateEntry;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 
-public class OperationsMenu extends JPopupMenu{
+public class OperationsMenu extends JPopupMenu {
 	private static final long serialVersionUID = 1L;
-	private enum Operations {Delete, MarkAndDeleteDNW, MarkBlocked, Ignore};
+
+	private enum Operations {
+		Delete, MarkAndDeleteDNW, MarkBlocked, Ignore
+	};
+
 	private final DuplicateEntry parent;
-	
+
 	public OperationsMenu(DuplicateEntry parent) {
 		super();
 		this.parent = parent;
 		setupPopupMenu();
 	}
-	
+
 	private void setupPopupMenu() {
 		HashMap<Operations, ActionListener> actions = new HashMap<OperationsMenu.Operations, ActionListener>();
-		
+
 		actions.put(Operations.Delete, new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -50,7 +54,7 @@ public class OperationsMenu extends JPopupMenu{
 				DuplicateOperations.deleteFile(path);
 			}
 		});
-		
+
 		actions.put(Operations.MarkAndDeleteDNW, new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -59,7 +63,7 @@ public class OperationsMenu extends JPopupMenu{
 				DuplicateOperations.deleteFile(path);
 			}
 		});
-		
+
 		actions.put(Operations.MarkBlocked, new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -67,29 +71,29 @@ public class OperationsMenu extends JPopupMenu{
 				DuplicateOperations.markAs(path, "BLOCK");
 			}
 		});
-		
+
 		actions.put(Operations.Ignore, new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				parent.ignore();
 			}
 		});
-		
+
 		createMenuItems(actions);
 		parent.setComponentPopupMenu(this);
 	}
-	
+
 	private Path getPath() {
 		ImageInfo ii = parent.getImageInfo();
 		Path path = ii.getPath();
 		return path;
 	}
-	
+
 	private void createMenuItems(HashMap<Operations, ActionListener> actions) {
-		for(Operations op : Operations.values()) {
+		for (Operations op : Operations.values()) {
 			ActionListener listener = actions.get(op);
-			
-			if(listener != null) {
+
+			if (listener != null) {
 				JMenuItem jmi = new JMenuItem(op.toString());
 				jmi.addActionListener(listener);
 				this.add(jmi);
