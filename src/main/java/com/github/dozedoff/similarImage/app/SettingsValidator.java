@@ -17,17 +17,12 @@
 */
 package com.github.dozedoff.similarImage.app;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.github.dozedoff.commonj.settings.AbstractSettings;
+import com.github.dozedoff.commonj.settings.AbstractSettingsValidator;
 import com.github.dozedoff.commonj.settings.ISettingsValidator;
 import com.github.dozedoff.similarImage.app.Settings.Parameters;
 
-public class SettingsValidator implements ISettingsValidator {
-	private static final Logger logger = LoggerFactory.getLogger(SettingsValidator.class);
-	private boolean allOk = true;
-	
+public class SettingsValidator extends AbstractSettingsValidator implements ISettingsValidator {
 	@Override
 	public boolean validate(AbstractSettings settings) {
 		if (!(settings instanceof Settings)) {
@@ -42,25 +37,6 @@ public class SettingsValidator implements ISettingsValidator {
 		checkGreaterZero(Parameters.phash_workers, set.getpHashWorkers());
 		checkGreaterZero(Parameters.thumbnail_dimension, set.getThumbnailDimension());
 
-		return allOk;
-	}
-	
-	private void checkGreaterZero(Parameters param, int value) {
-		if (!(value > 0)) {
-			setOk(false);
-			logger.warn("Value for {} must be greater than 0, currently set to {}", param.toString(), value);
-		}
-	}
-	
-	private void checkRange(Parameters param, int value, int min, int max) {
-		if(! ((value >= min) && (value <= max))){
-			setOk(false);
-			Object loggerData[] = {param.toString(), };
-			logger.warn("Value for {} must be between {} and {}, currently set to {}", loggerData);
-		}
-	}
-
-	private void setOk(boolean ok) {
-		allOk &= ok;
+		return getOkState();
 	}
 }
