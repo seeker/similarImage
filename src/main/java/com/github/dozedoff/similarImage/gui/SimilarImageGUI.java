@@ -46,11 +46,13 @@ import javax.swing.event.ListSelectionListener;
 import net.miginfocom.swing.MigLayout;
 
 import com.github.dozedoff.similarImage.app.SimilarImage;
+import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 
 public class SimilarImageGUI extends JFrame {
 	private static final long serialVersionUID = 1L;
-	private SimilarImage parent;
+	private final SimilarImage parent;
+	private final Persistence persistence;
 
 	private JTextField path;
 	private JButton find, stop, sortSimilar, sortFilter;
@@ -62,8 +64,10 @@ public class SimilarImageGUI extends JFrame {
 	private JScrollPane groupScrollPane;
 	private JScrollBar hammingDistance;
 
-	public SimilarImageGUI(SimilarImage parent) {
+	public SimilarImageGUI(SimilarImage parent, Persistence persistence) {
 		this.parent = parent;
+		this.persistence = persistence;
+
 		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
 		this.setSize(500, 500);
 		this.setTitle("Similar Image");
@@ -185,6 +189,8 @@ public class SimilarImageGUI extends JFrame {
 		folderBlock = new JMenuItem("Add folder as block");
 		pruneRecords = new JMenuItem("Prune records");
 
+		final DuplicateOperations duplicateOperations = new DuplicateOperations(persistence);
+
 		folderDnw.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
@@ -196,7 +202,7 @@ public class SimilarImageGUI extends JFrame {
 
 				if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION) {
 					Path path = Paths.get(directory.getText());
-					DuplicateOperations.markDirectoryAs(path, DuplicateOperations.Tags.DNW.toString());
+					duplicateOperations.markDirectoryAs(path, DuplicateOperations.Tags.DNW.toString());
 				}
 			}
 		});
@@ -212,7 +218,7 @@ public class SimilarImageGUI extends JFrame {
 
 				if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION) {
 					Path path = Paths.get(directory.getText());
-					DuplicateOperations.markDirectoryAs(path, "BLOCK");
+					duplicateOperations.markDirectoryAs(path, "BLOCK");
 				}
 			}
 		});
@@ -220,7 +226,7 @@ public class SimilarImageGUI extends JFrame {
 		pruneRecords.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				DuplicateOperations.pruneRecords(Paths.get(path.getText()));
+				duplicateOperations.pruneRecords(Paths.get(path.getText()));
 			}
 		});
 

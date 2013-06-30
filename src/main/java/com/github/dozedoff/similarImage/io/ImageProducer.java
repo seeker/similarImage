@@ -44,7 +44,7 @@ import com.github.dozedoff.similarImage.db.Persistence;
 public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>> {
 	private static final Logger logger = LoggerFactory.getLogger(ImageProducer.class);
 	private final JProgressBar bufferLevel, totalProgress;
-	private final Persistence persistence = Persistence.getInstance();
+	private final Persistence persistence;
 	private final AtomicInteger total = new AtomicInteger();
 	private final AtomicInteger processed = new AtomicInteger();
 	private final int maxOutputQueueSize;
@@ -52,9 +52,11 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 	private final int MAX_WAIT_TIME = 10000;
 	private final int WORK_BATCH_SIZE = 20;
 
-	public ImageProducer(int maxOutputQueueSize) {
+	public ImageProducer(int maxOutputQueueSize, Persistence persistence) {
 		super(maxOutputQueueSize);
 		this.maxOutputQueueSize = maxOutputQueueSize;
+		this.persistence = persistence;
+
 		totalProgress = new JProgressBar(processed.get(), total.get());
 		totalProgress.setStringPainted(true);
 		bufferLevel = new JProgressBar(0, maxOutputQueueSize);

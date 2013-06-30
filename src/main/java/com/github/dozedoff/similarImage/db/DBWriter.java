@@ -29,10 +29,12 @@ public class DBWriter {
 	private final static Logger logger = LoggerFactory.getLogger(DBWriter.class);
 
 	private final int MAX_RETRY = 3;
+	private final Persistence persistence;
 
 	LinkedBlockingQueue<Pair<List<ImageRecord>, Integer>> pendingWrites = new LinkedBlockingQueue<Pair<List<ImageRecord>, Integer>>();
 
-	public DBWriter() {
+	public DBWriter(Persistence persistence) {
+		this.persistence = persistence;
 		Thread t = new DBWriterDaemon();
 		t.setDaemon(true);
 		t.start();
@@ -43,7 +45,6 @@ public class DBWriter {
 	}
 
 	private class DBWriterDaemon extends Thread {
-		private final Persistence persitence = Persistence.getInstance();
 
 		public DBWriterDaemon() {
 			setName("DBWriter daemon");
@@ -56,7 +57,7 @@ public class DBWriter {
 					Pair<List<ImageRecord>, Integer> work = pendingWrites.take();
 					List<ImageRecord> records = work.getLeft();
 					try {
-						persitence.batchAddRecord(records);
+						persistence.batchAddRecord(records);
 					} catch (Exception e) {
 						reQueue(work);
 					}

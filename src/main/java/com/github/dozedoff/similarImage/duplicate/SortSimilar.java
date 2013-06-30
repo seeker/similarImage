@@ -38,9 +38,15 @@ import com.j256.ormlite.dao.CloseableWrappedIterable;
 
 public class SortSimilar {
 	private static final Logger logger = LoggerFactory.getLogger(SortSimilar.class);
+	private final Persistence persistence;
+
 	HashMap<Long, Set<ImageRecord>> sorted = new HashMap<Long, Set<ImageRecord>>();
 	CompareHammingDistance compareHamming = new CompareHammingDistance();
 	LinkedList<ImageRecord> ignoredImages = new LinkedList<ImageRecord>();
+
+	public SortSimilar(Persistence persistence) {
+		this.persistence = persistence;
+	}
 
 	public void sortHammingDistance(int hammingDistance, List<ImageRecord> dBrecords) {
 		clear();
@@ -96,13 +102,13 @@ public class SortSimilar {
 		// TODO add filtering regarding reason
 		List<FilterRecord> filters;
 		try {
-			filters = Persistence.getInstance().getAllFilters(reason);
+			filters = persistence.getAllFilters(reason);
 
 			for (FilterRecord filter : filters) {
 				long pHash = filter.getpHash();
 
 				if (!sorted.containsKey(pHash)) {
-					List<ImageRecord> records = Persistence.getInstance().getRecords(pHash);
+					List<ImageRecord> records = persistence.getRecords(pHash);
 					sorted.put(pHash, new HashSet<ImageRecord>(records));
 				}
 			}

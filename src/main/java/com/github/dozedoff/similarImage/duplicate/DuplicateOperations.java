@@ -38,9 +38,14 @@ import com.github.dozedoff.similarImage.db.Persistence;
 
 public class DuplicateOperations {
 	private static final Logger logger = LoggerFactory.getLogger(DuplicateOperations.class);
+	private final Persistence persistence;
 
 	public enum Tags {
 		DNW, BLOCK
+	}
+
+	public DuplicateOperations(Persistence persistence) {
+		this.persistence = persistence;
 	}
 
 	public void moveToDnw(Path path) {
@@ -48,12 +53,12 @@ public class DuplicateOperations {
 		// TODO code me
 	}
 
-	public static void deleteFile(Path path) {
+	public void deleteFile(Path path) {
 		try {
 			logger.info("Deleting file {}", path);
 			Files.delete(path);
 			ImageRecord ir = new ImageRecord(path.toString(), 0);
-			Persistence.getInstance().deleteRecord(ir);
+			persistence.deleteRecord(ir);
 		} catch (IOException e) {
 			logger.warn("Failed to delete {} - {}", path, e.getMessage());
 		} catch (SQLException e) {
@@ -61,11 +66,11 @@ public class DuplicateOperations {
 		}
 	}
 
-	public static void markAs(Path path, String reason) {
+	public void markAs(Path path, String reason) {
 		// TODO do this with transaction
 		// TODO get "Mark as" strings from options
 		try {
-			ImageRecord ir = Persistence.getInstance().getRecord(path);
+			ImageRecord ir = persistence.getRecord(path);
 			if (ir == null) {
 				logger.warn("No record found for {}", path);
 				return;
@@ -73,7 +78,7 @@ public class DuplicateOperations {
 
 			long pHash = ir.getpHash();
 			logger.info("Adding pHash {} to filter, reason {}", pHash, reason);
-			FilterRecord fr = Persistence.getInstance().getFilter(pHash);
+			FilterRecord fr = persistence.getFilter(pHash);
 
 			if (fr != null) {
 				fr.setReason(reason);
@@ -81,13 +86,13 @@ public class DuplicateOperations {
 				fr = new FilterRecord(pHash, reason);
 			}
 
-			Persistence.getInstance().addFilter(fr);
+			persistence.addFilter(fr);
 		} catch (SQLException e) {
 			logger.warn("Add filter operation failed for {} - {}", path, e.getMessage());
 		}
 	}
 
-	public static void markDirectoryAs(Path directory, String reason) {
+	public void markDirectoryAs(Path directory, String reason) {
 		if (!isDirectory(directory)) {
 			logger.warn("Directory {} not valid, aborting.", directory);
 			return;
@@ -103,18 +108,18 @@ public class DuplicateOperations {
 		logger.info("Added {} images from {} to filter list", files.length, directory);
 	}
 
-	private static boolean isDirectory(Path directory) {
+	private boolean isDirectory(Path directory) {
 		return directory != null && Files.exists(directory) && Files.isDirectory(directory);
 	}
 
-	public static void pruneRecords(Path directory) {
+	public void pruneRecords(Path directory) {
 		if (!isDirectory(directory)) {
 			logger.warn("Directory {} not valid, aborting.", directory);
 			return;
 		}
 
 		try {
-			List<ImageRecord> records = Persistence.getInstance().filterByPath(directory);
+			List<ImageRecord> records = persistence.filterByPath(directory);
 			LinkedList<Path> toPrune = new LinkedList<Path>();
 
 			for (ImageRecord ir : records) {
@@ -135,7 +140,7 @@ public class DuplicateOperations {
 			if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION) {
 				for (Path path : toPrune) {
 					ImageRecord ir = new ImageRecord(path.toString(), 0);
-					Persistence.getInstance().deleteRecord(ir);
+					persistence.deleteRecord(ir);
 				}
 			} else {
 				logger.info("User aborted prune operation for {}", directory);

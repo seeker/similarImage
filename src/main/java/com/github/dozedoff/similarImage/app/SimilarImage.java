@@ -41,6 +41,7 @@ import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.DuplicateEntry;
+import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 import com.github.dozedoff.similarImage.duplicate.SortSimilar;
 import com.github.dozedoff.similarImage.gui.DisplayGroup;
 import com.github.dozedoff.similarImage.gui.SimilarImageGUI;
@@ -63,19 +64,24 @@ public class SimilarImage {
 
 	private ImageProducer producer;
 	private PhashWorker workers[] = new PhashWorker[WORKER_THREADS];
-	private SortSimilar sorter = new SortSimilar();
-	private DBWriter dbWriter = new DBWriter();
+	private Persistence persistence;
+	private SortSimilar sorter;
+	private DBWriter dbWriter;
 
 	public static void main(String[] args) {
 		new SimilarImage().init();
 	}
 
 	public void init() {
-		producer = new ImageProducer(PRODUCER_QUEUE_SIZE);
+		persistence = new Persistence();
+		sorter = new SortSimilar(persistence);
+		dbWriter = new DBWriter(persistence);
+
+		producer = new ImageProducer(PRODUCER_QUEUE_SIZE, persistence);
 		producer.setThreadPriority(LOADER_PRIORITY);
 		producer.startLoader(LOADER_THREADS);
 
-		gui = new SimilarImageGUI(this);
+		gui = new SimilarImageGUI(this, persistence);
 		displayGroup = new DisplayGroup();
 	}
 
@@ -157,7 +163,8 @@ public class SimilarImage {
 
 		for (ImageRecord rec : grouplist) {
 			Path path = Paths.get(rec.getPath());
-			DuplicateEntry entry = new DuplicateEntry(this, path, imageDim);
+			ImageInfo info = new ImageInfo(path, persistence);
+			DuplicateEntry entry = new DuplicateEntry(this, info, persistence, imageDim);
 			images.add(entry);
 		}
 
@@ -206,13 +213,13 @@ public class SimilarImage {
 			gui.setStatus("Sorting...");
 
 			try {
-				dBrecords = Persistence.getInstance().getAllRecords();
+				dBrecords = persistence.getAllRecords();
 			} catch (SQLException e) {
 				logger.warn("Failed to load records - {}", e.getMessage());
 			}
 
 			if (hammingDistance == 0) {
-				CloseableWrappedIterable<ImageRecord> records = Persistence.getInstance().getImageRecordIterator();
+				CloseableWrappedIterable<ImageRecord> records = persistence.getImageRecordIterator();
 				sorter.sortExactMatch(records);
 			} else {
 				sorter.sortHammingDistance(hammingDistance, dBrecords);
@@ -240,8 +247,8 @@ public class SimilarImage {
 			gui.setStatus("Sorting...");
 
 			try {
-				dBrecords = Persistence.getInstance().getAllRecords();
-				filterRecords = Persistence.getInstance().getAllFilters(reason);
+				dBrecords = persistence.getAllRecords();
+				filterRecords = persistence.getAllFilters(reason);
 			} catch (SQLException e) {
 				logger.warn("Failed to load from database - {}", e.getMessage());
 			}

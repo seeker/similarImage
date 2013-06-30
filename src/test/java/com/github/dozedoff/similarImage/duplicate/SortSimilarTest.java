@@ -32,6 +32,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
+import com.github.dozedoff.similarImage.db.Persistence;
 import com.j256.ormlite.dao.CloseableIterator;
 import com.j256.ormlite.dao.CloseableWrappedIterable;
 
@@ -39,10 +40,12 @@ public class SortSimilarTest {
 	SortSimilar sort;
 	CloseableWrappedIterable<ImageRecord> dummy;
 	LinkedList<ImageRecord> testRecords;
+	Persistence mockPersistence;
 
 	@Before
 	public void setUp() throws Exception {
-		sort = new SortSimilar();
+		mockPersistence = mock(Persistence.class);
+		sort = new SortSimilar(mockPersistence);
 		dummy = mock(DummyIterator.class);
 		createTestRecords();
 

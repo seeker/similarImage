@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import com.github.dozedoff.commonj.image.SubsamplingImageLoader;
 import com.github.dozedoff.similarImage.app.SimilarImage;
 import com.github.dozedoff.similarImage.db.ImageRecord;
+import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.gui.OperationsMenu;
 
 public class DuplicateEntry extends JPanel {
@@ -44,39 +45,35 @@ public class DuplicateEntry extends JPanel {
 	private static final Logger logger = LoggerFactory.getLogger(DuplicateEntry.class);
 	private final ImageInfo imageInfo;
 	private JLabel image;
-	private final Path imagePath;
 	private final SimilarImage parent;
 
-	public DuplicateEntry(SimilarImage parent, Path imagePath, Dimension thumbDimension) {
+	public DuplicateEntry(SimilarImage parent, ImageInfo imageInfo, Persistence persistence, Dimension thumbDimension) {
 		super();
-		this.imagePath = imagePath;
 		this.parent = parent;
+		this.imageInfo = imageInfo;
 		this.setLayout(new MigLayout("wrap"));
 		image = new JLabel("NO IMAGE");
-		imageInfo = new ImageInfo(imagePath);
 
 		try {
-			this.image = SubsamplingImageLoader.loadAsLabel(imagePath, thumbDimension);
+			this.image = SubsamplingImageLoader.loadAsLabel(this.imageInfo.getPath(), thumbDimension);
 		} catch (Exception e) {
 			logger.warn("Could not load image thumbnail for {} - {}", imageInfo.getPath(), e.getMessage());
 		}
 
 		add(image);
 		addImageInfo();
-		new OperationsMenu(this);
+		new OperationsMenu(this, persistence);
 		this.addMouseListener(new ClickListener());
 	}
 
 	private void addImageInfo() {
 		LinkedList<JComponent> components = new LinkedList<JComponent>();
-		Path path = imageInfo.getPath();
-		ImageInfo iInfo = new ImageInfo(path);
-		components.add(new JLabel("Path: " + iInfo.getPath()));
-		components.add(new JLabel("Size: " + iInfo.getSize() / 1024 + " kb"));
-		Dimension dim = iInfo.getDimension();
+		components.add(new JLabel("Path: " + imageInfo.getPath()));
+		components.add(new JLabel("Size: " + imageInfo.getSize() / 1024 + " kb"));
+		Dimension dim = imageInfo.getDimension();
 		components.add(new JLabel("Dimension: " + dim.getWidth() + "x" + dim.getHeight()));
-		components.add(new JLabel("pHash: " + iInfo.getpHash()));
-		components.add(new JLabel("Size per Pixel: " + iInfo.getSizePerPixel()));
+		components.add(new JLabel("pHash: " + imageInfo.getpHash()));
+		components.add(new JLabel("Size per Pixel: " + imageInfo.getSizePerPixel()));
 
 		for (JComponent jc : components) {
 			this.add(jc);
@@ -84,7 +81,7 @@ public class DuplicateEntry extends JPanel {
 	}
 
 	public Path getImagePath() {
-		return imagePath;
+		return imageInfo.getPath();
 	}
 
 	public ImageInfo getImageInfo() {
@@ -92,7 +89,7 @@ public class DuplicateEntry extends JPanel {
 	}
 
 	public void ignore() {
-		ImageRecord ir = new ImageRecord(imagePath.toString(), imageInfo.getpHash());
+		ImageRecord ir = new ImageRecord(getImagePath().toString(), imageInfo.getpHash());
 		parent.ignoreImage(ir);
 	}
 
@@ -100,14 +97,14 @@ public class DuplicateEntry extends JPanel {
 		JPanel imagePanel = new JPanel(new MigLayout());
 		JScrollPane scroll = new JScrollPane(imagePanel);
 
-		JFrame imageFrame = new JFrame(imagePath.toString());
+		JFrame imageFrame = new JFrame(getImagePath().toString());
 		imageFrame.setLayout(new MigLayout());
 		JLabel largeImage = new JLabel("No Image");
 
 		try {
-			largeImage = SubsamplingImageLoader.loadAsLabel(imagePath, new Dimension(4000, 4000));
+			largeImage = SubsamplingImageLoader.loadAsLabel(getImagePath(), new Dimension(4000, 4000));
 		} catch (Exception e) {
-			logger.warn("Unable to load full image {} - {}", imagePath, e.getMessage());
+			logger.warn("Unable to load full image {} - {}", getImagePath(), e.getMessage());
 		}
 
 		imagePanel.add(largeImage);

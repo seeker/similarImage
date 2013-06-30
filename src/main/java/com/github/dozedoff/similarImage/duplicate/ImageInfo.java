@@ -41,9 +41,11 @@ public class ImageInfo {
 	private long size = -1;
 	private long pHash = 0;
 	private double sizePerPixel = 0;
+	private final Persistence persistence;
 
-	public ImageInfo(Path path) {
+	public ImageInfo(Path path, Persistence persistence) {
 		this.path = path;
+		this.persistence = persistence;
 		getImageData();
 	}
 
@@ -60,7 +62,7 @@ public class ImageInfo {
 
 			dimension.setSize(img.getWidth(), img.getHeight());
 			size = Files.size(path);
-			ImageRecord record = Persistence.getInstance().getRecord(path);
+			ImageRecord record = persistence.getRecord(path);
 			pHash = record.getpHash();
 			calculateSpp();
 		} catch (IOException e) {

@@ -25,12 +25,14 @@ import java.util.HashMap;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
+import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.DuplicateEntry;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 
 public class OperationsMenu extends JPopupMenu {
 	private static final long serialVersionUID = 1L;
+	private final DuplicateOperations duplicateOperations;
 
 	private enum Operations {
 		Delete, MarkAndDeleteDNW, MarkBlocked, Ignore
@@ -38,9 +40,10 @@ public class OperationsMenu extends JPopupMenu {
 
 	private final DuplicateEntry parent;
 
-	public OperationsMenu(DuplicateEntry parent) {
+	public OperationsMenu(DuplicateEntry parent, Persistence persistence) {
 		super();
 		this.parent = parent;
+		duplicateOperations = new DuplicateOperations(persistence);
 		setupPopupMenu();
 	}
 
@@ -51,7 +54,7 @@ public class OperationsMenu extends JPopupMenu {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				Path path = getPath();
-				DuplicateOperations.deleteFile(path);
+				duplicateOperations.deleteFile(path);
 			}
 		});
 
@@ -59,8 +62,8 @@ public class OperationsMenu extends JPopupMenu {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				Path path = getPath();
-				DuplicateOperations.markAs(path, DuplicateOperations.Tags.DNW.toString());
-				DuplicateOperations.deleteFile(path);
+				duplicateOperations.markAs(path, DuplicateOperations.Tags.DNW.toString());
+				duplicateOperations.deleteFile(path);
 			}
 		});
 
@@ -68,7 +71,7 @@ public class OperationsMenu extends JPopupMenu {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				Path path = getPath();
-				DuplicateOperations.markAs(path, "BLOCK");
+				duplicateOperations.markAs(path, "BLOCK");
 			}
 		});
 
