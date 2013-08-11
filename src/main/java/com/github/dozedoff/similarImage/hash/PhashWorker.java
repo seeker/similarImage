@@ -28,6 +28,7 @@ import javax.imageio.IIOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.commonj.util.Pair;
 import com.github.dozedoff.similarImage.db.DBWriter;
 import com.github.dozedoff.similarImage.db.ImageRecord;
