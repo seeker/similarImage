@@ -118,7 +118,7 @@ public class SimilarImageGUI extends JFrame {
 		sortSimilar.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				parent.sortDuplicates(hammingDistance.getValue());
+				parent.sortDuplicates(hammingDistance.getValue(), path.getText());
 			}
 		});
 

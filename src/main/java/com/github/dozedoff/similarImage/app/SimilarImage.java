@@ -47,7 +47,6 @@ import com.github.dozedoff.similarImage.gui.DisplayGroup;
 import com.github.dozedoff.similarImage.gui.SimilarImageGUI;
 import com.github.dozedoff.similarImage.hash.PhashWorker;
 import com.github.dozedoff.similarImage.io.ImageProducer;
-import com.j256.ormlite.dao.CloseableWrappedIterable;
 
 public class SimilarImage {
 	private final static Logger logger = LoggerFactory.getLogger(SimilarImage.class);
@@ -94,8 +93,8 @@ public class SimilarImage {
 		t.start();
 	}
 
-	public void sortDuplicates(int hammingDistance) {
-		Thread t = new ImageSorter(hammingDistance);
+	public void sortDuplicates(int hammingDistance, String path) {
+		Thread t = new ImageSorter(hammingDistance, path);
 		t.start();
 	}
 
@@ -199,10 +198,12 @@ public class SimilarImage {
 
 	class ImageSorter extends Thread {
 		int hammingDistance = 0;
+		String path;
 
-		public ImageSorter(int hammingDistance) {
+		public ImageSorter(int hammingDistance, String path) {
 			super();
 			this.hammingDistance = hammingDistance;
+			this.path = path;
 		}
 
 		@Override
@@ -213,14 +214,17 @@ public class SimilarImage {
 			gui.setStatus("Sorting...");
 
 			try {
-				dBrecords = persistence.getAllRecords();
+				if (path == null || path.isEmpty()) {
+					dBrecords = persistence.getAllRecords();
+				} else {
+					dBrecords = persistence.filterByPath(Paths.get(path));
+				}
 			} catch (SQLException e) {
 				logger.warn("Failed to load records - {}", e.getMessage());
 			}
 
 			if (hammingDistance == 0) {
-				CloseableWrappedIterable<ImageRecord> records = persistence.getImageRecordIterator();
-				sorter.sortExactMatch(records);
+				sorter.sortExactMatch(dBrecords);
 			} else {
 				sorter.sortHammingDistance(hammingDistance, dBrecords);
 			}

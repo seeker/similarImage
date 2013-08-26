@@ -145,6 +145,22 @@ public class SortSimilar {
 		}
 	}
 
+	public void sortExactMatch(List<ImageRecord> records) {
+		for (ImageRecord ir : records) {
+			long key = ir.getpHash();
+
+			if (ignoredImages.contains(ir)) {
+				continue;
+			}
+
+			if (sorted.containsKey(key)) {
+				addToBucket(key, ir);
+			} else {
+				createBucket(key, ir);
+			}
+		}
+	}
+
 	public int getNumberOfDuplicateGroups() {
 		Collection<Set<ImageRecord>> buckets = sorted.values();
 		int duplicateGroups = 0;
