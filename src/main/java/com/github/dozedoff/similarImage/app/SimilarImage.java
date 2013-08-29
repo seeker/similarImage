@@ -252,7 +252,12 @@ public class SimilarImage {
 
 			try {
 				dBrecords = persistence.getAllRecords();
-				filterRecords = persistence.getAllFilters(reason);
+
+				if (reason == null || reason.isEmpty() || reason.equals("*")) {
+					filterRecords = persistence.getAllFilters();
+				} else {
+					filterRecords = persistence.getAllFilters(reason);
+				}
 			} catch (SQLException e) {
 				logger.warn("Failed to load from database - {}", e.getMessage());
 			}
