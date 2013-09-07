@@ -43,15 +43,27 @@ public class SortSimilar {
 	HashMap<Long, Set<ImageRecord>> sorted = new HashMap<Long, Set<ImageRecord>>();
 	CompareHammingDistance compareHamming = new CompareHammingDistance();
 	LinkedList<ImageRecord> ignoredImages = new LinkedList<ImageRecord>();
+	BKTree<ImageRecord> bkTree = null;
 
 	public SortSimilar(Persistence persistence) {
 		this.persistence = persistence;
 	}
 
+	public void buildTree(List<ImageRecord> dbRecords) {
+		dbRecords.removeAll(ignoredImages);
+		bkTree = BKTree.build(dbRecords, compareHamming);
+	}
+
+	private void checkTree(List<ImageRecord> dbRecords) {
+		if (bkTree == null) {
+			logger.info("Building BK-Tree with {} records...", dbRecords.size());
+			buildTree(dbRecords);
+		}
+	}
+
 	public void sortHammingDistance(int hammingDistance, List<ImageRecord> dBrecords) {
 		clear();
-		dBrecords.removeAll(ignoredImages);
-		BKTree<ImageRecord> bkTree = BKTree.build(dBrecords, compareHamming);
+		checkTree(dBrecords);
 
 		for (ImageRecord ir : dBrecords) {
 			long pHash = ir.getpHash();
@@ -67,6 +79,8 @@ public class SortSimilar {
 
 	public void sortFilter(int hammingDistance, String reason, List<ImageRecord> dBrecords, List<FilterRecord> filter) {
 		clear();
+		checkTree(dBrecords);
+
 		String logReason = reason;
 
 		if (logReason == null || logReason.equals("")) {
@@ -80,9 +94,6 @@ public class SortSimilar {
 			sortFilterExact(hammingDistance, reason);
 			return;
 		}
-
-		dBrecords.removeAll(ignoredImages);
-		BKTree<ImageRecord> bkTree = BKTree.build(dBrecords, compareHamming);
 
 		for (FilterRecord fr : filter) {
 			long pHash = fr.getpHash();
@@ -202,7 +213,6 @@ public class SortSimilar {
 
 	public void clear() {
 		sorted.clear();
-		sorted = new HashMap<Long, Set<ImageRecord>>();
 	}
 
 	public void ignore(ImageRecord toIgnore) {
