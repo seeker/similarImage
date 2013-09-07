@@ -46,4 +46,8 @@ public class Bucket<I, T> {
 	public List<T> getBucket() {
 		return (List<T>) bucket;
 	}
+
+	public void add(T item) {
+		bucket.add(item);
+	}
 }

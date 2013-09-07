@@ -18,8 +18,10 @@
 package com.github.dozedoff.similarImage.duplicate;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -50,8 +52,63 @@ public class SortSimilar {
 	}
 
 	public void buildTree(List<ImageRecord> dbRecords) {
+		long uniquePHashes = 0;
+		ArrayList<Bucket<Long, ImageRecord>> buckets;
+
+		try {
+			uniquePHashes = persistence.distinctHashes();
+		} catch (SQLException e) {
+			logger.warn("Failed to get unigue pHash count: {}", e.getMessage());
+		}
+
+		logger.info("Creating bucket list with size {}", uniquePHashes);
+		buckets = new ArrayList<Bucket<Long, ImageRecord>>((int) uniquePHashes);
+
+		logger.info("Removing ignored images...");
 		dbRecords.removeAll(ignoredImages);
+
+		populateBuckets(buckets, dbRecords);
+
+		logger.info("Building BK-Tree...");
 		bkTree = BKTree.build(dbRecords, compareHamming);
+	}
+
+	private void populateBuckets(ArrayList<Bucket<Long, ImageRecord>> buckets, List<ImageRecord> dbRecords) {
+		ArrayList<ImageRecord> dbRecords2 = new ArrayList<>(dbRecords);
+
+		Comparator<ImageRecord> compIr = new Comparator<ImageRecord>() {
+			@Override
+			public int compare(ImageRecord o1, ImageRecord o2) {
+				return (int) Math.abs(o1.getpHash() - o2.getpHash());
+			}
+		};
+
+		Comparator<Bucket<Long, ImageRecord>> comp = new Comparator<Bucket<Long, ImageRecord>>() {
+
+			@Override
+			public int compare(Bucket<Long, ImageRecord> o1, Bucket<Long, ImageRecord> o2) {
+				return (int) (o1.getId() - o2.getId());
+			}
+
+		};
+
+		logger.info("Sorting dbRecords...");
+		Collections.sort(dbRecords2, compIr);
+
+		logger.info("Populating buckets...");
+		for (ImageRecord ir : dbRecords2) {
+			int index = Collections.binarySearch(buckets, new Bucket<Long, ImageRecord>(ir.getpHash()), comp);
+
+			if (index < 0) {
+				Bucket<Long, ImageRecord> b = new Bucket<Long, ImageRecord>(ir.getpHash(), ir);
+				buckets.add(Math.abs(index + 1), b);
+			} else {
+				Bucket<Long, ImageRecord> b = buckets.get(index);
+				b.add(ir);
+			}
+		}
+
+		logger.info("Sorted {} records into {} buckets", dbRecords.size(), buckets.size());
 	}
 
 	private void checkTree(List<ImageRecord> dbRecords) {
