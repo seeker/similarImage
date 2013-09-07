@@ -79,7 +79,16 @@ public class SortSimilar {
 		Comparator<ImageRecord> compIr = new Comparator<ImageRecord>() {
 			@Override
 			public int compare(ImageRecord o1, ImageRecord o2) {
-				return (int) Math.abs(o1.getpHash() - o2.getpHash());
+				long l1 = o1.getpHash();
+				long l2 = o2.getpHash();
+
+				if (l1 < l2) {
+					return -1;
+				} else if (l1 == l2) {
+					return 0;
+				} else {
+					return 1;
+				}
 			}
 		};
 
@@ -87,7 +96,16 @@ public class SortSimilar {
 
 			@Override
 			public int compare(Bucket<Long, ImageRecord> o1, Bucket<Long, ImageRecord> o2) {
-				return (int) (o1.getId() - o2.getId());
+				long l1 = o1.getId();
+				long l2 = o2.getId();
+
+				if (l1 < l2) {
+					return -1;
+				} else if (l1 == l2) {
+					return 0;
+				} else {
+					return 1;
+				}
 			}
 
 		};
