@@ -94,9 +94,9 @@ public class Persistence {
 		filterRecordDao = DaoManager.createDao(cs, FilterRecord.class);
 		badFileRecordDao = DaoManager.createDao(cs, BadFileRecord.class);
 
-		imageRecordDao.setObjectCache(new LruObjectCache(100));
-		filterRecordDao.setObjectCache(new LruObjectCache(100));
-		badFileRecordDao.setObjectCache(new LruObjectCache(100));
+		imageRecordDao.setObjectCache(new LruObjectCache(5000));
+		filterRecordDao.setObjectCache(new LruObjectCache(1000));
+		badFileRecordDao.setObjectCache(new LruObjectCache(1000));
 	}
 
 	public void addRecord(ImageRecord record) throws SQLException {
