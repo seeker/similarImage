@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import com.j256.ormlite.dao.CloseableWrappedIterable;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
+import com.j256.ormlite.dao.LruObjectCache;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.QueryBuilder;
@@ -92,6 +93,10 @@ public class Persistence {
 		imageRecordDao = DaoManager.createDao(cs, ImageRecord.class);
 		filterRecordDao = DaoManager.createDao(cs, FilterRecord.class);
 		badFileRecordDao = DaoManager.createDao(cs, BadFileRecord.class);
+
+		imageRecordDao.setObjectCache(new LruObjectCache(100));
+		filterRecordDao.setObjectCache(new LruObjectCache(100));
+		badFileRecordDao.setObjectCache(new LruObjectCache(100));
 	}
 
 	public void addRecord(ImageRecord record) throws SQLException {
