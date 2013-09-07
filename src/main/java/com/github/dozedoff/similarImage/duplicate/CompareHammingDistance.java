@@ -21,7 +21,7 @@ import org.everpeace.search.Distance;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
 
-public class CompareHammingDistance implements Distance<ImageRecord> {
+public class CompareHammingDistance implements Distance<Bucket<Long, ImageRecord>> {
 	protected static int getHammingDistance(long a, long b) {
 		long xor = a ^ b;
 		int distance = Long.bitCount(xor);
@@ -29,9 +29,9 @@ public class CompareHammingDistance implements Distance<ImageRecord> {
 	}
 
 	@Override
-	public double eval(ImageRecord e1, ImageRecord e2) {
-		long hashE1 = e1.getpHash();
-		long hashE2 = e2.getpHash();
+	public double eval(Bucket<Long, ImageRecord> e1, Bucket<Long, ImageRecord> e2) {
+		long hashE1 = e1.getId();
+		long hashE2 = e2.getId();
 		int distance = getHammingDistance(hashE1, hashE2);
 		return distance;
 	}

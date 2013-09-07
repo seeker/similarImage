@@ -42,10 +42,10 @@ public class SortSimilar {
 	private static final Logger logger = LoggerFactory.getLogger(SortSimilar.class);
 	private final Persistence persistence;
 
-	HashMap<Long, Set<ImageRecord>> sorted = new HashMap<Long, Set<ImageRecord>>();
+	HashMap<Long, Set<Bucket<Long, ImageRecord>>> sorted = new HashMap<Long, Set<Bucket<Long, ImageRecord>>>();
 	CompareHammingDistance compareHamming = new CompareHammingDistance();
 	LinkedList<ImageRecord> ignoredImages = new LinkedList<ImageRecord>();
-	BKTree<ImageRecord> bkTree = null;
+	BKTree<Bucket<Long, ImageRecord>> bkTree = null;
 
 	public SortSimilar(Persistence persistence) {
 		this.persistence = persistence;
@@ -70,7 +70,7 @@ public class SortSimilar {
 		populateBuckets(buckets, dbRecords);
 
 		logger.info("Building BK-Tree...");
-		bkTree = BKTree.build(dbRecords, compareHamming);
+		bkTree = BKTree.build(buckets, compareHamming);
 	}
 
 	private void populateBuckets(ArrayList<Bucket<Long, ImageRecord>> buckets, List<ImageRecord> dbRecords) {
@@ -147,7 +147,7 @@ public class SortSimilar {
 				return; // prevent duplicates
 			}
 
-			Set<ImageRecord> similar = bkTree.searchWithin(ir, (double) hammingDistance);
+			Set<Bucket<Long, ImageRecord>> similar = bkTree.searchWithin(new Bucket<Long, ImageRecord>(pHash), (double) hammingDistance);
 			sorted.put(pHash, similar);
 		}
 	}
@@ -173,69 +173,75 @@ public class SortSimilar {
 		for (FilterRecord fr : filter) {
 			long pHash = fr.getpHash();
 
-			if (sorted.containsKey(pHash)) {
-				continue; // prevent duplicates
-			}
-
-			ImageRecord query = new ImageRecord(null, pHash);
-
-			Set<ImageRecord> similar = bkTree.searchWithin(query, (double) hammingDistance);
+			Set<Bucket<Long, ImageRecord>> similar = bkTree.searchWithin(new Bucket<Long, ImageRecord>(pHash), (double) hammingDistance);
 			sorted.put(pHash, similar);
 		}
 	}
 
 	private void sortFilterExact(int hammingDistance, String reason) {
 		// TODO add filtering regarding reason
-		List<FilterRecord> filters;
-		try {
-			filters = persistence.getAllFilters(reason);
 
-			for (FilterRecord filter : filters) {
-				long pHash = filter.getpHash();
+		logger.error("Not implemented");
 
-				if (!sorted.containsKey(pHash)) {
-					List<ImageRecord> records = persistence.getRecords(pHash);
-					sorted.put(pHash, new HashSet<ImageRecord>(records));
-				}
-			}
-		} catch (SQLException e) {
-			logger.warn("Failed to load filter records - {}", e.getMessage());
-		}
+		// List<FilterRecord> filters;
+		// try {
+		// filters = persistence.getAllFilters(reason);
+		//
+		// for (FilterRecord filter : filters) {
+		// long pHash = filter.getpHash();
+		//
+		// if (!sorted.containsKey(pHash)) {
+		// List<ImageRecord> records = persistence.getRecords(pHash);
+		// sorted.put(pHash, new HashSet<ImageRecord>(records));
+		// }
+		// }
+		// } catch (SQLException e) {
+		// logger.warn("Failed to load filter records - {}", e.getMessage());
+		// }
 	}
 
 	public Set<ImageRecord> getGroup(long pHash) {
-		return sorted.get(pHash);
+		Set<ImageRecord> resultSet = new HashSet<ImageRecord>();
+
+		Set<Bucket<Long, ImageRecord>> bucketSet = sorted.get(pHash);
+
+		for (Bucket<Long, ImageRecord> bu : bucketSet) {
+			resultSet.addAll(bu.getBucket());
+		}
+
+		return resultSet;
 	}
 
 	public void sortExactMatch(CloseableWrappedIterable<ImageRecord> records) {
-		try {
-			for (ImageRecord ir : records) {
-				long key = ir.getpHash();
-
-				if (ignoredImages.contains(ir)) {
-					continue;
-				}
-
-				if (sorted.containsKey(key)) {
-					addToBucket(key, ir);
-				} else {
-					createBucket(key, ir);
-				}
-			}
-		} finally {
-			try {
-				records.close();
-			} catch (SQLException e) {
-				logger.warn("Failed to close ImageRecord iterator", e);
-			}
-		}
+		logger.error("Not implemented");
+		// try {
+		// for (ImageRecord ir : records) {
+		// long key = ir.getpHash();
+		//
+		// if (ignoredImages.contains(ir)) {
+		// continue;
+		// }
+		//
+		// if (sorted.containsKey(key)) {
+		// addToBucket(key, ir);
+		// } else {
+		// createBucket(key, ir);
+		// }
+		// }
+		// } finally {
+		// try {
+		// records.close();
+		// } catch (SQLException e) {
+		// logger.warn("Failed to close ImageRecord iterator", e);
+		// }
+		// }
 	}
 
 	public int getNumberOfDuplicateGroups() {
-		Collection<Set<ImageRecord>> buckets = sorted.values();
+		Collection<Set<Bucket<Long, ImageRecord>>> buckets = sorted.values();
 		int duplicateGroups = 0;
 
-		for (Set<ImageRecord> irl : buckets) {
+		for (Set<Bucket<Long, ImageRecord>> irl : buckets) {
 			if (irl.size() > 1) {
 				duplicateGroups++;
 			}
@@ -249,7 +255,7 @@ public class SortSimilar {
 		LinkedList<Long> duplicateGroups = new LinkedList<Long>();
 
 		for (long key : keys) {
-			Set<ImageRecord> irs = sorted.get(key);
+			Set<Bucket<Long, ImageRecord>> irs = sorted.get(key);
 
 			if (irs.size() > 1) {
 				duplicateGroups.add(key);
@@ -262,13 +268,13 @@ public class SortSimilar {
 	}
 
 	private void removeIdenticalSets(LinkedList<Long> duplicateGroups) {
-		LinkedList<Set<ImageRecord>> processedRecords = new LinkedList<Set<ImageRecord>>();
+		LinkedList<Set<Bucket<Long, ImageRecord>>> processedRecords = new LinkedList<Set<Bucket<Long, ImageRecord>>>();
 
 		Iterator<Long> ite = duplicateGroups.iterator();
 
 		while (ite.hasNext()) {
 			long group = ite.next();
-			Set<ImageRecord> set = sorted.get(group);
+			Set<Bucket<Long, ImageRecord>> set = sorted.get(group);
 
 			if (processedRecords.contains(set)) {
 				ite.remove();
@@ -298,16 +304,5 @@ public class SortSimilar {
 
 	public void clearIgnored() {
 		ignoredImages.clear();
-	}
-
-	private void createBucket(long key, ImageRecord record) {
-		Set<ImageRecord> value = new HashSet<ImageRecord>();
-		value.add(record);
-		sorted.put(key, value);
-	}
-
-	private void addToBucket(long key, ImageRecord value) {
-		Set<ImageRecord> bucket = sorted.get(key);
-		bucket.add(value);
 	}
 }
