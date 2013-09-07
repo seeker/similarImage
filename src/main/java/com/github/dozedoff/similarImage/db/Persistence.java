@@ -198,4 +198,10 @@ public class Persistence {
 		PreparedQuery<ImageRecord> prep = qb.where().like("path", directory.toString() + "%").prepare();
 		return imageRecordDao.query(prep);
 	}
+
+	public long distinctHashes() throws SQLException {
+		QueryBuilder<ImageRecord, String> qb = imageRecordDao.queryBuilder();
+		PreparedQuery<ImageRecord> prep = qb.distinct().selectColumns("pHash").setCountOf(true).prepare();
+		return imageRecordDao.countOf(prep);
+	}
 }
