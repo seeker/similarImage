@@ -32,6 +32,7 @@ import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.QueryBuilder;
+import com.j256.ormlite.stmt.SelectArg;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.support.DatabaseConnection;
 import com.j256.ormlite.table.TableUtils;
@@ -44,11 +45,14 @@ public class Persistence {
 	Dao<FilterRecord, Long> filterRecordDao;
 	Dao<BadFileRecord, String> badFileRecordDao;
 
+	PreparedQuery<ImageRecord> filterPrepQuery, distinctPrepQuery;
+
 	public Persistence() {
 		try {
 			ConnectionSource cs = new JdbcConnectionSource(dbUrl);
 			setupDatabase(cs);
 			setupDAO(cs);
+			createPreparedStatements();
 			long recordCount = imageRecordDao.countOf();
 			long filterCount = filterRecordDao.countOf();
 			logger.info("Loaded database with {} image and {} filter records", recordCount, filterCount);
@@ -56,6 +60,15 @@ public class Persistence {
 			logger.error("Failed to setup database {}", dbUrl, e);
 			System.exit(1);
 		}
+	}
+
+	private void createPreparedStatements() throws SQLException {
+		QueryBuilder<ImageRecord, String> qb;
+		qb = imageRecordDao.queryBuilder();
+		filterPrepQuery = qb.where().like("path", new SelectArg() + "%").prepare();
+
+		qb = imageRecordDao.queryBuilder();
+		distinctPrepQuery = qb.distinct().selectColumns("pHash").setCountOf(true).prepare();
 	}
 
 	private void setupDatabase(ConnectionSource cs) throws SQLException {
@@ -194,14 +207,11 @@ public class Persistence {
 	}
 
 	public List<ImageRecord> filterByPath(Path directory) throws SQLException {
-		QueryBuilder<ImageRecord, String> qb = imageRecordDao.queryBuilder();
-		PreparedQuery<ImageRecord> prep = qb.where().like("path", directory.toString() + "%").prepare();
-		return imageRecordDao.query(prep);
+		filterPrepQuery.setArgumentHolderValue(1, directory.toString());
+		return imageRecordDao.query(filterPrepQuery);
 	}
 
 	public long distinctHashes() throws SQLException {
-		QueryBuilder<ImageRecord, String> qb = imageRecordDao.queryBuilder();
-		PreparedQuery<ImageRecord> prep = qb.distinct().selectColumns("pHash").setCountOf(true).prepare();
-		return imageRecordDao.countOf(prep);
+		return imageRecordDao.countOf(distinctPrepQuery);
 	}
 }
