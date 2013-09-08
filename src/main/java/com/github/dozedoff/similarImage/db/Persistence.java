@@ -54,9 +54,7 @@ public class Persistence {
 			setupDatabase(cs);
 			setupDAO(cs);
 			createPreparedStatements();
-			long recordCount = imageRecordDao.countOf();
-			long filterCount = filterRecordDao.countOf();
-			logger.info("Loaded database with {} image and {} filter records", recordCount, filterCount);
+			logger.info("Loaded database");
 		} catch (SQLException e) {
 			logger.error("Failed to setup database {}", dbUrl, e);
 			System.exit(1);
