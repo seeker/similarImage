@@ -19,7 +19,6 @@ package com.github.dozedoff.similarImage.duplicate;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -202,6 +201,8 @@ public class SortSimilar {
 		clear();
 		checkTree(dbRecords);
 
+		logger.info("Checking {} buckets for size greater than 1", buckets.size());
+
 		for (Bucket<Long, ImageRecord> b : buckets) {
 			if (b.getSize() > 1) {
 				Set<Bucket<Long, ImageRecord>> set = new HashSet<>();
@@ -212,16 +213,7 @@ public class SortSimilar {
 	}
 
 	public int getNumberOfDuplicateGroups() {
-		Collection<Set<Bucket<Long, ImageRecord>>> buckets = sorted.values();
-		int duplicateGroups = 0;
-
-		for (Set<Bucket<Long, ImageRecord>> irl : buckets) {
-			if (irl.size() > 1) {
-				duplicateGroups++;
-			}
-		}
-
-		return duplicateGroups;
+		return sorted.size();
 	}
 
 	public LinkedList<Long> getDuplicateGroups() {
@@ -229,11 +221,7 @@ public class SortSimilar {
 		LinkedList<Long> duplicateGroups = new LinkedList<Long>();
 
 		for (long key : keys) {
-			Set<Bucket<Long, ImageRecord>> irs = sorted.get(key);
-
-			if (irs.size() > 1) {
-				duplicateGroups.add(key);
-			}
+			duplicateGroups.add(key);
 		}
 
 		Collections.sort(duplicateGroups);
