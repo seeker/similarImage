@@ -64,7 +64,7 @@ public class SimilarImageGUI extends JFrame {
 	private JScrollPane groupScrollPane;
 	private JScrollBar hammingDistance;
 
-	private final int MAX_LIST_SIZE = 1000;
+	private final int MAX_LIST_SIZE = 100;
 
 	public SimilarImageGUI(SimilarImage parent, Persistence persistence) {
 		this.parent = parent;
