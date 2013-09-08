@@ -64,6 +64,8 @@ public class SimilarImageGUI extends JFrame {
 	private JScrollPane groupScrollPane;
 	private JScrollBar hammingDistance;
 
+	private final int MAX_LIST_SIZE = 1000;
+
 	public SimilarImageGUI(SimilarImage parent, Persistence persistence) {
 		this.parent = parent;
 		this.persistence = persistence;
@@ -260,9 +262,15 @@ public class SimilarImageGUI extends JFrame {
 		@Override
 		public void run() {
 			groupListModel.clear();
+			int listSizeCounter = 0;
 
 			for (Long g : groups) {
 				groupListModel.addElement(g);
+				listSizeCounter++;
+
+				if (listSizeCounter >= MAX_LIST_SIZE) {
+					break;
+				}
 			}
 		}
 	}
