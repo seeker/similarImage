@@ -163,7 +163,7 @@ public class SimilarImage {
 		Dimension imageDim = new Dimension(THUMBNAIL_DIMENSION, THUMBNAIL_DIMENSION);
 
 		if (grouplist.size() > maxGroupSize) {
-			Object[] message = { "Group size is greater than " + maxGroupSize + "\nContinue loading?" };
+			Object[] message = { "Group size is " + grouplist.size() + "\nContinue loading?" };
 			JOptionPane pane = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
 			JDialog getTopicDialog = pane.createDialog(null, "Continue?");
 			getTopicDialog.setVisible(true);
