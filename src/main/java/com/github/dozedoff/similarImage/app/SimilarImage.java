@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Set;
 
 import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 
 import org.slf4j.Logger;
@@ -154,9 +156,22 @@ public class SimilarImage {
 	}
 
 	public void displayGroup(long group) {
+		int maxGroupSize = 30;
+
 		Set<ImageRecord> grouplist = sorter.getGroup(group);
 		LinkedList<JComponent> images = new LinkedList<JComponent>();
 		Dimension imageDim = new Dimension(THUMBNAIL_DIMENSION, THUMBNAIL_DIMENSION);
+
+		if (grouplist.size() > maxGroupSize) {
+			Object[] message = { "Group size is greater than " + maxGroupSize + "\nContinue loading?" };
+			JOptionPane pane = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+			JDialog getTopicDialog = pane.createDialog(null, "Continue?");
+			getTopicDialog.setVisible(true);
+
+			if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.CANCEL_OPTION) {
+				return;
+			}
+		}
 
 		logger.info("Loading {} thumbnails for group {}", grouplist.size(), group);
 
