@@ -47,7 +47,6 @@ import com.github.dozedoff.similarImage.gui.DisplayGroup;
 import com.github.dozedoff.similarImage.gui.SimilarImageGUI;
 import com.github.dozedoff.similarImage.hash.PhashWorker;
 import com.github.dozedoff.similarImage.io.ImageProducer;
-import com.j256.ormlite.dao.CloseableWrappedIterable;
 
 public class SimilarImage {
 	private final static Logger logger = LoggerFactory.getLogger(SimilarImage.class);
@@ -219,8 +218,7 @@ public class SimilarImage {
 			}
 
 			if (hammingDistance == 0) {
-				CloseableWrappedIterable<ImageRecord> records = persistence.getImageRecordIterator();
-				sorter.sortExactMatch(records);
+				sorter.sortExactMatch(dBrecords);
 			} else {
 				sorter.sortHammingDistance(hammingDistance, dBrecords);
 			}

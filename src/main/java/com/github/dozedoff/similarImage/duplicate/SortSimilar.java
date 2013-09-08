@@ -36,7 +36,6 @@ import org.slf4j.LoggerFactory;
 import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
-import com.j256.ormlite.dao.CloseableWrappedIterable;
 
 public class SortSimilar {
 	private static final Logger logger = LoggerFactory.getLogger(SortSimilar.class);
@@ -46,6 +45,7 @@ public class SortSimilar {
 	CompareHammingDistance compareHamming = new CompareHammingDistance();
 	LinkedList<ImageRecord> ignoredImages = new LinkedList<ImageRecord>();
 	BKTree<Bucket<Long, ImageRecord>> bkTree = null;
+	ArrayList<Bucket<Long, ImageRecord>> buckets;
 
 	public SortSimilar(Persistence persistence) {
 		this.persistence = persistence;
@@ -53,7 +53,6 @@ public class SortSimilar {
 
 	public void buildTree(List<ImageRecord> dbRecords) {
 		long uniquePHashes = 0;
-		ArrayList<Bucket<Long, ImageRecord>> buckets;
 
 		try {
 			uniquePHashes = persistence.distinctHashes();
@@ -92,23 +91,7 @@ public class SortSimilar {
 			}
 		};
 
-		Comparator<Bucket<Long, ImageRecord>> comp = new Comparator<Bucket<Long, ImageRecord>>() {
-
-			@Override
-			public int compare(Bucket<Long, ImageRecord> o1, Bucket<Long, ImageRecord> o2) {
-				long l1 = o1.getId();
-				long l2 = o2.getId();
-
-				if (l1 < l2) {
-					return -1;
-				} else if (l1 == l2) {
-					return 0;
-				} else {
-					return 1;
-				}
-			}
-
-		};
+		Comparator<Bucket<Long, ImageRecord>> comp = new BucketComperator();
 
 		logger.info("Sorting dbRecords...");
 		Collections.sort(dbRecords2, compIr);
@@ -130,8 +113,8 @@ public class SortSimilar {
 	}
 
 	private void checkTree(List<ImageRecord> dbRecords) {
-		if (bkTree == null) {
-			logger.info("Building BK-Tree with {} records...", dbRecords.size());
+		if (bkTree == null || buckets == null) {
+			logger.info("Building BK-Tree and bucket-list with {} records...", dbRecords.size());
 			buildTree(dbRecords);
 		}
 	}
@@ -143,6 +126,8 @@ public class SortSimilar {
 		for (ImageRecord ir : dBrecords) {
 			long pHash = ir.getpHash();
 
+			// TODO merge? Are these not filtered out via removeIdenticalSets()
+			// ?
 			if (sorted.containsKey(pHash)) {
 				return; // prevent duplicates
 			}
@@ -179,25 +164,26 @@ public class SortSimilar {
 	}
 
 	private void sortFilterExact(int hammingDistance, String reason) {
-		// TODO add filtering regarding reason
+		List<FilterRecord> filters;
 
-		logger.error("Not implemented");
+		try {
+			filters = persistence.getAllFilters(reason);
+			Comparator<Bucket<Long, ImageRecord>> comp = new BucketComperator();
 
-		// List<FilterRecord> filters;
-		// try {
-		// filters = persistence.getAllFilters(reason);
-		//
-		// for (FilterRecord filter : filters) {
-		// long pHash = filter.getpHash();
-		//
-		// if (!sorted.containsKey(pHash)) {
-		// List<ImageRecord> records = persistence.getRecords(pHash);
-		// sorted.put(pHash, new HashSet<ImageRecord>(records));
-		// }
-		// }
-		// } catch (SQLException e) {
-		// logger.warn("Failed to load filter records - {}", e.getMessage());
-		// }
+			for (FilterRecord filter : filters) {
+				long pHash = filter.getpHash();
+
+				int index = Collections.binarySearch(buckets, new Bucket<Long, ImageRecord>(pHash), comp);
+
+				if (index >= 0) {
+					Set<Bucket<Long, ImageRecord>> set = new HashSet<>();
+					set.add(buckets.get(index));
+					sorted.put(pHash, set);
+				}
+			}
+		} catch (SQLException e) {
+			logger.warn("Failed to load filter records - {}", e.getMessage());
+		}
 	}
 
 	public Set<ImageRecord> getGroup(long pHash) {
@@ -212,29 +198,17 @@ public class SortSimilar {
 		return resultSet;
 	}
 
-	public void sortExactMatch(CloseableWrappedIterable<ImageRecord> records) {
-		logger.error("Not implemented");
-		// try {
-		// for (ImageRecord ir : records) {
-		// long key = ir.getpHash();
-		//
-		// if (ignoredImages.contains(ir)) {
-		// continue;
-		// }
-		//
-		// if (sorted.containsKey(key)) {
-		// addToBucket(key, ir);
-		// } else {
-		// createBucket(key, ir);
-		// }
-		// }
-		// } finally {
-		// try {
-		// records.close();
-		// } catch (SQLException e) {
-		// logger.warn("Failed to close ImageRecord iterator", e);
-		// }
-		// }
+	public void sortExactMatch(List<ImageRecord> dbRecords) {
+		clear();
+		checkTree(dbRecords);
+
+		for (Bucket<Long, ImageRecord> b : buckets) {
+			if (b.getSize() > 1) {
+				Set<Bucket<Long, ImageRecord>> set = new HashSet<>();
+				set.add(b);
+				sorted.put(b.getId(), set);
+			}
+		}
 	}
 
 	public int getNumberOfDuplicateGroups() {
@@ -268,6 +242,8 @@ public class SortSimilar {
 	}
 
 	private void removeIdenticalSets(LinkedList<Long> duplicateGroups) {
+		// TODO redo this, identical bucktes should be merged, then duplicate
+		// records removed. Implement equal methods?
 		LinkedList<Set<Bucket<Long, ImageRecord>>> processedRecords = new LinkedList<Set<Bucket<Long, ImageRecord>>>();
 
 		Iterator<Long> ite = duplicateGroups.iterator();
@@ -304,5 +280,21 @@ public class SortSimilar {
 
 	public void clearIgnored() {
 		ignoredImages.clear();
+	}
+
+	class BucketComperator implements Comparator<Bucket<Long, ImageRecord>> {
+		@Override
+		public int compare(Bucket<Long, ImageRecord> o1, Bucket<Long, ImageRecord> o2) {
+			long l1 = o1.getId();
+			long l2 = o2.getId();
+
+			if (l1 < l2) {
+				return -1;
+			} else if (l1 == l2) {
+				return 0;
+			} else {
+				return 1;
+			}
+		}
 	}
 }

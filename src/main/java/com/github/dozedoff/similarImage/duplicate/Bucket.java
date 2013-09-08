@@ -50,4 +50,12 @@ public class Bucket<I, T> {
 	public void add(T item) {
 		bucket.add(item);
 	}
+
+	public int getSize() {
+		return bucket.size();
+	}
+
+	public boolean isEmpty() {
+		return bucket.isEmpty();
+	}
 }
