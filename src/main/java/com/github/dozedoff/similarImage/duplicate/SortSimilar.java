@@ -212,10 +212,6 @@ public class SortSimilar {
 		}
 	}
 
-	public int getNumberOfDuplicateGroups() {
-		return sorted.size();
-	}
-
 	public LinkedList<Long> getDuplicateGroups() {
 		Set<Long> keys = sorted.keySet();
 		LinkedList<Long> duplicateGroups = new LinkedList<Long>();

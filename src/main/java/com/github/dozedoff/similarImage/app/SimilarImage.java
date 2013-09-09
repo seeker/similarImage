@@ -237,7 +237,7 @@ public class SimilarImage {
 			} else {
 				sorter.sortHammingDistance(hammingDistance, dBrecords);
 			}
-			gui.setStatus("" + sorter.getNumberOfDuplicateGroups() + " Groups");
+			gui.setStatus("" + sorter.getNumberOfGroups() + " Groups");
 			List<Long> groups = sorter.getDuplicateGroups();
 			gui.populateGroupList(groups);
 		}
@@ -267,7 +267,7 @@ public class SimilarImage {
 			}
 
 			sorter.sortFilter(hammingDistance, reason, dBrecords, filterRecords);
-			gui.setStatus("" + sorter.getNumberOfDuplicateGroups() + " Groups");
+			gui.setStatus("" + sorter.getNumberOfGroups() + " Groups");
 			List<Long> groups = sorter.getDuplicateGroups();
 			gui.populateGroupList(groups);
 		}
