@@ -125,8 +125,6 @@ public class SortSimilar {
 		for (ImageRecord ir : dBrecords) {
 			long pHash = ir.getpHash();
 
-			// TODO merge? Are these not filtered out via removeIdenticalSets()
-			// ?
 			if (sorted.containsKey(pHash)) {
 				return; // prevent duplicates
 			}

@@ -69,6 +69,13 @@ public class SortSimilarTest {
 	}
 
 	@Test
+	public void testSortHammingDistance() {
+		sort.sortHammingDistance(1, testRecords);
+
+		assertThat(sort.getNumberOfGroups(), is(3));
+	}
+
+	@Test
 	public void testGetNumberOfGroups() {
 		sort.sortExactMatch(testRecords);
 		assertThat(sort.getNumberOfGroups(), is(2));
