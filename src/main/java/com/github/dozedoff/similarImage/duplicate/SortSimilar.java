@@ -208,6 +208,8 @@ public class SortSimilar {
 				sorted.put(b.getId(), set);
 			}
 		}
+
+		logger.info("Found {} buckets with more than 1 image", sorted.size());
 	}
 
 	public LinkedList<Long> getDuplicateGroups() {

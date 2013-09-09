@@ -45,12 +45,17 @@ import javax.swing.event.ListSelectionListener;
 
 import net.miginfocom.swing.MigLayout;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.dozedoff.similarImage.app.SimilarImage;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 
 public class SimilarImageGUI extends JFrame {
 	private static final long serialVersionUID = 1L;
+	private static final Logger logger = LoggerFactory.getLogger(SimilarImageGUI.class);
+
 	private final SimilarImage parent;
 	private final Persistence persistence;
 
@@ -261,7 +266,10 @@ public class SimilarImageGUI extends JFrame {
 
 		@Override
 		public void run() {
+			logger.info("Populating group list with {} groups", groups.size());
+
 			groupListModel.clear();
+
 			int listSizeCounter = 0;
 
 			for (Long g : groups) {
@@ -269,6 +277,7 @@ public class SimilarImageGUI extends JFrame {
 				listSizeCounter++;
 
 				if (listSizeCounter >= MAX_LIST_SIZE) {
+					logger.info("Reached list size limit, aborting...");
 					break;
 				}
 			}
