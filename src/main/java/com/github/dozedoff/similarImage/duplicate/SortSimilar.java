@@ -221,7 +221,7 @@ public class SortSimilar {
 		}
 
 		Collections.sort(duplicateGroups);
-		removeIdenticalSets(duplicateGroups);
+		// removeIdenticalSets(duplicateGroups);
 		return duplicateGroups;
 	}
 
