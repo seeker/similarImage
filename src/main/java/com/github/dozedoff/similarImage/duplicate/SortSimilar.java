@@ -17,6 +17,7 @@
  */
 package com.github.dozedoff.similarImage.duplicate;
 
+import java.math.BigInteger;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -227,14 +228,14 @@ public class SortSimilar {
 
 	private void mergeIdenticalSets(LinkedList<Long> duplicateGroups) {
 		logger.info("Merging duplicate sets...");
-		TreeMap<Long, Set<Bucket<Long, ImageRecord>>> tree = new TreeMap<>();
+		TreeMap<BigInteger, Set<Bucket<Long, ImageRecord>>> tree = new TreeMap<>();
 		Iterator<Long> ite = duplicateGroups.iterator();
 		int potentialMatch = 0, actualMatch = 0;
 
 		while (ite.hasNext()) {
 			long group = ite.next();
 			Set<Bucket<Long, ImageRecord>> set = sorted.get(group);
-			long hashSum = calcHashSum(set);
+			BigInteger hashSum = calcHashSum(set);
 
 			if (tree.containsKey(hashSum)) {
 				logger.info("Possible set match found with sum {}", hashSum);
@@ -269,11 +270,11 @@ public class SortSimilar {
 		return size;
 	}
 
-	private long calcHashSum(Set<Bucket<Long, ImageRecord>> set) {
-		long sum = 0;
+	private BigInteger calcHashSum(Set<Bucket<Long, ImageRecord>> set) {
+		BigInteger sum = new BigInteger("0");
 
 		for (Bucket<Long, ImageRecord> b : set) {
-			sum += b.getId();
+			sum = sum.add(BigInteger.valueOf(b.getId()));
 		}
 
 		return sum;
