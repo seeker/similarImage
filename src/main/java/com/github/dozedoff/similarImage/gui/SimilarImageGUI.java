@@ -68,8 +68,6 @@ public class SimilarImageGUI extends JFrame {
 	private JScrollPane groupScrollPane;
 	private JScrollBar hammingDistance;
 
-	private final int MAX_LIST_SIZE = 100;
-
 	public SimilarImageGUI(SimilarImage parent, Persistence persistence) {
 		this.parent = parent;
 		this.persistence = persistence;
@@ -261,27 +259,19 @@ public class SimilarImageGUI extends JFrame {
 		private List<Long> groups;
 
 		public GroupListPopulator(List<Long> groups) {
-			this.logger.info("GroupList populator created");
 			this.groups = groups;
 		}
 
 		@Override
 		public void run() {
 			this.logger.info("Populating group list with {} groups", groups.size());
-
 			groupListModel.clear();
-
-			int listSizeCounter = 0;
 
 			for (Long g : groups) {
 				groupListModel.addElement(g);
-				listSizeCounter++;
-
-				if (listSizeCounter >= MAX_LIST_SIZE) {
-					this.logger.info("Reached list size limit, aborting...");
-					break;
-				}
 			}
+
+			this.logger.info("Finished populating group list");
 		}
 	}
 }
