@@ -27,6 +27,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.everpeace.search.BKTree;
 import org.slf4j.Logger;
@@ -220,26 +221,84 @@ public class SortSimilar {
 			duplicateGroups.add(key);
 		}
 
-		Collections.sort(duplicateGroups);
-		// removeIdenticalSets(duplicateGroups);
+		mergeIdenticalSets(duplicateGroups);
 		return duplicateGroups;
 	}
 
-	private void removeIdenticalSets(LinkedList<Long> duplicateGroups) {
-		// TODO redo this, identical bucktes should be merged, then duplicate
-		// records removed. Implement equal methods?
-		LinkedList<Set<Bucket<Long, ImageRecord>>> processedRecords = new LinkedList<Set<Bucket<Long, ImageRecord>>>();
-
+	private void mergeIdenticalSets(LinkedList<Long> duplicateGroups) {
+		logger.info("Merging duplicate sets...");
+		TreeMap<Long, Set<Bucket<Long, ImageRecord>>> tree = new TreeMap<>();
 		Iterator<Long> ite = duplicateGroups.iterator();
+		int potentialMatch = 0, actualMatch = 0;
 
 		while (ite.hasNext()) {
 			long group = ite.next();
 			Set<Bucket<Long, ImageRecord>> set = sorted.get(group);
+			long hashSum = calcHashSum(set);
 
-			if (processedRecords.contains(set)) {
+			if (tree.containsKey(hashSum)) {
+				logger.info("Possible set match found with sum {}", hashSum);
+				Set<Bucket<Long, ImageRecord>> treeSet = tree.get(hashSum);
+				potentialMatch++;
+
+				if (treeSet.equals(set)) {
+					logger.info("Identical sets for hashsum {}", hashSum);
+					int oldSize = totalSetSize(treeSet);
+					mergeSets(treeSet, set);
+					actualMatch++;
+
+					logger.info("Merge sets, old size {}, new {}", oldSize, totalSetSize(treeSet));
+				}
+
 				ite.remove();
 			} else {
-				processedRecords.add(set);
+				tree.put(hashSum, set);
+			}
+		}
+		Object logData[] = { tree.size(), potentialMatch, actualMatch };
+		logger.info("Final TreeMap size was {}. {} potential matches, of which {} were actual matches", logData);
+	}
+
+	private <I, T> int totalSetSize(Set<Bucket<I, T>> set) {
+		int size = 0;
+
+		for (Bucket<I, T> b : set) {
+			size += b.getSize();
+		}
+
+		return size;
+	}
+
+	private long calcHashSum(Set<Bucket<Long, ImageRecord>> set) {
+		long sum = 0;
+
+		for (Bucket<Long, ImageRecord> b : set) {
+			sum += b.getId();
+		}
+
+		return sum;
+	}
+
+	private void mergeSets(Set<Bucket<Long, ImageRecord>> resultSet, Set<Bucket<Long, ImageRecord>> toMerge) {
+		for (Bucket<Long, ImageRecord> b : resultSet) {
+			Bucket<Long, ImageRecord> merge = null;
+
+			for (Bucket<Long, ImageRecord> mergB : toMerge) {
+				if (mergB.equals(b)) {
+					merge = mergB;
+					break;
+				}
+			}
+
+			if (merge != null) {
+				Set<ImageRecord> merged = new HashSet<>();
+				List<ImageRecord> originalList = b.getBucket();
+
+				merged.addAll(originalList);
+				merged.addAll(merge.getBucket());
+
+				originalList.clear();
+				originalList.addAll(merged);
 			}
 		}
 	}

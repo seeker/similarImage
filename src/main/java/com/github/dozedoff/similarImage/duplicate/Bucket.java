@@ -58,4 +58,17 @@ public class Bucket<I, T> {
 	public boolean isEmpty() {
 		return bucket.isEmpty();
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof Bucket<?, ?>) {
+			Bucket<?, ?> b = (Bucket<?, ?>) obj;
+
+			if (b.getId().equals(this.getId())) {
+				return true;
+			}
+		}
+
+		return false;
+	}
 }
