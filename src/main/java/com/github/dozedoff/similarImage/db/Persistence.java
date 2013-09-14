@@ -48,6 +48,8 @@ public class Persistence {
 
 	PreparedQuery<ImageRecord> filterPrepQuery, distinctPrepQuery;
 
+	SelectArg pathArg = new SelectArg();
+
 	public Persistence() {
 		try {
 			ConnectionSource cs = new JdbcConnectionSource(dbUrl);
@@ -64,7 +66,7 @@ public class Persistence {
 	private void createPreparedStatements() throws SQLException {
 		QueryBuilder<ImageRecord, String> qb;
 		qb = imageRecordDao.queryBuilder();
-		filterPrepQuery = qb.where().like("path", new SelectArg() + "%").prepare();
+		filterPrepQuery = qb.where().like("path", pathArg).prepare();
 
 		qb = imageRecordDao.queryBuilder();
 		distinctPrepQuery = qb.distinct().selectColumns("pHash").setCountOf(true).prepare();
@@ -210,7 +212,7 @@ public class Persistence {
 	}
 
 	public List<ImageRecord> filterByPath(Path directory) throws SQLException {
-		filterPrepQuery.setArgumentHolderValue(1, directory.toString());
+		filterPrepQuery.setArgumentHolderValue(0, directory.toString() + "%");
 		return imageRecordDao.query(filterPrepQuery);
 	}
 

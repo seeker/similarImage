@@ -69,6 +69,8 @@ public class SimilarImage {
 	private SortSimilar sorter;
 	private DBWriter dbWriter;
 
+	private String lastPath = "///////";
+
 	public static void main(String[] args) {
 		new SimilarImage().init();
 	}
@@ -237,10 +239,16 @@ public class SimilarImage {
 				if (path == null || path.isEmpty()) {
 					dBrecords = persistence.getAllRecords();
 				} else {
+					logger.info("Loading records for path {}", path);
 					dBrecords = persistence.filterByPath(Paths.get(path));
 				}
 			} catch (SQLException e) {
 				logger.warn("Failed to load records - {}", e.getMessage());
+			}
+
+			if (!path.equals(lastPath)) {
+				sorter.buildTree(dBrecords); // Force tree rebuild
+				lastPath = path;
 			}
 
 			if (hammingDistance == 0) {
