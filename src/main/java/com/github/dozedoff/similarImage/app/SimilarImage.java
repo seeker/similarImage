@@ -256,7 +256,10 @@ public class SimilarImage {
 			} else {
 				sorter.sortHammingDistance(hammingDistance, dBrecords);
 			}
+
+			sorter.removeSingleImageGroups();
 			gui.setStatus("" + sorter.getNumberOfGroups() + " Groups");
+
 			List<Long> groups = sorter.getDuplicateGroups();
 			gui.populateGroupList(groups);
 		}

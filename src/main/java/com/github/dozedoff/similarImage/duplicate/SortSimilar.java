@@ -226,6 +226,29 @@ public class SortSimilar {
 		return duplicateGroups;
 	}
 
+	public void removeSingleImageGroups() {
+		int startSize = sorted.size();
+		LinkedList<Long> toRemove = new LinkedList<>();
+
+		for (Long id : sorted.keySet()) {
+			int total = 0;
+
+			for (Bucket<Long, ImageRecord> b : sorted.get(id)) {
+				total += b.getSize();
+			}
+
+			if (total <= 1) {
+				toRemove.add(id);
+			}
+		}
+
+		for (Long id : toRemove) {
+			sorted.remove(id);
+		}
+
+		logger.info("Removed {} result groups with size <= 1", (startSize - sorted.size()));
+	}
+
 	private void mergeIdenticalSets(LinkedList<Long> duplicateGroups) {
 		logger.info("Merging duplicate sets...");
 		TreeMap<BigInteger, Set<Bucket<Long, ImageRecord>>> tree = new TreeMap<>();
