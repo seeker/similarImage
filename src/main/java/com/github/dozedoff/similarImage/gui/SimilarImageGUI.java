@@ -45,12 +45,16 @@ import javax.swing.event.ListSelectionListener;
 
 import net.miginfocom.swing.MigLayout;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.dozedoff.similarImage.app.SimilarImage;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 
 public class SimilarImageGUI extends JFrame {
 	private static final long serialVersionUID = 1L;
+
 	private final SimilarImage parent;
 	private final Persistence persistence;
 
@@ -251,6 +255,7 @@ public class SimilarImageGUI extends JFrame {
 	}
 
 	class GroupListPopulator implements Runnable {
+		Logger logger = LoggerFactory.getLogger(GroupListPopulator.class);
 		private List<Long> groups;
 
 		public GroupListPopulator(List<Long> groups) {
@@ -259,11 +264,14 @@ public class SimilarImageGUI extends JFrame {
 
 		@Override
 		public void run() {
+			this.logger.info("Populating group list with {} groups", groups.size());
 			groupListModel.clear();
 
 			for (Long g : groups) {
 				groupListModel.addElement(g);
 			}
+
+			this.logger.info("Finished populating group list");
 		}
 	}
 }

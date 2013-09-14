@@ -21,7 +21,7 @@ import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
 @DatabaseTable
-public class ImageRecord {
+public class ImageRecord implements Comparable<ImageRecord> {
 	@DatabaseField(id = true, canBeNull = false)
 	String path;
 	@DatabaseField(canBeNull = false)
@@ -64,5 +64,20 @@ public class ImageRecord {
 
 	private boolean samePath(ImageRecord rec) {
 		return this.getPath().equals(rec.getPath());
+	}
+
+	@Override
+	public int compareTo(ImageRecord o) {
+		if (o == null) {
+			throw new NullPointerException();
+		}
+
+		if (this.pHash == o.getpHash()) {
+			return 0;
+		} else if (this.getpHash() > o.pHash) {
+			return 1;
+		} else {
+			return -1;
+		}
 	}
 }

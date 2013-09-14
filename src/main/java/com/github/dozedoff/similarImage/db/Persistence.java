@@ -29,9 +29,11 @@ import org.slf4j.LoggerFactory;
 import com.j256.ormlite.dao.CloseableWrappedIterable;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
+import com.j256.ormlite.dao.LruObjectCache;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.QueryBuilder;
+import com.j256.ormlite.stmt.SelectArg;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.support.DatabaseConnection;
 import com.j256.ormlite.table.TableUtils;
@@ -44,18 +46,28 @@ public class Persistence {
 	Dao<FilterRecord, Long> filterRecordDao;
 	Dao<BadFileRecord, String> badFileRecordDao;
 
+	PreparedQuery<ImageRecord> filterPrepQuery, distinctPrepQuery;
+
 	public Persistence() {
 		try {
 			ConnectionSource cs = new JdbcConnectionSource(dbUrl);
 			setupDatabase(cs);
 			setupDAO(cs);
-			long recordCount = imageRecordDao.countOf();
-			long filterCount = filterRecordDao.countOf();
-			logger.info("Loaded database with {} image and {} filter records", recordCount, filterCount);
+			createPreparedStatements();
+			logger.info("Loaded database");
 		} catch (SQLException e) {
 			logger.error("Failed to setup database {}", dbUrl, e);
 			System.exit(1);
 		}
+	}
+
+	private void createPreparedStatements() throws SQLException {
+		QueryBuilder<ImageRecord, String> qb;
+		qb = imageRecordDao.queryBuilder();
+		filterPrepQuery = qb.where().like("path", new SelectArg() + "%").prepare();
+
+		qb = imageRecordDao.queryBuilder();
+		distinctPrepQuery = qb.distinct().selectColumns("pHash").setCountOf(true).prepare();
 	}
 
 	private void setupDatabase(ConnectionSource cs) throws SQLException {
@@ -79,6 +91,10 @@ public class Persistence {
 		imageRecordDao = DaoManager.createDao(cs, ImageRecord.class);
 		filterRecordDao = DaoManager.createDao(cs, FilterRecord.class);
 		badFileRecordDao = DaoManager.createDao(cs, BadFileRecord.class);
+
+		imageRecordDao.setObjectCache(new LruObjectCache(5000));
+		filterRecordDao.setObjectCache(new LruObjectCache(1000));
+		badFileRecordDao.setObjectCache(new LruObjectCache(1000));
 	}
 
 	public void addRecord(ImageRecord record) throws SQLException {
@@ -194,8 +210,11 @@ public class Persistence {
 	}
 
 	public List<ImageRecord> filterByPath(Path directory) throws SQLException {
-		QueryBuilder<ImageRecord, String> qb = imageRecordDao.queryBuilder();
-		PreparedQuery<ImageRecord> prep = qb.where().like("path", directory.toString() + "%").prepare();
-		return imageRecordDao.query(prep);
+		filterPrepQuery.setArgumentHolderValue(1, directory.toString());
+		return imageRecordDao.query(filterPrepQuery);
+	}
+
+	public long distinctHashes() throws SQLException {
+		return imageRecordDao.countOf(distinctPrepQuery);
 	}
 }
