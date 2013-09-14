@@ -23,6 +23,7 @@ import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -272,6 +273,8 @@ public class SimilarImageGUI extends JFrame {
 		public void run() {
 			this.logger.info("Populating group list with {} groups", groups.size());
 			groupListModel.clear();
+
+			Collections.sort(groups);
 
 			for (Long g : groups) {
 				groupListModel.addElement(g);
