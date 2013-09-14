@@ -177,9 +177,14 @@ public class SimilarImage {
 
 		for (ImageRecord rec : grouplist) {
 			Path path = Paths.get(rec.getPath());
-			ImageInfo info = new ImageInfo(path, persistence);
-			DuplicateEntry entry = new DuplicateEntry(this, info, persistence, imageDim);
-			images.add(entry);
+
+			if (Files.exists(path)) {
+				ImageInfo info = new ImageInfo(path, persistence);
+				DuplicateEntry entry = new DuplicateEntry(this, info, persistence, imageDim);
+				images.add(entry);
+			} else {
+				logger.warn("Image {} not found, skipping...", path);
+			}
 		}
 
 		displayGroup.displayImages(group, images);
