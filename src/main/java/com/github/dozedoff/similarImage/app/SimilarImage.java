@@ -160,7 +160,7 @@ public class SimilarImage {
 	public void displayGroup(long group) {
 		int maxGroupSize = 30;
 
-		Set<ImageRecord> grouplist = sorter.getGroup(group);
+		Set<ImageRecord> grouplist = getGroup(group);
 		LinkedList<JComponent> images = new LinkedList<JComponent>();
 		Dimension imageDim = new Dimension(THUMBNAIL_DIMENSION, THUMBNAIL_DIMENSION);
 
@@ -190,6 +190,10 @@ public class SimilarImage {
 		}
 
 		displayGroup.displayImages(group, images);
+	}
+
+	public Set<ImageRecord> getGroup(long group) {
+		return sorter.getGroup(group);
 	}
 
 	public void ignoreImage(ImageRecord toIgnore) {
