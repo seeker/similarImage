@@ -59,6 +59,7 @@ public class SimilarImage {
 
 	private final int THUMBNAIL_DIMENSION = 500;
 	private final int PRODUCER_QUEUE_SIZE = 400;
+	private final String PROPERTIES_FILENAME = "similarImage.properties";
 
 	SimilarImageGUI gui;
 	DisplayGroup displayGroup;
@@ -76,6 +77,9 @@ public class SimilarImage {
 	}
 
 	public void init() {
+
+		Settings settings = new Settings(new SettingsValidator());
+		settings.loadPropertiesFromFile(PROPERTIES_FILENAME);
 		persistence = new Persistence();
 		sorter = new SortSimilar(persistence);
 		dbWriter = new DBWriter(persistence);
