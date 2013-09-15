@@ -23,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -53,6 +54,22 @@ public class DuplicateOperations {
 		// TODO code me
 	}
 
+	public void deleteAll(Collection<ImageRecord> records) {
+		for (ImageRecord ir : records) {
+			Path path = Paths.get(ir.getPath());
+
+			try {
+				logger.info("Deleting file {}", path);
+				Files.delete(path);
+				persistence.deleteRecord(ir);
+			} catch (IOException e) {
+				logger.warn("Failed to delete {} - {}", path, e.getMessage());
+			} catch (SQLException e) {
+				logger.warn("Failed to remove {} from database - {}", path, e.getMessage());
+			}
+		}
+	}
+
 	public void deleteFile(Path path) {
 		try {
 			logger.info("Deleting file {}", path);
@@ -63,6 +80,25 @@ public class DuplicateOperations {
 			logger.warn("Failed to delete {} - {}", path, e.getMessage());
 		} catch (SQLException e) {
 			logger.warn("Failed to remove {} from database - {}", path, e.getMessage());
+		}
+	}
+
+	public void markDnwAndDelete(Collection<ImageRecord> records) {
+		for (ImageRecord ir : records) {
+			long pHash = ir.getpHash();
+			Path path = Paths.get(ir.getPath());
+
+			FilterRecord fr = new FilterRecord(pHash, Tags.DNW.toString());
+
+			try {
+				persistence.addFilter(fr);
+				Files.delete(path);
+				persistence.deleteRecord(ir);
+			} catch (SQLException e) {
+				logger.warn("SQL error while deleteing {} - {}", path, e.getMessage());
+			} catch (IOException e) {
+				logger.warn("IO error while deleting {} - {}", path, e.getMessage());
+			}
 		}
 	}
 

@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Set;
 
 import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 
 import org.slf4j.Logger;
@@ -47,7 +49,6 @@ import com.github.dozedoff.similarImage.gui.DisplayGroup;
 import com.github.dozedoff.similarImage.gui.SimilarImageGUI;
 import com.github.dozedoff.similarImage.hash.PhashWorker;
 import com.github.dozedoff.similarImage.io.ImageProducer;
-import com.j256.ormlite.dao.CloseableWrappedIterable;
 
 public class SimilarImage {
 	private final static Logger logger = LoggerFactory.getLogger(SimilarImage.class);
@@ -67,6 +68,8 @@ public class SimilarImage {
 	private Persistence persistence;
 	private SortSimilar sorter;
 	private DBWriter dbWriter;
+
+	private String lastPath = "///////";
 
 	public static void main(String[] args) {
 		new SimilarImage().init();
@@ -94,8 +97,8 @@ public class SimilarImage {
 		t.start();
 	}
 
-	public void sortDuplicates(int hammingDistance) {
-		Thread t = new ImageSorter(hammingDistance);
+	public void sortDuplicates(int hammingDistance, String path) {
+		Thread t = new ImageSorter(hammingDistance, path);
 		t.start();
 	}
 
@@ -155,20 +158,42 @@ public class SimilarImage {
 	}
 
 	public void displayGroup(long group) {
-		Set<ImageRecord> grouplist = sorter.getGroup(group);
+		int maxGroupSize = 30;
+
+		Set<ImageRecord> grouplist = getGroup(group);
 		LinkedList<JComponent> images = new LinkedList<JComponent>();
 		Dimension imageDim = new Dimension(THUMBNAIL_DIMENSION, THUMBNAIL_DIMENSION);
+
+		if (grouplist.size() > maxGroupSize) {
+			Object[] message = { "Group size is " + grouplist.size() + "\nContinue loading?" };
+			JOptionPane pane = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+			JDialog getTopicDialog = pane.createDialog(null, "Continue?");
+			getTopicDialog.setVisible(true);
+
+			if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.CANCEL_OPTION) {
+				return;
+			}
+		}
 
 		logger.info("Loading {} thumbnails for group {}", grouplist.size(), group);
 
 		for (ImageRecord rec : grouplist) {
 			Path path = Paths.get(rec.getPath());
-			ImageInfo info = new ImageInfo(path, persistence);
-			DuplicateEntry entry = new DuplicateEntry(this, info, persistence, imageDim);
-			images.add(entry);
+
+			if (Files.exists(path)) {
+				ImageInfo info = new ImageInfo(path, persistence);
+				DuplicateEntry entry = new DuplicateEntry(this, info, persistence, imageDim);
+				images.add(entry);
+			} else {
+				logger.warn("Image {} not found, skipping...", path);
+			}
 		}
 
 		displayGroup.displayImages(group, images);
+	}
+
+	public Set<ImageRecord> getGroup(long group) {
+		return sorter.getGroup(group);
 	}
 
 	public void ignoreImage(ImageRecord toIgnore) {
@@ -199,10 +224,12 @@ public class SimilarImage {
 
 	class ImageSorter extends Thread {
 		int hammingDistance = 0;
+		String path;
 
-		public ImageSorter(int hammingDistance) {
+		public ImageSorter(int hammingDistance, String path) {
 			super();
 			this.hammingDistance = hammingDistance;
+			this.path = path;
 		}
 
 		@Override
@@ -213,18 +240,30 @@ public class SimilarImage {
 			gui.setStatus("Sorting...");
 
 			try {
-				dBrecords = persistence.getAllRecords();
+				if (path == null || path.isEmpty()) {
+					dBrecords = persistence.getAllRecords();
+				} else {
+					logger.info("Loading records for path {}", path);
+					dBrecords = persistence.filterByPath(Paths.get(path));
+				}
 			} catch (SQLException e) {
 				logger.warn("Failed to load records - {}", e.getMessage());
 			}
 
+			if (!path.equals(lastPath)) {
+				sorter.buildTree(dBrecords); // Force tree rebuild
+				lastPath = path;
+			}
+
 			if (hammingDistance == 0) {
-				CloseableWrappedIterable<ImageRecord> records = persistence.getImageRecordIterator();
-				sorter.sortExactMatch(records);
+				sorter.sortExactMatch(dBrecords);
 			} else {
 				sorter.sortHammingDistance(hammingDistance, dBrecords);
 			}
-			gui.setStatus("" + sorter.getNumberOfDuplicateGroups() + " Groups");
+
+			sorter.removeSingleImageGroups();
+			gui.setStatus("" + sorter.getNumberOfGroups() + " Groups");
+
 			List<Long> groups = sorter.getDuplicateGroups();
 			gui.populateGroupList(groups);
 		}
@@ -248,13 +287,18 @@ public class SimilarImage {
 
 			try {
 				dBrecords = persistence.getAllRecords();
-				filterRecords = persistence.getAllFilters(reason);
+
+				if (reason == null || reason.isEmpty() || reason.equals("*")) {
+					filterRecords = persistence.getAllFilters();
+				} else {
+					filterRecords = persistence.getAllFilters(reason);
+				}
 			} catch (SQLException e) {
 				logger.warn("Failed to load from database - {}", e.getMessage());
 			}
 
 			sorter.sortFilter(hammingDistance, reason, dBrecords, filterRecords);
-			gui.setStatus("" + sorter.getNumberOfDuplicateGroups() + " Groups");
+			gui.setStatus("" + sorter.getNumberOfGroups() + " Groups");
 			List<Long> groups = sorter.getDuplicateGroups();
 			gui.populateGroupList(groups);
 		}

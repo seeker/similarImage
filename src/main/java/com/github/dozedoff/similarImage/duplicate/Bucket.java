@@ -17,22 +17,58 @@
  */
 package com.github.dozedoff.similarImage.duplicate;
 
-import org.everpeace.search.Distance;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 
-import com.github.dozedoff.similarImage.db.ImageRecord;
+public class Bucket<I, T> {
+	private I id;
+	private LinkedList<T> bucket = new LinkedList<T>();
 
-public class CompareHammingDistance implements Distance<Bucket<Long, ImageRecord>> {
-	protected static int getHammingDistance(long a, long b) {
-		long xor = a ^ b;
-		int distance = Long.bitCount(xor);
-		return distance;
+	public Bucket(I id) {
+		this.id = id;
+	}
+
+	public Bucket(I id, T entry) {
+		this.id = id;
+		bucket.add(entry);
+	}
+
+	public Bucket(I id, Collection<T> collection) {
+		this.id = id;
+		bucket.addAll(collection);
+	}
+
+	public I getId() {
+		return id;
+	}
+
+	public List<T> getBucket() {
+		return (List<T>) bucket;
+	}
+
+	public void add(T item) {
+		bucket.add(item);
+	}
+
+	public int getSize() {
+		return bucket.size();
+	}
+
+	public boolean isEmpty() {
+		return bucket.isEmpty();
 	}
 
 	@Override
-	public double eval(Bucket<Long, ImageRecord> e1, Bucket<Long, ImageRecord> e2) {
-		long hashE1 = e1.getId();
-		long hashE2 = e2.getId();
-		int distance = getHammingDistance(hashE1, hashE2);
-		return distance;
+	public boolean equals(Object obj) {
+		if (obj instanceof Bucket<?, ?>) {
+			Bucket<?, ?> b = (Bucket<?, ?>) obj;
+
+			if (b.getId().equals(this.getId())) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

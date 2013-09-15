@@ -17,14 +17,11 @@
  */
 package com.github.dozedoff.similarImage.duplicate;
 
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
-import static org.junit.matchers.JUnitMatchers.hasItems;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
-import java.sql.SQLException;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Set;
 
@@ -33,12 +30,9 @@ import org.junit.Test;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
-import com.j256.ormlite.dao.CloseableIterator;
-import com.j256.ormlite.dao.CloseableWrappedIterable;
 
 public class SortSimilarTest {
 	SortSimilar sort;
-	CloseableWrappedIterable<ImageRecord> dummy;
 	LinkedList<ImageRecord> testRecords;
 	Persistence mockPersistence;
 
@@ -46,10 +40,7 @@ public class SortSimilarTest {
 	public void setUp() throws Exception {
 		mockPersistence = mock(Persistence.class);
 		sort = new SortSimilar(mockPersistence);
-		dummy = mock(DummyIterator.class);
 		createTestRecords();
-
-		when(dummy.iterator()).thenReturn(testRecords.iterator());
 	}
 
 	private void createTestRecords() {
@@ -65,7 +56,7 @@ public class SortSimilarTest {
 
 	@Test
 	public void testSortExactMatch() {
-		sort.sortExactMatch(dummy);
+		sort.sortExactMatch(testRecords);
 
 		ImageRecord testRecords[] = { new ImageRecord("/foo/bar/1", 3), new ImageRecord("/foo/foo/1", 3) };
 		ImageRecord testRecords2[] = { new ImageRecord("/foo/bar/3", 5), new ImageRecord("/foo/foo/5", 5) };
@@ -78,47 +69,30 @@ public class SortSimilarTest {
 	}
 
 	@Test
-	public void testGetNumberOfDuplicateGroups() {
-		sort.sortExactMatch(dummy);
-		assertThat(sort.getNumberOfDuplicateGroups(), is(2));
+	public void testSortHammingDistance() {
+		sort.sortHammingDistance(1, testRecords);
+
+		assertThat(sort.getNumberOfGroups(), is(3));
 	}
 
 	@Test
 	public void testGetNumberOfGroups() {
-		sort.sortExactMatch(dummy);
-		assertThat(sort.getNumberOfGroups(), is(4));
+		sort.sortExactMatch(testRecords);
+		assertThat(sort.getNumberOfGroups(), is(2));
 	}
 
 	@Test
 	public void testIsEmpty() {
 		assertThat(sort.isEmpty(), is(true));
-		sort.sortExactMatch(dummy);
+		sort.sortExactMatch(testRecords);
 		assertThat(sort.isEmpty(), is(false));
 	}
 
 	@Test
 	public void testClear() {
-		sort.sortExactMatch(dummy);
+		sort.sortExactMatch(testRecords);
 		assertThat(sort.isEmpty(), is(false));
 		sort.clear();
 		assertThat(sort.isEmpty(), is(true));
-	}
-
-	class DummyIterator implements CloseableWrappedIterable<ImageRecord> {
-
-		@Override
-		public CloseableIterator<ImageRecord> closeableIterator() {
-			return null;
-		}
-
-		@Override
-		public Iterator<ImageRecord> iterator() {
-			return null;
-		}
-
-		@Override
-		public void close() throws SQLException {
-
-		}
 	}
 }

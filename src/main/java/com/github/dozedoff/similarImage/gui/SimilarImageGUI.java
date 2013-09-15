@@ -23,7 +23,9 @@ import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -35,6 +37,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
@@ -45,14 +48,18 @@ import javax.swing.event.ListSelectionListener;
 
 import net.miginfocom.swing.MigLayout;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.dozedoff.similarImage.app.SimilarImage;
+import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 
 public class SimilarImageGUI extends JFrame {
 	private static final long serialVersionUID = 1L;
+
 	private final SimilarImage parent;
-	private final Persistence persistence;
 
 	private JTextField path;
 	private JButton find, stop, sortSimilar, sortFilter;
@@ -63,15 +70,16 @@ public class SimilarImageGUI extends JFrame {
 	private DefaultListModel<Long> groupListModel;
 	private JScrollPane groupScrollPane;
 	private JScrollBar hammingDistance;
+	final DuplicateOperations duplicateOperations;
 
 	public SimilarImageGUI(SimilarImage parent, Persistence persistence) {
 		this.parent = parent;
-		this.persistence = persistence;
 
 		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
 		this.setSize(500, 500);
 		this.setTitle("Similar Image");
 		this.setLayout(new MigLayout("wrap 4"));
+		duplicateOperations = new DuplicateOperations(persistence);
 		setupComponents();
 		setupMenu();
 		updateHammingDisplay();
@@ -96,6 +104,7 @@ public class SimilarImageGUI extends JFrame {
 
 		groupListModel = new DefaultListModel<Long>();
 		groups = new JList<Long>(groupListModel);
+		groups.setComponentPopupMenu(new OperationsMenu());
 		groupScrollPane = new JScrollPane(groups);
 		hammingDistance = new JScrollBar(JScrollBar.HORIZONTAL, 0, 2, 0, 64);
 		hammingValue = new JLabel();
@@ -118,7 +127,7 @@ public class SimilarImageGUI extends JFrame {
 		sortSimilar.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				parent.sortDuplicates(hammingDistance.getValue());
+				parent.sortDuplicates(hammingDistance.getValue(), path.getText());
 			}
 		});
 
@@ -178,6 +187,10 @@ public class SimilarImageGUI extends JFrame {
 		this.add(hammingValue);
 	}
 
+	private long getSelectedGroup() {
+		return groups.getSelectedValue();
+	}
+
 	private void setupMenu() {
 		JMenuBar menuBar = new JMenuBar();
 		JMenu file;
@@ -188,8 +201,6 @@ public class SimilarImageGUI extends JFrame {
 		folderDnw = new JMenuItem("Add folder as dnw");
 		folderBlock = new JMenuItem("Add folder as block");
 		pruneRecords = new JMenuItem("Prune records");
-
-		final DuplicateOperations duplicateOperations = new DuplicateOperations(persistence);
 
 		folderDnw.addActionListener(new ActionListener() {
 			@Override
@@ -251,6 +262,7 @@ public class SimilarImageGUI extends JFrame {
 	}
 
 	class GroupListPopulator implements Runnable {
+		Logger logger = LoggerFactory.getLogger(GroupListPopulator.class);
 		private List<Long> groups;
 
 		public GroupListPopulator(List<Long> groups) {
@@ -259,11 +271,54 @@ public class SimilarImageGUI extends JFrame {
 
 		@Override
 		public void run() {
+			this.logger.info("Populating group list with {} groups", groups.size());
 			groupListModel.clear();
+
+			Collections.sort(groups);
 
 			for (Long g : groups) {
 				groupListModel.addElement(g);
 			}
+
+			this.logger.info("Finished populating group list");
+		}
+	}
+
+	private void deleteAll(long group) {
+		Set<ImageRecord> set = parent.getGroup(group);
+		duplicateOperations.deleteAll(set);
+		groupListModel.removeElement(group);
+	}
+
+	private void dnwAll(long group) {
+		Set<ImageRecord> set = parent.getGroup(group);
+		duplicateOperations.markDnwAndDelete(set);
+		groupListModel.removeElement(group);
+	}
+
+	class OperationsMenu extends JPopupMenu {
+		private static final long serialVersionUID = 1L;
+
+		public OperationsMenu() {
+			JMenuItem deleteAll = new JMenuItem("Delete all");
+			deleteAll.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+					deleteAll(getSelectedGroup());
+				}
+
+			});
+
+			JMenuItem dnwAll = new JMenuItem("Mark dnw & delete all");
+			dnwAll.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+					dnwAll(getSelectedGroup());
+				}
+			});
+
+			this.add(deleteAll);
+			this.add(dnwAll);
 		}
 	}
 }
