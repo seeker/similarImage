@@ -80,13 +80,13 @@ public class Settings extends AbstractSettings {
 		properties.setProperty(Parameters.hide_ignored_images.toString(), hideIgnored.toString());
 	}
 
-	private int readAndConvertProperty(Parameters parameter, int defaultValue) {
+	private int readAndConvertProperty(Enum<?> parameter, int defaultValue) {
 		String value = properties.getProperty(parameter.toString());
 		int intValue = Convert.stringToInt(value, defaultValue);
 		return intValue;
 	}
 
-	private boolean readAndConvertBoolean(Parameters parameter, Boolean defaultValue) {
+	private boolean readAndConvertBoolean(Enum<?> parameter, Boolean defaultValue) {
 		String value = properties.getProperty(parameter.toString(), defaultValue.toString());
 		boolean boolValue = Convert.stringToBoolean(value, defaultValue);
 		return boolValue;
