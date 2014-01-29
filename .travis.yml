@@ -2,3 +2,8 @@ language: java
 jdk:
   - oraclejdk7
   - openjdk7
+before_install:
+  - git clone https://github.com:everpeace/bk-tree.git --depth=1
+  - cd bk-tree
+  - mvn clean install -Dmaven.test.skip=true
+  - cd ..
