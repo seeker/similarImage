@@ -29,11 +29,13 @@ public class CompareTest {
 		assertThat(distance, is(0));
 	}
 
+	@Test
 	public void testGetHammingDistanceMax() {
 		int distance = CompareHammingDistance.getHammingDistance(Long.MIN_VALUE, Long.MIN_VALUE);
 		assertThat(distance, is(0));
 	}
 
+	@Test
 	public void testGetHammingDistance() {
 		int distance = CompareHammingDistance.getHammingDistance(5, 6);
 		assertThat(distance, is(2));
