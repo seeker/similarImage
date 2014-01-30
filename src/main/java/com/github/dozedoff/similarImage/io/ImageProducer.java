@@ -150,6 +150,10 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 		InputStream is = new ByteArrayInputStream(data);
 		BufferedImage img = ImageIO.read(is);
 
+		if (img == null) {
+			throw new IIOException("No ImageReader was able to read " + next.toString());
+		}
+
 		Pair<Path, BufferedImage> pair = new Pair<Path, BufferedImage>(next, img);
 		output.put(pair);
 
