@@ -68,11 +68,14 @@ public class PhashWorker extends Thread {
 
 		while (!isInterrupted()) {
 			try {
-				if (!producer.hasWork()) {
-					break;
+				synchronized (producer) {
+					while (!producer.hasWork()) {
+						producer.wait();
+					}
+
+					producer.drainTo(work, MAX_WORK_BATCH_SIZE);
 				}
 
-				producer.drainTo(work, MAX_WORK_BATCH_SIZE);
 			} catch (InterruptedException e1) {
 				interrupt();
 			}

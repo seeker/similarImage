@@ -163,6 +163,9 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 
 	@Override
 	protected void outputQueueChanged() {
+		synchronized (this) {
+			this.notifyAll();
+		}
 		bufferLevel.setValue(output.size());
 	}
 
