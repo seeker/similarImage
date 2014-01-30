@@ -47,20 +47,21 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 	private final Persistence persistence;
 	private final AtomicInteger total = new AtomicInteger();
 	private final AtomicInteger processed = new AtomicInteger();
-	private final int maxOutputQueueSize;
+	private AbstractBufferStrategy bufferStrategy;
 
-	private final int MAX_WAIT_TIME = 10000;
 	private final int WORK_BATCH_SIZE = 20;
 
 	public ImageProducer(int maxOutputQueueSize, Persistence persistence) {
 		super(maxOutputQueueSize);
-		this.maxOutputQueueSize = maxOutputQueueSize;
 		this.persistence = persistence;
 
 		totalProgress = new JProgressBar(processed.get(), total.get());
 		totalProgress.setStringPainted(true);
 		bufferLevel = new JProgressBar(0, maxOutputQueueSize);
 		bufferLevel.setStringPainted(true);
+
+		AbstractBufferStrategy refillBufferStartegy = new RefillBufferStartegy(input, output, maxOutputQueueSize);
+		this.bufferStrategy = refillBufferStartegy;
 	}
 
 	public JProgressBar getBufferLevel() {
@@ -95,7 +96,7 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 		Path n = null;
 		ArrayList<Path> work = new ArrayList<Path>(WORK_BATCH_SIZE + 1);
 
-		if (isBufferFilled() || input.isEmpty()) {
+		if (bufferStrategy.workAvailable()) {
 			synchronized (output) {
 				output.notifyAll();
 			}
@@ -155,28 +156,7 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 
 	@Override
 	public void drainTo(Collection<Pair<Path, BufferedImage>> drainTo, int maxElements) throws InterruptedException {
-		if (isBufferLow() && (!input.isEmpty())) {
-			synchronized (output) {
-				logger.debug("Low buffer, suspending drain");
-
-				try {
-					output.wait(MAX_WAIT_TIME);
-				} catch (InterruptedException e) {
-					logger.debug("Max wait has timed out, resuming drain");
-					return;
-				}
-
-				logger.debug("Buffer re-filled, resuming drain");
-			}
-		}
+		bufferStrategy.bufferCheck();
 		super.drainTo(drainTo, maxElements);
-	}
-
-	private boolean isBufferLow() {
-		return output.size() < (float) maxOutputQueueSize * 0.10f;
-	}
-
-	private boolean isBufferFilled() {
-		return output.size() > (float) maxOutputQueueSize * 0.90f;
 	}
 }
