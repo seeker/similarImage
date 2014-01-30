@@ -87,6 +87,14 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 		total.set(0);
 	}
 
+	public int getTotal() {
+		return total.get();
+	}
+
+	public int getProcessed() {
+		return processed.get();
+	}
+
 	public JProgressBar getTotalProgress() {
 		return totalProgress;
 	}
