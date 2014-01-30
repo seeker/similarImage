@@ -47,12 +47,14 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 	private final Persistence persistence;
 	private final AtomicInteger total = new AtomicInteger();
 	private final AtomicInteger processed = new AtomicInteger();
-	private AbstractBufferStrategy bufferStrategy;
 
 	private final int WORK_BATCH_SIZE = 20;
 
+	private AbstractBufferStrategy bufferStrategy = new SimpleBufferStrategy(input, output, WORK_BATCH_SIZE);
+
 	public ImageProducer(int maxOutputQueueSize, Persistence persistence) {
 		super(maxOutputQueueSize);
+		this.bufferStrategy = new RefillBufferStartegy(input, output, maxOutputQueueSize);
 		this.persistence = persistence;
 
 		totalProgress = new JProgressBar(processed.get(), total.get());
@@ -60,8 +62,6 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 		bufferLevel = new JProgressBar(0, maxOutputQueueSize);
 		bufferLevel.setStringPainted(true);
 
-		AbstractBufferStrategy refillBufferStartegy = new RefillBufferStartegy(input, output, maxOutputQueueSize);
-		this.bufferStrategy = refillBufferStartegy;
 	}
 
 	public JProgressBar getBufferLevel() {
