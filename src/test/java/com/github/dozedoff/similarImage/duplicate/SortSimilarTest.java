@@ -224,4 +224,19 @@ public class SortSimilarTest {
 		assertThat(group, hasItem(testRecords.get(5)));
 		assertThat(group.size(), is(3));
 	}
+
+	@Test
+	public void testRemoveSingleImageGroups() throws SQLException {
+		List<FilterRecord> filterRecords = createFilterRecords("foo", 4L, 3L);
+		when(mockPersistence.getAllFilters("foo")).thenReturn(filterRecords);
+
+		sort.sortFilter(0, "foo", testRecords, filterRecords);
+		List<Long> groups = sort.getDuplicateGroups();
+		assertThat(groups.size(), is(2));
+
+		sort.removeSingleImageGroups();
+
+		groups = sort.getDuplicateGroups();
+		assertThat(groups.size(), is(1));
+	}
 }
