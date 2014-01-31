@@ -77,9 +77,6 @@ public class Persistence {
 		QueryBuilder<ImageRecord, String> qb;
 		qb = imageRecordDao.queryBuilder();
 		filterPrepQuery = qb.where().like("path", pathArg).prepare();
-
-		qb = imageRecordDao.queryBuilder();
-		distinctPrepQuery = qb.distinct().selectColumns("pHash").setCountOf(true).prepare();
 	}
 
 	private void setupDatabase(ConnectionSource cs) throws SQLException {
@@ -227,6 +224,6 @@ public class Persistence {
 	}
 
 	public long distinctHashes() throws SQLException {
-		return imageRecordDao.countOf(distinctPrepQuery);
+		return imageRecordDao.queryRawValue("SELECT COUNT(DISTINCT `pHash`) FROM `imagerecord`");
 	}
 }
