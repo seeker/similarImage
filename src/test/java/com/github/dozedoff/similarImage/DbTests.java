@@ -21,11 +21,13 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
+import com.github.dozedoff.similarImage.db.ImageRecordTest;
 import com.github.dozedoff.similarImage.db.PersistenceTest;
 
 //@formatter:off
 @RunWith(Suite.class)
 @SuiteClasses({
-	PersistenceTest.class
+	PersistenceTest.class,
+	ImageRecordTest.class
 })
 public class DbTests {}
