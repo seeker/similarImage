@@ -81,8 +81,9 @@ public class DBWriter {
 					}
 				}
 			} else {
-				logger.warn("Re-adding failed list with {} entries to queue, {} attempt", records.size(), retryCount + 1);
-				pendingWrites.offer(new Pair<List<ImageRecord>, Integer>(records, retryCount++));
+				retryCount++;
+				logger.warn("Re-adding failed list with {} entries to queue, {} attempt", records.size(), retryCount);
+				pendingWrites.offer(new Pair<List<ImageRecord>, Integer>(records, retryCount));
 			}
 		}
 	}
