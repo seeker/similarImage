@@ -21,6 +21,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
+import com.github.dozedoff.similarImage.db.FilterRecordTest;
 import com.github.dozedoff.similarImage.db.ImageRecordTest;
 import com.github.dozedoff.similarImage.db.PersistenceTest;
 
@@ -28,6 +29,7 @@ import com.github.dozedoff.similarImage.db.PersistenceTest;
 @RunWith(Suite.class)
 @SuiteClasses({
 	PersistenceTest.class,
-	ImageRecordTest.class
+	ImageRecordTest.class,
+	FilterRecordTest.class
 })
 public class DbTests {}
