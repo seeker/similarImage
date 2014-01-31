@@ -42,6 +42,7 @@ public class DBWriter {
 
 	public void add(List<ImageRecord> records) {
 		pendingWrites.offer(new Pair<List<ImageRecord>, Integer>(records, 0));
+		logger.debug("Adding list with {} entries to queue", records.size());
 	}
 
 	private class DBWriterDaemon extends Thread {
@@ -72,7 +73,7 @@ public class DBWriter {
 			List<ImageRecord> records = work.getLeft();
 
 			if (retryCount >= MAX_RETRY) {
-				logger.warn("Giving up on adding list with {} entries", records.size());
+				logger.error("Giving up on adding list with {} entries", records.size());
 
 				if (logger.isDebugEnabled()) {
 					for (ImageRecord ir : records) {
@@ -80,7 +81,7 @@ public class DBWriter {
 					}
 				}
 			} else {
-				logger.info("Re-adding failed list with {} entries to queue, {} attempt", records.size(), retryCount + 1);
+				logger.warn("Re-adding failed list with {} entries to queue, {} attempt", records.size(), retryCount + 1);
 				pendingWrites.offer(new Pair<List<ImageRecord>, Integer>(records, retryCount++));
 			}
 		}
