@@ -21,10 +21,15 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
+import com.github.dozedoff.similarImage.duplicate.BucketTest;
 import com.github.dozedoff.similarImage.duplicate.CompareTest;
 import com.github.dozedoff.similarImage.duplicate.SortSimilarTest;
 
+//@formatter:off
 @RunWith(Suite.class)
-@SuiteClasses({ CompareTest.class, SortSimilarTest.class })
-public class DuplicateTests {
-}
+@SuiteClasses({
+	CompareTest.class,
+	SortSimilarTest.class,
+	BucketTest.class
+})
+public class DuplicateTests {}
