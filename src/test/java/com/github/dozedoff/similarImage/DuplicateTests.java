@@ -22,6 +22,7 @@ import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
 import com.github.dozedoff.similarImage.duplicate.BucketTest;
+import com.github.dozedoff.similarImage.duplicate.CompareHammingDistanceTest;
 import com.github.dozedoff.similarImage.duplicate.CompareTest;
 import com.github.dozedoff.similarImage.duplicate.SortSimilarTest;
 
@@ -30,6 +31,7 @@ import com.github.dozedoff.similarImage.duplicate.SortSimilarTest;
 @SuiteClasses({
 	CompareTest.class,
 	SortSimilarTest.class,
-	BucketTest.class
+	BucketTest.class,
+	CompareHammingDistanceTest.class
 })
 public class DuplicateTests {}
