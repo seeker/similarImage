@@ -40,7 +40,8 @@ import com.j256.ormlite.table.TableUtils;
 
 public class Persistence {
 	private static final Logger logger = LoggerFactory.getLogger(Persistence.class);
-	private final String dbUrl = "jdbc:sqlite:similarImage.db";
+	private final static String defaultDbPath = "similarImage.db";
+	private final static String dbPrefix = "jdbc:sqlite:";
 
 	Dao<ImageRecord, String> imageRecordDao;
 	Dao<FilterRecord, Long> filterRecordDao;
@@ -51,14 +52,23 @@ public class Persistence {
 	SelectArg pathArg = new SelectArg();
 
 	public Persistence() {
+		this(defaultDbPath);
+	}
+
+	public Persistence(Path dbPath) {
+		this(dbPath.toString());
+	}
+
+	public Persistence(String dbPath) {
 		try {
-			ConnectionSource cs = new JdbcConnectionSource(dbUrl);
+			String fullDbPath = dbPrefix + dbPath;
+			ConnectionSource cs = new JdbcConnectionSource(fullDbPath);
 			setupDatabase(cs);
 			setupDAO(cs);
 			createPreparedStatements();
 			logger.info("Loaded database");
 		} catch (SQLException e) {
-			logger.error("Failed to setup database {}", dbUrl, e);
+			logger.error("Failed to setup database {}", dbPath, e);
 			System.exit(1);
 		}
 	}
