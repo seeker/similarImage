@@ -55,4 +55,15 @@ public class FilterRecord {
 	public void setReason(String reason) {
 		this.reason = reason;
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (!(obj instanceof FilterRecord)) {
+			return false;
+		}
+
+		FilterRecord fr = (FilterRecord) obj;
+
+		return (this.pHash == fr.pHash) && (this.reason.equals(fr.getReason()));
+	}
 }
