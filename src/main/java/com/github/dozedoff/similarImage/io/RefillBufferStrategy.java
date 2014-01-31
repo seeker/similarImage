@@ -26,11 +26,11 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.util.Pair;
 
-public class RefillBufferStartegy extends AbstractBufferStrategy {
-	private static final Logger logger = LoggerFactory.getLogger(RefillBufferStartegy.class);
+public class RefillBufferStrategy extends AbstractBufferStrategy {
+	private static final Logger logger = LoggerFactory.getLogger(RefillBufferStrategy.class);
 	private final int MAX_WAIT_TIME = 10000;
 
-	public RefillBufferStartegy(LinkedBlockingQueue<Path> input, LinkedBlockingQueue<Pair<Path, BufferedImage>> output, int outputCapacity) {
+	public RefillBufferStrategy(LinkedBlockingQueue<Path> input, LinkedBlockingQueue<Pair<Path, BufferedImage>> output, int outputCapacity) {
 		super(input, output, outputCapacity);
 	}
 

@@ -57,7 +57,7 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 		if (useSimpleStrategy) {
 			this.bufferStrategy = new SimpleBufferStrategy(input, output, maxOutputQueueSize);
 		} else {
-			this.bufferStrategy = new RefillBufferStartegy(input, output, maxOutputQueueSize);
+			this.bufferStrategy = new RefillBufferStrategy(input, output, maxOutputQueueSize);
 		}
 
 		this.persistence = persistence;
