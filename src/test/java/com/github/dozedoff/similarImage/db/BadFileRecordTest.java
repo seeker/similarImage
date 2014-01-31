@@ -15,23 +15,26 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.dozedoff.similarImage;
+package com.github.dozedoff.similarImage.db;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.junit.runners.Suite.SuiteClasses;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 
-import com.github.dozedoff.similarImage.db.BadFileRecord;
-import com.github.dozedoff.similarImage.db.FilterRecordTest;
-import com.github.dozedoff.similarImage.db.ImageRecordTest;
-import com.github.dozedoff.similarImage.db.PersistenceTest;
+import java.nio.file.Paths;
 
-//@formatter:off
-@RunWith(Suite.class)
-@SuiteClasses({
-	PersistenceTest.class,
-	ImageRecordTest.class,
-	FilterRecordTest.class,
-	BadFileRecord.class
-})
-public class DbTests {}
+import org.junit.Before;
+import org.junit.Test;
+
+public class BadFileRecordTest {
+	private BadFileRecord badFileRecord;
+
+	@Before
+	public void setUp() throws Exception {
+		badFileRecord = new BadFileRecord(Paths.get("bad"));
+	}
+
+	@Test
+	public void testGetPath() throws Exception {
+		assertThat(badFileRecord.getPath(), is("bad"));
+	}
+}
