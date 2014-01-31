@@ -70,6 +70,7 @@ public class PhashWorker extends Thread {
 			try {
 				synchronized (producer) {
 					while (!producer.hasWork()) {
+						logger.debug("No work, waiting...");
 						producer.wait();
 					}
 
@@ -105,6 +106,7 @@ public class PhashWorker extends Thread {
 			}
 
 			dbWriter.add(newRecords);
+			logger.debug("{} records added to DBWriter", newRecords.size());
 			newRecords = new LinkedList<ImageRecord>();
 
 			work.clear();
