@@ -22,6 +22,7 @@ import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
 import com.github.dozedoff.similarImage.db.BadFileRecord;
+import com.github.dozedoff.similarImage.db.DBWriterTest;
 import com.github.dozedoff.similarImage.db.FilterRecordTest;
 import com.github.dozedoff.similarImage.db.ImageRecordTest;
 import com.github.dozedoff.similarImage.db.PersistenceTest;
@@ -32,6 +33,7 @@ import com.github.dozedoff.similarImage.db.PersistenceTest;
 	PersistenceTest.class,
 	ImageRecordTest.class,
 	FilterRecordTest.class,
-	BadFileRecord.class
+	BadFileRecord.class,
+	DBWriterTest.class
 })
 public class DbTests {}
