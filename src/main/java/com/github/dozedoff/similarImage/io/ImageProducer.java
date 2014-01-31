@@ -183,4 +183,9 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 		bufferStrategy.bufferCheck();
 		super.drainTo(drainTo, maxElements);
 	}
+
+	@Override
+	public boolean hasWork() {
+		return bufferStrategy.workAvailable();
+	}
 }

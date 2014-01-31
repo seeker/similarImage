@@ -35,6 +35,6 @@ public class SimpleBufferStrategy extends AbstractBufferStrategy {
 
 	@Override
 	public boolean workAvailable() {
-		return (!input.isEmpty());
+		return (!output.isEmpty());
 	}
 }
