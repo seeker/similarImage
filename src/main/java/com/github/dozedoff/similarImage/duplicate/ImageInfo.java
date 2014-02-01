@@ -41,11 +41,30 @@ public class ImageInfo {
 	private long size = -1;
 	private long pHash = 0;
 	private double sizePerPixel = 0;
-	private final Persistence persistence;
 
+	/**
+	 * Use {@link ImageInfo#ImageInfo(Path, long)} instead to pass the pHash value directly.
+	 * 
+	 * @param path
+	 * @param persistence
+	 */
+	@Deprecated
 	public ImageInfo(Path path, Persistence persistence) {
 		this.path = path;
-		this.persistence = persistence;
+		getImageData();
+
+		try {
+			ImageRecord record = persistence.getRecord(path);
+			pHash = record.getpHash();
+		} catch (SQLException e) {
+			logger.warn("Failed to get pHash for image {} - {}", path, e.getMessage());
+		}
+	}
+
+	public ImageInfo(Path path, long pHash) {
+		this.path = path;
+		this.pHash = pHash;
+
 		getImageData();
 	}
 
@@ -57,18 +76,15 @@ public class ImageInfo {
 
 			if (img == null) {
 				logger.warn("Failed to process image {}", path);
+				this.pHash = 0;
 				return;
 			}
 
 			dimension.setSize(img.getWidth(), img.getHeight());
 			size = Files.size(path);
-			ImageRecord record = persistence.getRecord(path);
-			pHash = record.getpHash();
 			calculateSpp();
 		} catch (IOException e) {
 			logger.warn("Unable to get info for file {} - {}", path, e.getMessage());
-		} catch (SQLException e) {
-			logger.warn("Failed to get pHash for image {} - {}", path, e.getMessage());
 		} finally {
 			try {
 				if (is != null) {
