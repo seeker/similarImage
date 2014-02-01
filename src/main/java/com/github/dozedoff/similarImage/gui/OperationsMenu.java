@@ -26,7 +26,6 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
 import com.github.dozedoff.similarImage.db.Persistence;
-import com.github.dozedoff.similarImage.duplicate.DuplicateEntry;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 

@@ -15,7 +15,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.dozedoff.similarImage.duplicate;
+package com.github.dozedoff.similarImage.gui;
 
 import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
@@ -38,7 +38,7 @@ import com.github.dozedoff.commonj.image.SubsamplingImageLoader;
 import com.github.dozedoff.similarImage.app.SimilarImage;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
-import com.github.dozedoff.similarImage.gui.OperationsMenu;
+import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 
 public class DuplicateEntry extends JPanel {
 	private static final long serialVersionUID = 1L;
