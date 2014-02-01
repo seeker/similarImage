@@ -74,9 +74,11 @@ public class DuplicateOperations {
 			}
 
 			logger.info("Deleting file {}", path);
-			Files.delete(path);
+
 			ImageRecord ir = new ImageRecord(path.toString(), 0);
+
 			persistence.deleteRecord(ir);
+			Files.delete(path);
 		} catch (IOException e) {
 			logger.warn("Failed to delete {} - {}", path, e.getMessage());
 		} catch (SQLException e) {
