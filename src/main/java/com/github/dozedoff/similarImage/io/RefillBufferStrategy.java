@@ -24,14 +24,16 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.dozedoff.commonj.io.DataProducer;
 import com.github.dozedoff.commonj.util.Pair;
 
-public class RefillBufferStrategy extends AbstractBufferStrategy {
+public class RefillBufferStrategy extends AbstractBufferStrategy<Path, Pair<Path, BufferedImage>> {
 	private static final Logger logger = LoggerFactory.getLogger(RefillBufferStrategy.class);
 	private final int MAX_WAIT_TIME = 10000;
 
-	public RefillBufferStrategy(LinkedBlockingQueue<Path> input, LinkedBlockingQueue<Pair<Path, BufferedImage>> output, int outputCapacity) {
-		super(input, output, outputCapacity);
+	public RefillBufferStrategy(DataProducer<Path, Pair<Path, BufferedImage>> producer, LinkedBlockingQueue<Path> input,
+			LinkedBlockingQueue<Pair<Path, BufferedImage>> output, int outputCapacity) {
+		super(producer, input, output, outputCapacity);
 	}
 
 	@Override
@@ -41,7 +43,7 @@ public class RefillBufferStrategy extends AbstractBufferStrategy {
 				logger.debug("Low buffer, suspending drain");
 
 				try {
-					output.wait(MAX_WAIT_TIME);
+					producer.wait(MAX_WAIT_TIME);
 				} catch (InterruptedException e) {
 					logger.debug("Max wait has timed out, resuming drain");
 					return;

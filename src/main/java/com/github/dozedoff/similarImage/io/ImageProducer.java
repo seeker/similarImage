@@ -50,14 +50,15 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 
 	private final int WORK_BATCH_SIZE = 20;
 
-	private AbstractBufferStrategy bufferStrategy = new SimpleBufferStrategy(input, output, WORK_BATCH_SIZE);
+	private AbstractBufferStrategy<Path, Pair<Path, BufferedImage>> bufferStrategy = new SimpleBufferStrategy(this, input, output,
+			WORK_BATCH_SIZE);
 
 	public ImageProducer(int maxOutputQueueSize, Persistence persistence, boolean useSimpleStrategy) {
 		super(maxOutputQueueSize);
 		if (useSimpleStrategy) {
-			this.bufferStrategy = new SimpleBufferStrategy(input, output, maxOutputQueueSize);
+			this.bufferStrategy = new SimpleBufferStrategy(this, input, output, maxOutputQueueSize);
 		} else {
-			this.bufferStrategy = new RefillBufferStrategy(input, output, maxOutputQueueSize);
+			this.bufferStrategy = new RefillBufferStrategy(this, input, output, maxOutputQueueSize);
 		}
 
 		this.persistence = persistence;

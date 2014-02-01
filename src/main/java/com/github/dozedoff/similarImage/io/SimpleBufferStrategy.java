@@ -21,12 +21,14 @@ import java.awt.image.BufferedImage;
 import java.nio.file.Path;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import com.github.dozedoff.commonj.io.DataProducer;
 import com.github.dozedoff.commonj.util.Pair;
 
-public class SimpleBufferStrategy extends AbstractBufferStrategy {
+public class SimpleBufferStrategy extends AbstractBufferStrategy<Path, Pair<Path, BufferedImage>> {
 
-	public SimpleBufferStrategy(LinkedBlockingQueue<Path> input, LinkedBlockingQueue<Pair<Path, BufferedImage>> output, int outputCapacity) {
-		super(input, output, outputCapacity);
+	public SimpleBufferStrategy(DataProducer<Path, Pair<Path, BufferedImage>> producer, LinkedBlockingQueue<Path> input,
+			LinkedBlockingQueue<Pair<Path, BufferedImage>> output, int outputCapacity) {
+		super(producer, input, output, outputCapacity);
 	}
 
 	@Override

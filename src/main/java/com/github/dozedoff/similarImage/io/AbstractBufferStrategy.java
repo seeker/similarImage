@@ -21,17 +21,21 @@ import java.awt.image.BufferedImage;
 import java.nio.file.Path;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import com.github.dozedoff.commonj.io.DataProducer;
 import com.github.dozedoff.commonj.util.Pair;
 
-public abstract class AbstractBufferStrategy {
+public abstract class AbstractBufferStrategy<I, O> {
 	protected LinkedBlockingQueue<Path> input;
 	protected LinkedBlockingQueue<Pair<Path, BufferedImage>> output;
 	protected int outputCapacity;
+	protected DataProducer<I, O> producer;
 
-	public AbstractBufferStrategy(LinkedBlockingQueue<Path> input, LinkedBlockingQueue<Pair<Path, BufferedImage>> output, int outputCapacity) {
+	public AbstractBufferStrategy(DataProducer<I, O> producer, LinkedBlockingQueue<Path> input,
+			LinkedBlockingQueue<Pair<Path, BufferedImage>> output, int outputCapacity) {
 		this.input = input;
 		this.output = output;
 		this.outputCapacity = outputCapacity;
+		this.producer = producer;
 	}
 
 	public abstract void bufferCheck();
