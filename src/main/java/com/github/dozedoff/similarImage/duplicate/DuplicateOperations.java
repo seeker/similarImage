@@ -63,6 +63,11 @@ public class DuplicateOperations {
 
 	public void deleteFile(Path path) {
 		try {
+			if (isDirectory(path)) {
+				logger.warn("Path is a directory, skipping...");
+				return;
+			}
+
 			logger.info("Deleting file {}", path);
 			Files.delete(path);
 			ImageRecord ir = new ImageRecord(path.toString(), 0);
