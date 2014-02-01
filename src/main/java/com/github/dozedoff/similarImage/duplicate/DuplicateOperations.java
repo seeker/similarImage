@@ -80,12 +80,11 @@ public class DuplicateOperations {
 			Path path = Paths.get(ir.getPath());
 
 			FilterRecord fr = new FilterRecord(pHash, Tags.DNW.toString());
-
 			try {
 				persistence.addFilter(fr);
 				deleteFile(path);
 			} catch (SQLException e) {
-				logger.warn("SQL error while deleteing {} - {}", path, e.getMessage());
+				logger.warn("Failed to add filter entry for {} - {}", path, e.getMessage());
 			}
 		}
 	}
