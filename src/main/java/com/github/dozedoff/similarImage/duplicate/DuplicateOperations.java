@@ -63,8 +63,13 @@ public class DuplicateOperations {
 
 	public void deleteFile(Path path) {
 		try {
+			if (path == null) {
+				logger.error("Path was null, skipping...");
+				return;
+			}
+
 			if (isDirectory(path)) {
-				logger.warn("Path is a directory, skipping...");
+				logger.info("Path is a directory, skipping...");
 				return;
 			}
 
