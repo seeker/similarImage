@@ -36,6 +36,7 @@ import javax.swing.JProgressBar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.commonj.io.DataProducer;
 import com.github.dozedoff.commonj.util.Pair;
 import com.github.dozedoff.similarImage.db.BadFileRecord;
@@ -48,6 +49,7 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 	private final AtomicInteger total = new AtomicInteger();
 	private final AtomicInteger processed = new AtomicInteger();
 
+	private final int IMAGE_SIZE = 32;
 	private final int WORK_BATCH_SIZE = 20;
 
 	private AbstractBufferStrategy<Path, Pair<Path, BufferedImage>> bufferStrategy = new SimpleBufferStrategy(this, input, output,
@@ -163,6 +165,8 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 		if (img == null) {
 			throw new IIOException("No ImageReader was able to read " + next.toString());
 		}
+
+		img = ImagePHash.resize(img, IMAGE_SIZE, IMAGE_SIZE);
 
 		Pair<Path, BufferedImage> pair = new Pair<Path, BufferedImage>(next, img);
 		output.put(pair);

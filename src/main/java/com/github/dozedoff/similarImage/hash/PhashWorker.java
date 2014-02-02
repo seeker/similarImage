@@ -90,7 +90,7 @@ public class PhashWorker extends Thread {
 
 				try {
 					BufferedImage img = pair.getRight();
-					long hash = phash.getLongHash(img);
+					long hash = phash.getLongHashScaledImage(img);
 
 					ImageRecord record = new ImageRecord(path.toString(), hash);
 					newRecords.add(record);
