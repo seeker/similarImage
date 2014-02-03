@@ -45,6 +45,7 @@ public class Persistence {
 	Dao<ImageRecord, String> imageRecordDao;
 	Dao<FilterRecord, Long> filterRecordDao;
 	Dao<BadFileRecord, String> badFileRecordDao;
+	Dao<IgnoreRecord, Long> ignoreRecordDao;
 
 	PreparedQuery<ImageRecord> filterPrepQuery, distinctPrepQuery;
 
@@ -86,6 +87,7 @@ public class Persistence {
 		TableUtils.createTableIfNotExists(cs, ImageRecord.class);
 		TableUtils.createTableIfNotExists(cs, FilterRecord.class);
 		TableUtils.createTableIfNotExists(cs, BadFileRecord.class);
+		TableUtils.createTableIfNotExists(cs, IgnoreRecord.class);
 	}
 
 	private void setupDAO(ConnectionSource cs) throws SQLException {
@@ -93,10 +95,12 @@ public class Persistence {
 		imageRecordDao = DaoManager.createDao(cs, ImageRecord.class);
 		filterRecordDao = DaoManager.createDao(cs, FilterRecord.class);
 		badFileRecordDao = DaoManager.createDao(cs, BadFileRecord.class);
+		ignoreRecordDao = DaoManager.createDao(cs, IgnoreRecord.class);
 
 		imageRecordDao.setObjectCache(new LruObjectCache(5000));
 		filterRecordDao.setObjectCache(new LruObjectCache(1000));
 		badFileRecordDao.setObjectCache(new LruObjectCache(1000));
+		ignoreRecordDao.setObjectCache(new LruObjectCache(1000));
 	}
 
 	public void addRecord(ImageRecord record) throws SQLException {
@@ -218,5 +222,19 @@ public class Persistence {
 
 	public long distinctHashes() throws SQLException {
 		return imageRecordDao.countOf(distinctPrepQuery);
+	}
+
+	public void addIgnore(long pHash) throws SQLException {
+		ignoreRecordDao.createOrUpdate(new IgnoreRecord(pHash));
+	}
+
+	public boolean isIgnored(long pHash) throws SQLException {
+		IgnoreRecord ir = ignoreRecordDao.queryForId(pHash);
+
+		if (ir == null) {
+			return false;
+		} else {
+			return true;
+		}
 	}
 }
