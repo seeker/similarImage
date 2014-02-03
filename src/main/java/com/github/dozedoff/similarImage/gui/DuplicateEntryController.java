@@ -42,29 +42,21 @@ public class DuplicateEntryController extends JPanel {
 	private static final long serialVersionUID = 1L;
 	private static final Logger logger = LoggerFactory.getLogger(DuplicateEntryController.class);
 	private final ImageInfo imageInfo;
-	private JLabel image;
 	private final SimilarImage parent;
-
+	private Dimension thumbDimension;
 	private final DuplicateEntryView view;
 
 	public DuplicateEntryController(SimilarImage parent, ImageInfo imageInfo, Persistence persistence, Dimension thumbDimension) {
 		super();
 		this.parent = parent;
 		this.imageInfo = imageInfo;
+		this.thumbDimension = thumbDimension;
 
 		view = new DuplicateEntryView(this);
 
-		this.setLayout(new MigLayout("wrap"));
-		image = new JLabel("NO IMAGE");
-
-		try {
-			this.image = SubsamplingImageLoader.loadAsLabel(this.imageInfo.getPath(), thumbDimension);
-		} catch (Exception e) {
-			logger.warn("Could not load image thumbnail for {} - {}", imageInfo.getPath(), e.getMessage());
-		}
-
-		add(image);
+		loadThumbnail();
 		addImageInfo();
+
 		new OperationsMenu(this, persistence);
 		this.addMouseListener(new ClickListener());
 	}
@@ -76,6 +68,15 @@ public class DuplicateEntryController extends JPanel {
 		view.createLable("Dimension: " + dim.getWidth() + "x" + dim.getHeight());
 		view.createLable("pHash: " + imageInfo.getpHash());
 		view.createLable("Size per Pixel: " + imageInfo.getSizePerPixel());
+	}
+
+	private void loadThumbnail() {
+		try {
+			JLabel image = SubsamplingImageLoader.loadAsLabel(this.imageInfo.getPath(), thumbDimension);
+			view.setImage(image);
+		} catch (Exception e) {
+			logger.warn("Could not load image thumbnail for {} - {}", imageInfo.getPath(), e.getMessage());
+		}
 	}
 
 	public Path getImagePath() {

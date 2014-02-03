@@ -20,13 +20,19 @@ package com.github.dozedoff.similarImage.gui;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import net.miginfocom.swing.MigLayout;
+
 public class DuplicateEntryView {
 	private JPanel view;
+	private JLabel image;
 	private DuplicateEntryController controller;
 
 	public DuplicateEntryView(DuplicateEntryController controller) {
 		this.controller = controller;
 		view = new JPanel();
+		view.setLayout(new MigLayout("wrap"));
+		image = new JLabel("NO IMAGE");
+		view.add(image);
 	}
 
 	public void createLable(String info) {
@@ -34,4 +40,7 @@ public class DuplicateEntryView {
 		view.add(lable);
 	}
 
+	public void setImage(JLabel image) {
+		this.image = image;
+	}
 }
