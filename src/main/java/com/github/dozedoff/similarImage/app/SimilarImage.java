@@ -44,7 +44,7 @@ import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 import com.github.dozedoff.similarImage.duplicate.SortSimilar;
-import com.github.dozedoff.similarImage.gui.DisplayGroup;
+import com.github.dozedoff.similarImage.gui.DisplayGroupView;
 import com.github.dozedoff.similarImage.gui.DuplicateEntry;
 import com.github.dozedoff.similarImage.gui.SimilarImageGUI;
 import com.github.dozedoff.similarImage.hash.PhashWorker;
@@ -62,7 +62,7 @@ public class SimilarImage {
 	private final String PROPERTIES_FILENAME = "similarImage.properties";
 
 	SimilarImageGUI gui;
-	DisplayGroup displayGroup;
+	DisplayGroupView displayGroup;
 
 	private ImageProducer producer;
 	private PhashWorker workers[] = new PhashWorker[WORKER_THREADS];
@@ -89,7 +89,7 @@ public class SimilarImage {
 		producer.startLoader(LOADER_THREADS);
 
 		gui = new SimilarImageGUI(this, persistence);
-		displayGroup = new DisplayGroup();
+		displayGroup = new DisplayGroupView();
 	}
 
 	public JProgressBar getBufferLevel() {
