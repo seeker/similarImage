@@ -18,8 +18,6 @@
 package com.github.dozedoff.similarImage.gui;
 
 import java.awt.Dimension;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.nio.file.Path;
 
 import javax.swing.JFrame;
@@ -58,7 +56,6 @@ public class DuplicateEntryController extends JPanel {
 		addImageInfo();
 
 		new OperationsMenu(this, persistence);
-		this.addMouseListener(new ClickListener());
 	}
 
 	private void addImageInfo() {
@@ -92,7 +89,7 @@ public class DuplicateEntryController extends JPanel {
 		parent.ignoreImage(ir);
 	}
 
-	private void displayFullImage() {
+	public void displayFullImage() {
 		JPanel imagePanel = new JPanel(new MigLayout());
 		JScrollPane scroll = new JScrollPane(imagePanel);
 
@@ -112,12 +109,4 @@ public class DuplicateEntryController extends JPanel {
 		imageFrame.setVisible(true);
 	}
 
-	class ClickListener extends MouseAdapter {
-		@Override
-		public void mouseClicked(MouseEvent e) {
-			if (e.getButton() == MouseEvent.BUTTON1) {
-				displayFullImage();
-			}
-		}
-	}
 }

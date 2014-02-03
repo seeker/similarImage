@@ -17,6 +17,9 @@
  */
 package com.github.dozedoff.similarImage.gui;
 
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
@@ -33,6 +36,7 @@ public class DuplicateEntryView {
 		view.setLayout(new MigLayout("wrap"));
 		image = new JLabel("NO IMAGE");
 		view.add(image);
+		view.addMouseListener(new ClickListener());
 	}
 
 	public void createLable(String info) {
@@ -42,5 +46,14 @@ public class DuplicateEntryView {
 
 	public void setImage(JLabel image) {
 		this.image = image;
+	}
+
+	class ClickListener extends MouseAdapter {
+		@Override
+		public void mouseClicked(MouseEvent e) {
+			if (e.getButton() == MouseEvent.BUTTON1) {
+				controller.displayFullImage();
+			}
+		}
 	}
 }
