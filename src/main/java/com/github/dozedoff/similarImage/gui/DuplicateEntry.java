@@ -21,9 +21,7 @@ import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.nio.file.Path;
-import java.util.LinkedList;
 
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -47,10 +45,15 @@ public class DuplicateEntry extends JPanel {
 	private JLabel image;
 	private final SimilarImage parent;
 
+	private final DuplicateEntryView view;
+
 	public DuplicateEntry(SimilarImage parent, ImageInfo imageInfo, Persistence persistence, Dimension thumbDimension) {
 		super();
 		this.parent = parent;
 		this.imageInfo = imageInfo;
+
+		view = new DuplicateEntryView(this);
+
 		this.setLayout(new MigLayout("wrap"));
 		image = new JLabel("NO IMAGE");
 
@@ -67,17 +70,12 @@ public class DuplicateEntry extends JPanel {
 	}
 
 	private void addImageInfo() {
-		LinkedList<JComponent> components = new LinkedList<JComponent>();
-		components.add(new JLabel("Path: " + imageInfo.getPath()));
-		components.add(new JLabel("Size: " + imageInfo.getSize() / 1024 + " kb"));
+		view.createLable("Path: " + imageInfo.getPath());
+		view.createLable("Size: " + imageInfo.getSize() / 1024 + " kb");
 		Dimension dim = imageInfo.getDimension();
-		components.add(new JLabel("Dimension: " + dim.getWidth() + "x" + dim.getHeight()));
-		components.add(new JLabel("pHash: " + imageInfo.getpHash()));
-		components.add(new JLabel("Size per Pixel: " + imageInfo.getSizePerPixel()));
-
-		for (JComponent jc : components) {
-			this.add(jc);
-		}
+		view.createLable("Dimension: " + dim.getWidth() + "x" + dim.getHeight());
+		view.createLable("pHash: " + imageInfo.getpHash());
+		view.createLable("Size per Pixel: " + imageInfo.getSizePerPixel());
 	}
 
 	public Path getImagePath() {
