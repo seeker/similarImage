@@ -20,12 +20,7 @@ package com.github.dozedoff.similarImage.gui;
 import java.awt.Dimension;
 import java.nio.file.Path;
 
-import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-
-import net.miginfocom.swing.MigLayout;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +31,7 @@ import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 
-public class DuplicateEntryController extends JPanel {
+public class DuplicateEntryController {
 	private static final long serialVersionUID = 1L;
 	private static final Logger logger = LoggerFactory.getLogger(DuplicateEntryController.class);
 	private final ImageInfo imageInfo;
@@ -90,23 +85,7 @@ public class DuplicateEntryController extends JPanel {
 	}
 
 	public void displayFullImage() {
-		JPanel imagePanel = new JPanel(new MigLayout());
-		JScrollPane scroll = new JScrollPane(imagePanel);
-
-		JFrame imageFrame = new JFrame(getImagePath().toString());
-		imageFrame.setLayout(new MigLayout());
-		JLabel largeImage = new JLabel("No Image");
-
-		try {
-			largeImage = SubsamplingImageLoader.loadAsLabel(getImagePath(), new Dimension(4000, 4000));
-		} catch (Exception e) {
-			logger.warn("Unable to load full image {} - {}", getImagePath(), e.getMessage());
-		}
-
-		imagePanel.add(largeImage);
-		imageFrame.add(scroll);
-		imageFrame.pack();
-		imageFrame.setVisible(true);
+		new FullImage(getImagePath());
 	}
 
 }
