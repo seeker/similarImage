@@ -22,9 +22,9 @@ import javax.swing.JPanel;
 
 public class DuplicateEntryView {
 	private JPanel view;
-	private DuplicateEntry controller;
+	private DuplicateEntryController controller;
 
-	public DuplicateEntryView(DuplicateEntry controller) {
+	public DuplicateEntryView(DuplicateEntryController controller) {
 		this.controller = controller;
 		view = new JPanel();
 	}

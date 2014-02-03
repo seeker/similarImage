@@ -45,7 +45,7 @@ import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 import com.github.dozedoff.similarImage.duplicate.SortSimilar;
 import com.github.dozedoff.similarImage.gui.DisplayGroupView;
-import com.github.dozedoff.similarImage.gui.DuplicateEntry;
+import com.github.dozedoff.similarImage.gui.DuplicateEntryController;
 import com.github.dozedoff.similarImage.gui.SimilarImageGUI;
 import com.github.dozedoff.similarImage.hash.PhashWorker;
 import com.github.dozedoff.similarImage.io.ImageProducer;
@@ -186,7 +186,7 @@ public class SimilarImage {
 
 			if (Files.exists(path)) {
 				ImageInfo info = new ImageInfo(path, persistence);
-				DuplicateEntry entry = new DuplicateEntry(this, info, persistence, imageDim);
+				DuplicateEntryController entry = new DuplicateEntryController(this, info, persistence, imageDim);
 				images.add(entry);
 			} else {
 				logger.warn("Image {} not found, skipping...", path);

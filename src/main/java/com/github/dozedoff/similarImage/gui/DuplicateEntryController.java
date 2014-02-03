@@ -38,16 +38,16 @@ import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 
-public class DuplicateEntry extends JPanel {
+public class DuplicateEntryController extends JPanel {
 	private static final long serialVersionUID = 1L;
-	private static final Logger logger = LoggerFactory.getLogger(DuplicateEntry.class);
+	private static final Logger logger = LoggerFactory.getLogger(DuplicateEntryController.class);
 	private final ImageInfo imageInfo;
 	private JLabel image;
 	private final SimilarImage parent;
 
 	private final DuplicateEntryView view;
 
-	public DuplicateEntry(SimilarImage parent, ImageInfo imageInfo, Persistence persistence, Dimension thumbDimension) {
+	public DuplicateEntryController(SimilarImage parent, ImageInfo imageInfo, Persistence persistence, Dimension thumbDimension) {
 		super();
 		this.parent = parent;
 		this.imageInfo = imageInfo;
