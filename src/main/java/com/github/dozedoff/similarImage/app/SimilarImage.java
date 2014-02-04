@@ -77,6 +77,13 @@ public class SimilarImage {
 	}
 
 	public void init() {
+		String version = this.getClass().getPackage().getImplementationVersion();
+
+		if (version == null) {
+			version = "unknown";
+		}
+
+		logger.info("SimilarImage version " + version);
 
 		Settings settings = new Settings(new SettingsValidator());
 		settings.loadPropertiesFromFile(PROPERTIES_FILENAME);

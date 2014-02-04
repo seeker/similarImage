@@ -45,6 +45,8 @@
 					<archive>
 						<manifest>
 							<mainClass>com.github.dozedoff.similarImage.app.SimilarImage</mainClass>
+							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+              				<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
 						</manifest>
 					</archive>
 				</configuration>
