@@ -45,7 +45,9 @@ public class DuplicateEntryController implements View {
 		this.imageInfo = imageInfo;
 		this.thumbDimension = thumbDimension;
 
-		view = new DuplicateEntryView(this, persistence);
+		OperationsMenu opMenu = new OperationsMenu(this, persistence);
+
+		view = new DuplicateEntryView(this, opMenu);
 
 		loadThumbnail();
 		addImageInfo();

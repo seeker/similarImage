@@ -26,20 +26,17 @@ import javax.swing.JPanel;
 
 import net.miginfocom.swing.MigLayout;
 
-import com.github.dozedoff.similarImage.db.Persistence;
-
 public class DuplicateEntryView implements View {
 	private JPanel view;
 	private JLabel image;
 	private DuplicateEntryController controller;
 
-	public DuplicateEntryView(DuplicateEntryController controller, Persistence persistence) {
+	public DuplicateEntryView(DuplicateEntryController controller, OperationsMenu opMenu) {
 		this.controller = controller;
 		view = new JPanel();
 		view.setLayout(new MigLayout("wrap"));
 		image = new JLabel("NO IMAGE");
 		view.addMouseListener(new ClickListener());
-		OperationsMenu opMenu = new OperationsMenu(controller, persistence);
 		view.setComponentPopupMenu(opMenu);
 	}
 
