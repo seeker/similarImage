@@ -43,16 +43,4 @@ public class SimilarImage {
 		persistence = new Persistence();
 		new SimilarImageController(persistence);
 	}
-
-	public void stopWorkers() {
-		logger.info("Stopping all workers...");
-		// producer.clear(); // FIXME clear producer
-		// FIXME stop workers
-		// for (PhashWorker phw : workers) {
-		// if (phw != null) {
-		// logger.info("Stopping {}...", phw.getName());
-		// phw.stopWorker();
-		// }
-		// }
-	}
 }

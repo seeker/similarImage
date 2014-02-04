@@ -56,6 +56,8 @@ public class SimilarImageController {
 	private SimilarImageGUI gui;
 	private ImageProducer producer;
 
+	private ImageIndexer indexer;
+
 	public SimilarImageController(Persistence persistence) {
 		this.persistence = persistence;
 		setupProducer();
@@ -139,6 +141,12 @@ public class SimilarImageController {
 	}
 
 	public void stopWorkers() {
-		// TODO Auto-generated method stub
+		logger.info("Stopping all workers...");
+		producer.clear();
+		// FIXME stop workers
+
+		if (indexer != null && indexer.isAlive()) {
+			indexer.killAll();
+		}
 	}
 }

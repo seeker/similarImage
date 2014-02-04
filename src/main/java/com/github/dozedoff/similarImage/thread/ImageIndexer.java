@@ -68,6 +68,16 @@ public class ImageIndexer extends Thread {
 		gui.setStatus("Done");
 	}
 
+	// TODO replace this with interrupt
+	public void killAll() {
+		for (PhashWorker phw : workers) {
+			if (phw != null) {
+				logger.info("Stopping {}...", phw.getName());
+				phw.stopWorker();
+			}
+		}
+	}
+
 	private void findImages(String path, LinkedList<Path> imagePaths) {
 		FilenameFilterVisitor visitor = new FilenameFilterVisitor(imagePaths, new SimpleImageFilter());
 		Path directoryToSearch = Paths.get(path);
