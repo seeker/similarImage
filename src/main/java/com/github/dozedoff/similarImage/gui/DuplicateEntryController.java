@@ -84,7 +84,15 @@ public class DuplicateEntryController implements View {
 	}
 
 	public void displayFullImage() {
-		new FullImage(getImagePath());
+		JLabel largeImage = new JLabel("No Image");
+
+		try {
+			largeImage = SubsamplingImageLoader.loadAsLabel(getImagePath(), new Dimension(4000, 4000));
+		} catch (Exception e) {
+			logger.warn("Unable to load full image {} - {}", getImagePath(), e.getMessage());
+		}
+
+		new FullImage(largeImage, getImagePath());
 	}
 
 	@Override

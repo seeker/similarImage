@@ -17,7 +17,6 @@
  */
 package com.github.dozedoff.similarImage.gui;
 
-import java.awt.Dimension;
 import java.nio.file.Path;
 
 import javax.swing.JFrame;
@@ -27,27 +26,13 @@ import javax.swing.JScrollPane;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.github.dozedoff.commonj.image.SubsamplingImageLoader;
-
 public class FullImage {
-	private static final Logger logger = LoggerFactory.getLogger(FullImage.class);
-
-	public FullImage(Path path) {
+	public FullImage(JLabel largeImage, Path path) {
 		JPanel imagePanel = new JPanel(new MigLayout());
 		JScrollPane scroll = new JScrollPane(imagePanel);
 
 		JFrame imageFrame = new JFrame(path.toString());
 		imageFrame.setLayout(new MigLayout());
-		JLabel largeImage = new JLabel("No Image");
-
-		try {
-			largeImage = SubsamplingImageLoader.loadAsLabel(path, new Dimension(4000, 4000));
-		} catch (Exception e) {
-			logger.warn("Unable to load full image {} - {}", path, e.getMessage());
-		}
 
 		imagePanel.add(largeImage);
 		imageFrame.add(scroll);
