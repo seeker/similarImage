@@ -27,7 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.image.SubsamplingImageLoader;
-import com.github.dozedoff.similarImage.app.SimilarImage;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
@@ -35,11 +34,11 @@ import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 public class DuplicateEntryController implements View {
 	private static final Logger logger = LoggerFactory.getLogger(DuplicateEntryController.class);
 	private final ImageInfo imageInfo;
-	private final SimilarImage parent;
+	private final SimilarImageController parent;
 	private Dimension thumbDimension;
 	private final DuplicateEntryView view;
 
-	public DuplicateEntryController(SimilarImage parent, ImageInfo imageInfo, Persistence persistence, Dimension thumbDimension) {
+	public DuplicateEntryController(SimilarImageController parent, ImageInfo imageInfo, Persistence persistence, Dimension thumbDimension) {
 		super();
 		this.parent = parent;
 		this.imageInfo = imageInfo;

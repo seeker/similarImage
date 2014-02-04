@@ -51,7 +51,6 @@ import net.miginfocom.swing.MigLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.dozedoff.similarImage.app.SimilarImage;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
@@ -59,7 +58,7 @@ import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 public class SimilarImageGUI extends JFrame {
 	private static final long serialVersionUID = 1L;
 
-	private final SimilarImage parent;
+	private final SimilarImageController parent;
 
 	private JTextField path;
 	private JButton find, stop, sortSimilar, sortFilter;
@@ -72,7 +71,7 @@ public class SimilarImageGUI extends JFrame {
 	private JScrollBar hammingDistance;
 	final DuplicateOperations duplicateOperations;
 
-	public SimilarImageGUI(SimilarImage parent, Persistence persistence) {
+	public SimilarImageGUI(SimilarImageController parent, Persistence persistence) {
 		this.parent = parent;
 
 		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
