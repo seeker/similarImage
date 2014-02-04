@@ -27,7 +27,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
@@ -47,6 +46,7 @@ import com.github.dozedoff.similarImage.duplicate.SortSimilar;
 import com.github.dozedoff.similarImage.gui.DisplayGroupView;
 import com.github.dozedoff.similarImage.gui.DuplicateEntryController;
 import com.github.dozedoff.similarImage.gui.SimilarImageGUI;
+import com.github.dozedoff.similarImage.gui.View;
 import com.github.dozedoff.similarImage.hash.PhashWorker;
 import com.github.dozedoff.similarImage.io.ImageProducer;
 
@@ -165,7 +165,7 @@ public class SimilarImage {
 		int maxGroupSize = 30;
 
 		Set<ImageRecord> grouplist = getGroup(group);
-		LinkedList<JComponent> images = new LinkedList<JComponent>();
+		LinkedList<View> images = new LinkedList<View>();
 		Dimension imageDim = new Dimension(THUMBNAIL_DIMENSION, THUMBNAIL_DIMENSION);
 
 		if (grouplist.size() > maxGroupSize) {

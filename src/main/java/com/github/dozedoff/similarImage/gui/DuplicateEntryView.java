@@ -20,23 +20,27 @@ package com.github.dozedoff.similarImage.gui;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import net.miginfocom.swing.MigLayout;
 
-public class DuplicateEntryView {
+import com.github.dozedoff.similarImage.db.Persistence;
+
+public class DuplicateEntryView implements View {
 	private JPanel view;
 	private JLabel image;
 	private DuplicateEntryController controller;
 
-	public DuplicateEntryView(DuplicateEntryController controller) {
+	public DuplicateEntryView(DuplicateEntryController controller, Persistence persistence) {
 		this.controller = controller;
 		view = new JPanel();
 		view.setLayout(new MigLayout("wrap"));
 		image = new JLabel("NO IMAGE");
-		view.add(image);
 		view.addMouseListener(new ClickListener());
+		OperationsMenu opMenu = new OperationsMenu(controller, persistence);
+		view.setComponentPopupMenu(opMenu);
 	}
 
 	public void createLable(String info) {
@@ -45,7 +49,15 @@ public class DuplicateEntryView {
 	}
 
 	public void setImage(JLabel image) {
+		view.remove(this.image);
 		this.image = image;
+		view.add(this.image);
+		view.revalidate();
+	}
+
+	@Override
+	public JComponent getView() {
+		return view;
 	}
 
 	class ClickListener extends MouseAdapter {

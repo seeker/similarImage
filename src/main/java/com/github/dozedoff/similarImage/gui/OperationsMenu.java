@@ -82,7 +82,6 @@ public class OperationsMenu extends JPopupMenu {
 		});
 
 		createMenuItems(actions);
-		parent.setComponentPopupMenu(this);
 	}
 
 	private Path getPath() {

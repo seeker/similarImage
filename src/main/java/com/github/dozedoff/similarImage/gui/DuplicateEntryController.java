@@ -20,6 +20,7 @@ package com.github.dozedoff.similarImage.gui;
 import java.awt.Dimension;
 import java.nio.file.Path;
 
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 
 import org.slf4j.Logger;
@@ -31,8 +32,7 @@ import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 
-public class DuplicateEntryController {
-	private static final long serialVersionUID = 1L;
+public class DuplicateEntryController implements View {
 	private static final Logger logger = LoggerFactory.getLogger(DuplicateEntryController.class);
 	private final ImageInfo imageInfo;
 	private final SimilarImage parent;
@@ -45,12 +45,10 @@ public class DuplicateEntryController {
 		this.imageInfo = imageInfo;
 		this.thumbDimension = thumbDimension;
 
-		view = new DuplicateEntryView(this);
+		view = new DuplicateEntryView(this, persistence);
 
 		loadThumbnail();
 		addImageInfo();
-
-		new OperationsMenu(this, persistence);
 	}
 
 	private void addImageInfo() {
@@ -88,4 +86,8 @@ public class DuplicateEntryController {
 		new FullImage(getImagePath());
 	}
 
+	@Override
+	public JComponent getView() {
+		return view.getView();
+	}
 }
