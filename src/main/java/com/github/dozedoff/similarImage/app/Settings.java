@@ -25,7 +25,7 @@ public class Settings extends AbstractSettings {
 	private static Settings instance = null;
 
 	public enum Parameters {
-		phash_workers, data_loaders, data_loader_priority, thumbnail_dimension, loader_out_queue_size
+		phash_workers, data_loaders, data_loader_priority, thumbnail_dimension, loader_out_queue_size, hide_ignored_images
 	}
 
 	private final int DEFAULT_PHASH_WORKERS = 2;
@@ -34,6 +34,7 @@ public class Settings extends AbstractSettings {
 
 	private final int THUMBNAIL_DIMENSION = 500;
 	private final int LOADER_OUT_QUEUE_SIZE = 400;
+	private final boolean HIDE_IGNORED_IMAGES = true;
 
 	private Settings() {
 		super(new SettingsValidator());
@@ -71,9 +72,23 @@ public class Settings extends AbstractSettings {
 		return readAndConvertProperty(Parameters.loader_out_queue_size, LOADER_OUT_QUEUE_SIZE);
 	}
 
-	private int readAndConvertProperty(Parameters parameter, int defaultValue) {
+	public boolean getHideIgnoredImages() {
+		return readAndConvertBoolean(Parameters.hide_ignored_images, HIDE_IGNORED_IMAGES);
+	}
+
+	public void setHideIgnoredImages(Boolean hideIgnored) {
+		properties.setProperty(Parameters.hide_ignored_images.toString(), hideIgnored.toString());
+	}
+
+	private int readAndConvertProperty(Enum<?> parameter, int defaultValue) {
 		String value = properties.getProperty(parameter.toString());
 		int intValue = Convert.stringToInt(value, defaultValue);
 		return intValue;
+	}
+
+	private boolean readAndConvertBoolean(Enum<?> parameter, Boolean defaultValue) {
+		String value = properties.getProperty(parameter.toString(), defaultValue.toString());
+		boolean boolValue = Convert.stringToBoolean(value, defaultValue);
+		return boolValue;
 	}
 }

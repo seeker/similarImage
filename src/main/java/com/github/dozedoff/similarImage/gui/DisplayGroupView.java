@@ -19,32 +19,31 @@ package com.github.dozedoff.similarImage.gui;
 
 import java.util.List;
 
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
 import net.miginfocom.swing.MigLayout;
 
-public class DisplayGroup extends JFrame {
+public class DisplayGroupView extends JFrame {
 	private static final long serialVersionUID = 1L;
 	private JPanel content = new JPanel();
 	private JScrollPane scroll = new JScrollPane(content);
 
-	public DisplayGroup() {
+	public DisplayGroupView() {
 		this.setSize(500, 500);
 		this.setDefaultCloseOperation(HIDE_ON_CLOSE);
 		this.setFocusableWindowState(false);
 	}
 
-	public void displayImages(long group, List<JComponent> duplicates) {
+	public void displayImages(long group, List<View> duplicates) {
 		this.remove(scroll);
 		this.dispose();
 		this.setTitle("" + group);
 		content = new JPanel(new MigLayout("wrap 4"));
 
-		for (JComponent entry : duplicates) {
-			content.add(entry);
+		for (View entry : duplicates) {
+			content.add(entry.getView());
 		}
 
 		scroll = new JScrollPane(content);

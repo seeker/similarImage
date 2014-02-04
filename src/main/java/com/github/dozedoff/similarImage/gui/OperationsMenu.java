@@ -37,9 +37,9 @@ public class OperationsMenu extends JPopupMenu {
 		Delete, MarkAndDeleteDNW, MarkBlocked, Ignore
 	};
 
-	private final DuplicateEntry parent;
+	private final DuplicateEntryController parent;
 
-	public OperationsMenu(DuplicateEntry parent, Persistence persistence) {
+	public OperationsMenu(DuplicateEntryController parent, Persistence persistence) {
 		super();
 		this.parent = parent;
 		duplicateOperations = new DuplicateOperations(persistence);
@@ -82,7 +82,6 @@ public class OperationsMenu extends JPopupMenu {
 		});
 
 		createMenuItems(actions);
-		parent.setComponentPopupMenu(this);
 	}
 
 	private Path getPath() {
