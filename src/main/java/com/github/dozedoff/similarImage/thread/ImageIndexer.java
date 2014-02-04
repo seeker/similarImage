@@ -31,7 +31,7 @@ import com.github.dozedoff.commonj.file.FilenameFilterVisitor;
 import com.github.dozedoff.commonj.filefilter.SimpleImageFilter;
 import com.github.dozedoff.commonj.time.StopWatch;
 import com.github.dozedoff.similarImage.db.DBWriter;
-import com.github.dozedoff.similarImage.gui.SimilarImageGUI;
+import com.github.dozedoff.similarImage.gui.SimilarImageView;
 import com.github.dozedoff.similarImage.hash.PhashWorker;
 import com.github.dozedoff.similarImage.io.ImageProducer;
 
@@ -41,12 +41,12 @@ public class ImageIndexer extends Thread {
 	private final int WORKER_THREADS = 6;
 
 	private String path;
-	private SimilarImageGUI gui;
+	private SimilarImageView gui;
 	private ImageProducer producer;
 	private PhashWorker workers[] = new PhashWorker[WORKER_THREADS];
 	private DBWriter dbWriter;
 
-	public ImageIndexer(String path, SimilarImageGUI gui, ImageProducer producer, DBWriter dbWriter) {
+	public ImageIndexer(String path, SimilarImageView gui, ImageProducer producer, DBWriter dbWriter) {
 		super("ImageIndexer");
 		this.path = path;
 		this.gui = gui;

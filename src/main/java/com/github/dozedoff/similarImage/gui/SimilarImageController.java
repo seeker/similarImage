@@ -53,7 +53,7 @@ public class SimilarImageController {
 
 	private SortSimilar sorter;
 	private DisplayGroupView displayGroup;
-	private SimilarImageGUI gui;
+	private SimilarImageView gui;
 	private ImageProducer producer;
 
 	private ImageIndexer indexer;
@@ -64,7 +64,7 @@ public class SimilarImageController {
 
 		sorter = new SortSimilar(persistence);
 		displayGroup = new DisplayGroupView();
-		gui = new SimilarImageGUI(this, persistence);
+		gui = new SimilarImageView(this, persistence);
 	}
 
 	private void setupProducer() {

@@ -28,7 +28,7 @@ import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.SortSimilar;
-import com.github.dozedoff.similarImage.gui.SimilarImageGUI;
+import com.github.dozedoff.similarImage.gui.SimilarImageView;
 
 public class FilterSorter extends Thread {
 	private final Logger logger = LoggerFactory.getLogger(FilterSorter.class);
@@ -37,11 +37,11 @@ public class FilterSorter extends Thread {
 	private String reason;
 	private List<ImageRecord> dBrecords = new LinkedList<ImageRecord>();
 	private List<FilterRecord> filterRecords = new LinkedList<FilterRecord>();
-	private SimilarImageGUI gui;
+	private SimilarImageView gui;
 	private Persistence persistence;
 	private SortSimilar sorter;
 
-	public FilterSorter(int hammingDistance, String reason, SimilarImageGUI gui, SortSimilar sorter, Persistence persistence) {
+	public FilterSorter(int hammingDistance, String reason, SimilarImageView gui, SortSimilar sorter, Persistence persistence) {
 		this.hammingDistance = hammingDistance;
 		this.reason = reason;
 		this.gui = gui;

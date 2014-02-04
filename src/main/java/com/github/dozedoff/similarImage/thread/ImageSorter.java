@@ -28,19 +28,19 @@ import org.slf4j.LoggerFactory;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.SortSimilar;
-import com.github.dozedoff.similarImage.gui.SimilarImageGUI;
+import com.github.dozedoff.similarImage.gui.SimilarImageView;
 
 public class ImageSorter extends Thread {
 	private static final Logger logger = LoggerFactory.getLogger(ImageSorter.class);
 
 	private int hammingDistance = 0;
 	private String path;
-	private SimilarImageGUI gui;
+	private SimilarImageView gui;
 	private SortSimilar sorter;
 	private Persistence persistence;
 	private String lastPath;
 
-	public ImageSorter(int hammingDistance, String path, SimilarImageGUI gui, SortSimilar sorter, Persistence persistence) {
+	public ImageSorter(int hammingDistance, String path, SimilarImageView gui, SortSimilar sorter, Persistence persistence) {
 		super();
 		this.hammingDistance = hammingDistance;
 		this.path = path;

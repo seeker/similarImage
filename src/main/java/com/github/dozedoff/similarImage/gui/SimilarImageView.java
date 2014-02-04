@@ -55,7 +55,7 @@ import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 
-public class SimilarImageGUI extends JFrame {
+public class SimilarImageView extends JFrame {
 	private static final long serialVersionUID = 1L;
 
 	private final SimilarImageController parent;
@@ -71,7 +71,7 @@ public class SimilarImageGUI extends JFrame {
 	private JScrollBar hammingDistance;
 	final DuplicateOperations duplicateOperations;
 
-	public SimilarImageGUI(SimilarImageController parent, Persistence persistence) {
+	public SimilarImageView(SimilarImageController parent, Persistence persistence) {
 		this.parent = parent;
 
 		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
