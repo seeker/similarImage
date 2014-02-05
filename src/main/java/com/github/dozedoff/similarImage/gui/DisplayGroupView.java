@@ -25,21 +25,22 @@ import javax.swing.JScrollPane;
 
 import net.miginfocom.swing.MigLayout;
 
-public class DisplayGroupView extends JFrame {
-	private static final long serialVersionUID = 1L;
+public class DisplayGroupView {
+	private JFrame view;
 	private JPanel content = new JPanel();
 	private JScrollPane scroll = new JScrollPane(content);
 
 	public DisplayGroupView() {
-		this.setSize(500, 500);
-		this.setDefaultCloseOperation(HIDE_ON_CLOSE);
-		this.setFocusableWindowState(false);
+		view = new JFrame();
+		view.setSize(500, 500);
+		view.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+		view.setFocusableWindowState(false);
 	}
 
 	public void displayImages(long group, List<View> duplicates) {
-		this.remove(scroll);
-		this.dispose();
-		this.setTitle("" + group);
+		view.remove(scroll);
+		view.dispose();
+		view.setTitle("" + group);
 		content = new JPanel(new MigLayout("wrap 4"));
 
 		for (View entry : duplicates) {
@@ -47,11 +48,11 @@ public class DisplayGroupView extends JFrame {
 		}
 
 		scroll = new JScrollPane(content);
-		this.add(scroll);
+		view.add(scroll);
 
-		this.validate();
-		this.pack();
-		this.repaint();
-		this.setVisible(true);
+		view.validate();
+		view.pack();
+		view.repaint();
+		view.setVisible(true);
 	}
 }
