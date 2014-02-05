@@ -150,7 +150,7 @@ public class ImageProducerTest {
 		when(persistence.isPathRecorded(any(Path.class))).thenReturn(true, true, false);
 
 		imageProducer.addToLoad(images);
-		Thread.sleep(SLEEP_DELAY);
+		Thread.sleep(3 * SLEEP_DELAY);
 
 		assertThat(imageProducer.getProcessed(), is(NUM_OF_TEST_IMAGES));
 	}
