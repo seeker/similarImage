@@ -192,14 +192,17 @@ public class SimilarImageView extends JFrame {
 
 	private void setupMenu() {
 		JMenuBar menuBar = new JMenuBar();
-		JMenu file;
-		JMenuItem folderDnw, folderBlock, pruneRecords;
+		JMenu file, help;
+		JMenuItem folderDnw, folderBlock, pruneRecords, about;
 
 		file = new JMenu("File");
+		help = new JMenu("Help");
 
 		folderDnw = new JMenuItem("Add folder as dnw");
 		folderBlock = new JMenuItem("Add folder as block");
 		pruneRecords = new JMenuItem("Prune records");
+
+		about = new JMenuItem("About");
 
 		folderDnw.addActionListener(new ActionListener() {
 			@Override
@@ -240,11 +243,27 @@ public class SimilarImageView extends JFrame {
 			}
 		});
 
+		about.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String version = this.getClass().getPackage().getImplementationVersion();
+
+				if (version == null) {
+					version = "unknown";
+				}
+
+				JOptionPane.showMessageDialog(null, "SimilarImage Version: " + version, "About", JOptionPane.PLAIN_MESSAGE);
+			}
+		});
+
 		file.add(folderDnw);
 		file.add(folderBlock);
 		file.add(pruneRecords);
 
+		help.add(about);
+
 		menuBar.add(file);
+		menuBar.add(help);
 		this.setJMenuBar(menuBar);
 	}
 
