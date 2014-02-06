@@ -106,7 +106,7 @@ public class SimilarImageController {
 			Path path = Paths.get(rec.getPath());
 
 			if (Files.exists(path)) {
-				ImageInfo info = new ImageInfo(path, persistence);
+				ImageInfo info = new ImageInfo(path, rec.getpHash());
 				DuplicateEntryController entry = new DuplicateEntryController(this, info, persistence, imageDim);
 				images.add(entry);
 			} else {
