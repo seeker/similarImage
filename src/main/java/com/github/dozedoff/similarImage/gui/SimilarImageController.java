@@ -26,7 +26,6 @@ import java.util.Set;
 
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
-import javax.swing.JProgressBar;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import com.github.dozedoff.similarImage.db.DBWriter;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 import com.github.dozedoff.similarImage.duplicate.SortSimilar;
 import com.github.dozedoff.similarImage.io.ImageProducer;
@@ -64,7 +64,7 @@ public class SimilarImageController {
 
 		sorter = new SortSimilar(persistence);
 		displayGroup = new DisplayGroupView();
-		gui = new SimilarImageView(this, persistence);
+		gui = new SimilarImageView(this, new DuplicateOperations(persistence), producer.getTotalProgress(), producer.getBufferLevel());
 	}
 
 	private void setupProducer() {
@@ -130,14 +130,6 @@ public class SimilarImageController {
 	public void sortFilter(int hammingDistance, String reason) {
 		Thread t = new FilterSorter(hammingDistance, reason, gui, sorter, persistence);
 		t.start();
-	}
-
-	public JProgressBar getBufferLevel() {
-		return producer.getBufferLevel();
-	}
-
-	public JProgressBar getTotalProgress() {
-		return producer.getTotalProgress();
 	}
 
 	public void stopWorkers() {

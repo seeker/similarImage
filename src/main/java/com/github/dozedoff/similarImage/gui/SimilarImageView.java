@@ -48,7 +48,6 @@ import javax.swing.event.ListSelectionListener;
 import net.miginfocom.swing.MigLayout;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
-import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.thread.GroupListPopulator;
 
@@ -68,7 +67,8 @@ public class SimilarImageView {
 	private JScrollBar hammingDistance;
 	final DuplicateOperations duplicateOperations;
 
-	public SimilarImageView(SimilarImageController controller, Persistence persistence) {
+	public SimilarImageView(SimilarImageController controller, DuplicateOperations duplicateOperations, JProgressBar totalProgress,
+			JProgressBar bufferLevel) {
 		this.controller = controller;
 
 		view = new JFrame();
@@ -77,7 +77,11 @@ public class SimilarImageView {
 		view.setSize(500, 500);
 		view.setTitle("Similar Image");
 		view.setLayout(new MigLayout("wrap 4"));
-		duplicateOperations = new DuplicateOperations(persistence);
+		this.duplicateOperations = duplicateOperations;
+
+		this.progress = totalProgress;
+		this.bufferLevel = bufferLevel;
+
 		setupComponents();
 		setupMenu();
 		updateHammingDisplay();
@@ -95,10 +99,8 @@ public class SimilarImageView {
 		find = new JButton("Find");
 		stop = new JButton("Stop");
 		status = new JLabel("Idle");
-		progress = controller.getTotalProgress();
 		sortSimilar = new JButton("Sort similar");
 		sortFilter = new JButton("Sort filter");
-		bufferLevel = controller.getBufferLevel();
 
 		groupListModel = new DefaultListModel<Long>();
 		groups = new JList<Long>(groupListModel);
