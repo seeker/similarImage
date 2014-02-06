@@ -29,9 +29,9 @@ import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 
-public class OperationsMenu extends JPopupMenu {
-	private static final long serialVersionUID = 1L;
+public class OperationsMenu {
 	private final DuplicateOperations duplicateOperations;
+	private final JPopupMenu menu;
 
 	private enum Operations {
 		Delete, MarkAndDeleteDNW, MarkBlocked, Ignore
@@ -43,6 +43,8 @@ public class OperationsMenu extends JPopupMenu {
 		super();
 		this.duplicateOperations = new DuplicateOperations(persistence);
 		this.imageInfo = imageInfo;
+		this.menu = new JPopupMenu();
+
 		setupPopupMenu();
 	}
 
@@ -91,8 +93,12 @@ public class OperationsMenu extends JPopupMenu {
 			if (listener != null) {
 				JMenuItem jmi = new JMenuItem(op.toString());
 				jmi.addActionListener(listener);
-				this.add(jmi);
+				menu.add(jmi);
 			}
 		}
+	}
+
+	public JPopupMenu getMenu() {
+		return menu;
 	}
 }
