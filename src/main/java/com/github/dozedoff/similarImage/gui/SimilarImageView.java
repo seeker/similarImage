@@ -55,8 +55,8 @@ import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 
-public class SimilarImageView extends JFrame {
-	private static final long serialVersionUID = 1L;
+public class SimilarImageView {
+	private JFrame view;
 
 	private final SimilarImageController parent;
 
@@ -74,15 +74,17 @@ public class SimilarImageView extends JFrame {
 	public SimilarImageView(SimilarImageController parent, Persistence persistence) {
 		this.parent = parent;
 
-		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
-		this.setSize(500, 500);
-		this.setTitle("Similar Image");
-		this.setLayout(new MigLayout("wrap 4"));
+		view = new JFrame();
+
+		view.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		view.setSize(500, 500);
+		view.setTitle("Similar Image");
+		view.setLayout(new MigLayout("wrap 4"));
 		duplicateOperations = new DuplicateOperations(persistence);
 		setupComponents();
 		setupMenu();
 		updateHammingDisplay();
-		this.setVisible(true);
+		view.setVisible(true);
 	}
 
 	public void setStatus(String statusMsg) {
@@ -173,17 +175,17 @@ public class SimilarImageView extends JFrame {
 			}
 		});
 
-		this.add(path);
-		this.add(find);
-		this.add(stop);
-		this.add(status);
-		this.add(progress);
-		this.add(sortSimilar, "wrap");
-		this.add(bufferLevel);
-		this.add(sortFilter, "wrap");
-		this.add(groupScrollPane, "growy");
-		this.add(hammingDistance, "growx");
-		this.add(hammingValue);
+		view.add(path);
+		view.add(find);
+		view.add(stop);
+		view.add(status);
+		view.add(progress);
+		view.add(sortSimilar, "wrap");
+		view.add(bufferLevel);
+		view.add(sortFilter, "wrap");
+		view.add(groupScrollPane, "growy");
+		view.add(hammingDistance, "growx");
+		view.add(hammingValue);
 	}
 
 	private long getSelectedGroup() {
@@ -264,7 +266,7 @@ public class SimilarImageView extends JFrame {
 
 		menuBar.add(file);
 		menuBar.add(help);
-		this.setJMenuBar(menuBar);
+		view.setJMenuBar(menuBar);
 	}
 
 	private void updateHammingDisplay() {
