@@ -55,20 +55,18 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 
 	private LinkedList<ImageProducerObserver> guiUpdateListeners;
 
-	private AbstractBufferStrategy<Path, Pair<Path, BufferedImage>> bufferStrategy = new SimpleBufferStrategy(this, input, output,
-			WORK_BATCH_SIZE);
+	private AbstractBufferStrategy<Path, Pair<Path, BufferedImage>> bufferStrategy;
 
+	private volatile boolean workerBusy = false;
+
+	@Deprecated
 	public ImageProducer(int maxOutputQueueSize, Persistence persistence, boolean useSimpleStrategy) {
 		super(maxOutputQueueSize);
 
 		this.maxOutputQueueSize = maxOutputQueueSize;
 		guiUpdateListeners = new LinkedList<>();
 
-		if (useSimpleStrategy) {
-			this.bufferStrategy = new SimpleBufferStrategy(this, input, output, maxOutputQueueSize);
-		} else {
-			this.bufferStrategy = new RefillBufferStrategy(this, input, output, maxOutputQueueSize);
-		}
+		bufferStrategy = new SimpleBufferStrategy(this, input, output, WORK_BATCH_SIZE);
 
 		this.persistence = persistence;
 	}
@@ -126,6 +124,9 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 		}
 
 		n = input.take();
+
+		workerBusy = true;
+
 		work.add(n);
 		input.drainTo(work, WORK_BATCH_SIZE);
 
@@ -152,6 +153,8 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 				}
 			}
 		}
+
+		workerBusy = false;
 	}
 
 	private void processFile(Path next) throws SQLException, IOException, InterruptedException {
@@ -219,6 +222,6 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 
 	public boolean allDone() {
 		listenersUpdateBufferLevel(output.size());
-		return input.isEmpty() && output.isEmpty();
+		return input.isEmpty() && output.isEmpty() && (!workerBusy);
 	}
 }
