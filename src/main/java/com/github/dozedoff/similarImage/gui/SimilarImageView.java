@@ -23,7 +23,6 @@ import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -48,12 +47,10 @@ import javax.swing.event.ListSelectionListener;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
+import com.github.dozedoff.similarImage.thread.GroupListPopulator;
 
 public class SimilarImageView {
 	private JFrame view;
@@ -278,30 +275,7 @@ public class SimilarImageView {
 	}
 
 	public void populateGroupList(List<Long> groups) {
-		SwingUtilities.invokeLater(new GroupListPopulator(groups));
-	}
-
-	class GroupListPopulator implements Runnable {
-		Logger logger = LoggerFactory.getLogger(GroupListPopulator.class);
-		private List<Long> groups;
-
-		public GroupListPopulator(List<Long> groups) {
-			this.groups = groups;
-		}
-
-		@Override
-		public void run() {
-			this.logger.info("Populating group list with {} groups", groups.size());
-			groupListModel.clear();
-
-			Collections.sort(groups);
-
-			for (Long g : groups) {
-				groupListModel.addElement(g);
-			}
-
-			this.logger.info("Finished populating group list");
-		}
+		SwingUtilities.invokeLater(new GroupListPopulator(groups, groupListModel));
 	}
 
 	private void deleteAll(long group) {
