@@ -55,7 +55,7 @@ import com.github.dozedoff.similarImage.thread.GroupListPopulator;
 public class SimilarImageView {
 	private JFrame view;
 
-	private final SimilarImageController parent;
+	private final SimilarImageController controller;
 
 	private JTextField path;
 	private JButton find, stop, sortSimilar, sortFilter;
@@ -68,8 +68,8 @@ public class SimilarImageView {
 	private JScrollBar hammingDistance;
 	final DuplicateOperations duplicateOperations;
 
-	public SimilarImageView(SimilarImageController parent, Persistence persistence) {
-		this.parent = parent;
+	public SimilarImageView(SimilarImageController controller, Persistence persistence) {
+		this.controller = controller;
 
 		view = new JFrame();
 
@@ -95,10 +95,10 @@ public class SimilarImageView {
 		find = new JButton("Find");
 		stop = new JButton("Stop");
 		status = new JLabel("Idle");
-		progress = parent.getTotalProgress();
+		progress = controller.getTotalProgress();
 		sortSimilar = new JButton("Sort similar");
 		sortFilter = new JButton("Sort filter");
-		bufferLevel = parent.getBufferLevel();
+		bufferLevel = controller.getBufferLevel();
 
 		groupListModel = new DefaultListModel<Long>();
 		groups = new JList<Long>(groupListModel);
@@ -111,21 +111,21 @@ public class SimilarImageView {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				String userpath = path.getText();
-				parent.indexImages(userpath);
+				controller.indexImages(userpath);
 			}
 		});
 
 		stop.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				parent.stopWorkers();
+				controller.stopWorkers();
 			}
 		});
 
 		sortSimilar.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				parent.sortDuplicates(hammingDistance.getValue(), path.getText());
+				controller.sortDuplicates(hammingDistance.getValue(), path.getText());
 			}
 		});
 
@@ -142,7 +142,7 @@ public class SimilarImageView {
 
 				if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION) {
 					String r = reason.getText();
-					parent.sortFilter(hammingDistance.getValue(), r);
+					controller.sortFilter(hammingDistance.getValue(), r);
 				}
 			}
 		});
@@ -157,7 +157,7 @@ public class SimilarImageView {
 				int index = groups.getSelectedIndex();
 				if (index > -1 && index < groupListModel.size()) {
 					long group = groupListModel.get(index);
-					parent.displayGroup(group);
+					controller.displayGroup(group);
 				}
 
 			}
@@ -279,13 +279,13 @@ public class SimilarImageView {
 	}
 
 	private void deleteAll(long group) {
-		Set<ImageRecord> set = parent.getGroup(group);
+		Set<ImageRecord> set = controller.getGroup(group);
 		duplicateOperations.deleteAll(set);
 		groupListModel.removeElement(group);
 	}
 
 	private void dnwAll(long group) {
-		Set<ImageRecord> set = parent.getGroup(group);
+		Set<ImageRecord> set = controller.getGroup(group);
 		duplicateOperations.markDnwAndDelete(set);
 		groupListModel.removeElement(group);
 	}
