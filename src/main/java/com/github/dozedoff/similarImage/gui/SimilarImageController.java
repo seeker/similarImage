@@ -99,7 +99,7 @@ public class SimilarImageController {
 
 			if (Files.exists(path)) {
 				ImageInfo info = new ImageInfo(path, rec.getpHash());
-				DuplicateEntryController entry = new DuplicateEntryController(this, info, persistence, imageDim);
+				DuplicateEntryController entry = new DuplicateEntryController(info, persistence, imageDim);
 				images.add(entry);
 			} else {
 				logger.warn("Image {} not found, skipping...", path);

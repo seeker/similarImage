@@ -37,12 +37,12 @@ public class OperationsMenu extends JPopupMenu {
 		Delete, MarkAndDeleteDNW, MarkBlocked, Ignore
 	};
 
-	private final DuplicateEntryController parent;
+	private final ImageInfo imageInfo;
 
-	public OperationsMenu(DuplicateEntryController parent, Persistence persistence) {
+	public OperationsMenu(ImageInfo imageInfo, Persistence persistence) {
 		super();
-		this.parent = parent;
-		duplicateOperations = new DuplicateOperations(persistence);
+		this.duplicateOperations = new DuplicateOperations(persistence);
+		this.imageInfo = imageInfo;
 		setupPopupMenu();
 	}
 
@@ -52,7 +52,7 @@ public class OperationsMenu extends JPopupMenu {
 		actions.put(Operations.Delete, new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Path path = getPath();
+				Path path = imageInfo.getPath();
 				duplicateOperations.deleteFile(path);
 			}
 		});
@@ -60,7 +60,7 @@ public class OperationsMenu extends JPopupMenu {
 		actions.put(Operations.MarkAndDeleteDNW, new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Path path = getPath();
+				Path path = imageInfo.getPath();
 				duplicateOperations.markAs(path, DuplicateOperations.Tags.DNW.toString());
 				duplicateOperations.deleteFile(path);
 			}
@@ -69,7 +69,7 @@ public class OperationsMenu extends JPopupMenu {
 		actions.put(Operations.MarkBlocked, new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Path path = getPath();
+				Path path = imageInfo.getPath();
 				duplicateOperations.markAs(path, "BLOCK");
 			}
 		});
@@ -77,17 +77,11 @@ public class OperationsMenu extends JPopupMenu {
 		actions.put(Operations.Ignore, new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				parent.ignore();
+				duplicateOperations.ignore(imageInfo.getpHash());
 			}
 		});
 
 		createMenuItems(actions);
-	}
-
-	private Path getPath() {
-		ImageInfo ii = parent.getImageInfo();
-		Path path = ii.getPath();
-		return path;
 	}
 
 	private void createMenuItems(HashMap<Operations, ActionListener> actions) {

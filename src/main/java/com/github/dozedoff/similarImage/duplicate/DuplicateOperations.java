@@ -184,4 +184,12 @@ public class DuplicateOperations {
 			logger.warn("Failed to prune records for {} - {}", directory, e.getMessage());
 		}
 	}
+
+	public void ignore(long pHash) {
+		try {
+			persistence.addIgnore(pHash);
+		} catch (SQLException e) {
+			logger.warn("Failed to ignore pHash {} - {}", pHash, e.getMessage());
+		}
+	}
 }
