@@ -77,7 +77,7 @@ public class PhashWorkerTest {
 	public void testHashImage() throws Exception {
 		ip.addToLoad(testImage);
 
-		Thread.sleep(SLEEP_TIME);
+		Thread.sleep(3 * SLEEP_TIME);
 
 		verify(dbWriter).add(anyListOf(ImageRecord.class));
 		// TODO needs more accurate test

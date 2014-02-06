@@ -72,12 +72,16 @@ public class PhashWorker extends Thread {
 		LinkedList<Pair<Path, BufferedImage>> work = new LinkedList<Pair<Path, BufferedImage>>();
 		LinkedList<ImageRecord> newRecords = new LinkedList<ImageRecord>();
 
-		while (!isInterrupted()) {
+		while ((!isInterrupted()) && (!producer.allDone())) {
 			try {
 				synchronized (producer) {
 					while (!producer.hasWork()) {
 						logger.debug("No work, waiting...");
-						producer.wait();
+						producer.wait(1000);
+					}
+
+					if (producer.allDone()) {
+						break;
 					}
 
 					producer.drainTo(work, MAX_WORK_BATCH_SIZE);

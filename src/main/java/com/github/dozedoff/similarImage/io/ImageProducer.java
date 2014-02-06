@@ -216,4 +216,9 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 	public boolean hasWork() {
 		return bufferStrategy.workAvailable();
 	}
+
+	public boolean allDone() {
+		listenersUpdateBufferLevel(output.size());
+		return input.isEmpty() && output.isEmpty();
+	}
 }

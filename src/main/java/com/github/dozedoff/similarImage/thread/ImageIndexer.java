@@ -76,6 +76,8 @@ public class ImageIndexer extends Thread {
 				phw.stopWorker();
 			}
 		}
+
+		logger.info("All hash workers stopped");
 	}
 
 	private void findImages(String path, LinkedList<Path> imagePaths) {
@@ -104,6 +106,13 @@ public class ImageIndexer extends Thread {
 
 		logger.info("Adding paths to ImageProducer");
 		producer.addToLoad(imagePaths);
+
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 
 		for (int i = 0; i < WORKER_THREADS; i++) {
 			try {
