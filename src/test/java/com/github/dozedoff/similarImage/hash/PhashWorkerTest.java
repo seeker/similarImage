@@ -17,6 +17,8 @@
  */
 package com.github.dozedoff.similarImage.hash;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.verify;
@@ -81,7 +83,7 @@ public class PhashWorkerTest {
 		// TODO needs more accurate test
 	}
 
-	@Test
+	@Test(timeout = 6000)
 	public void testStopWorker() throws Exception {
 		List<Path> work = Collections.nCopies(NUM_OF_TEST_IMAGES, testImage);
 		ip.addToLoad(work);
@@ -89,5 +91,12 @@ public class PhashWorkerTest {
 		Thread.sleep(SLEEP_TIME);
 
 		verify(dbWriter, atMost(100)).add(anyListOf(ImageRecord.class));
+	}
+
+	@Test(timeout = 6000)
+	public void testStopWorkerNoWOrk() throws Exception {
+		phw.stopWorker();
+
+		assertThat(phw.isAlive(), is(false));
 	}
 }

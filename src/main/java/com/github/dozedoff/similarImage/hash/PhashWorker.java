@@ -58,6 +58,12 @@ public class PhashWorker extends Thread {
 
 	public void stopWorker() {
 		interrupt();
+		try {
+			this.join();
+		} catch (InterruptedException e) {
+			interrupt();
+			logger.warn("Interrupted while waiting to stop");
+		}
 	}
 
 	private void calculateHashes() {
