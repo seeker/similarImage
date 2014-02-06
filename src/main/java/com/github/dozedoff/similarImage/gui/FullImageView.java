@@ -26,8 +26,8 @@ import javax.swing.JScrollPane;
 
 import net.miginfocom.swing.MigLayout;
 
-public class FullImage {
-	public FullImage(JLabel largeImage, Path path) {
+public class FullImageView {
+	public FullImageView(JLabel largeImage, Path path) {
 		JPanel imagePanel = new JPanel(new MigLayout());
 		JScrollPane scroll = new JScrollPane(imagePanel);
 
