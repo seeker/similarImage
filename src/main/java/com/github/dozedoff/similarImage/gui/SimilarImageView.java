@@ -49,9 +49,10 @@ import net.miginfocom.swing.MigLayout;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
+import com.github.dozedoff.similarImage.io.ImageProducerObserver;
 import com.github.dozedoff.similarImage.thread.GroupListPopulator;
 
-public class SimilarImageView {
+public class SimilarImageView implements ImageProducerObserver {
 	private JFrame view;
 
 	private final SimilarImageController controller;
@@ -67,8 +68,7 @@ public class SimilarImageView {
 	private JScrollBar hammingDistance;
 	final DuplicateOperations duplicateOperations;
 
-	public SimilarImageView(SimilarImageController controller, DuplicateOperations duplicateOperations, JProgressBar totalProgress,
-			JProgressBar bufferLevel) {
+	public SimilarImageView(SimilarImageController controller, DuplicateOperations duplicateOperations, int maxBufferSize) {
 		this.controller = controller;
 
 		view = new JFrame();
@@ -79,8 +79,11 @@ public class SimilarImageView {
 		view.setLayout(new MigLayout("wrap 4"));
 		this.duplicateOperations = duplicateOperations;
 
-		this.progress = totalProgress;
-		this.bufferLevel = bufferLevel;
+		this.progress = new JProgressBar(0, 0);
+		this.progress.setStringPainted(true);
+
+		this.bufferLevel = new JProgressBar(0, maxBufferSize);
+		this.bufferLevel.setStringPainted(true);
 
 		setupComponents();
 		setupMenu();
@@ -316,5 +319,16 @@ public class SimilarImageView {
 			this.add(deleteAll);
 			this.add(dnwAll);
 		}
+	}
+
+	@Override
+	public void totalProgressChanged(int current, int total) {
+		progress.setMaximum(total);
+		progress.setValue(current);
+	}
+
+	@Override
+	public void bufferLevelChanged(int current) {
+		bufferLevel.setValue(current);
 	}
 }

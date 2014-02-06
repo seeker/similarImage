@@ -64,7 +64,8 @@ public class SimilarImageController {
 
 		sorter = new SortSimilar(persistence);
 		displayGroup = new DisplayGroupView();
-		gui = new SimilarImageView(this, new DuplicateOperations(persistence), producer.getTotalProgress(), producer.getBufferLevel());
+		gui = new SimilarImageView(this, new DuplicateOperations(persistence), producer.getMaxOutputQueueSize());
+		producer.addGuiUpdateListener(gui);
 	}
 
 	private void setupProducer() {

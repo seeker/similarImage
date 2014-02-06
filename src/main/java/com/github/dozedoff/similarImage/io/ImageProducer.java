@@ -26,12 +26,12 @@ import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.imageio.IIOException;
 import javax.imageio.ImageIO;
-import javax.swing.JProgressBar;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +44,6 @@ import com.github.dozedoff.similarImage.db.Persistence;
 
 public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>> {
 	private static final Logger logger = LoggerFactory.getLogger(ImageProducer.class);
-	private final JProgressBar bufferLevel, totalProgress;
 	private final Persistence persistence;
 	private final AtomicInteger total = new AtomicInteger();
 	private final AtomicInteger processed = new AtomicInteger();
@@ -52,11 +51,19 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 	private final int IMAGE_SIZE = 32;
 	private final int WORK_BATCH_SIZE = 20;
 
+	private final int maxOutputQueueSize;
+
+	private LinkedList<ImageProducerObserver> guiUpdateListeners;
+
 	private AbstractBufferStrategy<Path, Pair<Path, BufferedImage>> bufferStrategy = new SimpleBufferStrategy(this, input, output,
 			WORK_BATCH_SIZE);
 
 	public ImageProducer(int maxOutputQueueSize, Persistence persistence, boolean useSimpleStrategy) {
 		super(maxOutputQueueSize);
+
+		this.maxOutputQueueSize = maxOutputQueueSize;
+		guiUpdateListeners = new LinkedList<>();
+
 		if (useSimpleStrategy) {
 			this.bufferStrategy = new SimpleBufferStrategy(this, input, output, maxOutputQueueSize);
 		} else {
@@ -64,32 +71,26 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 		}
 
 		this.persistence = persistence;
-
-		totalProgress = new JProgressBar(processed.get(), total.get());
-		totalProgress.setStringPainted(true);
-		bufferLevel = new JProgressBar(0, maxOutputQueueSize);
-		bufferLevel.setStringPainted(true);
-
 	}
 
 	public ImageProducer(int maxOutputQueueSize, Persistence persistence) {
 		this(maxOutputQueueSize, persistence, false);
 	}
 
-	public JProgressBar getBufferLevel() {
-		return bufferLevel;
-	}
-
 	@Override
 	public void addToLoad(List<Path> paths) {
 		total.addAndGet(paths.size());
 		super.addToLoad(paths);
+
+		listenersUpdateTotalProgress();
 	}
 
 	@Override
 	public void addToLoad(Path... paths) {
 		total.addAndGet(paths.length);
 		super.addToLoad(paths);
+
+		listenersUpdateTotalProgress();
 	}
 
 	@Override
@@ -97,6 +98,8 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 		super.clear();
 		processed.set(0);
 		total.set(0);
+
+		listenersUpdateTotalProgress();
 	}
 
 	public int getTotal() {
@@ -107,8 +110,8 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 		return processed.get();
 	}
 
-	public JProgressBar getTotalProgress() {
-		return totalProgress;
+	public int getMaxOutputQueueSize() {
+		return maxOutputQueueSize;
 	}
 
 	@Override
@@ -154,7 +157,7 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 	private void processFile(Path next) throws SQLException, IOException, InterruptedException {
 		if (persistence.isBadFile(next) || persistence.isPathRecorded(next)) {
 			processed.addAndGet(1);
-			totalProgress.setValue(processed.get());
+			listenersUpdateTotalProgress();
 			return;
 		}
 
@@ -172,7 +175,27 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 		output.put(pair);
 
 		processed.addAndGet(1);
-		totalProgress.setValue(processed.get());
+		listenersUpdateTotalProgress();
+	}
+
+	public void addGuiUpdateListener(ImageProducerObserver listener) {
+		this.guiUpdateListeners.add(listener);
+	}
+
+	public void removeGuiUpdateListener(ImageProducerObserver listener) {
+		this.guiUpdateListeners.remove(listener);
+	}
+
+	private void listenersUpdateTotalProgress() {
+		for (ImageProducerObserver o : guiUpdateListeners) {
+			o.totalProgressChanged(processed.get(), total.get());
+		}
+	}
+
+	private void listenersUpdateBufferLevel(int currentValue) {
+		for (ImageProducerObserver o : guiUpdateListeners) {
+			o.bufferLevelChanged(currentValue);
+		}
 	}
 
 	@Override
@@ -180,7 +203,7 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 		synchronized (this) {
 			this.notifyAll();
 		}
-		bufferLevel.setValue(output.size());
+		listenersUpdateBufferLevel(output.size());
 	}
 
 	@Override
