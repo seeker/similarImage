@@ -295,6 +295,15 @@ public class SimilarImageView implements ImageProducerObserver {
 		groupListModel.removeElement(group);
 	}
 
+	public boolean okToDisplayLargeGroup(int groupSize) {
+		Object[] message = { "Group size is " + groupSize + "\nContinue loading?" };
+		JOptionPane pane = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+		JDialog getTopicDialog = pane.createDialog(null, "Continue?");
+		getTopicDialog.setVisible(true);
+
+		return (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION);
+	}
+
 	class OperationsMenu extends JPopupMenu {
 		private static final long serialVersionUID = 1L;
 

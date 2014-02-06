@@ -24,9 +24,6 @@ import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.Set;
 
-import javax.swing.JDialog;
-import javax.swing.JOptionPane;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,12 +87,7 @@ public class SimilarImageController {
 		Dimension imageDim = new Dimension(THUMBNAIL_DIMENSION, THUMBNAIL_DIMENSION);
 
 		if (grouplist.size() > maxGroupSize) {
-			Object[] message = { "Group size is " + grouplist.size() + "\nContinue loading?" };
-			JOptionPane pane = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
-			JDialog getTopicDialog = pane.createDialog(null, "Continue?");
-			getTopicDialog.setVisible(true);
-
-			if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.CANCEL_OPTION) {
+			if (!gui.okToDisplayLargeGroup(grouplist.size())) {
 				return;
 			}
 		}
