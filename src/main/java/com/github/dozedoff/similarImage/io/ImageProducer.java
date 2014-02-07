@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.hash.PhashWorker;
 import com.github.dozedoff.similarImage.thread.ImageLoadJob;
+import com.github.dozedoff.similarImage.thread.NamedThreadFactory;
 import com.google.common.collect.Lists;
 
 public class ImageProducer {
@@ -59,7 +60,7 @@ public class ImageProducer {
 		this.maxOutputQueueSize = maxOutputQueueSize;
 		this.persistence = persistence;
 		this.jobQueue = new LinkedBlockingQueue<>(maxOutputQueueSize);
-		this.tpe = new ThreadPoolExecutor(1, 1, 10, TimeUnit.SECONDS, jobQueue);
+		this.tpe = new ThreadPoolExecutor(1, 1, 10, TimeUnit.SECONDS, jobQueue, new NamedThreadFactory(ImageProducer.class.getSimpleName()));
 		this.phw = phw;
 	}
 
@@ -108,6 +109,10 @@ public class ImageProducer {
 		total.set(0);
 
 		listenersUpdateTotalProgress();
+	}
+
+	public void shutdown() {
+		tpe.shutdownNow();
 	}
 
 	public int getTotal() {

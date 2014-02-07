@@ -31,6 +31,7 @@ import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.commonj.util.Pair;
 import com.github.dozedoff.similarImage.db.DBWriter;
 import com.github.dozedoff.similarImage.thread.ImageHashJob;
+import com.github.dozedoff.similarImage.thread.NamedThreadFactory;
 
 public class PhashWorker {
 	private final static Logger logger = LoggerFactory.getLogger(PhashWorker.class);
@@ -46,7 +47,8 @@ public class PhashWorker {
 
 		phash = new ImagePHash(32, 9);
 		jobQueue = new LinkedBlockingQueue<>();
-		tpe = new ThreadPoolExecutor(1, Runtime.getRuntime().availableProcessors(), 10, TimeUnit.SECONDS, jobQueue);
+		tpe = new ThreadPoolExecutor(1, Runtime.getRuntime().availableProcessors(), 10, TimeUnit.SECONDS, jobQueue, new NamedThreadFactory(
+				PhashWorker.class.getSimpleName()));
 	}
 
 	public void toHash(List<Pair<Path, BufferedImage>> data) {
@@ -60,6 +62,6 @@ public class PhashWorker {
 
 	public void shutdown() {
 		this.shuttingDown = true;
-		tpe.shutdown();
+		tpe.shutdownNow();
 	}
 }

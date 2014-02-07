@@ -70,7 +70,6 @@ public class ImageIndexer extends Thread {
 		gui.setStatus("Done");
 	}
 
-	// TODO replace this with interrupt
 	public void killAll() {
 		phw.shutdown();
 

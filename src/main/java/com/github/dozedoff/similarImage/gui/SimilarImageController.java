@@ -126,8 +126,8 @@ public class SimilarImageController {
 
 	public void stopWorkers() {
 		logger.info("Stopping all workers...");
+		producer.shutdown();
 		producer.clear();
-		// FIXME stop workers
 
 		if (indexer != null && indexer.isAlive()) {
 			indexer.killAll();
