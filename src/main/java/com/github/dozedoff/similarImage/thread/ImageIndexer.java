@@ -43,7 +43,7 @@ public class ImageIndexer extends Thread {
 	private String path;
 	private SimilarImageView gui;
 	private ImageProducer producer;
-	private PhashWorker workers[] = new PhashWorker[WORKER_THREADS];
+	private PhashWorker phw;
 	private DBWriter dbWriter;
 
 	public ImageIndexer(String path, SimilarImageView gui, ImageProducer producer, DBWriter dbWriter) {
@@ -52,6 +52,8 @@ public class ImageIndexer extends Thread {
 		this.gui = gui;
 		this.producer = producer;
 		this.dbWriter = dbWriter;
+
+		phw = new PhashWorker(dbWriter);
 	}
 
 	@Override
@@ -70,12 +72,7 @@ public class ImageIndexer extends Thread {
 
 	// TODO replace this with interrupt
 	public void killAll() {
-		for (PhashWorker phw : workers) {
-			if (phw != null) {
-				logger.info("Stopping {}...", phw.getName());
-				phw.stopWorker();
-			}
-		}
+		phw.shutdown();
 
 		logger.info("All hash workers stopped");
 	}
@@ -98,11 +95,6 @@ public class ImageIndexer extends Thread {
 		StopWatch sw = new StopWatch();
 
 		sw.start();
-		logger.info("Creating and starting workers...");
-		for (int i = 0; i < WORKER_THREADS; i++) {
-			workers[i] = new PhashWorker(producer, dbWriter);
-			workers[i].start();
-		}
 
 		logger.info("Adding paths to ImageProducer");
 		producer.addToLoad(imagePaths);
@@ -112,14 +104,6 @@ public class ImageIndexer extends Thread {
 		} catch (InterruptedException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
-		}
-
-		for (int i = 0; i < WORKER_THREADS; i++) {
-			try {
-				workers[i].join();
-			} catch (InterruptedException e) {
-				logger.info("Interrupted waiting for {}", workers[i].getName());
-			}
 		}
 
 		sw.stop();

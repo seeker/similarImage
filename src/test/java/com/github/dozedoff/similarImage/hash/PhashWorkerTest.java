@@ -17,8 +17,6 @@
  */
 package com.github.dozedoff.similarImage.hash;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.verify;
@@ -64,13 +62,12 @@ public class PhashWorkerTest {
 		MockitoAnnotations.initMocks(this);
 
 		ip = new ImageProducer(100, persistence, true);
-		phw = new PhashWorker(ip, dbWriter);
-		phw.start();
+		phw = new PhashWorker(dbWriter);
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		phw.stopWorker();
+		phw.shutdown();
 	}
 
 	@Test(timeout = 6000)
@@ -91,12 +88,5 @@ public class PhashWorkerTest {
 		Thread.sleep(SLEEP_TIME);
 
 		verify(dbWriter, atMost(100)).add(anyListOf(ImageRecord.class));
-	}
-
-	@Test(timeout = 6000)
-	public void testStopWorkerNoWOrk() throws Exception {
-		phw.stopWorker();
-
-		assertThat(phw.isAlive(), is(false));
 	}
 }
