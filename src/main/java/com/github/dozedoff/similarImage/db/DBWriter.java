@@ -30,19 +30,26 @@ public class DBWriter {
 
 	private final int MAX_RETRY = 3;
 	private final Persistence persistence;
+	private final Thread dbDaemon;
 
 	LinkedBlockingQueue<Pair<List<ImageRecord>, Integer>> pendingWrites = new LinkedBlockingQueue<Pair<List<ImageRecord>, Integer>>();
 
 	public DBWriter(Persistence persistence) {
 		this.persistence = persistence;
-		Thread t = new DBWriterDaemon();
-		t.setDaemon(true);
-		t.start();
+		dbDaemon = new DBWriterDaemon();
+		dbDaemon.setDaemon(true);
+		dbDaemon.start();
 	}
 
 	public void add(List<ImageRecord> records) {
 		pendingWrites.offer(new Pair<List<ImageRecord>, Integer>(records, 0));
 		logger.debug("Adding list with {} entries to queue", records.size());
+	}
+
+	public void shutdown() {
+		if (dbDaemon != null) {
+			dbDaemon.interrupt();
+		}
 	}
 
 	private class DBWriterDaemon extends Thread {

@@ -63,5 +63,6 @@ public class PhashWorker {
 	public void shutdown() {
 		this.shuttingDown = true;
 		tpe.shutdownNow();
+		dbWriter.shutdown();
 	}
 }
