@@ -33,6 +33,7 @@ import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 import com.github.dozedoff.similarImage.duplicate.SortSimilar;
+import com.github.dozedoff.similarImage.hash.PhashWorker;
 import com.github.dozedoff.similarImage.io.ImageProducer;
 import com.github.dozedoff.similarImage.thread.FilterSorter;
 import com.github.dozedoff.similarImage.thread.ImageIndexer;
@@ -42,8 +43,6 @@ public class SimilarImageController {
 	private final Logger logger = LoggerFactory.getLogger(SimilarImageController.class);
 
 	private final int THUMBNAIL_DIMENSION = 500;
-	private final int LOADER_THREADS = 2;
-	private final int LOADER_PRIORITY = 2;
 	private final int PRODUCER_QUEUE_SIZE = 400;
 
 	private final Persistence persistence;
@@ -66,9 +65,9 @@ public class SimilarImageController {
 	}
 
 	private void setupProducer() {
-		producer = new ImageProducer(PRODUCER_QUEUE_SIZE, persistence);
-		producer.setThreadPriority(LOADER_PRIORITY);
-		producer.startLoader(LOADER_THREADS);
+		DBWriter dbWriter = new DBWriter(persistence);
+		PhashWorker phw = new PhashWorker(dbWriter);
+		producer = new ImageProducer(PRODUCER_QUEUE_SIZE, persistence, phw);
 	}
 
 	public void ignoreImage(ImageRecord toIgnore) {

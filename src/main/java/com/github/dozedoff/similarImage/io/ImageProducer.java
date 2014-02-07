@@ -17,32 +17,24 @@
  */
 package com.github.dozedoff.similarImage.io;
 
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.imageio.IIOException;
-import javax.imageio.ImageIO;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.dozedoff.commonj.hash.ImagePHash;
-import com.github.dozedoff.commonj.io.DataProducer;
-import com.github.dozedoff.commonj.util.Pair;
-import com.github.dozedoff.similarImage.db.BadFileRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.hash.PhashWorker;
+import com.github.dozedoff.similarImage.thread.ImageLoadJob;
+import com.google.common.collect.Lists;
 
-public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>> {
+public class ImageProducer {
 	private static final Logger logger = LoggerFactory.getLogger(ImageProducer.class);
 	private final Persistence persistence;
 	private final AtomicInteger total = new AtomicInteger();
@@ -51,49 +43,67 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 	private final int IMAGE_SIZE = 32;
 	private final int WORK_BATCH_SIZE = 20;
 
-	private final int maxOutputQueueSize;
-
+	private int maxOutputQueueSize;
 	private LinkedList<ImageProducerObserver> guiUpdateListeners;
-
-	private AbstractBufferStrategy<Path, Pair<Path, BufferedImage>> bufferStrategy;
 
 	private volatile boolean workerBusy = false;
 
-	@Deprecated
-	public ImageProducer(int maxOutputQueueSize, Persistence persistence, boolean useSimpleStrategy) {
-		super(maxOutputQueueSize);
+	private LinkedBlockingQueue<Runnable> jobQueue;
+	private ThreadPoolExecutor tpe;
+	private PhashWorker phw;
 
-		this.maxOutputQueueSize = maxOutputQueueSize;
+	@Deprecated
+	public ImageProducer(int maxOutputQueueSize, Persistence persistence, PhashWorker phw, boolean useSimpleStrategy) {
 		guiUpdateListeners = new LinkedList<>();
 
-		bufferStrategy = new SimpleBufferStrategy(this, input, output, WORK_BATCH_SIZE);
-
+		this.maxOutputQueueSize = maxOutputQueueSize;
 		this.persistence = persistence;
+		this.jobQueue = new LinkedBlockingQueue<>(maxOutputQueueSize);
+		this.tpe = new ThreadPoolExecutor(1, 1, 10, TimeUnit.SECONDS, jobQueue);
+		this.phw = phw;
 	}
 
-	public ImageProducer(int maxOutputQueueSize, Persistence persistence) {
-		this(maxOutputQueueSize, persistence, false);
+	public ImageProducer(int maxOutputQueueSize, Persistence persistence, PhashWorker phw) {
+		this(maxOutputQueueSize, persistence, phw, false);
 	}
 
-	@Override
 	public void addToLoad(List<Path> paths) {
 		total.addAndGet(paths.size());
-		super.addToLoad(paths);
+		createJobBatches(paths);
 
 		listenersUpdateTotalProgress();
 	}
 
-	@Override
 	public void addToLoad(Path... paths) {
-		total.addAndGet(paths.length);
-		super.addToLoad(paths);
-
-		listenersUpdateTotalProgress();
+		addToLoad(Lists.newArrayList(paths));
 	}
 
-	@Override
+	private void createJobBatches(List<Path> paths) {
+		int counter = 0;
+		ArrayList<Path> batch = new ArrayList<>(WORK_BATCH_SIZE);
+
+		for (Path p : paths) {
+			batch.add(p);
+			counter++;
+
+			if (counter >= WORK_BATCH_SIZE) {
+				createJob(batch);
+
+				counter = 0;
+				batch = new ArrayList<>(WORK_BATCH_SIZE); // don't use .clear
+			}
+		}
+
+		createJob(batch);
+	}
+
+	private void createJob(List<Path> batch) {
+		ImageLoadJob job = new ImageLoadJob(batch, phw, persistence);
+		tpe.execute(job);
+	}
+
 	public void clear() {
-		super.clear();
+		jobQueue.clear();
 		processed.set(0);
 		total.set(0);
 
@@ -110,75 +120,6 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 
 	public int getMaxOutputQueueSize() {
 		return maxOutputQueueSize;
-	}
-
-	@Override
-	protected void loaderDoWork() throws InterruptedException {
-		Path n = null;
-		ArrayList<Path> work = new ArrayList<Path>(WORK_BATCH_SIZE + 1);
-
-		if (bufferStrategy.workAvailable()) {
-			synchronized (output) {
-				output.notifyAll();
-			}
-		}
-
-		n = input.take();
-
-		workerBusy = true;
-
-		work.add(n);
-		input.drainTo(work, WORK_BATCH_SIZE);
-
-		for (Path p : work) {
-			try {
-				processFile(p);
-			} catch (IIOException e) {
-				logger.warn("Failed to process image(IIO) - {}", e.getMessage());
-				try {
-					persistence.addBadFile(new BadFileRecord(p));
-				} catch (SQLException e1) {
-					logger.warn("Failed to add bad file record for {} - {}", p, e.getMessage());
-				}
-			} catch (IOException e) {
-				logger.warn("Failed to load file - {}", e.getMessage());
-			} catch (SQLException e) {
-				logger.warn("Failed to query database - {}", e.getMessage());
-			} catch (Exception e) {
-				logger.warn("Failed to process image(other) - {}", e.getMessage());
-				try {
-					persistence.addBadFile(new BadFileRecord(p));
-				} catch (SQLException e1) {
-					logger.warn("Failed to add bad file record for {} - {}", p, e.getMessage());
-				}
-			}
-		}
-
-		workerBusy = false;
-	}
-
-	private void processFile(Path next) throws SQLException, IOException, InterruptedException {
-		if (persistence.isBadFile(next) || persistence.isPathRecorded(next)) {
-			processed.addAndGet(1);
-			listenersUpdateTotalProgress();
-			return;
-		}
-
-		byte[] data = Files.readAllBytes(next);
-		InputStream is = new ByteArrayInputStream(data);
-		BufferedImage img = ImageIO.read(is);
-
-		if (img == null) {
-			throw new IIOException("No ImageReader was able to read " + next.toString());
-		}
-
-		img = ImagePHash.resize(img, IMAGE_SIZE, IMAGE_SIZE);
-
-		Pair<Path, BufferedImage> pair = new Pair<Path, BufferedImage>(next, img);
-		output.put(pair);
-
-		processed.addAndGet(1);
-		listenersUpdateTotalProgress();
 	}
 
 	public void addGuiUpdateListener(ImageProducerObserver listener) {
@@ -201,27 +142,9 @@ public class ImageProducer extends DataProducer<Path, Pair<Path, BufferedImage>>
 		}
 	}
 
-	@Override
 	protected void outputQueueChanged() {
 		synchronized (this) {
 			this.notifyAll();
 		}
-		listenersUpdateBufferLevel(output.size());
-	}
-
-	@Override
-	public void drainTo(Collection<Pair<Path, BufferedImage>> drainTo, int maxElements) throws InterruptedException {
-		bufferStrategy.bufferCheck();
-		super.drainTo(drainTo, maxElements);
-	}
-
-	@Override
-	public boolean hasWork() {
-		return bufferStrategy.workAvailable();
-	}
-
-	public boolean allDone() {
-		listenersUpdateBufferLevel(output.size());
-		return input.isEmpty() && output.isEmpty() && (!workerBusy);
 	}
 }
