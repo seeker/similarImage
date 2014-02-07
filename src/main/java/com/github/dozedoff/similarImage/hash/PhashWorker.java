@@ -22,6 +22,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import javax.imageio.IIOException;
 
@@ -33,6 +37,7 @@ import com.github.dozedoff.commonj.util.Pair;
 import com.github.dozedoff.similarImage.db.DBWriter;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.io.ImageProducer;
+import com.github.dozedoff.similarImage.thread.ImageHashJob;
 
 public class PhashWorker extends Thread {
 	private final static Logger logger = LoggerFactory.getLogger(PhashWorker.class);
@@ -42,6 +47,9 @@ public class PhashWorker extends Thread {
 
 	private final ImageProducer producer;
 	private final DBWriter dbWriter;
+	private ThreadPoolExecutor tpe;
+	private LinkedBlockingQueue<Runnable> jobQueue;
+	private ImagePHash phash;
 
 	public PhashWorker(ImageProducer producer, DBWriter dbWriter) {
 		this.producer = producer;
@@ -49,6 +57,15 @@ public class PhashWorker extends Thread {
 		localWorkerNumber = workerNumber;
 		workerNumber++;
 		this.setName("pHash worker " + localWorkerNumber);
+
+		phash = new ImagePHash(32, 9);
+		jobQueue = new LinkedBlockingQueue<>();
+		tpe = new ThreadPoolExecutor(1, Runtime.getRuntime().availableProcessors(), 10, TimeUnit.SECONDS, jobQueue);
+	}
+
+	public void toHash(List<Pair<Path, BufferedImage>> data) {
+		ImageHashJob job = new ImageHashJob(data, dbWriter, phash);
+		tpe.execute(job);
 	}
 
 	@Override
