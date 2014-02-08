@@ -57,7 +57,8 @@ public class ImageProducer {
 		this.persistence = persistence;
 		this.jobQueue = new LinkedBlockingQueue<>(maxOutputQueueSize);
 		this.phw = phw;
-		this.tpe = new ThreadPoolExecutor(2, 2, 10, TimeUnit.SECONDS, jobQueue, new NamedThreadFactory(ImageProducer.class.getSimpleName()));
+		this.tpe = new ImageProducerPool(2, 2, 10, TimeUnit.SECONDS, jobQueue, new NamedThreadFactory(ImageProducer.class.getSimpleName()),
+				this);
 		this.tpe.allowCoreThreadTimeOut(true);
 	}
 
@@ -84,7 +85,6 @@ public class ImageProducer {
 		for (Path p : paths) {
 			batch.add(p);
 			counter++;
-			processed.incrementAndGet();
 
 			if (counter >= WORK_BATCH_SIZE) {
 				createJob(batch);
@@ -134,10 +134,14 @@ public class ImageProducer {
 		this.guiUpdateListeners.remove(listener);
 	}
 
-	private void listenersUpdateTotalProgress() {
+	void listenersUpdateTotalProgress() {
 		for (ImageProducerObserver o : guiUpdateListeners) {
 			o.totalProgressChanged(processed.get(), total.get());
 		}
+	}
+
+	void addToProcessed(int done) {
+		processed.addAndGet(done);
 	}
 
 	private void listenersUpdateBufferLevel(int currentValue) {

@@ -103,4 +103,8 @@ public class ImageLoadJob implements Runnable {
 		Pair<Path, BufferedImage> pair = new Pair<Path, BufferedImage>(next, img);
 		output.add(pair);
 	}
+
+	public int getJobSize() {
+		return files.size();
+	}
 }
