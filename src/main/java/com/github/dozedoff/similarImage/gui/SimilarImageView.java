@@ -105,6 +105,13 @@ public class SimilarImageView implements ImageProducerObserver {
 		sortSimilar = new JButton("Sort similar");
 		sortFilter = new JButton("Sort filter");
 
+		JButton setPool = new JButton("Set pools");
+
+		final JTextField imPool = new JTextField(5);
+		imPool.setToolTipText("Image loader pool size");
+		final JTextField hPool = new JTextField(5);
+		hPool.setToolTipText("Hash worker pool size");
+
 		groupListModel = new DefaultListModel<Long>();
 		groups = new JList<Long>(groupListModel);
 		groups.setComponentPopupMenu(new OperationsMenu());
@@ -177,6 +184,18 @@ public class SimilarImageView implements ImageProducerObserver {
 			}
 		});
 
+		setPool.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int imp = Integer.parseInt(imPool.getText());
+				int hp = Integer.parseInt(hPool.getText());
+
+				controller.setImageLoaderPoolSize(imp);
+				controller.setPhashPoolSize(hp);
+			}
+		});
+
 		view.add(path);
 		view.add(find);
 		view.add(stop);
@@ -188,6 +207,9 @@ public class SimilarImageView implements ImageProducerObserver {
 		view.add(groupScrollPane, "growy");
 		view.add(hammingDistance, "growx");
 		view.add(hammingValue);
+		view.add(setPool);
+		view.add(imPool);
+		view.add(hPool);
 	}
 
 	private long getSelectedGroup() {

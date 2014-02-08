@@ -49,6 +49,7 @@ public class ImageProducer {
 	private LinkedBlockingQueue<Runnable> jobQueue;
 	private ThreadPoolExecutor tpe;
 	private PhashWorker phw;
+	private int poolSize = 2;
 
 	public ImageProducer(Persistence persistence, PhashWorker phw) {
 		guiUpdateListeners = new LinkedList<>();
@@ -56,9 +57,19 @@ public class ImageProducer {
 		this.persistence = persistence;
 		this.jobQueue = new LinkedBlockingQueue<>();
 		this.phw = phw;
-		this.tpe = new ImageProducerPool(2, 2, 10, TimeUnit.SECONDS, jobQueue, new NamedThreadFactory(ImageProducer.class.getSimpleName()),
-				this);
+		this.tpe = new ImageProducerPool(poolSize, poolSize, 10, TimeUnit.SECONDS, jobQueue, new NamedThreadFactory(
+				ImageProducer.class.getSimpleName()), this);
 		this.tpe.allowCoreThreadTimeOut(true);
+	}
+
+	public void setPoolSize(int poolSize) {
+		this.poolSize = poolSize;
+		this.tpe.setCorePoolSize(poolSize);
+		this.tpe.setMaximumPoolSize(poolSize);
+	}
+
+	public int getPoolSize() {
+		return poolSize;
 	}
 
 	public ImageProducer(Persistence persistence, PhashWorker phw, ThreadPoolExecutor customTpe) {

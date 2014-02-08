@@ -46,6 +46,7 @@ public class PhashWorker {
 	private Semaphore jobTickets;
 	private int maxQueueSize = 200;
 	private static final int POOL_TIMEOUT = 60;
+	private int hashPoolSize = 1;
 
 	private LinkedList<ImageProducerObserver> guiUpdateListeners;
 
@@ -54,13 +55,22 @@ public class PhashWorker {
 		jobTickets = new Semaphore(maxQueueSize);
 	}
 
+	public void setPoolSize(int poolSize) {
+		this.hashPoolSize = poolSize;
+		this.tpe.setCorePoolSize(poolSize);
+		this.tpe.setMaximumPoolSize(poolSize);
+	}
+
+	public int getPoolSize() {
+		return hashPoolSize;
+	}
+
 	public PhashWorker(DBWriter dbWriter) {
 		this.dbWriter = dbWriter;
 
 		phash = new ImagePHash(32, 9);
 		jobQueue = new LinkedBlockingQueue<>();
 		int processors = Runtime.getRuntime().availableProcessors();
-		int hashPoolSize = 1;
 
 		if (processors > 1) {
 			hashPoolSize = processors - 1;

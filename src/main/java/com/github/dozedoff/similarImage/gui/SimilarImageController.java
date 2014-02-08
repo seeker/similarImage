@@ -66,6 +66,20 @@ public class SimilarImageController {
 		phw.addGuiUpdateListener(gui);
 	}
 
+	public void setImageLoaderPoolSize(int poolSize) {
+		if ((poolSize > 0) && (poolSize + phw.getPoolSize() <= Runtime.getRuntime().availableProcessors())) {
+			producer.setPoolSize(poolSize);
+			logger.info("Setting imageloader pool to {}", poolSize);
+		}
+	}
+
+	public void setPhashPoolSize(int poolSize) {
+		if ((poolSize > 0) && (poolSize + producer.getPoolSize() <= Runtime.getRuntime().availableProcessors())) {
+			phw.setPoolSize(poolSize);
+			logger.info("Setting hash worker pool to {}", poolSize);
+		}
+	}
+
 	private void setupProducer() {
 		DBWriter dbWriter = new DBWriter(persistence);
 		phw = new PhashWorker(dbWriter);
