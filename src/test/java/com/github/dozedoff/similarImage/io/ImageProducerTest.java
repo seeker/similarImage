@@ -20,55 +20,47 @@ package com.github.dozedoff.similarImage.io;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.awt.image.BufferedImage;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.mockito.runners.MockitoJUnitRunner;
 
-import com.github.dozedoff.commonj.util.Pair;
-import com.github.dozedoff.similarImage.db.BadFileRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.hash.PhashWorker;
 
-@RunWith(MockitoJUnitRunner.class)
 public class ImageProducerTest {
-	@Mock
 	private Persistence persistence;
-	@Mock
 	private PhashWorker phw;
+	private ThreadPoolExecutor tpe;
+	private ImageProducerObserver ipo;
 
 	private ImageProducer imageProducer;
 
-	private static Path testImage = null, notAnImage = null;
+	private static Path testImage = null;
 	private static Path[] images;
 
 	private static final int NUM_OF_TEST_IMAGES = 5;
-	private static final int SLEEP_DELAY = 300;
 	private static final int OUTPUT_QUEUE_SIZE = 100;
 
 	@BeforeClass
 	public static void setUpClass() throws URISyntaxException {
 		testImage = Paths.get(Thread.currentThread().getContextClassLoader().getResource("testImage.jpg").toURI());
-		notAnImage = Paths.get(Thread.currentThread().getContextClassLoader().getResource("notAnImage.jpg").toURI());
 		assertThat("Could not load test image", Files.exists(testImage), is(true));
 
 		images = new Path[NUM_OF_TEST_IMAGES];
@@ -80,13 +72,17 @@ public class ImageProducerTest {
 
 	@Before
 	public void setUp() throws Exception {
-		MockitoAnnotations.initMocks(this);
+		persistence = mock(Persistence.class);
+		phw = mock(PhashWorker.class);
+		tpe = mock(ThreadPoolExecutor.class);
+		ipo = mock(ImageProducerObserver.class);
 
-		imageProducer = new ImageProducer(OUTPUT_QUEUE_SIZE, persistence, phw);
+		imageProducer = new ImageProducer(OUTPUT_QUEUE_SIZE, persistence, phw, tpe);
 	}
 
 	@After
 	public void tearDown() throws Exception {
+		imageProducer.shutdown();
 	}
 
 	@Test
@@ -99,48 +95,12 @@ public class ImageProducerTest {
 	}
 
 	@Test(timeout = 6000)
-	public void testClearProcessed() throws Exception {
-		imageProducer.addToLoad(images);
-
-		Thread.sleep(SLEEP_DELAY);
-		assertThat(imageProducer.getProcessed(), is(NUM_OF_TEST_IMAGES));
-
-		imageProducer.clear();
-
-		assertThat(imageProducer.getProcessed(), is(0));
-	}
-
-	@Ignore
-	@Test(timeout = 6000)
-	public void testBadFilesOutputQueue() throws Exception {
-		when(persistence.isBadFile(any(Path.class))).thenReturn(true, true, false);
-		Collection<Pair<Path, BufferedImage>> results = new LinkedList<>();
-
-		imageProducer.addToLoad(images);
-		Thread.sleep(SLEEP_DELAY);
-
-		// imageProducer.drainTo(results, OUTPUT_QUEUE_SIZE);
-
-		assertThat(results.size(), is(3));
-	}
-
-	@Test(timeout = 6000)
 	public void testBadFilesTotal() throws Exception {
 		when(persistence.isBadFile(any(Path.class))).thenReturn(true, true, false);
 
 		imageProducer.addToLoad(images);
 
 		assertThat(imageProducer.getTotal(), is(NUM_OF_TEST_IMAGES));
-	}
-
-	@Test(timeout = 6000)
-	public void testBadFilesProcessed() throws Exception {
-		when(persistence.isBadFile(any(Path.class))).thenReturn(true, true, false);
-
-		imageProducer.addToLoad(images);
-		Thread.sleep(SLEEP_DELAY);
-
-		assertThat(imageProducer.getProcessed(), is(NUM_OF_TEST_IMAGES));
 	}
 
 	@Test(timeout = 6000)
@@ -152,58 +112,78 @@ public class ImageProducerTest {
 		assertThat(imageProducer.getTotal(), is(NUM_OF_TEST_IMAGES));
 	}
 
-	@Test(timeout = 6000)
-	public void testRecordedPathsProcessed() throws Exception {
-		when(persistence.isPathRecorded(any(Path.class))).thenReturn(true, true, false);
-
-		imageProducer.addToLoad(images);
-		Thread.sleep(3 * SLEEP_DELAY);
-
-		assertThat(imageProducer.getProcessed(), is(NUM_OF_TEST_IMAGES));
-	}
-
-	@Ignore
-	@Test
-	public void testDrainTo() throws Exception {
-		Collection<Pair<Path, BufferedImage>> results = new LinkedList<>();
-
-		imageProducer.addToLoad(images);
-		Thread.sleep(SLEEP_DELAY);
-		// imageProducer.drainTo(results, OUTPUT_QUEUE_SIZE);
-
-		assertThat(results.size(), is(NUM_OF_TEST_IMAGES));
-	}
-
-	@Ignore
 	@Test
 	public void testAddToLoadList() throws Exception {
-		Collection<Pair<Path, BufferedImage>> results = new LinkedList<>();
 		List<Path> list = Arrays.asList(images);
 
 		imageProducer.addToLoad(list);
-		Thread.sleep(SLEEP_DELAY);
-		// imageProducer.drainTo(results, OUTPUT_QUEUE_SIZE);
 
-		assertThat(results.size(), is(NUM_OF_TEST_IMAGES));
+		verify(tpe).execute(any(Runnable.class));
 	}
 
 	@Test
-	public void testNonExistantFile() throws Exception {
-		Path path = Paths.get("foo");
+	public void testAddToLoadListLarge() throws Exception {
+		List<Path> list = Collections.nCopies(25, testImage);
 
-		imageProducer.addToLoad(path);
+		imageProducer.addToLoad(list);
 
-		Thread.sleep(SLEEP_DELAY);
-
-		verify(persistence, never()).addBadFile(any(BadFileRecord.class));
+		verify(tpe, times(2)).execute(any(Runnable.class));
 	}
 
 	@Test
-	public void testUnreadableImage() throws Exception {
-		imageProducer.addToLoad(notAnImage);
+	public void testGetProcessed() throws Exception {
+		List<Path> list = Collections.nCopies(3, testImage);
 
-		Thread.sleep(SLEEP_DELAY);
+		imageProducer.addToLoad(list);
 
-		verify(persistence).addBadFile(any(BadFileRecord.class));
+		assertThat(imageProducer.getProcessed(), is(3));
+	}
+
+	@Test
+	public void testGetProcessedLargeBatch() throws Exception {
+		List<Path> list = Collections.nCopies(30, testImage);
+
+		imageProducer.addToLoad(list);
+
+		assertThat(imageProducer.getProcessed(), is(30));
+	}
+
+	@Test
+	public void testGetMaxOutputQueueSize() throws Exception {
+		assertThat(imageProducer.getMaxOutputQueueSize(), is(100));
+	}
+
+	@Test
+	public void testAddGuiUpdateListener() throws Exception {
+		List<Path> list = Collections.nCopies(3, testImage);
+		imageProducer.addGuiUpdateListener(ipo);
+
+		imageProducer.addToLoad(list);
+
+		verify(ipo).totalProgressChanged(3, 3);
+	}
+
+	@Test
+	public void testAddGuiUpdateListenerTwoEvents() throws Exception {
+		List<Path> list = Collections.nCopies(3, testImage);
+		List<Path> list2 = Collections.nCopies(5, testImage);
+		imageProducer.addGuiUpdateListener(ipo);
+
+		imageProducer.addToLoad(list);
+		imageProducer.addToLoad(list2);
+
+		verify(ipo).totalProgressChanged(3, 3);
+		verify(ipo).totalProgressChanged(8, 8);
+	}
+
+	@Test
+	public void testRemoveGuiUpdateListener() throws Exception {
+		List<Path> list = Collections.nCopies(3, testImage);
+		imageProducer.addGuiUpdateListener(ipo);
+		imageProducer.removeGuiUpdateListener(ipo);
+
+		imageProducer.addToLoad(list);
+
+		verify(ipo, never()).totalProgressChanged(anyInt(), anyInt());
 	}
 }
