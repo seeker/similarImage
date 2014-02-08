@@ -40,7 +40,6 @@ public class PhashWorker {
 	private ThreadPoolExecutor tpe;
 	private LinkedBlockingQueue<Runnable> jobQueue;
 	private ImagePHash phash;
-	private boolean shuttingDown = false;
 
 	public PhashWorker(DBWriter dbWriter) {
 		this.dbWriter = dbWriter;
@@ -52,8 +51,9 @@ public class PhashWorker {
 	}
 
 	public void toHash(List<Pair<Path, BufferedImage>> data) {
-		if (shuttingDown) {
-			logger.error("Could not add job during shutdown");
+		if (tpe.isShutdown()) {
+			logger.error("Cannot add jobs to a pool that has been shutdown");
+			return;
 		}
 
 		ImageHashJob job = new ImageHashJob(data, dbWriter, phash);
@@ -61,7 +61,6 @@ public class PhashWorker {
 	}
 
 	public void shutdown() {
-		this.shuttingDown = true;
 		tpe.shutdownNow();
 		dbWriter.shutdown();
 	}
