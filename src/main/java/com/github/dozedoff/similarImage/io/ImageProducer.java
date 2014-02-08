@@ -41,31 +41,28 @@ public class ImageProducer {
 	private final AtomicInteger total = new AtomicInteger();
 	private final AtomicInteger processed = new AtomicInteger();
 
-	private final int IMAGE_SIZE = 32;
 	private final int WORK_BATCH_SIZE = 20;
 
 	private int maxOutputQueueSize;
 	private LinkedList<ImageProducerObserver> guiUpdateListeners;
 
-	private volatile boolean workerBusy = false;
-
 	private LinkedBlockingQueue<Runnable> jobQueue;
 	private ThreadPoolExecutor tpe;
 	private PhashWorker phw;
 
-	@Deprecated
-	public ImageProducer(int maxOutputQueueSize, Persistence persistence, PhashWorker phw, boolean useSimpleStrategy) {
+	public ImageProducer(int maxOutputQueueSize, Persistence persistence, PhashWorker phw) {
 		guiUpdateListeners = new LinkedList<>();
 
 		this.maxOutputQueueSize = maxOutputQueueSize;
 		this.persistence = persistence;
 		this.jobQueue = new LinkedBlockingQueue<>(maxOutputQueueSize);
-		this.tpe = new ThreadPoolExecutor(1, 1, 10, TimeUnit.SECONDS, jobQueue, new NamedThreadFactory(ImageProducer.class.getSimpleName()));
 		this.phw = phw;
+		this.tpe = new ThreadPoolExecutor(1, 1, 10, TimeUnit.SECONDS, jobQueue, new NamedThreadFactory(ImageProducer.class.getSimpleName()));
 	}
 
-	public ImageProducer(int maxOutputQueueSize, Persistence persistence, PhashWorker phw) {
-		this(maxOutputQueueSize, persistence, phw, false);
+	public ImageProducer(int maxOutputQueueSize, Persistence persistence, PhashWorker phw, ThreadPoolExecutor customTpe) {
+		this(maxOutputQueueSize, persistence, phw);
+		this.tpe = customTpe;
 	}
 
 	public void addToLoad(List<Path> paths) {
