@@ -22,7 +22,6 @@ import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -43,7 +42,6 @@ public class PhashWorker {
 	private ThreadPoolExecutor tpe;
 	private LinkedBlockingQueue<Runnable> jobQueue;
 	private ImagePHash phash;
-	private Semaphore jobTickets;
 	private int maxQueueSize = 200;
 	private static final int POOL_TIMEOUT = 60;
 	private int hashPoolSize = 1;
@@ -52,7 +50,6 @@ public class PhashWorker {
 
 	public PhashWorker(DBWriter dbWriter, int maxQueueSize) {
 		this(dbWriter);
-		jobTickets = new Semaphore(maxQueueSize);
 	}
 
 	public void setPoolSize(int poolSize) {
@@ -69,14 +66,12 @@ public class PhashWorker {
 		this.dbWriter = dbWriter;
 
 		phash = new ImagePHash(32, 9);
-		jobQueue = new LinkedBlockingQueue<>();
+		jobQueue = new LinkedBlockingQueue<>(maxQueueSize);
 		int processors = Runtime.getRuntime().availableProcessors();
 
 		if (processors > 1) {
 			hashPoolSize = processors - 1;
 		}
-
-		this.jobTickets = new Semaphore(maxQueueSize);
 
 		this.tpe = new HashWorkerPool(hashPoolSize, hashPoolSize, POOL_TIMEOUT, TimeUnit.SECONDS, jobQueue, new NamedThreadFactory(
 				PhashWorker.class.getSimpleName()), this);
@@ -92,13 +87,17 @@ public class PhashWorker {
 		}
 
 		try {
-			jobTickets.acquire();
 			ImageHashJob job = new ImageHashJob(data, dbWriter, phash);
-			tpe.execute(job);
+			jobQueue.put(job);
+			tpe.prestartCoreThread();
 			listenersUpdateBufferLevel();
 		} catch (InterruptedException e) {
 			logger.info("Interrupted while adding job to queue");
 		}
+	}
+
+	public void clear() {
+		jobQueue.clear();
 	}
 
 	public void shutdown() {
@@ -106,13 +105,9 @@ public class PhashWorker {
 		dbWriter.shutdown();
 	}
 
-	void releaseJobTicket() {
-		jobTickets.release();
-	}
-
 	void listenersUpdateBufferLevel() {
 		for (ImageProducerObserver listener : guiUpdateListeners) {
-			listener.bufferLevelChanged(maxQueueSize - jobTickets.availablePermits());
+			listener.bufferLevelChanged(jobQueue.size());
 		}
 	}
 
