@@ -83,6 +83,7 @@ public class ImageProducer {
 		for (Path p : paths) {
 			batch.add(p);
 			counter++;
+			processed.incrementAndGet();
 
 			if (counter >= WORK_BATCH_SIZE) {
 				createJob(batch);
