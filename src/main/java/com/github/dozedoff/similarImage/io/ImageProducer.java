@@ -50,20 +50,19 @@ public class ImageProducer {
 	private ThreadPoolExecutor tpe;
 	private PhashWorker phw;
 
-	public ImageProducer(int maxOutputQueueSize, Persistence persistence, PhashWorker phw) {
+	public ImageProducer(Persistence persistence, PhashWorker phw) {
 		guiUpdateListeners = new LinkedList<>();
 
-		this.maxOutputQueueSize = maxOutputQueueSize;
 		this.persistence = persistence;
-		this.jobQueue = new LinkedBlockingQueue<>(maxOutputQueueSize);
+		this.jobQueue = new LinkedBlockingQueue<>();
 		this.phw = phw;
 		this.tpe = new ImageProducerPool(2, 2, 10, TimeUnit.SECONDS, jobQueue, new NamedThreadFactory(ImageProducer.class.getSimpleName()),
 				this);
 		this.tpe.allowCoreThreadTimeOut(true);
 	}
 
-	public ImageProducer(int maxOutputQueueSize, Persistence persistence, PhashWorker phw, ThreadPoolExecutor customTpe) {
-		this(maxOutputQueueSize, persistence, phw);
+	public ImageProducer(Persistence persistence, PhashWorker phw, ThreadPoolExecutor customTpe) {
+		this(persistence, phw);
 		this.tpe = customTpe;
 	}
 
@@ -120,10 +119,6 @@ public class ImageProducer {
 
 	public int getProcessed() {
 		return processed.get();
-	}
-
-	public int getMaxOutputQueueSize() {
-		return maxOutputQueueSize;
 	}
 
 	public void addGuiUpdateListener(ImageProducerObserver listener) {

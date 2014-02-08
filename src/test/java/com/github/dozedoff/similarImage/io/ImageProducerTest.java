@@ -56,7 +56,6 @@ public class ImageProducerTest {
 	private static Path[] images;
 
 	private static final int NUM_OF_TEST_IMAGES = 5;
-	private static final int OUTPUT_QUEUE_SIZE = 100;
 
 	@BeforeClass
 	public static void setUpClass() throws URISyntaxException {
@@ -77,7 +76,7 @@ public class ImageProducerTest {
 		tpe = mock(ThreadPoolExecutor.class);
 		ipo = mock(ImageProducerObserver.class);
 
-		imageProducer = new ImageProducer(OUTPUT_QUEUE_SIZE, persistence, phw, tpe);
+		imageProducer = new ImageProducer(persistence, phw, tpe);
 	}
 
 	@After
@@ -146,11 +145,6 @@ public class ImageProducerTest {
 		imageProducer.addToLoad(list);
 
 		assertThat(imageProducer.getProcessed(), is(30));
-	}
-
-	@Test
-	public void testGetMaxOutputQueueSize() throws Exception {
-		assertThat(imageProducer.getMaxOutputQueueSize(), is(100));
 	}
 
 	@Test

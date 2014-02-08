@@ -21,6 +21,7 @@ import java.awt.image.BufferedImage;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -40,6 +41,13 @@ public class PhashWorker {
 	private ThreadPoolExecutor tpe;
 	private LinkedBlockingQueue<Runnable> jobQueue;
 	private ImagePHash phash;
+	private Semaphore jobTickets;
+	private int maxQueueSize = 200;
+
+	public PhashWorker(DBWriter dbWriter, int maxQueueSize) {
+		this(dbWriter);
+		jobTickets = new Semaphore(maxQueueSize);
+	}
 
 	public PhashWorker(DBWriter dbWriter) {
 		this.dbWriter = dbWriter;
@@ -53,8 +61,10 @@ public class PhashWorker {
 			hashPoolSize = processors - 1;
 		}
 
-		this.tpe = new ThreadPoolExecutor(hashPoolSize, hashPoolSize, 10, TimeUnit.SECONDS, jobQueue, new NamedThreadFactory(
-				PhashWorker.class.getSimpleName()));
+		this.jobTickets = new Semaphore(maxQueueSize);
+
+		this.tpe = new HashWorkerPool(hashPoolSize, hashPoolSize, 10, TimeUnit.SECONDS, jobQueue, new NamedThreadFactory(
+				PhashWorker.class.getSimpleName()), this);
 		this.tpe.allowCoreThreadTimeOut(true);
 	}
 
@@ -64,12 +74,21 @@ public class PhashWorker {
 			return;
 		}
 
-		ImageHashJob job = new ImageHashJob(data, dbWriter, phash);
-		tpe.execute(job);
+		try {
+			jobTickets.acquire();
+			ImageHashJob job = new ImageHashJob(data, dbWriter, phash);
+			tpe.execute(job);
+		} catch (InterruptedException e) {
+			logger.info("Interrupted while adding job to queue");
+		}
 	}
 
 	public void shutdown() {
 		tpe.shutdownNow();
 		dbWriter.shutdown();
+	}
+
+	void releaseJobTicket() {
+		jobTickets.release();
 	}
 }

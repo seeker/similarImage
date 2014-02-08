@@ -60,14 +60,14 @@ public class SimilarImageController {
 
 		sorter = new SortSimilar(persistence);
 		displayGroup = new DisplayGroupView();
-		gui = new SimilarImageView(this, new DuplicateOperations(persistence), producer.getMaxOutputQueueSize());
+		gui = new SimilarImageView(this, new DuplicateOperations(persistence), PRODUCER_QUEUE_SIZE);
 		producer.addGuiUpdateListener(gui);
 	}
 
 	private void setupProducer() {
 		DBWriter dbWriter = new DBWriter(persistence);
 		PhashWorker phw = new PhashWorker(dbWriter);
-		producer = new ImageProducer(PRODUCER_QUEUE_SIZE, persistence, phw);
+		producer = new ImageProducer(persistence, phw);
 	}
 
 	public void ignoreImage(ImageRecord toIgnore) {
