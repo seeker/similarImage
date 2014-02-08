@@ -57,7 +57,8 @@ public class ImageProducer {
 		this.persistence = persistence;
 		this.jobQueue = new LinkedBlockingQueue<>(maxOutputQueueSize);
 		this.phw = phw;
-		this.tpe = new ThreadPoolExecutor(1, 1, 10, TimeUnit.SECONDS, jobQueue, new NamedThreadFactory(ImageProducer.class.getSimpleName()));
+		this.tpe = new ThreadPoolExecutor(2, 2, 10, TimeUnit.SECONDS, jobQueue, new NamedThreadFactory(ImageProducer.class.getSimpleName()));
+		this.tpe.allowCoreThreadTimeOut(true);
 	}
 
 	public ImageProducer(int maxOutputQueueSize, Persistence persistence, PhashWorker phw, ThreadPoolExecutor customTpe) {

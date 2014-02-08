@@ -46,8 +46,16 @@ public class PhashWorker {
 
 		phash = new ImagePHash(32, 9);
 		jobQueue = new LinkedBlockingQueue<>();
-		tpe = new ThreadPoolExecutor(1, Runtime.getRuntime().availableProcessors(), 10, TimeUnit.SECONDS, jobQueue, new NamedThreadFactory(
+		int processors = Runtime.getRuntime().availableProcessors();
+		int hashPoolSize = 1;
+
+		if (processors > 1) {
+			hashPoolSize = processors - 1;
+		}
+
+		this.tpe = new ThreadPoolExecutor(hashPoolSize, hashPoolSize, 10, TimeUnit.SECONDS, jobQueue, new NamedThreadFactory(
 				PhashWorker.class.getSimpleName()));
+		this.tpe.allowCoreThreadTimeOut(true);
 	}
 
 	public void toHash(List<Pair<Path, BufferedImage>> data) {
