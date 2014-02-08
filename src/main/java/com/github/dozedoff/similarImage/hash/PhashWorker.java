@@ -98,6 +98,7 @@ public class PhashWorker {
 
 	public void clear() {
 		jobQueue.clear();
+		logger.info("Job queue cleared");
 	}
 
 	public void shutdown() {

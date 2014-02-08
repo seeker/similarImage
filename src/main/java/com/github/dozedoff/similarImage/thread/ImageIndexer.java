@@ -58,7 +58,6 @@ public class ImageIndexer extends Thread {
 
 	@Override
 	public void run() {
-		producer.clear();
 		gui.setStatus("Running...");
 		logger.info("Hashing images in {}", path);
 		LinkedList<Path> imagePaths = new LinkedList<Path>();
@@ -71,9 +70,10 @@ public class ImageIndexer extends Thread {
 	}
 
 	public void killAll() {
-		phw.shutdown();
+		producer.clear();
+		phw.clear();
 
-		logger.info("All hash workers stopped");
+		logger.info("Cleared all queues");
 	}
 
 	private void findImages(String path, LinkedList<Path> imagePaths) {

@@ -123,6 +123,7 @@ public class ImageProducer {
 		total.set(0);
 
 		listenersUpdateTotalProgress();
+		logger.info("Job queue cleared");
 	}
 
 	public void forceShutdown() {

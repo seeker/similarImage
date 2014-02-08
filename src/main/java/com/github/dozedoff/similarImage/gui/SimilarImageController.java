@@ -141,9 +141,9 @@ public class SimilarImageController {
 	}
 
 	public void stopWorkers() {
-		logger.info("Stopping all workers...");
-		producer.shutdown();
+		logger.info("Clearing all queues...");
 		producer.clear();
+		phw.clear();
 
 		if (indexer != null && indexer.isAlive()) {
 			indexer.killAll();
