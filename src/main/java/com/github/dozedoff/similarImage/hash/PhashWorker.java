@@ -67,6 +67,14 @@ public class PhashWorker {
 		return hashPoolSize;
 	}
 
+	int selectHashPoolSize(int availableProcessors) {
+		if (availableProcessors < 2) {
+			return 1;
+		} else {
+			return availableProcessors - 1;
+		}
+	}
+
 	public PhashWorker(DBWriter dbWriter) {
 		this.dbWriter = dbWriter;
 
@@ -74,9 +82,7 @@ public class PhashWorker {
 		jobQueue = new LinkedBlockingQueue<>(maxQueueSize);
 		int processors = Runtime.getRuntime().availableProcessors();
 
-		if (processors > 1) {
-			hashPoolSize = processors - 1;
-		}
+		hashPoolSize = selectHashPoolSize(processors);
 
 		this.tpe = new HashWorkerPool(hashPoolSize, hashPoolSize, POOL_TIMEOUT, TimeUnit.SECONDS, jobQueue, new NamedThreadFactory(
 				PhashWorker.class.getSimpleName()), this);
