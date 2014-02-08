@@ -17,8 +17,14 @@
  */
 package com.github.dozedoff.similarImage.hash;
 
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyListOf;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.awt.image.BufferedImage;
@@ -34,7 +40,6 @@ import javax.imageio.ImageIO;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -43,12 +48,13 @@ import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.commonj.util.Pair;
 import com.github.dozedoff.similarImage.db.DBWriter;
 import com.github.dozedoff.similarImage.db.ImageRecord;
+import com.github.dozedoff.similarImage.io.ImageProducerObserver;
 
 public class PhashWorkerTest {
 	private PhashWorker phw;
 	private static Path testImage;
 
-	private static final int NUM_OF_TEST_IMAGES = 10000;
+	private static final int NUM_OF_TEST_IMAGES = 5;
 
 	@Mock
 	private DBWriter dbWriter;
@@ -67,7 +73,7 @@ public class PhashWorkerTest {
 
 	@After
 	public void tearDown() throws Exception {
-		phw.shutdown();
+		phw.forceShutdown();
 	}
 
 	private List<Pair<Path, BufferedImage>> createWork(int amount) throws IOException {
@@ -84,24 +90,119 @@ public class PhashWorkerTest {
 		return work;
 	}
 
-	@Ignore
-	@Test
+	@Test(timeout = 2000)
 	public void testHashImage() throws Exception {
 		phw.toHash(createWork(1));
-		phw.shutdown();
+		phw.gracefulShutdown();
+		hashSpinLock();
 
 		verify(dbWriter).add(anyListOf(ImageRecord.class));
 		// TODO needs more accurate test
 	}
 
-	@Ignore
-	@Test(timeout = 6000)
+	@Test(timeout = 2000)
+	public void testHashImageWhenShutdown() throws Exception {
+		List<Pair<Path, BufferedImage>> work = createWork(NUM_OF_TEST_IMAGES);
+
+		phw.gracefulShutdown();
+		phw.toHash(work);
+
+		hashSpinLock();
+
+		verify(dbWriter, never()).add(anyListOf(ImageRecord.class));
+	}
+
+	@Test(timeout = 2000)
 	public void testStopWorker() throws Exception {
 		List<Pair<Path, BufferedImage>> work = createWork(NUM_OF_TEST_IMAGES);
 		phw.toHash(work);
 
-		phw.shutdown();
+		phw.forceShutdown();
 
 		verify(dbWriter, never()).add(anyListOf(ImageRecord.class));
+	}
+
+	@Test(timeout = 5000)
+	public void testBufferLevel() throws IOException {
+		List<Pair<Path, BufferedImage>> work = createWork(NUM_OF_TEST_IMAGES);
+		ImageProducerObserver ipo = mock(ImageProducerObserver.class);
+
+		phw.addGuiUpdateListener(ipo);
+		phw.toHash(work);
+		phw.gracefulShutdown();
+
+		hashSpinLock();
+
+		verify(ipo, times(2)).bufferLevelChanged(anyInt());
+	}
+
+	private void hashSpinLock() {
+		while (!phw.isTerminated()) {
+			// spin spin
+		}
+	}
+
+	@Test(timeout = 2000)
+	public void testClear() throws Exception {
+		List<Pair<Path, BufferedImage>> work = createWork(10000);
+		phw.toHash(work);
+		phw.gracefulShutdown();
+		phw.clear();
+
+		hashSpinLock();
+	}
+
+	@Test
+	public void testSetPoolSize() {
+		phw.setPoolSize(1);
+		assertThat(phw.getPoolSize(), is(1));
+
+		phw.setPoolSize(4);
+		assertThat(phw.getPoolSize(), is(4));
+	}
+
+	@Test
+	public void testSetPoolSizeZero() {
+		int poolSize = phw.getPoolSize();
+		assertThat(poolSize, is(not(0))); // guard
+
+		phw.setPoolSize(0);
+
+		assertThat(phw.getPoolSize(), is(poolSize));
+	}
+
+	@Test
+	public void testSetPoolSizeNegative() {
+		int poolSize = phw.getPoolSize();
+		assertThat(poolSize, is(not(-1))); // guard
+
+		phw.setPoolSize(-1);
+
+		assertThat(phw.getPoolSize(), is(poolSize));
+	}
+
+	@Test
+	public void testSelectHashPoolSizeZero() {
+		assertThat(phw.selectHashPoolSize(0), is(1));
+	}
+
+	@Test
+	public void testSelectHashPoolSizeNegative() {
+		assertThat(phw.selectHashPoolSize(-2), is(1));
+	}
+
+	@Test
+	public void testSelectHashPoolSizeDualCore() {
+		assertThat(phw.selectHashPoolSize(2), is(1));
+	}
+
+	@Test
+	public void testSelectHashPoolSizeQuadCore() {
+		assertThat(phw.selectHashPoolSize(4), is(3));
+	}
+
+	@Test
+	public void testSelectHashPoolSizeQuadCoreWithHyperThreading() {
+		assertThat(phw.selectHashPoolSize(8), is(7));
 	}
 }
