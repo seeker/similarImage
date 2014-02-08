@@ -162,16 +162,4 @@ public class ImageProducer {
 	void addToProcessed(int done) {
 		processed.addAndGet(done);
 	}
-
-	private void listenersUpdateBufferLevel(int currentValue) {
-		for (ImageProducerObserver o : guiUpdateListeners) {
-			o.bufferLevelChanged(currentValue);
-		}
-	}
-
-	protected void outputQueueChanged() {
-		synchronized (this) {
-			this.notifyAll();
-		}
-	}
 }
