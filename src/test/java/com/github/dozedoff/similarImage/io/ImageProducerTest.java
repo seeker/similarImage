@@ -198,6 +198,41 @@ public class ImageProducerTest {
 		verify(ipo, never()).totalProgressChanged(anyInt(), anyInt());
 	}
 
+	@Test
+	public void testGetPoolSize() throws Exception {
+		assertThat(imageProducer.getPoolSize(), is(2));
+	}
+
+	@Test
+	public void testSetPoolSizeFive() throws Exception {
+		assertThat(imageProducer.getPoolSize(), is(2)); // guard
+
+		imageProducer.setPoolSize(5);
+
+		assertThat(imageProducer.getPoolSize(), is(5));
+
+	}
+
+	@Test
+	public void testSetPoolSizeOne() throws Exception {
+		assertThat(imageProducer.getPoolSize(), is(2)); // guard
+
+		imageProducer.setPoolSize(1);
+
+		assertThat(imageProducer.getPoolSize(), is(1));
+
+	}
+
+	@Test
+	public void testSetPoolSizeInvalid() throws Exception {
+		assertThat(imageProducer.getPoolSize(), is(2)); // guard
+
+		imageProducer.setPoolSize(-1);
+
+		assertThat(imageProducer.getPoolSize(), is(2));
+
+	}
+
 	private void producerShutdownSpinLock() {
 		// TODO find a better solution
 		// an ugly solution, but used for lack of a better one
