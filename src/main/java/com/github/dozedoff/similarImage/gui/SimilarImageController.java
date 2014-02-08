@@ -51,6 +51,7 @@ public class SimilarImageController {
 	private DisplayGroupView displayGroup;
 	private SimilarImageView gui;
 	private ImageProducer producer;
+	private PhashWorker phw;
 
 	private ImageIndexer indexer;
 
@@ -62,11 +63,12 @@ public class SimilarImageController {
 		displayGroup = new DisplayGroupView();
 		gui = new SimilarImageView(this, new DuplicateOperations(persistence), PRODUCER_QUEUE_SIZE);
 		producer.addGuiUpdateListener(gui);
+		phw.addGuiUpdateListener(gui);
 	}
 
 	private void setupProducer() {
 		DBWriter dbWriter = new DBWriter(persistence);
-		PhashWorker phw = new PhashWorker(dbWriter);
+		phw = new PhashWorker(dbWriter);
 		producer = new ImageProducer(persistence, phw);
 	}
 

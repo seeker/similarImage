@@ -19,6 +19,7 @@ package com.github.dozedoff.similarImage.hash;
 
 import java.awt.image.BufferedImage;
 import java.nio.file.Path;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
@@ -31,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.commonj.util.Pair;
 import com.github.dozedoff.similarImage.db.DBWriter;
+import com.github.dozedoff.similarImage.io.ImageProducerObserver;
 import com.github.dozedoff.similarImage.thread.ImageHashJob;
 import com.github.dozedoff.similarImage.thread.NamedThreadFactory;
 
@@ -43,6 +45,8 @@ public class PhashWorker {
 	private ImagePHash phash;
 	private Semaphore jobTickets;
 	private int maxQueueSize = 200;
+
+	private LinkedList<ImageProducerObserver> guiUpdateListeners;
 
 	public PhashWorker(DBWriter dbWriter, int maxQueueSize) {
 		this(dbWriter);
@@ -66,6 +70,8 @@ public class PhashWorker {
 		this.tpe = new HashWorkerPool(hashPoolSize, hashPoolSize, 10, TimeUnit.SECONDS, jobQueue, new NamedThreadFactory(
 				PhashWorker.class.getSimpleName()), this);
 		this.tpe.allowCoreThreadTimeOut(true);
+
+		guiUpdateListeners = new LinkedList<>();
 	}
 
 	public void toHash(List<Pair<Path, BufferedImage>> data) {
@@ -78,6 +84,7 @@ public class PhashWorker {
 			jobTickets.acquire();
 			ImageHashJob job = new ImageHashJob(data, dbWriter, phash);
 			tpe.execute(job);
+			listenersUpdateBufferLevel();
 		} catch (InterruptedException e) {
 			logger.info("Interrupted while adding job to queue");
 		}
@@ -90,5 +97,19 @@ public class PhashWorker {
 
 	void releaseJobTicket() {
 		jobTickets.release();
+	}
+
+	void listenersUpdateBufferLevel() {
+		for (ImageProducerObserver listener : guiUpdateListeners) {
+			listener.bufferLevelChanged(maxQueueSize - jobTickets.availablePermits());
+		}
+	}
+
+	public void addGuiUpdateListener(ImageProducerObserver listener) {
+		this.guiUpdateListeners.add(listener);
+	}
+
+	public void removeGuiUpdateListener(ImageProducerObserver listener) {
+		this.guiUpdateListeners.remove(listener);
 	}
 }

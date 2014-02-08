@@ -34,6 +34,7 @@ public class HashWorkerPool extends ThreadPoolExecutor {
 	@Override
 	protected void afterExecute(Runnable r, Throwable t) {
 		phw.releaseJobTicket();
+		phw.listenersUpdateBufferLevel();
 		super.afterExecute(r, t);
 	}
 }
