@@ -21,6 +21,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -81,10 +82,10 @@ public class ImageProducerTest {
 
 	@After
 	public void tearDown() throws Exception {
-		imageProducer.shutdown();
+		imageProducer.forceShutdown();
 	}
 
-	@Test
+	@Test(timeout = 2000)
 	public void testClearTotal() throws Exception {
 		imageProducer.addToLoad(images);
 		assertThat(imageProducer.getTotal(), is(NUM_OF_TEST_IMAGES));
@@ -93,7 +94,7 @@ public class ImageProducerTest {
 		assertThat(imageProducer.getTotal(), is(0));
 	}
 
-	@Test(timeout = 6000)
+	@Test(timeout = 2000)
 	public void testBadFilesTotal() throws Exception {
 		when(persistence.isBadFile(any(Path.class))).thenReturn(true, true, false);
 
@@ -102,7 +103,7 @@ public class ImageProducerTest {
 		assertThat(imageProducer.getTotal(), is(NUM_OF_TEST_IMAGES));
 	}
 
-	@Test(timeout = 6000)
+	@Test(timeout = 2000)
 	public void testRecordedPathsTotal() throws Exception {
 		when(persistence.isPathRecorded(any(Path.class))).thenReturn(true, true, false);
 
@@ -111,7 +112,6 @@ public class ImageProducerTest {
 		assertThat(imageProducer.getTotal(), is(NUM_OF_TEST_IMAGES));
 	}
 
-	@Test
 	public void testAddToLoadList() throws Exception {
 		List<Path> list = Arrays.asList(images);
 
@@ -120,7 +120,7 @@ public class ImageProducerTest {
 		verify(tpe).execute(any(Runnable.class));
 	}
 
-	@Test
+	@Test(timeout = 2000)
 	public void testAddToLoadListLarge() throws Exception {
 		List<Path> list = Collections.nCopies(25, testImage);
 
@@ -129,48 +129,65 @@ public class ImageProducerTest {
 		verify(tpe, times(2)).execute(any(Runnable.class));
 	}
 
-	@Test
+	@Test(timeout = 2000)
 	public void testGetProcessed() throws Exception {
 		List<Path> list = Collections.nCopies(3, testImage);
-
+		imageProducer = new ImageProducer(persistence, phw);
 		imageProducer.addToLoad(list);
+
+		imageProducer.gracefulShutdown();
+		producerShutdownSpinLock();
 
 		assertThat(imageProducer.getProcessed(), is(3));
 	}
 
-	@Test
+	@Test(timeout = 2000)
 	public void testGetProcessedLargeBatch() throws Exception {
 		List<Path> list = Collections.nCopies(30, testImage);
+		imageProducer = new ImageProducer(persistence, phw);
 
 		imageProducer.addToLoad(list);
+
+		imageProducer.gracefulShutdown();
+		producerShutdownSpinLock();
 
 		assertThat(imageProducer.getProcessed(), is(30));
 	}
 
-	@Test
+	@Test(timeout = 2000)
 	public void testAddGuiUpdateListener() throws Exception {
 		List<Path> list = Collections.nCopies(3, testImage);
+		imageProducer = new ImageProducer(persistence, phw);
 		imageProducer.addGuiUpdateListener(ipo);
 
 		imageProducer.addToLoad(list);
 
+		imageProducer.gracefulShutdown();
+		producerShutdownSpinLock();
+
 		verify(ipo).totalProgressChanged(3, 3);
 	}
 
-	@Test
+	@Test(timeout = 2000)
 	public void testAddGuiUpdateListenerTwoEvents() throws Exception {
 		List<Path> list = Collections.nCopies(3, testImage);
 		List<Path> list2 = Collections.nCopies(5, testImage);
+
+		imageProducer = new ImageProducer(persistence, phw);
+
 		imageProducer.addGuiUpdateListener(ipo);
 
 		imageProducer.addToLoad(list);
 		imageProducer.addToLoad(list2);
 
-		verify(ipo).totalProgressChanged(3, 3);
-		verify(ipo).totalProgressChanged(8, 8);
+		imageProducer.gracefulShutdown();
+		producerShutdownSpinLock();
+
+		verify(ipo).totalProgressChanged(0, 3);
+		verify(ipo, times(3)).totalProgressChanged(anyInt(), eq(8));
 	}
 
-	@Test
+	@Test(timeout = 2000)
 	public void testRemoveGuiUpdateListener() throws Exception {
 		List<Path> list = Collections.nCopies(3, testImage);
 		imageProducer.addGuiUpdateListener(ipo);
@@ -179,5 +196,13 @@ public class ImageProducerTest {
 		imageProducer.addToLoad(list);
 
 		verify(ipo, never()).totalProgressChanged(anyInt(), anyInt());
+	}
+
+	private void producerShutdownSpinLock() {
+		// TODO find a better solution
+		// an ugly solution, but used for lack of a better one
+		while (!imageProducer.isTerminated()) {
+			// spin spin
+		}
 	}
 }
