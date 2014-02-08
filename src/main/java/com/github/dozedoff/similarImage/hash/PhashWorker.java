@@ -53,6 +53,11 @@ public class PhashWorker {
 	}
 
 	public void setPoolSize(int poolSize) {
+		if (poolSize < 1) {
+			logger.error("Pool size must be 1 or greater, {} is not valid and was ignored", poolSize);
+			return;
+		}
+
 		this.hashPoolSize = poolSize;
 		this.tpe.setCorePoolSize(poolSize);
 		this.tpe.setMaximumPoolSize(poolSize);
