@@ -120,8 +120,21 @@ public class ImageProducer {
 		listenersUpdateTotalProgress();
 	}
 
-	public void shutdown() {
+	public void forceShutdown() {
 		tpe.shutdownNow();
+	}
+
+	@Deprecated
+	public void shutdown() {
+		forceShutdown();
+	}
+
+	public void gracefulShutdown() {
+		tpe.shutdown();
+	}
+
+	public boolean isTerminated() {
+		return tpe.isTerminated();
 	}
 
 	public int getTotal() {
