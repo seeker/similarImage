@@ -101,9 +101,22 @@ public class PhashWorker {
 		logger.info("Job queue cleared");
 	}
 
-	public void shutdown() {
+	public void forceShutdown() {
 		tpe.shutdownNow();
 		dbWriter.shutdown();
+	}
+
+	public void gracefulShutdown() {
+		tpe.shutdown();
+	}
+
+	public boolean isTerminated() {
+		return tpe.isTerminated();
+	}
+
+	@Deprecated
+	public void shutdown() {
+		forceShutdown();
 	}
 
 	void listenersUpdateBufferLevel() {
