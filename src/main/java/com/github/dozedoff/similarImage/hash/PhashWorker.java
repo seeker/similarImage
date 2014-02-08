@@ -45,6 +45,7 @@ public class PhashWorker {
 	private ImagePHash phash;
 	private Semaphore jobTickets;
 	private int maxQueueSize = 200;
+	private static final int POOL_TIMEOUT = 60;
 
 	private LinkedList<ImageProducerObserver> guiUpdateListeners;
 
@@ -67,7 +68,7 @@ public class PhashWorker {
 
 		this.jobTickets = new Semaphore(maxQueueSize);
 
-		this.tpe = new HashWorkerPool(hashPoolSize, hashPoolSize, 10, TimeUnit.SECONDS, jobQueue, new NamedThreadFactory(
+		this.tpe = new HashWorkerPool(hashPoolSize, hashPoolSize, POOL_TIMEOUT, TimeUnit.SECONDS, jobQueue, new NamedThreadFactory(
 				PhashWorker.class.getSimpleName()), this);
 		this.tpe.allowCoreThreadTimeOut(true);
 
