@@ -35,4 +35,8 @@ public class IgnoreRecord {
 	public IgnoreRecord(long pHash) {
 		this.pHash = pHash;
 	}
+
+	public long getpHash() {
+		return pHash;
+	}
 }
