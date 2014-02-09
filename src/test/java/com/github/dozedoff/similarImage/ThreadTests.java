@@ -21,6 +21,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
+import com.github.dozedoff.similarImage.thread.GroupListPopulatorTest;
 import com.github.dozedoff.similarImage.thread.ImageHashJobTest;
 import com.github.dozedoff.similarImage.thread.NamedThreadFactoryTest;
 
@@ -28,6 +29,7 @@ import com.github.dozedoff.similarImage.thread.NamedThreadFactoryTest;
 @RunWith(Suite.class)
 @SuiteClasses({
 	NamedThreadFactoryTest.class,
-	ImageHashJobTest.class
+	ImageHashJobTest.class,
+	GroupListPopulatorTest.class
 })
 public class ThreadTests {}
