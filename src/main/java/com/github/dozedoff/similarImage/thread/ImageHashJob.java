@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
+import com.github.dozedoff.commonj.time.StopWatch;
 import com.github.dozedoff.commonj.util.Pair;
 import com.github.dozedoff.similarImage.db.DBWriter;
 import com.github.dozedoff.similarImage.db.ImageRecord;
@@ -40,6 +41,7 @@ public class ImageHashJob implements Runnable {
 	private List<Pair<Path, BufferedImage>> work;
 	private DBWriter dbWriter;
 	private ImagePHash phash;
+	private StopWatch sw;
 
 	public ImageHashJob(List<Pair<Path, BufferedImage>> work, DBWriter dbWriter, ImagePHash phash) {
 		this.work = work;
@@ -49,6 +51,11 @@ public class ImageHashJob implements Runnable {
 
 	@Override
 	public void run() {
+		if (logger.isDebugEnabled()) {
+			sw = new StopWatch();
+			sw.start();
+		}
+
 		LinkedList<ImageRecord> newRecords = new LinkedList<ImageRecord>();
 
 		for (Pair<Path, BufferedImage> pair : work) {
@@ -70,6 +77,11 @@ public class ImageHashJob implements Runnable {
 			} catch (Exception e) {
 				logger.warn("Failed to hash image {} - {}", path, e.getMessage());
 			}
+		}
+
+		if (logger.isDebugEnabled()) {
+			sw.stop();
+			logger.debug("Took {} to hash {} images", sw.getTime(), work.size());
 		}
 
 		dbWriter.add(newRecords);

@@ -44,6 +44,7 @@ public class SimilarImage {
 		}
 
 		logger.info("SimilarImage version " + version);
+		logger.info("System has {} processors", Runtime.getRuntime().availableProcessors());
 
 		Settings settings = new Settings(new SettingsValidator());
 		settings.loadPropertiesFromFile(PROPERTIES_FILENAME);

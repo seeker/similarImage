@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
+import com.github.dozedoff.commonj.time.StopWatch;
 import com.github.dozedoff.commonj.util.Pair;
 import com.github.dozedoff.similarImage.db.BadFileRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
@@ -48,6 +49,8 @@ public class ImageLoadJob implements Runnable {
 	private PhashWorker phw;
 	private LinkedList<Pair<Path, BufferedImage>> output;
 
+	private StopWatch sw;
+
 	public ImageLoadJob(List<Path> files, PhashWorker phw, Persistence persistence) {
 		this.files = files;
 		this.phw = phw;
@@ -58,6 +61,11 @@ public class ImageLoadJob implements Runnable {
 
 	@Override
 	public void run() {
+		if (logger.isDebugEnabled()) {
+			sw = new StopWatch();
+			sw.start();
+		}
+
 		for (Path p : files) {
 			try {
 				processFile(p);
@@ -82,7 +90,19 @@ public class ImageLoadJob implements Runnable {
 			}
 		}
 
+		if (logger.isDebugEnabled()) {
+			sw.stop();
+			logger.debug("Loaded {} files in {}", files.size(), sw.getTime());
+			sw.reset();
+			sw.start();
+		}
+
 		phw.toHash(output);
+
+		if (logger.isDebugEnabled()) {
+			sw.stop();
+			logger.debug("Waited {} to queue loaded files in hash worker", sw.getTime());
+		}
 	}
 
 	private void processFile(Path next) throws SQLException, IOException, InterruptedException {
