@@ -21,11 +21,13 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
+import com.github.dozedoff.similarImage.thread.ImageHashJobTest;
 import com.github.dozedoff.similarImage.thread.NamedThreadFactoryTest;
 
 //@formatter:off
 @RunWith(Suite.class)
 @SuiteClasses({
-	NamedThreadFactoryTest.class
+	NamedThreadFactoryTest.class,
+	ImageHashJobTest.class
 })
 public class ThreadTests {}
