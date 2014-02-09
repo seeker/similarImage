@@ -15,27 +15,24 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.dozedoff.similarImage;
+package com.github.dozedoff.similarImage.db;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.junit.runners.Suite.SuiteClasses;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 
-import com.github.dozedoff.similarImage.db.BadFileRecordTest;
-import com.github.dozedoff.similarImage.db.DBWriterTest;
-import com.github.dozedoff.similarImage.db.FilterRecordTest;
-import com.github.dozedoff.similarImage.db.IgnoreRecordTest;
-import com.github.dozedoff.similarImage.db.ImageRecordTest;
-import com.github.dozedoff.similarImage.db.PersistenceTest;
+import org.junit.Before;
+import org.junit.Test;
 
-//@formatter:off
-@RunWith(Suite.class)
-@SuiteClasses({
-	PersistenceTest.class,
-	ImageRecordTest.class,
-	FilterRecordTest.class,
-	BadFileRecordTest.class,
-	DBWriterTest.class,
-	IgnoreRecordTest.class
-})
-public class DbTests {}
+public class IgnoreRecordTest {
+	private IgnoreRecord ir;
+
+	@Before
+	public void setUp() throws Exception {
+		ir = new IgnoreRecord(42);
+	}
+
+	@Test
+	public void testGetpHash() {
+		assertThat(ir.getpHash(), is(42L));
+	}
+}
