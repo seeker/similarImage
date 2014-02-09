@@ -1,8 +1,8 @@
-/*  Copyright (C) 2013  Nicholas Wright
+/*  Copyright (C) 2014  Nicholas Wright
     
     This file is part of similarImage - A similar image finder using pHash
     
-    mmut is free software: you can redistribute it and/or modify
+    similarImage is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
@@ -21,14 +21,11 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
+import com.github.dozedoff.similarImage.thread.NamedThreadFactoryTest;
+
+//@formatter:off
 @RunWith(Suite.class)
-// @formatter:off
 @SuiteClasses({
-	DuplicateTests.class,
-	AppTests.class,
-	IoTests.class,
-	HashTests.class,
-	DbTests.class,
-	ThreadTests.class
+	NamedThreadFactoryTest.class
 })
-public class AllTestsSimilarImage {}
+public class ThreadTests {}
