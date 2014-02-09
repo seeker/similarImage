@@ -21,11 +21,13 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
+import com.github.dozedoff.similarImage.hash.HashWorkerPoolTest;
 import com.github.dozedoff.similarImage.hash.PhashWorkerTest;
 
 //@formatter:off
 @RunWith(Suite.class)
 @SuiteClasses({
-	PhashWorkerTest.class
+	PhashWorkerTest.class,
+	HashWorkerPoolTest.class
 })
 public class HashTests {}
