@@ -46,6 +46,7 @@ import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.hash.PhashWorker;
 
 public class ImageProducerTest {
+	private static final int TEST_TIMEOUT = 5000;
 	private Persistence persistence;
 	private PhashWorker phw;
 	private ThreadPoolExecutor tpe;
@@ -85,7 +86,7 @@ public class ImageProducerTest {
 		imageProducer.forceShutdown();
 	}
 
-	@Test(timeout = 2000)
+	@Test(timeout = TEST_TIMEOUT)
 	public void testClearTotal() throws Exception {
 		imageProducer.addToLoad(images);
 		assertThat(imageProducer.getTotal(), is(NUM_OF_TEST_IMAGES));
@@ -94,7 +95,7 @@ public class ImageProducerTest {
 		assertThat(imageProducer.getTotal(), is(0));
 	}
 
-	@Test(timeout = 2000)
+	@Test(timeout = TEST_TIMEOUT)
 	public void testBadFilesTotal() throws Exception {
 		when(persistence.isBadFile(any(Path.class))).thenReturn(true, true, false);
 
@@ -103,7 +104,7 @@ public class ImageProducerTest {
 		assertThat(imageProducer.getTotal(), is(NUM_OF_TEST_IMAGES));
 	}
 
-	@Test(timeout = 2000)
+	@Test(timeout = TEST_TIMEOUT)
 	public void testRecordedPathsTotal() throws Exception {
 		when(persistence.isPathRecorded(any(Path.class))).thenReturn(true, true, false);
 
@@ -120,7 +121,7 @@ public class ImageProducerTest {
 		verify(tpe).execute(any(Runnable.class));
 	}
 
-	@Test(timeout = 2000)
+	@Test(timeout = TEST_TIMEOUT)
 	public void testAddToLoadListLarge() throws Exception {
 		List<Path> list = Collections.nCopies(25, testImage);
 
@@ -129,7 +130,7 @@ public class ImageProducerTest {
 		verify(tpe, times(2)).execute(any(Runnable.class));
 	}
 
-	@Test(timeout = 2000)
+	@Test(timeout = TEST_TIMEOUT)
 	public void testGetProcessed() throws Exception {
 		List<Path> list = Collections.nCopies(3, testImage);
 		imageProducer = new ImageProducer(persistence, phw);
@@ -141,7 +142,7 @@ public class ImageProducerTest {
 		assertThat(imageProducer.getProcessed(), is(3));
 	}
 
-	@Test(timeout = 2000)
+	@Test(timeout = TEST_TIMEOUT)
 	public void testGetProcessedLargeBatch() throws Exception {
 		List<Path> list = Collections.nCopies(30, testImage);
 		imageProducer = new ImageProducer(persistence, phw);
@@ -154,7 +155,7 @@ public class ImageProducerTest {
 		assertThat(imageProducer.getProcessed(), is(30));
 	}
 
-	@Test(timeout = 2000)
+	@Test(timeout = TEST_TIMEOUT)
 	public void testAddGuiUpdateListener() throws Exception {
 		List<Path> list = Collections.nCopies(3, testImage);
 		imageProducer = new ImageProducer(persistence, phw);
@@ -168,7 +169,7 @@ public class ImageProducerTest {
 		verify(ipo).totalProgressChanged(3, 3);
 	}
 
-	@Test(timeout = 2000)
+	@Test(timeout = TEST_TIMEOUT)
 	public void testAddGuiUpdateListenerTwoEvents() throws Exception {
 		List<Path> list = Collections.nCopies(3, testImage);
 		List<Path> list2 = Collections.nCopies(5, testImage);
@@ -187,7 +188,7 @@ public class ImageProducerTest {
 		verify(ipo, times(3)).totalProgressChanged(anyInt(), eq(8));
 	}
 
-	@Test(timeout = 2000)
+	@Test(timeout = TEST_TIMEOUT)
 	public void testRemoveGuiUpdateListener() throws Exception {
 		List<Path> list = Collections.nCopies(3, testImage);
 		imageProducer.addGuiUpdateListener(ipo);
