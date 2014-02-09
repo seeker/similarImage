@@ -41,7 +41,7 @@ public class ImageProducer {
 	private final AtomicInteger total = new AtomicInteger();
 	private final AtomicInteger processed = new AtomicInteger();
 
-	private final int WORK_BATCH_SIZE = 20;
+	private final int WORK_BATCH_SIZE = 10;
 
 	private int maxOutputQueueSize;
 	private LinkedList<ImageProducerObserver> guiUpdateListeners;

@@ -126,7 +126,7 @@ public class ImageProducerTest {
 
 		imageProducer.addToLoad(list);
 
-		verify(tpe, times(2)).execute(any(Runnable.class));
+		verify(tpe, times(3)).execute(any(Runnable.class));
 	}
 
 	@Test(timeout = 2000)
