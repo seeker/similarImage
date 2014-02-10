@@ -113,6 +113,7 @@ public class ImageProducerTest {
 		assertThat(imageProducer.getTotal(), is(NUM_OF_TEST_IMAGES));
 	}
 
+	@Test(timeout = TEST_TIMEOUT)
 	public void testAddToLoadList() throws Exception {
 		List<Path> list = Arrays.asList(images);
 
