@@ -76,10 +76,6 @@ public class HashWorkerPoolTest {
 	}
 
 	private void spinLock() {
-		if (hashWorkerPool == null) {
-			return;
-		}
-
 		while (!hashWorkerPool.isTerminated()) {
 			// spin
 		}

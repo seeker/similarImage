@@ -74,10 +74,6 @@ public class ImageProducerPoolTest {
 	}
 
 	private void spinLock() {
-		if (ipp == null) {
-			return;
-		}
-
 		while (!ipp.isTerminated()) {
 			// spin
 		}
