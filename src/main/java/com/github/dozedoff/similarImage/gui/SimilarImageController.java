@@ -126,7 +126,8 @@ public class SimilarImageController {
 
 	public void indexImages(String path) {
 		DBWriter dbWriter = new DBWriter(persistence);
-		Thread t = new ImageIndexer(path, gui, producer, dbWriter);
+		PhashWorker phw = new PhashWorker(dbWriter);
+		Thread t = new ImageIndexer(path, gui, producer, phw);
 		t.start();
 	}
 
