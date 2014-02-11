@@ -38,6 +38,7 @@ public class DuplicateEntryView implements View {
 		image = new JLabel("NO IMAGE");
 		view.addMouseListener(new ClickListener());
 		view.setComponentPopupMenu(opMenu.getMenu());
+		this.controller.setView(this);
 	}
 
 	public void createLable(String info) {

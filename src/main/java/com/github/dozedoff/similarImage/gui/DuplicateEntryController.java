@@ -33,17 +33,12 @@ public class DuplicateEntryController implements View {
 	private static final Logger logger = LoggerFactory.getLogger(DuplicateEntryController.class);
 	private final ImageInfo imageInfo;
 	private Dimension thumbDimension;
-	private final DuplicateEntryView view;
+	private DuplicateEntryView view;
 
-	public DuplicateEntryController(ImageInfo imageInfo, OperationsMenu opMenu, Dimension thumbDimension) {
+	public DuplicateEntryController(ImageInfo imageInfo, Dimension thumbDimension) {
 		super();
 		this.imageInfo = imageInfo;
 		this.thumbDimension = thumbDimension;
-
-		view = new DuplicateEntryView(this, opMenu);
-
-		loadThumbnail();
-		addImageInfo();
 	}
 
 	private void addImageInfo() {
@@ -82,6 +77,13 @@ public class DuplicateEntryController implements View {
 		}
 
 		new FullImageView(largeImage, getImagePath());
+	}
+
+	public void setView(DuplicateEntryView view) {
+		this.view = view;
+
+		loadThumbnail();
+		addImageInfo();
 	}
 
 	@Override
