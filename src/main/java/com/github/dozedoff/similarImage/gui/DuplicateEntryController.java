@@ -45,7 +45,7 @@ public class DuplicateEntryController implements View {
 		view.createLable("Path: " + imageInfo.getPath());
 		view.createLable("Size: " + imageInfo.getSize() / 1024 + " kb");
 		Dimension dim = imageInfo.getDimension();
-		view.createLable("Dimension: " + dim.getWidth() + "x" + dim.getHeight());
+		view.createLable("Dimension: " + (int) dim.getWidth() + "x" + (int) dim.getHeight());
 		view.createLable("pHash: " + imageInfo.getpHash());
 		view.createLable("Size per Pixel: " + imageInfo.getSizePerPixel());
 	}
