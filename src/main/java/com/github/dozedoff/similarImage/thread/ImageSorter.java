@@ -56,6 +56,10 @@ public class ImageSorter extends Thread {
 		sorter.clear();
 		gui.setStatus("Sorting...");
 
+		if (path == null) {
+			path = "";
+		}
+
 		try {
 			if (path == null || path.isEmpty()) {
 				dBrecords = persistence.getAllRecords();
