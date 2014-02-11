@@ -57,11 +57,11 @@ public class ImageSorter extends Thread {
 		gui.setStatus("Sorting...");
 
 		if (path == null) {
-			path = "";
+			path = "null";
 		}
 
 		try {
-			if (path == null || path.isEmpty()) {
+			if (path.equals("null") || path.isEmpty()) {
 				dBrecords = persistence.getAllRecords();
 			} else {
 				logger.info("Loading records for path {}", path);
