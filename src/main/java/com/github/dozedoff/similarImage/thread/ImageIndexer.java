@@ -92,13 +92,6 @@ public class ImageIndexer extends Thread {
 		logger.info("Adding paths to ImageProducer");
 		producer.addToLoad(imagePaths);
 
-		try {
-			Thread.sleep(1000);
-		} catch (InterruptedException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-
 		sw.stop();
 		logger.info("Took {} to process {} images", sw.getTime(), imagePaths.size());
 	}
