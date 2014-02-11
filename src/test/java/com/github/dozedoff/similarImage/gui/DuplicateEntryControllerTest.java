@@ -61,7 +61,7 @@ public class DuplicateEntryControllerTest {
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
-		testImage = Paths.get(Thread.currentThread().getContextClassLoader().getResource("test.jpg").toURI());
+		testImage = Paths.get(Thread.currentThread().getContextClassLoader().getResource("testImage.jpg").toURI());
 	}
 
 	@Before
