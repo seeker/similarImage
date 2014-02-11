@@ -76,7 +76,7 @@ public class DuplicateEntryController implements View {
 			logger.warn("Unable to load full image {} - {}", getImagePath(), e.getMessage());
 		}
 
-		new FullImageView(largeImage, getImagePath());
+		view.displayFullImage(largeImage, getImagePath());
 	}
 
 	public void setView(DuplicateEntryView view) {
