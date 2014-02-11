@@ -19,6 +19,7 @@ package com.github.dozedoff.similarImage.gui;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -27,6 +28,7 @@ import java.awt.Dimension;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 
@@ -107,6 +109,13 @@ public class DuplicateEntryControllerTest {
 	@Test
 	public void testGetView() throws Exception {
 		assertThat(duplicateEntryController.getView(), is(view.getView()));
+	}
+
+	@Test
+	public void testDisplayFullImage() throws Exception {
+		duplicateEntryController.displayFullImage();
+
+		verify(view).displayFullImage(any(JLabel.class), eq(testImage));
 	}
 
 }
