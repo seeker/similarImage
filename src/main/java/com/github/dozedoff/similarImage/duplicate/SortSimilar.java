@@ -43,81 +43,34 @@ public class SortSimilar {
 	private final Persistence persistence;
 
 	HashMap<Long, Set<Bucket<Long, ImageRecord>>> sorted = new HashMap<Long, Set<Bucket<Long, ImageRecord>>>();
-	CompareHammingDistance compareHamming = new CompareHammingDistance();
 	LinkedList<ImageRecord> ignoredImages = new LinkedList<ImageRecord>();
-	BKTree<Bucket<Long, ImageRecord>> bkTree = null;
-	ArrayList<Bucket<Long, ImageRecord>> buckets;
+
+	private BKTree<Bucket<Long, ImageRecord>> bkTree;
+	private boolean isTreeValid = false;
+	private ArrayList<Bucket<Long, ImageRecord>> buckets;
 
 	public SortSimilar(Persistence persistence) {
 		this.persistence = persistence;
 	}
 
-	public void buildTree(List<ImageRecord> dbRecords) {
-		long uniquePHashes = 0;
+	public void buildTree(List<ImageRecord> dBrecords) {
+		// logger.info("Removing ignored images...");
+		// dbRecords.removeAll(ignoredImages); //TODO replace this with db call
 
-		try {
-			uniquePHashes = persistence.distinctHashes();
-		} catch (SQLException e) {
-			logger.warn("Failed to get unigue pHash count: {}", e.getMessage());
-		}
-
-		logger.info("Creating bucket list with size {}", uniquePHashes);
-		buckets = new ArrayList<Bucket<Long, ImageRecord>>((int) uniquePHashes);
-
-		logger.info("Removing ignored images...");
-		dbRecords.removeAll(ignoredImages);
-
-		populateBuckets(buckets, dbRecords);
-
-		logger.info("Building BK-Tree...");
-		bkTree = BKTree.build(buckets, compareHamming);
+		buckets = DuplicateUtil.sortIntoBuckets(dBrecords);
+		logger.info("Building BK-Tree from {} buckets", buckets.size());
+		bkTree = BKTree.build(buckets, new CompareHammingDistance());
 	}
 
-	private void populateBuckets(ArrayList<Bucket<Long, ImageRecord>> buckets, List<ImageRecord> dbRecords) {
-		ArrayList<ImageRecord> dbRecords2 = new ArrayList<>(dbRecords);
-
-		Comparator<ImageRecord> compIr = new Comparator<ImageRecord>() {
-			@Override
-			public int compare(ImageRecord o1, ImageRecord o2) {
-				long l1 = o1.getpHash();
-				long l2 = o2.getpHash();
-
-				if (l1 < l2) {
-					return -1;
-				} else if (l1 == l2) {
-					return 0;
-				} else {
-					return 1;
-				}
-			}
-		};
-
-		Comparator<Bucket<Long, ImageRecord>> comp = new BucketComperator();
-
-		logger.info("Sorting dbRecords...");
-		Collections.sort(dbRecords2, compIr);
-
-		logger.info("Populating buckets...");
-		for (ImageRecord ir : dbRecords2) {
-			int index = Collections.binarySearch(buckets, new Bucket<Long, ImageRecord>(ir.getpHash()), comp);
-
-			if (index < 0) {
-				Bucket<Long, ImageRecord> b = new Bucket<Long, ImageRecord>(ir.getpHash(), ir);
-				buckets.add(Math.abs(index + 1), b);
-			} else {
-				Bucket<Long, ImageRecord> b = buckets.get(index);
-				b.add(ir);
-			}
+	private void checkTree(List<ImageRecord> dBrecords) {
+		if (!isTreeValid) {
+			buildTree(dBrecords);
+			isTreeValid = true;
 		}
-
-		logger.info("Sorted {} records into {} buckets", dbRecords.size(), buckets.size());
 	}
 
-	private void checkTree(List<ImageRecord> dbRecords) {
-		if (bkTree == null || buckets == null) {
-			logger.info("Building BK-Tree and bucket-list with {} records...", dbRecords.size());
-			buildTree(dbRecords);
-		}
+	public Set<Bucket<Long, ImageRecord>> searchTree(long pHash, long hammingDistance) {
+		return bkTree.searchWithin(new Bucket<Long, ImageRecord>(pHash), (double) hammingDistance);
 	}
 
 	public void sortHammingDistance(int hammingDistance, List<ImageRecord> dBrecords) {
@@ -131,7 +84,7 @@ public class SortSimilar {
 				return; // prevent duplicates
 			}
 
-			Set<Bucket<Long, ImageRecord>> similar = bkTree.searchWithin(new Bucket<Long, ImageRecord>(pHash), (double) hammingDistance);
+			Set<Bucket<Long, ImageRecord>> similar = searchTree(pHash, hammingDistance);
 			sorted.put(pHash, similar);
 		}
 	}
@@ -157,7 +110,7 @@ public class SortSimilar {
 		for (FilterRecord fr : filter) {
 			long pHash = fr.getpHash();
 
-			Set<Bucket<Long, ImageRecord>> similar = bkTree.searchWithin(new Bucket<Long, ImageRecord>(pHash), (double) hammingDistance);
+			Set<Bucket<Long, ImageRecord>> similar = searchTree(pHash, hammingDistance);
 			sorted.put(pHash, similar);
 		}
 	}
@@ -345,21 +298,5 @@ public class SortSimilar {
 
 	public void clearIgnored() {
 		ignoredImages.clear();
-	}
-
-	class BucketComperator implements Comparator<Bucket<Long, ImageRecord>> {
-		@Override
-		public int compare(Bucket<Long, ImageRecord> o1, Bucket<Long, ImageRecord> o2) {
-			long l1 = o1.getId();
-			long l2 = o2.getId();
-
-			if (l1 < l2) {
-				return -1;
-			} else if (l1 == l2) {
-				return 0;
-			} else {
-				return 1;
-			}
-		}
 	}
 }
