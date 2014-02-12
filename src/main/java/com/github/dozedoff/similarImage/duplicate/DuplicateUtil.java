@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
 
-public class DuplicateUtil {
+public abstract class DuplicateUtil {
 	private static final Logger logger = LoggerFactory.getLogger(DuplicateUtil.class);
 
 	private static final ImageRecordComperator irc = new ImageRecordComperator();
