@@ -218,9 +218,7 @@ public class SortSimilar {
 		Set<Long> keys = sorted.keySet();
 		LinkedList<Long> duplicateGroups = new LinkedList<Long>();
 
-		for (long key : keys) {
-			duplicateGroups.add(key);
-		}
+		duplicateGroups.addAll(keys);
 
 		mergeIdenticalSets(duplicateGroups);
 		return duplicateGroups;
