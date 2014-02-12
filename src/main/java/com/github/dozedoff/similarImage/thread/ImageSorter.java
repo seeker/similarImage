@@ -38,7 +38,7 @@ public class ImageSorter extends Thread {
 	private SimilarImageView gui;
 	private SortSimilar sorter;
 	private Persistence persistence;
-	private String lastPath;
+	private static String lastPath;
 
 	public ImageSorter(int hammingDistance, String path, SimilarImageView gui, SortSimilar sorter, Persistence persistence) {
 		super();
@@ -56,8 +56,12 @@ public class ImageSorter extends Thread {
 		sorter.clear();
 		gui.setStatus("Sorting...");
 
+		if (path == null) {
+			path = "null";
+		}
+
 		try {
-			if (path == null || path.isEmpty()) {
+			if (path.equals("null") || path.isEmpty()) {
 				dBrecords = persistence.getAllRecords();
 			} else {
 				logger.info("Loading records for path {}", path);
@@ -67,7 +71,6 @@ public class ImageSorter extends Thread {
 			logger.warn("Failed to load records - {}", e.getMessage());
 		}
 
-		// FIXME must remember last path, or tree will always be rebuilt
 		if (!path.equals(lastPath)) {
 			sorter.buildTree(dBrecords); // Force tree rebuild
 			lastPath = path;

@@ -80,13 +80,6 @@ public class ImageLoadJob implements Runnable {
 				logger.warn("Failed to load file - {}", e.getMessage());
 			} catch (SQLException e) {
 				logger.warn("Failed to query database - {}", e.getMessage());
-			} catch (Exception e) {
-				logger.warn("Failed to process image(other) - {}", e.getMessage());
-				try {
-					persistence.addBadFile(new BadFileRecord(p));
-				} catch (SQLException e1) {
-					logger.warn("Failed to add bad file record for {} - {}", p, e.getMessage());
-				}
 			}
 		}
 
@@ -105,7 +98,7 @@ public class ImageLoadJob implements Runnable {
 		}
 	}
 
-	private void processFile(Path next) throws SQLException, IOException, InterruptedException {
+	private void processFile(Path next) throws SQLException, IOException {
 		if (persistence.isBadFile(next) || persistence.isPathRecorded(next)) {
 			return;
 		}

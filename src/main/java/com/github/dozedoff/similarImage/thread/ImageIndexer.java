@@ -30,7 +30,6 @@ import org.slf4j.LoggerFactory;
 import com.github.dozedoff.commonj.file.FilenameFilterVisitor;
 import com.github.dozedoff.commonj.filefilter.SimpleImageFilter;
 import com.github.dozedoff.commonj.time.StopWatch;
-import com.github.dozedoff.similarImage.db.DBWriter;
 import com.github.dozedoff.similarImage.gui.SimilarImageView;
 import com.github.dozedoff.similarImage.hash.PhashWorker;
 import com.github.dozedoff.similarImage.io.ImageProducer;
@@ -38,22 +37,17 @@ import com.github.dozedoff.similarImage.io.ImageProducer;
 public class ImageIndexer extends Thread {
 	private final Logger logger = LoggerFactory.getLogger(ImageIndexer.class);
 
-	private final int WORKER_THREADS = 6;
-
 	private String path;
 	private SimilarImageView gui;
 	private ImageProducer producer;
 	private PhashWorker phw;
-	private DBWriter dbWriter;
 
-	public ImageIndexer(String path, SimilarImageView gui, ImageProducer producer, DBWriter dbWriter) {
+	public ImageIndexer(String path, SimilarImageView gui, ImageProducer producer, PhashWorker phw) {
 		super("ImageIndexer");
 		this.path = path;
 		this.gui = gui;
 		this.producer = producer;
-		this.dbWriter = dbWriter;
-
-		phw = new PhashWorker(dbWriter);
+		this.phw = phw;
 	}
 
 	@Override
@@ -97,13 +91,6 @@ public class ImageIndexer extends Thread {
 
 		logger.info("Adding paths to ImageProducer");
 		producer.addToLoad(imagePaths);
-
-		try {
-			Thread.sleep(1000);
-		} catch (InterruptedException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
 
 		sw.stop();
 		logger.info("Took {} to process {} images", sw.getTime(), imagePaths.size());

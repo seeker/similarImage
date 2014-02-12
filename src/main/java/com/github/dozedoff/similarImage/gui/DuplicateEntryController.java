@@ -27,33 +27,25 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.image.SubsamplingImageLoader;
-import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 
 public class DuplicateEntryController implements View {
 	private static final Logger logger = LoggerFactory.getLogger(DuplicateEntryController.class);
 	private final ImageInfo imageInfo;
 	private Dimension thumbDimension;
-	private final DuplicateEntryView view;
+	private DuplicateEntryView view;
 
-	public DuplicateEntryController(ImageInfo imageInfo, Persistence persistence, Dimension thumbDimension) {
+	public DuplicateEntryController(ImageInfo imageInfo, Dimension thumbDimension) {
 		super();
 		this.imageInfo = imageInfo;
 		this.thumbDimension = thumbDimension;
-
-		OperationsMenu opMenu = new OperationsMenu(imageInfo, persistence);
-
-		view = new DuplicateEntryView(this, opMenu);
-
-		loadThumbnail();
-		addImageInfo();
 	}
 
 	private void addImageInfo() {
 		view.createLable("Path: " + imageInfo.getPath());
 		view.createLable("Size: " + imageInfo.getSize() / 1024 + " kb");
 		Dimension dim = imageInfo.getDimension();
-		view.createLable("Dimension: " + dim.getWidth() + "x" + dim.getHeight());
+		view.createLable("Dimension: " + (int) dim.getWidth() + "x" + (int) dim.getHeight());
 		view.createLable("pHash: " + imageInfo.getpHash());
 		view.createLable("Size per Pixel: " + imageInfo.getSizePerPixel());
 	}
@@ -84,7 +76,14 @@ public class DuplicateEntryController implements View {
 			logger.warn("Unable to load full image {} - {}", getImagePath(), e.getMessage());
 		}
 
-		new FullImageView(largeImage, getImagePath());
+		view.displayFullImage(largeImage, getImagePath());
+	}
+
+	public void setView(DuplicateEntryView view) {
+		this.view = view;
+
+		loadThumbnail();
+		addImageInfo();
 	}
 
 	@Override

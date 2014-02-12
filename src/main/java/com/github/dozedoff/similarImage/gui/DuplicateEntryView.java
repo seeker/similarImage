@@ -19,6 +19,7 @@ package com.github.dozedoff.similarImage.gui;
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.nio.file.Path;
 
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -38,6 +39,7 @@ public class DuplicateEntryView implements View {
 		image = new JLabel("NO IMAGE");
 		view.addMouseListener(new ClickListener());
 		view.setComponentPopupMenu(opMenu.getMenu());
+		this.controller.setView(this);
 	}
 
 	public void createLable(String info) {
@@ -50,6 +52,10 @@ public class DuplicateEntryView implements View {
 		this.image = image;
 		view.add(this.image);
 		view.revalidate();
+	}
+
+	public void displayFullImage(JLabel image, Path path) {
+		new FullImageView(image, path);
 	}
 
 	@Override

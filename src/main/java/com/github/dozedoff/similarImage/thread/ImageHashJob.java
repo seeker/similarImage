@@ -73,7 +73,7 @@ public class ImageHashJob implements Runnable {
 			} catch (IOException e) {
 				logger.warn("Could not load file {} - {}", path, e.getMessage());
 			} catch (SQLException e) {
-				logger.warn("Database operation failed", e);
+				logger.warn("Database operation failed: {}", e.getMessage());
 			} catch (Exception e) {
 				logger.warn("Failed to hash image {} - {}", path, e.getMessage());
 			}

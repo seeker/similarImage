@@ -1,8 +1,8 @@
-/*  Copyright (C) 2013  Nicholas Wright
+/*  Copyright (C) 2014  Nicholas Wright
     
     This file is part of similarImage - A similar image finder using pHash
     
-    mmut is free software: you can redistribute it and/or modify
+    similarImage is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
@@ -15,28 +15,17 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.dozedoff.similarImage.db;
+package com.github.dozedoff.similarImage;
 
-import com.j256.ormlite.field.DatabaseField;
-import com.j256.ormlite.table.DatabaseTable;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
+import org.junit.runners.Suite.SuiteClasses;
 
-@DatabaseTable
-public class IgnoreRecord {
-	@DatabaseField(id = true, canBeNull = false)
-	private long pHash;
+import com.github.dozedoff.similarImage.gui.DuplicateEntryControllerTest;
 
-	/**
-	 * Intended for DAO only
-	 */
-	@Deprecated
-	public IgnoreRecord() {
-	}
-
-	public IgnoreRecord(long pHash) {
-		this.pHash = pHash;
-	}
-
-	public long getpHash() {
-		return pHash;
-	}
-}
+// @formatter:off
+@RunWith(Suite.class)
+@SuiteClasses({
+	DuplicateEntryControllerTest.class
+})
+public class GuiTests {}

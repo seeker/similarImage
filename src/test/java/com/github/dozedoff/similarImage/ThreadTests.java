@@ -21,21 +21,23 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
-import com.github.dozedoff.similarImage.db.BadFileRecordTest;
-import com.github.dozedoff.similarImage.db.DBWriterTest;
-import com.github.dozedoff.similarImage.db.FilterRecordTest;
-import com.github.dozedoff.similarImage.db.IgnoreRecordTest;
-import com.github.dozedoff.similarImage.db.ImageRecordTest;
-import com.github.dozedoff.similarImage.db.PersistenceTest;
+import com.github.dozedoff.similarImage.thread.FilterSorterTest;
+import com.github.dozedoff.similarImage.thread.GroupListPopulatorTest;
+import com.github.dozedoff.similarImage.thread.ImageHashJobTest;
+import com.github.dozedoff.similarImage.thread.ImageIndexerTest;
+import com.github.dozedoff.similarImage.thread.ImageLoadJobTest;
+import com.github.dozedoff.similarImage.thread.ImageSorterTest;
+import com.github.dozedoff.similarImage.thread.NamedThreadFactoryTest;
 
 //@formatter:off
 @RunWith(Suite.class)
 @SuiteClasses({
-	PersistenceTest.class,
-	ImageRecordTest.class,
-	FilterRecordTest.class,
-	BadFileRecordTest.class,
-	DBWriterTest.class,
-	IgnoreRecordTest.class
+	NamedThreadFactoryTest.class,
+	ImageHashJobTest.class,
+	GroupListPopulatorTest.class,
+	FilterSorterTest.class,
+	ImageIndexerTest.class,
+	ImageLoadJobTest.class,
+	ImageSorterTest.class
 })
-public class DbTests {}
+public class ThreadTests {}

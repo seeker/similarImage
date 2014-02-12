@@ -15,27 +15,35 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.dozedoff.similarImage;
+package com.github.dozedoff.similarImage.thread;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.junit.runners.Suite.SuiteClasses;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 
-import com.github.dozedoff.similarImage.db.BadFileRecordTest;
-import com.github.dozedoff.similarImage.db.DBWriterTest;
-import com.github.dozedoff.similarImage.db.FilterRecordTest;
-import com.github.dozedoff.similarImage.db.IgnoreRecordTest;
-import com.github.dozedoff.similarImage.db.ImageRecordTest;
-import com.github.dozedoff.similarImage.db.PersistenceTest;
+import org.junit.Before;
+import org.junit.Test;
 
-//@formatter:off
-@RunWith(Suite.class)
-@SuiteClasses({
-	PersistenceTest.class,
-	ImageRecordTest.class,
-	FilterRecordTest.class,
-	BadFileRecordTest.class,
-	DBWriterTest.class,
-	IgnoreRecordTest.class
-})
-public class DbTests {}
+public class NamedThreadFactoryTest {
+	private NamedThreadFactory ntf;
+
+	@Before
+	public void setUp() throws Exception {
+		ntf = new NamedThreadFactory("test");
+	}
+
+	@Test
+	public void testNewThread() throws Exception {
+		Thread t = ntf.newThread(null);
+
+		assertThat(t.getName(), is("test thread 0"));
+	}
+
+	@Test
+	public void testNewThreadTwo() throws Exception {
+		ntf.newThread(null);
+		Thread t2 = ntf.newThread(null);
+
+		assertThat(t2.getName(), is("test thread 1"));
+	}
+
+}

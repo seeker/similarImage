@@ -114,7 +114,10 @@ public class SimilarImageController {
 
 			if (Files.exists(path)) {
 				ImageInfo info = new ImageInfo(path, rec.getpHash());
-				DuplicateEntryController entry = new DuplicateEntryController(info, persistence, imageDim);
+				OperationsMenu opMenu = new OperationsMenu(info, persistence);
+
+				DuplicateEntryController entry = new DuplicateEntryController(info, imageDim);
+				new DuplicateEntryView(entry, opMenu);
 				images.add(entry);
 			} else {
 				logger.warn("Image {} not found, skipping...", path);
@@ -126,7 +129,8 @@ public class SimilarImageController {
 
 	public void indexImages(String path) {
 		DBWriter dbWriter = new DBWriter(persistence);
-		Thread t = new ImageIndexer(path, gui, producer, dbWriter);
+		PhashWorker phw = new PhashWorker(dbWriter);
+		Thread t = new ImageIndexer(path, gui, producer, phw);
 		t.start();
 	}
 

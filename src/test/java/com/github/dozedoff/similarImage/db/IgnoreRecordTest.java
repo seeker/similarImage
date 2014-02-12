@@ -15,28 +15,24 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.dozedoff.similarImage.io;
+package com.github.dozedoff.similarImage.db;
 
-import java.awt.image.BufferedImage;
-import java.nio.file.Path;
-import java.util.concurrent.LinkedBlockingQueue;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 
-import com.github.dozedoff.commonj.io.DataProducer;
-import com.github.dozedoff.commonj.util.Pair;
+import org.junit.Before;
+import org.junit.Test;
 
-public class SimpleBufferStrategy extends AbstractBufferStrategy<Path, Pair<Path, BufferedImage>> {
+public class IgnoreRecordTest {
+	private IgnoreRecord ir;
 
-	public SimpleBufferStrategy(DataProducer<Path, Pair<Path, BufferedImage>> producer, LinkedBlockingQueue<Path> input,
-			LinkedBlockingQueue<Pair<Path, BufferedImage>> output, int outputCapacity) {
-		super(producer, input, output, outputCapacity);
+	@Before
+	public void setUp() throws Exception {
+		ir = new IgnoreRecord(42);
 	}
 
-	@Override
-	public void bufferCheck() {
-	}
-
-	@Override
-	public boolean workAvailable() {
-		return (!output.isEmpty());
+	@Test
+	public void testGetpHash() {
+		assertThat(ir.getpHash(), is(42L));
 	}
 }
