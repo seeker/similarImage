@@ -100,15 +100,12 @@ public class ImageInfo {
 		double height = dimension.getHeight();
 		double width = dimension.getWidth();
 
-		if (height < 1 || width < 1) {
-			return;
-		}
-
-		if (size == 0) {
-			return;
-		}
-
 		double area = height * width;
+
+		if (area == 0) {
+			return;
+		}
+
 		sizePerPixel = size / area;
 	}
 
