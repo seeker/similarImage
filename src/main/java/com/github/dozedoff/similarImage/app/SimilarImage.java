@@ -30,8 +30,6 @@ public class SimilarImage {
 
 	private Persistence persistence;
 
-	private String lastPath = "///////";
-
 	public static void main(String[] args) {
 		new SimilarImage().init();
 	}

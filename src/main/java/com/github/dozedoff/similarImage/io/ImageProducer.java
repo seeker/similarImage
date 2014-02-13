@@ -43,7 +43,6 @@ public class ImageProducer {
 
 	private final int WORK_BATCH_SIZE = 10;
 
-	private int maxOutputQueueSize;
 	private LinkedList<ImageProducerObserver> guiUpdateListeners;
 
 	private LinkedBlockingQueue<Runnable> jobQueue;
