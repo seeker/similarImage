@@ -26,6 +26,7 @@ import com.github.dozedoff.similarImage.duplicate.BucketTest;
 import com.github.dozedoff.similarImage.duplicate.CompareHammingDistanceTest;
 import com.github.dozedoff.similarImage.duplicate.CompareTest;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperationsTest;
+import com.github.dozedoff.similarImage.duplicate.DuplicateUtilTest;
 import com.github.dozedoff.similarImage.duplicate.ImageInfoTest;
 import com.github.dozedoff.similarImage.duplicate.SortSimilarTest;
 
@@ -38,6 +39,7 @@ import com.github.dozedoff.similarImage.duplicate.SortSimilarTest;
 	CompareHammingDistanceTest.class,
 	DuplicateOperationsTest.class,
 	ImageInfoTest.class,
-	BucketComperatorTest.class
+	BucketComperatorTest.class,
+	DuplicateUtilTest.class
 })
 public class DuplicateTests {}
