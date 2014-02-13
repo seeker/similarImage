@@ -24,15 +24,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.SQLException;
 
 import javax.imageio.ImageIO;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.github.dozedoff.similarImage.db.ImageRecord;
-import com.github.dozedoff.similarImage.db.Persistence;
 
 public class ImageInfo {
 	private final static Logger logger = LoggerFactory.getLogger(ImageInfo.class);
@@ -41,25 +37,6 @@ public class ImageInfo {
 	private long size = -1;
 	private long pHash = 0;
 	private double sizePerPixel = 0;
-
-	/**
-	 * Use {@link ImageInfo#ImageInfo(Path, long)} instead to pass the pHash value directly.
-	 * 
-	 * @param path
-	 * @param persistence
-	 */
-	@Deprecated
-	public ImageInfo(Path path, Persistence persistence) {
-		this.path = path;
-		getImageData();
-
-		try {
-			ImageRecord record = persistence.getRecord(path);
-			pHash = record.getpHash();
-		} catch (SQLException e) {
-			logger.warn("Failed to get pHash for image {} - {}", path, e.getMessage());
-		}
-	}
 
 	public ImageInfo(Path path, long pHash) {
 		this.path = path;
