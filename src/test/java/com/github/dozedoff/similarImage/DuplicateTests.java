@@ -21,6 +21,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
+import com.github.dozedoff.similarImage.duplicate.BucketComperatorTest;
 import com.github.dozedoff.similarImage.duplicate.BucketTest;
 import com.github.dozedoff.similarImage.duplicate.CompareHammingDistanceTest;
 import com.github.dozedoff.similarImage.duplicate.CompareTest;
@@ -36,6 +37,7 @@ import com.github.dozedoff.similarImage.duplicate.SortSimilarTest;
 	BucketTest.class,
 	CompareHammingDistanceTest.class,
 	DuplicateOperationsTest.class,
-	ImageInfoTest.class
+	ImageInfoTest.class,
+	BucketComperatorTest.class
 })
 public class DuplicateTests {}
