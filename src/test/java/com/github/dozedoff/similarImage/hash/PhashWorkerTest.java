@@ -27,15 +27,12 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
-
-import javax.imageio.ImageIO;
 
 import org.junit.After;
 import org.junit.Before;
@@ -44,8 +41,6 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import com.github.dozedoff.commonj.hash.ImagePHash;
-import com.github.dozedoff.commonj.util.Pair;
 import com.github.dozedoff.similarImage.db.DBWriter;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.io.ImageProducerObserver;
@@ -58,6 +53,8 @@ public class PhashWorkerTest {
 
 	@Mock
 	private DBWriter dbWriter;
+	
+	private List<Path> work;
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
@@ -69,6 +66,7 @@ public class PhashWorkerTest {
 		MockitoAnnotations.initMocks(this);
 
 		phw = new PhashWorker(dbWriter);
+		work = createWork(NUM_OF_TEST_IMAGES);
 	}
 
 	@After
@@ -76,15 +74,11 @@ public class PhashWorkerTest {
 		phw.forceShutdown();
 	}
 
-	private List<Pair<Path, BufferedImage>> createWork(int amount) throws IOException {
-		InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("testImage.jpg");
-		BufferedImage bi = ImageIO.read(is);
-		bi = ImagePHash.resize(bi, 32, 32);
-
-		LinkedList<Pair<Path, BufferedImage>> work = new LinkedList<>();
+	private List<Path> createWork(int amount) throws IOException, URISyntaxException {
+		LinkedList<Path> work = new LinkedList<>();
 
 		for (int i = 0; i < amount; i++) {
-			work.add(new Pair<Path, BufferedImage>(testImage, bi));
+			work.add(testImage);
 		}
 
 		return work;
@@ -102,8 +96,6 @@ public class PhashWorkerTest {
 
 	@Test(timeout = 2000)
 	public void testHashImageWhenShutdown() throws Exception {
-		List<Pair<Path, BufferedImage>> work = createWork(NUM_OF_TEST_IMAGES);
-
 		phw.gracefulShutdown();
 		phw.toHash(work);
 
@@ -114,7 +106,6 @@ public class PhashWorkerTest {
 
 	@Test(timeout = 2000)
 	public void testStopWorker() throws Exception {
-		List<Pair<Path, BufferedImage>> work = createWork(NUM_OF_TEST_IMAGES);
 		phw.toHash(work);
 
 		phw.forceShutdown();
@@ -124,7 +115,6 @@ public class PhashWorkerTest {
 
 	@Test(timeout = 5000)
 	public void testBufferLevel() throws IOException {
-		List<Pair<Path, BufferedImage>> work = createWork(NUM_OF_TEST_IMAGES);
 		ImageProducerObserver ipo = mock(ImageProducerObserver.class);
 
 		phw.addGuiUpdateListener(ipo);
@@ -144,7 +134,7 @@ public class PhashWorkerTest {
 
 	@Test(timeout = 2000)
 	public void testClear() throws Exception {
-		List<Pair<Path, BufferedImage>> work = createWork(10000);
+		work = createWork(10000);
 		phw.toHash(work);
 		phw.gracefulShutdown();
 		phw.clear();

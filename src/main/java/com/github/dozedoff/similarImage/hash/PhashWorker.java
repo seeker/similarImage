@@ -17,7 +17,6 @@
  */
 package com.github.dozedoff.similarImage.hash;
 
-import java.awt.image.BufferedImage;
 import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
@@ -29,7 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
-import com.github.dozedoff.commonj.util.Pair;
 import com.github.dozedoff.similarImage.db.DBWriter;
 import com.github.dozedoff.similarImage.io.ImageProducerObserver;
 import com.github.dozedoff.similarImage.thread.ImageHashJob;
@@ -91,7 +89,7 @@ public class PhashWorker {
 		guiUpdateListeners = new LinkedList<>();
 	}
 
-	public void toHash(List<Pair<Path, BufferedImage>> data) {
+	public void toHash(List<Path> data) {
 		if (tpe.isShutdown()) {
 			logger.error("Cannot add jobs to a pool that has been shutdown");
 			return;

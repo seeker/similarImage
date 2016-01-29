@@ -17,37 +17,29 @@
  */
 package com.github.dozedoff.similarImage.thread;
 
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
 
 import javax.imageio.IIOException;
-import javax.imageio.ImageIO;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.commonj.time.StopWatch;
-import com.github.dozedoff.commonj.util.Pair;
 import com.github.dozedoff.similarImage.db.BadFileRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.hash.PhashWorker;
 
 public class ImageLoadJob implements Runnable {
 	private static final Logger logger = LoggerFactory.getLogger(ImageLoadJob.class);
-	private static final int IMAGE_SIZE = 32;
 
 	private List<Path> files;
 	private Persistence persistence;
 	private PhashWorker phw;
-	private LinkedList<Pair<Path, BufferedImage>> output;
+	private LinkedList<Path> output;
 
 	private StopWatch sw;
 
@@ -103,18 +95,7 @@ public class ImageLoadJob implements Runnable {
 			return;
 		}
 
-		byte[] data = Files.readAllBytes(next);
-		InputStream is = new ByteArrayInputStream(data);
-		BufferedImage img = ImageIO.read(is);
-
-		if (img == null) {
-			throw new IIOException("No ImageReader was able to read " + next.toString());
-		}
-
-		img = ImagePHash.resize(img, IMAGE_SIZE, IMAGE_SIZE);
-
-		Pair<Path, BufferedImage> pair = new Pair<Path, BufferedImage>(next, img);
-		output.add(pair);
+		output.add(next);
 	}
 
 	public int getJobSize() {

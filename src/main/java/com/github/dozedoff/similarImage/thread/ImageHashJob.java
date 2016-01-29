@@ -17,10 +17,8 @@
  */
 package com.github.dozedoff.similarImage.thread;
 
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -31,19 +29,18 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.commonj.time.StopWatch;
-import com.github.dozedoff.commonj.util.Pair;
 import com.github.dozedoff.similarImage.db.DBWriter;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 
 public class ImageHashJob implements Runnable {
 	private static final Logger logger = LoggerFactory.getLogger(ImageHashJob.class);
 
-	private List<Pair<Path, BufferedImage>> work;
+	private List<Path> work;
 	private DBWriter dbWriter;
 	private ImagePHash phash;
 	private StopWatch sw;
 
-	public ImageHashJob(List<Pair<Path, BufferedImage>> work, DBWriter dbWriter, ImagePHash phash) {
+	public ImageHashJob(List<Path> work, DBWriter dbWriter, ImagePHash phash) {
 		this.work = work;
 		this.dbWriter = dbWriter;
 		this.phash = phash;
@@ -58,22 +55,15 @@ public class ImageHashJob implements Runnable {
 
 		LinkedList<ImageRecord> newRecords = new LinkedList<ImageRecord>();
 
-		for (Pair<Path, BufferedImage> pair : work) {
-
-			Path path = pair.getLeft();
-
+		for (Path path : work) {
 			try {
-				BufferedImage img = pair.getRight();
-				long hash = phash.getLongHashScaledImage(img);
-
+				long hash = phash.getLongHash(path);
 				ImageRecord record = new ImageRecord(path.toString(), hash);
 				newRecords.add(record);
 			} catch (IIOException iioe) {
 				logger.warn("Unable to process image {} - {}", path, iioe.getMessage());
 			} catch (IOException e) {
 				logger.warn("Could not load file {} - {}", path, e.getMessage());
-			} catch (SQLException e) {
-				logger.warn("Database operation failed: {}", e.getMessage());
 			} catch (Exception e) {
 				logger.warn("Failed to hash image {} - {}", path, e.getMessage());
 			}

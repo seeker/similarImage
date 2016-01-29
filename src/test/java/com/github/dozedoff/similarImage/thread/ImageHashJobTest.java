@@ -40,7 +40,6 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
-import com.github.dozedoff.commonj.util.Pair;
 import com.github.dozedoff.similarImage.db.DBWriter;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 
@@ -54,7 +53,7 @@ public class ImageHashJobTest {
 	@Mock
 	private ImagePHash phash;
 
-	private List<Pair<Path, BufferedImage>> work;
+	private List<Path> work;
 
 	private ImageHashJob imageHashJob;
 
@@ -62,7 +61,7 @@ public class ImageHashJobTest {
 	public void setUp() throws Exception {
 		MockitoAnnotations.initMocks(this);
 		work = new LinkedList<>();
-		work.add(new Pair<Path, BufferedImage>(Paths.get(""), new BufferedImage(1, 1, BufferedImage.TYPE_BYTE_GRAY)));
+		work.add(Paths.get(""));
 
 		imageHashJob = new ImageHashJob(work, dbWriter, phash);
 	}
