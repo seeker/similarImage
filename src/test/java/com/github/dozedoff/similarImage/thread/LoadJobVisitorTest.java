@@ -1,21 +1,22 @@
 package com.github.dozedoff.similarImage.thread;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.never;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
-import java.nio.file.DirectoryStream.Filter;
 import java.util.concurrent.ExecutorService;
 
 import org.junit.Before;
 import org.junit.Test;
 
+import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.db.Persistence;
 
 public class LoadJobVisitorTest {
@@ -27,6 +28,8 @@ public class LoadJobVisitorTest {
 	private Persistence persistence = mock(Persistence.class);
 
 	private ExecutorService threadPool = mock(ExecutorService.class);
+	private ImagePHash imagePHash = mock(ImagePHash.class);
+
 	private LoadJobVisitor loadJobVisitor;
 
 	private Path testPath;
@@ -36,7 +39,7 @@ public class LoadJobVisitorTest {
 		when(persistence.isBadFile(any(Path.class))).thenReturn(false);
 		when(persistence.isPathRecorded(any(Path.class))).thenReturn(false);
 
-		loadJobVisitor = new LoadJobVisitor(fileFilter, threadPool, persistence);
+		loadJobVisitor = new LoadJobVisitor(fileFilter, threadPool, persistence, imagePHash);
 	}
 
 	@Before
@@ -49,7 +52,7 @@ public class LoadJobVisitorTest {
 	public void testVisitFileValidUnknown() throws Exception {
 		loadJobVisitor.visitFile(testPath, null);
 
-		verify(threadPool, timeout(DEFAULT_TIMEOUT)).execute(any(ImageLoadJob.class));
+		verify(threadPool, timeout(DEFAULT_TIMEOUT)).execute(any(ImageHashJob.class));
 	}
 
 	@Test
@@ -58,7 +61,7 @@ public class LoadJobVisitorTest {
 
 		loadJobVisitor.visitFile(testPath, null);
 
-		verify(threadPool, never()).execute(any(ImageLoadJob.class));
+		verify(threadPool, never()).execute(any(ImageHashJob.class));
 	}
 
 	@Test
@@ -67,7 +70,7 @@ public class LoadJobVisitorTest {
 
 		loadJobVisitor.visitFile(testPath, null);
 
-		verify(threadPool, never()).execute(any(ImageLoadJob.class));
+		verify(threadPool, never()).execute(any(ImageHashJob.class));
 	}
 
 	@Test
@@ -76,7 +79,7 @@ public class LoadJobVisitorTest {
 
 		loadJobVisitor.visitFile(testPath, null);
 
-		verify(threadPool, never()).execute(any(ImageLoadJob.class));
+		verify(threadPool, never()).execute(any(ImageHashJob.class));
 	}
 
 	@Test
@@ -85,6 +88,6 @@ public class LoadJobVisitorTest {
 
 		loadJobVisitor.visitFile(testPath, null);
 
-		verify(threadPool, never()).execute(any(ImageLoadJob.class));
+		verify(threadPool, never()).execute(any(ImageHashJob.class));
 	}
 }

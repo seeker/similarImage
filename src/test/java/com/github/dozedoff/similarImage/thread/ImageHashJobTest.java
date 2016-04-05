@@ -18,96 +18,62 @@
 package com.github.dozedoff.similarImage.thread;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
-import java.awt.image.BufferedImage;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.SQLException;
-import java.util.LinkedList;
-import java.util.List;
 
 import javax.imageio.IIOException;
 
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
-import com.github.dozedoff.commonj.util.Pair;
-import com.github.dozedoff.similarImage.db.DBWriter;
+import com.github.dozedoff.similarImage.db.BadFileRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
+import com.github.dozedoff.similarImage.db.Persistence;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ImageHashJobTest {
-	private final static String TEST_MSG = "This is a test";
+	@Mock
+	private Persistence persistence;
 
 	@Mock
-	private DBWriter dbWriter;
+	private ImagePHash phw;
 
-	@Mock
-	private ImagePHash phash;
+	private ImageHashJob imageLoadJob;
 
-	private List<Pair<Path, BufferedImage>> work;
+	private static Path testImage;
 
-	private ImageHashJob imageHashJob;
+	@BeforeClass
+	public static void setUpClass() throws Exception {
+		testImage = Paths.get(Thread.currentThread().getContextClassLoader().getResource("testImage.jpg").toURI());
+	}
 
 	@Before
 	public void setUp() throws Exception {
 		MockitoAnnotations.initMocks(this);
-		work = new LinkedList<>();
-		work.add(new Pair<Path, BufferedImage>(Paths.get(""), new BufferedImage(1, 1, BufferedImage.TYPE_BYTE_GRAY)));
-
-		imageHashJob = new ImageHashJob(work, dbWriter, phash);
+		imageLoadJob = new ImageHashJob(testImage, phw, persistence);
 	}
 
 	@Test
-	public void testRun() throws Exception {
-		imageHashJob.run();
+	public void testRunAddFile() throws Exception {
+		imageLoadJob.run();
 
-		verify(dbWriter).add(anyListOf(ImageRecord.class));
+		verify(persistence).addRecord(new ImageRecord(testImage.toString(), 0));
 	}
 
 	@Test
 	public void testRunIIOException() throws Exception {
-		when(phash.getLongHashScaledImage(any(BufferedImage.class))).thenThrow(new IIOException(TEST_MSG));
+		Mockito.doThrow(IIOException.class).when(persistence).addRecord(any(ImageRecord.class));
+		imageLoadJob.run();
 
-		imageHashJob.run();
-
-		verify(dbWriter).add(anyListOf(ImageRecord.class));
+		verify(persistence).addBadFile(any(BadFileRecord.class));
 	}
-
-	@Test
-	public void testRunIOException() throws Exception {
-		when(phash.getLongHashScaledImage(any(BufferedImage.class))).thenThrow(new IOException(TEST_MSG));
-
-		imageHashJob.run();
-
-		verify(dbWriter).add(anyListOf(ImageRecord.class));
-	}
-
-	@Test
-	public void testRunSQLException() throws Exception {
-		when(phash.getLongHashScaledImage(any(BufferedImage.class))).thenThrow(new SQLException(TEST_MSG));
-
-		imageHashJob.run();
-
-		verify(dbWriter).add(anyListOf(ImageRecord.class));
-	}
-
-	@Test
-	public void testRunException() throws Exception {
-		when(phash.getLongHashScaledImage(any(BufferedImage.class))).thenThrow(new Exception(TEST_MSG));
-
-		imageHashJob.run();
-
-		verify(dbWriter).add(anyListOf(ImageRecord.class));
-	}
-
 }

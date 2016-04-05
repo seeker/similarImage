@@ -17,12 +17,11 @@
  */
 package com.github.dozedoff.similarImage.thread;
 
-import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
-import java.util.LinkedList;
-import java.util.List;
 
 import javax.imageio.IIOException;
 
@@ -30,61 +29,57 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
-import com.github.dozedoff.commonj.time.StopWatch;
-import com.github.dozedoff.commonj.util.Pair;
-import com.github.dozedoff.similarImage.db.DBWriter;
+import com.github.dozedoff.similarImage.db.BadFileRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
+import com.github.dozedoff.similarImage.db.Persistence;
 
+/**
+ * Load an image and calculate the hash, then store the result in the database.
+ * 
+ * @author Nicholas Wright
+ *
+ */
 public class ImageHashJob implements Runnable {
 	private static final Logger logger = LoggerFactory.getLogger(ImageHashJob.class);
 
-	private List<Pair<Path, BufferedImage>> work;
-	private DBWriter dbWriter;
-	private ImagePHash phash;
-	private StopWatch sw;
-
-	public ImageHashJob(List<Pair<Path, BufferedImage>> work, DBWriter dbWriter, ImagePHash phash) {
-		this.work = work;
-		this.dbWriter = dbWriter;
-		this.phash = phash;
+	private final Persistence persistence;
+	private final Path image;
+	private final ImagePHash hasher;
+	
+	public ImageHashJob(Path image, ImagePHash hasher, Persistence persistence) {
+		this.image = image;
+		this.persistence = persistence;
+		this.hasher = hasher;
 	}
 
 	@Override
 	public void run() {
-		if (logger.isDebugEnabled()) {
-			sw = new StopWatch();
-			sw.start();
-		}
-
-		LinkedList<ImageRecord> newRecords = new LinkedList<ImageRecord>();
-
-		for (Pair<Path, BufferedImage> pair : work) {
-
-			Path path = pair.getLeft();
-
+		try {
+			processFile(image);
+		} catch (IIOException e) {
+			logger.warn("Failed to process image(IIO) - {}", e.getMessage());
 			try {
-				BufferedImage img = pair.getRight();
-				long hash = phash.getLongHashScaledImage(img);
-
-				ImageRecord record = new ImageRecord(path.toString(), hash);
-				newRecords.add(record);
-			} catch (IIOException iioe) {
-				logger.warn("Unable to process image {} - {}", path, iioe.getMessage());
-			} catch (IOException e) {
-				logger.warn("Could not load file {} - {}", path, e.getMessage());
-			} catch (SQLException e) {
-				logger.warn("Database operation failed: {}", e.getMessage());
-			} catch (Exception e) {
-				logger.warn("Failed to hash image {} - {}", path, e.getMessage());
+				persistence.addBadFile(new BadFileRecord(image));
+			} catch (SQLException e1) {
+				logger.warn("Failed to add bad file record for {} - {}", image, e.getMessage());
 			}
+		} catch (IOException e) {
+			logger.warn("Failed to load file - {}", e.getMessage());
+		} catch (SQLException e) {
+			logger.warn("Failed to query database - {}", e.getMessage());
 		}
+	}
 
-		if (logger.isDebugEnabled()) {
-			sw.stop();
-			logger.debug("Took {} to hash {} images", sw.getTime(), work.size());
-		}
+	private void processFile(Path next) throws SQLException, IOException {
+		long hash = hasher.getLongHash(new BufferedInputStream(Files.newInputStream(next)));
+		persistence.addRecord(new ImageRecord(next.toString(), hash));
+	}
 
-		dbWriter.add(newRecords);
-		logger.debug("{} records added to DBWriter", newRecords.size());
+	/**
+	 * This method is now pointless.
+	 */
+	@Deprecated
+	public int getJobSize() {
+		return 0;
 	}
 }
