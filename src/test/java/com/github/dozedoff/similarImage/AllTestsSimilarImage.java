@@ -26,8 +26,6 @@ import org.junit.runners.Suite.SuiteClasses;
 @SuiteClasses({
 	DuplicateTests.class,
 	AppTests.class,
-	IoTests.class,
-	HashTests.class,
 	DbTests.class,
 	ThreadTests.class,
 	GuiTests.class
