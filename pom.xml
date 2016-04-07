@@ -10,6 +10,13 @@
 
 	<name>similarImage</name>
 	<url>http://maven.apache.org</url>
+	
+	<repositories>
+		<repository>
+		    <id>jitpack.io</id>
+		    <url>https://jitpack.io</url>
+		</repository>
+	</repositories>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -132,9 +139,9 @@
 			<version>1.0.13</version>
 		</dependency>
 		<dependency>
-			<groupId>com.github.dozedoff.commonj</groupId>
+			<groupId>com.github.dozedoff</groupId>
 			<artifactId>commonj</artifactId>
-			<version>0.1.0-SNAPSHOT</version>
+			<version>v0.2.0</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
@@ -153,9 +160,9 @@
 			<version>3.7.2</version>
 		</dependency>
 		<dependency>
-			<groupId>org.everpeace.search</groupId>
+			<groupId>com.github.everpeace</groupId>
 			<artifactId>bk-tree</artifactId>
-			<version>1.0-SNAPSHOT</version>
+			<version>48de9bb37b</version>
 		</dependency>
 	</dependencies>
 </project>
