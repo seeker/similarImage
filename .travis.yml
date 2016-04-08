@@ -1,14 +1,7 @@
 sudo: false
 language: java
 jdk:
-  - oraclejdk7
-  - openjdk7
   - oraclejdk8
-before_install:
-  - git clone https://github.com/everpeace/bk-tree.git --depth=1
-  - git clone https://github.com/dozedoff/commonj.git --depth=1
-  - mvn clean install -Dmaven.test.skip=true -f ./bk-tree/pom.xml
-  - mvn clean install -Dmaven.test.skip=true -f ./commonj/pom.xml
 
 after_success:
   - mvn clean cobertura:cobertura coveralls:cobertura
