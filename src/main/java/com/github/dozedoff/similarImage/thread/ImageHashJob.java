@@ -19,6 +19,7 @@ package com.github.dozedoff.similarImage.thread;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
@@ -78,8 +79,10 @@ public class ImageHashJob implements Runnable {
 
 	private void processFile(Path next) throws SQLException, IOException {
 		statistics.incrementProcessedFiles();
-		long hash = hasher.getLongHash(new BufferedInputStream(Files.newInputStream(next)));
-		persistence.addRecord(new ImageRecord(next.toString(), hash));
+		try (InputStream bis = new BufferedInputStream(Files.newInputStream(next))) {
+			long hash = hasher.getLongHash(bis);
+			persistence.addRecord(new ImageRecord(next.toString(), hash));
+		}
 	}
 
 	/**
