@@ -39,7 +39,7 @@ import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.thread.FilterSorter;
 import com.github.dozedoff.similarImage.thread.ImageFindJob;
 import com.github.dozedoff.similarImage.thread.ImageSorter;
-import com.github.dozedoff.similarImage.thread.LoadJobVisitor;
+import com.github.dozedoff.similarImage.thread.ImageFindJobVisitor;
 
 public class SimilarImageController {
 	private final Logger logger = LoggerFactory.getLogger(SimilarImageController.class);
@@ -121,7 +121,7 @@ public class SimilarImageController {
 	}
 
 	public void indexImages(String path) {
-		LoadJobVisitor visitor = new LoadJobVisitor(new SimpleImageFilter(), threadPool, persistence, new ImagePHash(),
+		ImageFindJobVisitor visitor = new ImageFindJobVisitor(new SimpleImageFilter(), threadPool, persistence, new ImagePHash(),
 				statistics);
 		// TODO use a priority queue to let FindJobs run first
 		Thread t = new Thread(new ImageFindJob(path, visitor));

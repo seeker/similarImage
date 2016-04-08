@@ -24,8 +24,8 @@ import com.github.dozedoff.similarImage.io.Statistics;
  * @author Nicholas Wright
  *
  */
-public class LoadJobVisitor extends SimpleFileVisitor<Path> {
-	private static final Logger logger = LoggerFactory.getLogger(LoadJobVisitor.class);
+public class ImageFindJobVisitor extends SimpleFileVisitor<Path> {
+	private static final Logger logger = LoggerFactory.getLogger(ImageFindJobVisitor.class);
 	private final ExecutorService threadPool;
 	private final Filter<Path> fileFilter;
 	private final Persistence persistence;
@@ -33,7 +33,7 @@ public class LoadJobVisitor extends SimpleFileVisitor<Path> {
 	private final Statistics statistics;
 	private int fileCount = 0;
 
-	public LoadJobVisitor(Filter<Path> fileFilter, ExecutorService threadPool, Persistence persistence,
+	public ImageFindJobVisitor(Filter<Path> fileFilter, ExecutorService threadPool, Persistence persistence,
 			ImagePHash hasher, Statistics statistics) {
 		this.threadPool = threadPool;
 		this.persistence = persistence;

@@ -35,9 +35,9 @@ import org.slf4j.LoggerFactory;
 public class ImageFindJob implements Runnable {
 	private final Logger logger = LoggerFactory.getLogger(ImageFindJob.class);
 	private final String searchPath;
-	private final LoadJobVisitor visitor;
+	private final ImageFindJobVisitor visitor;
 
-	public ImageFindJob(String searchPath, LoadJobVisitor visitor) {
+	public ImageFindJob(String searchPath, ImageFindJobVisitor visitor) {
 		this.searchPath = searchPath;
 		this.visitor = visitor;
 	}

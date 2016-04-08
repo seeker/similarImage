@@ -25,7 +25,7 @@ import com.github.dozedoff.similarImage.thread.FilterSorterTest;
 import com.github.dozedoff.similarImage.thread.GroupListPopulatorTest;
 import com.github.dozedoff.similarImage.thread.ImageHashJobTest;
 import com.github.dozedoff.similarImage.thread.ImageSorterTest;
-import com.github.dozedoff.similarImage.thread.LoadJobVisitorTest;
+import com.github.dozedoff.similarImage.thread.ImageFindJobVisitorTest;
 import com.github.dozedoff.similarImage.thread.NamedThreadFactoryTest;
 
 //@formatter:off
@@ -36,6 +36,6 @@ import com.github.dozedoff.similarImage.thread.NamedThreadFactoryTest;
 	FilterSorterTest.class,
 	ImageHashJobTest.class,
 	ImageSorterTest.class,
-	LoadJobVisitorTest.class
+	ImageFindJobVisitorTest.class
 })
 public class ThreadTests {}
