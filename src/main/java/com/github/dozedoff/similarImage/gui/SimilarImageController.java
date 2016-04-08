@@ -124,7 +124,9 @@ public class SimilarImageController {
 		LoadJobVisitor visitor = new LoadJobVisitor(new SimpleImageFilter(), threadPool, persistence, new ImagePHash(),
 				statistics);
 		// TODO use a priority queue to let FindJobs run first
-		threadPool.execute(new ImageFindJob(path, visitor));
+		Thread t = new Thread(new ImageFindJob(path, visitor));
+		t.setName("Image Find Job");
+		t.start();
 	}
 
 	public void sortDuplicates(int hammingDistance, String path) {
