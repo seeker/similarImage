@@ -32,6 +32,7 @@ import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.db.BadFileRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.io.Statistics;
 
 /**
  * Load an image and calculate the hash, then store the result in the database.
@@ -45,11 +46,13 @@ public class ImageHashJob implements Runnable {
 	private final Persistence persistence;
 	private final Path image;
 	private final ImagePHash hasher;
+	private final Statistics statistics;
 	
-	public ImageHashJob(Path image, ImagePHash hasher, Persistence persistence) {
+	public ImageHashJob(Path image, ImagePHash hasher, Persistence persistence, Statistics statistics) {
 		this.image = image;
 		this.persistence = persistence;
 		this.hasher = hasher;
+		this.statistics = statistics;
 	}
 
 	@Override
@@ -63,14 +66,18 @@ public class ImageHashJob implements Runnable {
 			} catch (SQLException e1) {
 				logger.warn("Failed to add bad file record for {} - {}", image, e.getMessage());
 			}
+			statistics.incrementFailedFiles();
 		} catch (IOException e) {
 			logger.warn("Failed to load file - {}", e.getMessage());
+			statistics.incrementFailedFiles();
 		} catch (SQLException e) {
 			logger.warn("Failed to query database - {}", e.getMessage());
+			statistics.incrementFailedFiles();
 		}
 	}
 
 	private void processFile(Path next) throws SQLException, IOException {
+		statistics.incrementProcessedFiles();
 		long hash = hasher.getLongHash(new BufferedInputStream(Files.newInputStream(next)));
 		persistence.addRecord(new ImageRecord(next.toString(), hash));
 	}

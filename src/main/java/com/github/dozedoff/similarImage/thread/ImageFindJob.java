@@ -19,9 +19,7 @@ package com.github.dozedoff.similarImage.thread;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,9 +35,9 @@ import org.slf4j.LoggerFactory;
 public class ImageFindJob implements Runnable {
 	private final Logger logger = LoggerFactory.getLogger(ImageFindJob.class);
 	private final String searchPath;
-	private final SimpleFileVisitor<Path> visitor;
+	private final LoadJobVisitor visitor;
 
-	public ImageFindJob(String searchPath, SimpleFileVisitor<Path> visitor) {
+	public ImageFindJob(String searchPath, LoadJobVisitor visitor) {
 		this.searchPath = searchPath;
 		this.visitor = visitor;
 	}
@@ -54,6 +52,6 @@ public class ImageFindJob implements Runnable {
 			logger.error("Failed to walk file tree", e);
 		}
 
-		logger.info("Finished scanning for images in {}", searchPath);
+		logger.info("Finished scanning for images in {}, found {} images", searchPath, visitor.getFileCount());
 	}
 }

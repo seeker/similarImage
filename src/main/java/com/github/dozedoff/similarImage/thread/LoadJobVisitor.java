@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.io.Statistics;
 
 /**
  * For every file that is found, check the file extension. A valid file is
@@ -29,22 +30,35 @@ public class LoadJobVisitor extends SimpleFileVisitor<Path> {
 	private final Filter<Path> fileFilter;
 	private final Persistence persistence;
 	private final ImagePHash hasher;
+	private final Statistics statistics;
+	private int fileCount = 0;
 
 	public LoadJobVisitor(Filter<Path> fileFilter, ExecutorService threadPool, Persistence persistence,
-			ImagePHash hasher) {
+			ImagePHash hasher, Statistics statistics) {
 		this.threadPool = threadPool;
 		this.persistence = persistence;
 		this.fileFilter = fileFilter;
 		this.hasher = hasher;
+		this.statistics = statistics;
 	}
 
 	@Override
 	public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
 		try {
-			if (isAcceptedFile(file) && !isInDatabase(file)) {
-				threadPool.execute(new ImageHashJob(file, hasher, persistence));
+			if (isAcceptedFile(file)) {
+				statistics.incrementFoundFiles();
+				fileCount++;
+
+				if (!isInDatabase(file)) {
+					threadPool.execute(new ImageHashJob(file, hasher, persistence, statistics));
+				} else {
+					statistics.incrementSkippedFiles();
+					statistics.incrementProcessedFiles();
+				}
 			}
 		} catch (SQLException e) {
+			statistics.incrementProcessedFiles();
+			statistics.incrementFailedFiles();
 			logger.error("Database query for {} failed with: {}", file, e);
 		}
 
@@ -57,5 +71,9 @@ public class LoadJobVisitor extends SimpleFileVisitor<Path> {
 
 	private boolean isInDatabase(Path path) throws SQLException {
 		return (persistence.isBadFile(path) || persistence.isPathRecorded(path));
+	}
+
+	public int getFileCount() {
+		return fileCount;
 	}
 }

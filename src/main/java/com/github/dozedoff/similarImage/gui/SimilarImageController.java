@@ -35,6 +35,7 @@ import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 import com.github.dozedoff.similarImage.duplicate.SortSimilar;
+import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.thread.FilterSorter;
 import com.github.dozedoff.similarImage.thread.ImageFindJob;
 import com.github.dozedoff.similarImage.thread.ImageSorter;
@@ -52,15 +53,18 @@ public class SimilarImageController {
 	private DisplayGroupView displayGroup;
 	private SimilarImageView gui;
 	private final ExecutorService threadPool;
+	private final Statistics statistics;
 
-	public SimilarImageController(Persistence persistence, ExecutorService threadPool) {
+	public SimilarImageController(Persistence persistence, ExecutorService threadPool, Statistics statistics) {
 		this.persistence = persistence;
 		setupProducer();
 
 		sorter = new SortSimilar(persistence);
 		displayGroup = new DisplayGroupView();
 		gui = new SimilarImageView(this, new DuplicateOperations(persistence), PRODUCER_QUEUE_SIZE);
+		statistics.addStatisticsListener(gui);
 		this.threadPool = threadPool; 
+		this.statistics = statistics;
 	}
 
 	@Deprecated
@@ -117,7 +121,9 @@ public class SimilarImageController {
 	}
 
 	public void indexImages(String path) {
-		LoadJobVisitor visitor = new LoadJobVisitor(new SimpleImageFilter(), threadPool, persistence, new ImagePHash());
+		LoadJobVisitor visitor = new LoadJobVisitor(new SimpleImageFilter(), threadPool, persistence, new ImagePHash(),
+				statistics);
+		// TODO use a priority queue to let FindJobs run first
 		threadPool.execute(new ImageFindJob(path, visitor));
 	}
 

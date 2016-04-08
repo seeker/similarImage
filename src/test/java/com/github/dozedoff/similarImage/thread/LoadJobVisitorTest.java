@@ -18,6 +18,7 @@ import org.junit.Test;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.io.Statistics;
 
 public class LoadJobVisitorTest {
 	private static final int DEFAULT_TIMEOUT = 2000;
@@ -29,6 +30,7 @@ public class LoadJobVisitorTest {
 
 	private ExecutorService threadPool = mock(ExecutorService.class);
 	private ImagePHash imagePHash = mock(ImagePHash.class);
+	private Statistics statistics = mock(Statistics.class);
 
 	private LoadJobVisitor loadJobVisitor;
 
@@ -39,7 +41,7 @@ public class LoadJobVisitorTest {
 		when(persistence.isBadFile(any(Path.class))).thenReturn(false);
 		when(persistence.isPathRecorded(any(Path.class))).thenReturn(false);
 
-		loadJobVisitor = new LoadJobVisitor(fileFilter, threadPool, persistence, imagePHash);
+		loadJobVisitor = new LoadJobVisitor(fileFilter, threadPool, persistence, imagePHash, statistics);
 	}
 
 	@Before

@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.gui.SimilarImageController;
+import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.thread.NamedThreadFactory;
 
 public class SimilarImage {
@@ -35,6 +36,7 @@ public class SimilarImage {
 
 	private Persistence persistence;
 	private ExecutorService threadPool;
+	private Statistics statistics;
 	ThreadPoolExecutor foo;
 
 	public static void main(String[] args) {
@@ -55,6 +57,7 @@ public class SimilarImage {
 		Settings settings = new Settings(new SettingsValidator());
 		settings.loadPropertiesFromFile(PROPERTIES_FILENAME);
 		persistence = new Persistence();
-		new SimilarImageController(persistence, threadPool);
+		statistics = new Statistics();
+		new SimilarImageController(persistence, threadPool, statistics);
 	}
 }

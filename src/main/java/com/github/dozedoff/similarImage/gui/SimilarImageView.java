@@ -45,14 +45,16 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import net.miginfocom.swing.MigLayout;
-
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.io.ImageProducerObserver;
+import com.github.dozedoff.similarImage.io.Statistics.StatisticsEvent;
+import com.github.dozedoff.similarImage.io.StatisticsChangedListener;
 import com.github.dozedoff.similarImage.thread.GroupListPopulator;
 
-public class SimilarImageView implements ImageProducerObserver {
+import net.miginfocom.swing.MigLayout;
+
+public class SimilarImageView implements ImageProducerObserver, StatisticsChangedListener {
 	private JFrame view;
 
 	private final SimilarImageController controller;
@@ -361,5 +363,22 @@ public class SimilarImageView implements ImageProducerObserver {
 	@Override
 	public void bufferLevelChanged(int current) {
 		bufferLevel.setValue(current);
+	}
+
+	@Override
+	public void statisticsChangedEvent(StatisticsEvent event, int newValue) {
+		switch (event) {
+		case FOUND_FILES:
+			progress.setMaximum(newValue);
+			break;
+
+		case PROCESSED_FILES:
+			progress.setValue(newValue);
+			break;
+
+		default:
+			break;
+		}
+
 	}
 }

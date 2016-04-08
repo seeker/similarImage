@@ -38,6 +38,7 @@ import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.db.BadFileRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.io.Statistics;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ImageHashJobTest {
@@ -46,6 +47,9 @@ public class ImageHashJobTest {
 
 	@Mock
 	private ImagePHash phw;
+
+	@Mock
+	private Statistics statistics;
 
 	private ImageHashJob imageLoadJob;
 
@@ -59,7 +63,7 @@ public class ImageHashJobTest {
 	@Before
 	public void setUp() throws Exception {
 		MockitoAnnotations.initMocks(this);
-		imageLoadJob = new ImageHashJob(testImage, phw, persistence);
+		imageLoadJob = new ImageHashJob(testImage, phw, persistence, statistics);
 	}
 
 	@Test
