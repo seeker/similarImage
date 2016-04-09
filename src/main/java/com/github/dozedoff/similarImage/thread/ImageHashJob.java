@@ -84,12 +84,4 @@ public class ImageHashJob implements Runnable {
 			persistence.addRecord(new ImageRecord(next.toString(), hash));
 		}
 	}
-
-	/**
-	 * This method is now pointless.
-	 */
-	@Deprecated
-	public int getJobSize() {
-		return 0;
-	}
 }

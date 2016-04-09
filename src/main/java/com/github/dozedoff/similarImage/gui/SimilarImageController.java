@@ -38,8 +38,8 @@ import com.github.dozedoff.similarImage.duplicate.SortSimilar;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.thread.FilterSorter;
 import com.github.dozedoff.similarImage.thread.ImageFindJob;
-import com.github.dozedoff.similarImage.thread.ImageSorter;
 import com.github.dozedoff.similarImage.thread.ImageFindJobVisitor;
+import com.github.dozedoff.similarImage.thread.ImageSorter;
 
 public class SimilarImageController {
 	private final Logger logger = LoggerFactory.getLogger(SimilarImageController.class);
@@ -57,7 +57,6 @@ public class SimilarImageController {
 
 	public SimilarImageController(Persistence persistence, ExecutorService threadPool, Statistics statistics) {
 		this.persistence = persistence;
-		setupProducer();
 
 		sorter = new SortSimilar(persistence);
 		displayGroup = new DisplayGroupView();
@@ -65,18 +64,6 @@ public class SimilarImageController {
 		statistics.addStatisticsListener(gui);
 		this.threadPool = threadPool; 
 		this.statistics = statistics;
-	}
-
-	@Deprecated
-	public void setImageLoaderPoolSize(int poolSize) {
-	}
-
-	@Deprecated
-	public void setPhashPoolSize(int poolSize) {
-	}
-
-	@Deprecated
-	private void setupProducer() {
 	}
 
 	public void ignoreImage(ImageRecord toIgnore) {

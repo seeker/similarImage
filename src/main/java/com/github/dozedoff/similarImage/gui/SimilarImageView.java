@@ -47,14 +47,13 @@ import javax.swing.event.ListSelectionListener;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
-import com.github.dozedoff.similarImage.io.ImageProducerObserver;
 import com.github.dozedoff.similarImage.io.Statistics.StatisticsEvent;
 import com.github.dozedoff.similarImage.io.StatisticsChangedListener;
 import com.github.dozedoff.similarImage.thread.GroupListPopulator;
 
 import net.miginfocom.swing.MigLayout;
 
-public class SimilarImageView implements ImageProducerObserver, StatisticsChangedListener {
+public class SimilarImageView implements StatisticsChangedListener {
 	private JFrame view;
 
 	private final SimilarImageController controller;
@@ -106,13 +105,6 @@ public class SimilarImageView implements ImageProducerObserver, StatisticsChange
 		status = new JLabel("Idle");
 		sortSimilar = new JButton("Sort similar");
 		sortFilter = new JButton("Sort filter");
-
-		JButton setPool = new JButton("Set pools");
-
-		final JTextField imPool = new JTextField(5);
-		imPool.setToolTipText("Image loader pool size");
-		final JTextField hPool = new JTextField(5);
-		hPool.setToolTipText("Hash worker pool size");
 
 		groupListModel = new DefaultListModel<Long>();
 		groups = new JList<Long>(groupListModel);
@@ -186,18 +178,6 @@ public class SimilarImageView implements ImageProducerObserver, StatisticsChange
 			}
 		});
 
-		setPool.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				int imp = Integer.parseInt(imPool.getText());
-				int hp = Integer.parseInt(hPool.getText());
-
-				controller.setImageLoaderPoolSize(imp);
-				controller.setPhashPoolSize(hp);
-			}
-		});
-
 		view.add(path);
 		view.add(find);
 		view.add(stop);
@@ -209,9 +189,6 @@ public class SimilarImageView implements ImageProducerObserver, StatisticsChange
 		view.add(groupScrollPane, "growy");
 		view.add(hammingDistance, "growx");
 		view.add(hammingValue);
-		view.add(setPool);
-		view.add(imPool);
-		view.add(hPool);
 	}
 
 	private long getSelectedGroup() {
@@ -352,17 +329,6 @@ public class SimilarImageView implements ImageProducerObserver, StatisticsChange
 			this.add(deleteAll);
 			this.add(dnwAll);
 		}
-	}
-
-	@Override
-	public void totalProgressChanged(int current, int total) {
-		progress.setMaximum(total);
-		progress.setValue(current);
-	}
-
-	@Override
-	public void bufferLevelChanged(int current) {
-		bufferLevel.setValue(current);
 	}
 
 	@Override
