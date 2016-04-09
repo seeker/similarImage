@@ -21,7 +21,7 @@ import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
 @DatabaseTable
-public class FilterRecord {
+public final class FilterRecord {
 	@DatabaseField(id = true, canBeNull = false)
 	private long pHash;
 	@DatabaseField(canBeNull = false)
@@ -56,14 +56,32 @@ public class FilterRecord {
 		this.reason = reason;
 	}
 
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (int) (pHash ^ (pHash >>> 32));
+		result = prime * result + ((reason == null) ? 0 : reason.hashCode());
+		return result;
+	}
+
 	@Override
 	public boolean equals(Object obj) {
-		if (!(obj instanceof FilterRecord)) {
+		if (this == obj)
+			return true;
+		if (obj == null)
 			return false;
-		}
-
-		FilterRecord fr = (FilterRecord) obj;
-
-		return (this.pHash == fr.pHash) && (this.reason.equals(fr.getReason()));
+		if (getClass() != obj.getClass())
+			return false;
+		FilterRecord other = (FilterRecord) obj;
+		if (pHash != other.pHash)
+			return false;
+		if (reason == null) {
+			if (other.reason != null)
+				return false;
+		} else if (!reason.equals(other.reason))
+			return false;
+		return true;
 	}
 }

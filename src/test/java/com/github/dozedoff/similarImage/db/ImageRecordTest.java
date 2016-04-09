@@ -23,6 +23,9 @@ import static org.junit.Assert.assertThat;
 import org.junit.Before;
 import org.junit.Test;
 
+import nl.jqno.equalsverifier.EqualsVerifier;
+import nl.jqno.equalsverifier.Warning;
+
 public class ImageRecordTest {
 	private ImageRecord imageRecord;
 
@@ -39,45 +42,6 @@ public class ImageRecordTest {
 	@Test
 	public void testGetpHash() throws Exception {
 		assertThat(imageRecord.getpHash(), is(42L));
-	}
-
-	@Test
-	public void testEqualsIsEqual() throws Exception {
-		ImageRecord other = new ImageRecord("foo", 42);
-		assertThat(imageRecord.equals(other), is(true));
-	}
-
-	@Test
-	public void testEqualsIsNotEqualPath() throws Exception {
-		ImageRecord other = new ImageRecord("bar", 42);
-		assertThat(imageRecord.equals(other), is(false));
-	}
-
-	@Test
-	public void testEqualsIsNotEqualHash() throws Exception {
-		ImageRecord other = new ImageRecord("foo", 7);
-		assertThat(imageRecord.equals(other), is(false));
-	}
-
-	@Test
-	public void testEqualsIsNotEqualHashAndPath() throws Exception {
-		ImageRecord other = new ImageRecord("bar", 7);
-		assertThat(imageRecord.equals(other), is(false));
-	}
-
-	@Test
-	public void testEqualsNull() throws Exception {
-		assertThat(imageRecord.equals(null), is(false));
-	}
-
-	@Test
-	public void testEqualsSelf() throws Exception {
-		assertThat(imageRecord.equals(imageRecord), is(true));
-	}
-
-	@Test
-	public void testEqualsWrongType() throws Exception {
-		assertThat(imageRecord.equals(new Integer(5)), is(false));
 	}
 
 	@Test
@@ -103,5 +67,10 @@ public class ImageRecordTest {
 	@Test
 	public void testCompareToEqual() throws Exception {
 		assertThat(imageRecord.compareTo(new ImageRecord("bar", 42)), is(0));
+	}
+
+	@Test
+	public void testEquals() throws Exception {
+		EqualsVerifier.forClass(ImageRecord.class).suppress(Warning.NONFINAL_FIELDS).verify();
 	}
 }

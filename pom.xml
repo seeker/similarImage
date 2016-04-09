@@ -164,5 +164,11 @@
 			<artifactId>bk-tree</artifactId>
 			<version>48de9bb37b</version>
 		</dependency>
+		<dependency>
+			<groupId>nl.jqno.equalsverifier</groupId>
+			<artifactId>equalsverifier</artifactId>
+			<version>1.7.5</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 </project>

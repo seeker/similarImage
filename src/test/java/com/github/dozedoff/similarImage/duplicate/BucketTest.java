@@ -29,6 +29,8 @@ import java.util.LinkedList;
 import org.junit.Before;
 import org.junit.Test;
 
+import nl.jqno.equalsverifier.EqualsVerifier;
+
 public class BucketTest {
 	private static final String GUARD_MSG = "Guard condition failed";
 	private Bucket<Integer, Integer> bucket;
@@ -153,5 +155,10 @@ public class BucketTest {
 		bucket = new Bucket<Integer, Integer>(1, entries);
 
 		assertThat(bucket.getBucket(), hasSize(3));
+	}
+
+	@Test
+	public void testEquals() {
+		EqualsVerifier.forClass(Bucket.class).verify();
 	}
 }
