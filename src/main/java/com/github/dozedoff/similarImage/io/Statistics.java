@@ -66,8 +66,9 @@ public class Statistics {
 
 	public void reset() {
 		foundFiles.set(0);
-		processedFiles.set(0);
 		failedFiles.set(0);
+		processedFiles.set(0);
+		skippedFiles.set(0);
 	}
 
 	public void addStatisticsListener(StatisticsChangedListener listener) {

@@ -21,14 +21,11 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
+import com.github.dozedoff.similarImage.io.StatisticsTest;
+
+//@formatter:off
 @RunWith(Suite.class)
-// @formatter:off
 @SuiteClasses({
-	DuplicateTests.class,
-	AppTests.class,
-	DbTests.class,
-	ThreadTests.class,
-	GuiTests.class,
-	IoTests.class
+		StatisticsTest.class
 })
-public class AllTestsSimilarImage {}
+public class IoTests {}
