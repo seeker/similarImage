@@ -1,4 +1,4 @@
-/*  Copyright (C) 2014  Nicholas Wright
+/*  Copyright (C) 2016  Nicholas Wright
     
     This file is part of similarImage - A similar image finder using pHash
     
@@ -17,8 +17,8 @@
  */
 package com.github.dozedoff.similarImage.io;
 
-public interface ImageProducerObserver {
-	public void totalProgressChanged(int current, int total);
+import com.github.dozedoff.similarImage.io.Statistics.StatisticsEvent;
 
-	public void bufferLevelChanged(int current);
+public interface StatisticsChangedListener {
+	public void statisticsChangedEvent(StatisticsEvent event, int newValue);
 }

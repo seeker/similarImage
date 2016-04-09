@@ -24,20 +24,18 @@ import org.junit.runners.Suite.SuiteClasses;
 import com.github.dozedoff.similarImage.thread.FilterSorterTest;
 import com.github.dozedoff.similarImage.thread.GroupListPopulatorTest;
 import com.github.dozedoff.similarImage.thread.ImageHashJobTest;
-import com.github.dozedoff.similarImage.thread.ImageIndexerTest;
-import com.github.dozedoff.similarImage.thread.ImageLoadJobTest;
 import com.github.dozedoff.similarImage.thread.ImageSorterTest;
+import com.github.dozedoff.similarImage.thread.ImageFindJobVisitorTest;
 import com.github.dozedoff.similarImage.thread.NamedThreadFactoryTest;
 
 //@formatter:off
 @RunWith(Suite.class)
 @SuiteClasses({
 	NamedThreadFactoryTest.class,
-	ImageHashJobTest.class,
 	GroupListPopulatorTest.class,
 	FilterSorterTest.class,
-	ImageIndexerTest.class,
-	ImageLoadJobTest.class,
-	ImageSorterTest.class
+	ImageHashJobTest.class,
+	ImageSorterTest.class,
+	ImageFindJobVisitorTest.class
 })
 public class ThreadTests {}

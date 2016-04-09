@@ -17,11 +17,17 @@
  */
 package com.github.dozedoff.similarImage.app;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.gui.SimilarImageController;
+import com.github.dozedoff.similarImage.io.Statistics;
+import com.github.dozedoff.similarImage.thread.NamedThreadFactory;
 
 public class SimilarImage {
 	private final static Logger logger = LoggerFactory.getLogger(SimilarImage.class);
@@ -29,6 +35,9 @@ public class SimilarImage {
 	private final String PROPERTIES_FILENAME = "similarImage.properties";
 
 	private Persistence persistence;
+	private ExecutorService threadPool;
+	private Statistics statistics;
+	ThreadPoolExecutor foo;
 
 	public static void main(String[] args) {
 		new SimilarImage().init();
@@ -44,9 +53,11 @@ public class SimilarImage {
 		logger.info("SimilarImage version " + version);
 		logger.info("System has {} processors", Runtime.getRuntime().availableProcessors());
 
+		threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new NamedThreadFactory(SimilarImage.class.getSimpleName()));
 		Settings settings = new Settings(new SettingsValidator());
 		settings.loadPropertiesFromFile(PROPERTIES_FILENAME);
 		persistence = new Persistence();
-		new SimilarImageController(persistence);
+		statistics = new Statistics();
+		new SimilarImageController(persistence, threadPool, statistics);
 	}
 }
