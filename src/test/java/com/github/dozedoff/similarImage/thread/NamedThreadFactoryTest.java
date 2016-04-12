@@ -19,31 +19,33 @@ package com.github.dozedoff.similarImage.thread;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
 
 import org.junit.Before;
 import org.junit.Test;
 
 public class NamedThreadFactoryTest {
 	private NamedThreadFactory ntf;
+	private Runnable runnableMock;
 
 	@Before
 	public void setUp() throws Exception {
 		ntf = new NamedThreadFactory("test");
+		runnableMock = mock(Runnable.class);
 	}
 
 	@Test
 	public void testNewThread() throws Exception {
-		Thread t = ntf.newThread(null);
+		Thread t = ntf.newThread(runnableMock);
 
 		assertThat(t.getName(), is("test thread 0"));
 	}
 
 	@Test
 	public void testNewThreadTwo() throws Exception {
-		ntf.newThread(null);
-		Thread t2 = ntf.newThread(null);
+		ntf.newThread(runnableMock);
+		Thread t2 = ntf.newThread(runnableMock);
 
 		assertThat(t2.getName(), is("test thread 1"));
 	}
-
 }

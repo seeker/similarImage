@@ -17,13 +17,13 @@
  */
 package com.github.dozedoff.similarImage.duplicate;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -133,14 +133,22 @@ public class DuplicateOperations {
 			return;
 		}
 
-		File dir = directory.toFile();
-		File files[] = dir.listFiles();
+		try {
+			int addCount = 0;
+			Iterator<Path> iter = Files.newDirectoryStream(directory).iterator();
 
-		for (File f : files) {
-			markAs(f.toPath(), reason);
+			while (iter.hasNext()) {
+				Path current = iter.next();
+				if (Files.isRegularFile(current)) {
+					markAs(current, reason);
+					addCount++;
+				}
+			}
+			
+			logger.info("Added {} images from {} to filter list", addCount, directory);
+		} catch (IOException e) {
+			logger.error("Failed to add images to filter list, {}", e);
 		}
-
-		logger.info("Added {} images from {} to filter list", files.length, directory);
 	}
 
 	private boolean isDirectory(Path directory) {

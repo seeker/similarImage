@@ -17,11 +17,15 @@
  */
 package com.github.dozedoff.similarImage.duplicate;
 
+import java.io.Serializable;
 import java.util.Comparator;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
 
-public class BucketComperator implements Comparator<Bucket<Long, ImageRecord>> {
+public class BucketComperator implements Comparator<Bucket<Long, ImageRecord>>, Serializable {
+	private static final long serialVersionUID = 5900233220884625603L;
+
+	// TODO null should be treated smaller as a record
 	@Override
 	public int compare(Bucket<Long, ImageRecord> o1, Bucket<Long, ImageRecord> o2) {
 		long l1 = o1.getId();

@@ -20,14 +20,9 @@ package com.github.dozedoff.similarImage.app;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-import org.junit.Before;
 import org.junit.Test;
 
 public class SettingsTest {
-	@Before
-	public void setup() {
-	}
-
 	@Test
 	public void testGetpHashWorkersDefaultValue() throws Exception {
 		int value = Settings.getInstance().getpHashWorkers();

@@ -53,7 +53,7 @@ public class PersistenceTest {
 		addBadFilesRecords();
 	}
 
-	private void createImageRecords() throws SQLException {
+	private void createImageRecords() {
 		imageRecords = new ArrayList<>(6);
 
 		imageRecords.add(new ImageRecord("foo", 0));

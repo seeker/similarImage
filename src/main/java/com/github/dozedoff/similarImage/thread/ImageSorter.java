@@ -72,6 +72,8 @@ public class ImageSorter extends Thread {
 		}
 
 		if (!path.equals(lastPath)) {
+			// TODO use tree cache instead of static field lastPath, see guava
+			// Cachebuilder
 			sorter.buildTree(dBrecords); // Force tree rebuild
 			lastPath = path;
 		}

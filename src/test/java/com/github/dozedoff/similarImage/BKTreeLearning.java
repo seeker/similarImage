@@ -32,7 +32,7 @@ public class BKTreeLearning {
 	static int last = -1;
 
 	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
+	public static void setUpBeforeClass() {
 		bkTree = new BKTree<Integer>(new Comparator<Integer>() {
 
 			@Override
