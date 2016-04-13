@@ -89,7 +89,7 @@
 				<version>3.0.1</version>
 				<configuration>
 					<effort>Max</effort>
-					<threshold>Low</threshold>
+					<threshold>Normal</threshold>
 					<xmlOutput>true</xmlOutput>
 					<includeTests>true</includeTests>
 					<failOnError>false</failOnError>
