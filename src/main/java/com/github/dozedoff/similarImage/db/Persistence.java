@@ -70,7 +70,7 @@ public class Persistence {
 			logger.info("Loaded database");
 		} catch (SQLException e) {
 			logger.error("Failed to setup database {}", dbPath, e);
-			System.exit(1);
+			throw new RuntimeException("Failed to setup database" + dbPath);
 		}
 	}
 

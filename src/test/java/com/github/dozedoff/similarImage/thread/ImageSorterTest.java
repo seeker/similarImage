@@ -53,7 +53,7 @@ public class ImageSorterTest {
 	private ImageSorter imageSorter;
 
 	private static final int DISTANCE = 2;
-	private static Path path;
+	private Path path;
 
 	@Before
 	public void setUp() throws Exception {
@@ -66,7 +66,8 @@ public class ImageSorterTest {
 
 	@Test
 	public void testRun() throws Exception {
-		imageSorter.run();
+		imageSorter.start();
+		imageSorter.join();
 
 		verify(persistence).filterByPath(path);
 		verify(sorter).buildTree(anyListOf(ImageRecord.class));
@@ -79,7 +80,8 @@ public class ImageSorterTest {
 	public void testRunDistanceZero() throws Exception {
 		imageSorter = new ImageSorter(0, path.toString(), gui, sorter, persistence);
 
-		imageSorter.run();
+		imageSorter.start();
+		imageSorter.join();
 
 		verify(persistence).filterByPath(path);
 		verify(sorter).buildTree(anyListOf(ImageRecord.class));
@@ -92,7 +94,8 @@ public class ImageSorterTest {
 	public void testRunNullPath() throws Exception {
 		imageSorter = new ImageSorter(DISTANCE, null, gui, sorter, persistence);
 
-		imageSorter.run();
+		imageSorter.start();
+		imageSorter.join();
 
 		verify(persistence).getAllRecords();
 		verify(sorter).buildTree(anyListOf(ImageRecord.class));
@@ -105,7 +108,8 @@ public class ImageSorterTest {
 	public void testRunEmptyPath() throws Exception {
 		imageSorter = new ImageSorter(DISTANCE, "", gui, sorter, persistence);
 
-		imageSorter.run();
+		imageSorter.start();
+		imageSorter.join();
 
 		verify(persistence).getAllRecords();
 		verify(sorter).buildTree(anyListOf(ImageRecord.class));
@@ -119,7 +123,8 @@ public class ImageSorterTest {
 		when(persistence.getAllRecords()).thenThrow(new SQLException("This is a test"));
 		imageSorter = new ImageSorter(DISTANCE, "", gui, sorter, persistence);
 
-		imageSorter.run();
+		imageSorter.start();
+		imageSorter.join();
 
 		verify(persistence).getAllRecords();
 		verify(sorter).buildTree(anyListOf(ImageRecord.class));
@@ -131,12 +136,14 @@ public class ImageSorterTest {
 	@Test
 	public void testReRunSamePath() throws Exception {
 		imageSorter = new ImageSorter(DISTANCE, "", gui, sorter, persistence);
-		imageSorter.run();
+		imageSorter.start();
+		imageSorter.join();
 
 		setUp();
 
 		imageSorter = new ImageSorter(DISTANCE, "", gui, sorter, persistence);
-		imageSorter.run();
+		imageSorter.start();
+		imageSorter.join();
 
 		verify(sorter, never()).buildTree(anyListOf(ImageRecord.class));
 	}

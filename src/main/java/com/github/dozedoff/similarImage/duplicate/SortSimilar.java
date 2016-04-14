@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -181,10 +182,13 @@ public class SortSimilar {
 		int startSize = sorted.size();
 		LinkedList<Long> toRemove = new LinkedList<>();
 
-		for (Long id : sorted.keySet()) {
+		for (Entry<Long, Set<Bucket<Long, ImageRecord>>> entries : sorted.entrySet()) {
 			int total = 0;
 
-			for (Bucket<Long, ImageRecord> b : sorted.get(id)) {
+			long id = entries.getKey();
+			Set<Bucket<Long, ImageRecord>> sets = entries.getValue();
+
+			for (Bucket<Long, ImageRecord> b : sets) {
 				total += b.getSize();
 			}
 

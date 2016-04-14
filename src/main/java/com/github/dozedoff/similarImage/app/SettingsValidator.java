@@ -19,10 +19,9 @@ package com.github.dozedoff.similarImage.app;
 
 import com.github.dozedoff.commonj.settings.AbstractSettings;
 import com.github.dozedoff.commonj.settings.AbstractSettingsValidator;
-import com.github.dozedoff.commonj.settings.ISettingsValidator;
 import com.github.dozedoff.similarImage.app.Settings.Parameters;
 
-public class SettingsValidator extends AbstractSettingsValidator implements ISettingsValidator {
+public class SettingsValidator extends AbstractSettingsValidator {
 	@Override
 	public boolean validate(AbstractSettings settings) {
 		if (!(settings instanceof Settings)) {

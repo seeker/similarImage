@@ -21,7 +21,7 @@ import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
 @DatabaseTable
-public class ImageRecord implements Comparable<ImageRecord> {
+public final class ImageRecord implements Comparable<ImageRecord> {
 	@DatabaseField(id = true, canBeNull = false)
 	String path;
 	@DatabaseField(canBeNull = false)
@@ -48,22 +48,31 @@ public class ImageRecord implements Comparable<ImageRecord> {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (!(obj instanceof ImageRecord)) {
-			return false;
-		}
-
-		ImageRecord toComapre = (ImageRecord) obj;
-
-		if ((this.pHash == toComapre.getpHash()) && samePath(toComapre)) {
-			return true;
-		} else {
-			return false;
-		}
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (int) (pHash ^ (pHash >>> 32));
+		result = prime * result + ((path == null) ? 0 : path.hashCode());
+		return result;
 	}
 
-	private boolean samePath(ImageRecord rec) {
-		return this.getPath().equals(rec.getPath());
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		ImageRecord other = (ImageRecord) obj;
+		if (pHash != other.pHash)
+			return false;
+		if (path == null) {
+			if (other.path != null)
+				return false;
+		} else if (!path.equals(other.path))
+			return false;
+		return true;
 	}
 
 	@Override

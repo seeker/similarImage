@@ -19,7 +19,6 @@ package com.github.dozedoff.similarImage.app;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +36,6 @@ public class SimilarImage {
 	private Persistence persistence;
 	private ExecutorService threadPool;
 	private Statistics statistics;
-	ThreadPoolExecutor foo;
 
 	public static void main(String[] args) {
 		new SimilarImage().init();

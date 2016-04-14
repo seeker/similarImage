@@ -17,11 +17,15 @@
  */
 package com.github.dozedoff.similarImage.duplicate;
 
+import java.io.Serializable;
 import java.util.Comparator;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
 
-public class ImageRecordComperator implements Comparator<ImageRecord> {
+public class ImageRecordComperator implements Comparator<ImageRecord>, Serializable {
+	private static final long serialVersionUID = -407477449233333356L;
+
+	// TODO null should be treated smaller as a record
 	@Override
 	public int compare(ImageRecord o1, ImageRecord o2) {
 		long l1 = o1.getpHash();

@@ -13,6 +13,7 @@ import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.concurrent.ExecutorService;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -48,6 +49,11 @@ public class ImageFindJobVisitorTest {
 	public void setUp() throws Exception {
 		createLoadJobVisitor();
 		testPath = Paths.get("fooBar");
+	}
+
+	@After
+	public void tearDown() {
+		threadPool.shutdown();
 	}
 
 	@Test

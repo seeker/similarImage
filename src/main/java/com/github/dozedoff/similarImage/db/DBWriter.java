@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.util.Pair;
 
-public class DBWriter {
+public final class DBWriter {
 	private final static Logger logger = LoggerFactory.getLogger(DBWriter.class);
 
 	private final int MAX_RETRY = 3;
@@ -42,7 +42,10 @@ public class DBWriter {
 	}
 
 	public void add(List<ImageRecord> records) {
-		pendingWrites.offer(new Pair<List<ImageRecord>, Integer>(records, 0));
+		if(!pendingWrites.offer(new Pair<List<ImageRecord>, Integer>(records, 0))){
+			logger.error("Failed to re-add list with {} entries", records.size());
+		}
+		
 		logger.debug("Adding list with {} entries to queue", records.size());
 	}
 
@@ -90,7 +93,10 @@ public class DBWriter {
 			} else {
 				retryCount++;
 				logger.warn("Re-adding failed list with {} entries to queue, {} attempt", records.size(), retryCount);
-				pendingWrites.offer(new Pair<List<ImageRecord>, Integer>(records, retryCount));
+
+				if (!pendingWrites.offer(new Pair<List<ImageRecord>, Integer>(records, retryCount))) {
+					logger.error("Failed to re-add list with {} entries", records.size());
+				}
 			}
 		}
 	}

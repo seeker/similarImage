@@ -28,13 +28,13 @@ public class Settings extends AbstractSettings {
 		phash_workers, data_loaders, data_loader_priority, thumbnail_dimension, loader_out_queue_size, hide_ignored_images
 	}
 
-	private final int DEFAULT_PHASH_WORKERS = 2;
-	private final int DEFAULT_DATA_LOADERS = 1;
-	private final int DATA_LOADER_PRIORITY = 2;
+	private static final int DEFAULT_PHASH_WORKERS = 2;
+	private static final int DEFAULT_DATA_LOADERS = 1;
+	private static final int DATA_LOADER_PRIORITY = 2;
 
-	private final int THUMBNAIL_DIMENSION = 500;
-	private final int LOADER_OUT_QUEUE_SIZE = 400;
-	private final boolean HIDE_IGNORED_IMAGES = true;
+	private static final int THUMBNAIL_DIMENSION = 500;
+	private static final int LOADER_OUT_QUEUE_SIZE = 400;
+	private static final boolean HIDE_IGNORED_IMAGES = true;
 
 	private Settings() {
 		super(new SettingsValidator());

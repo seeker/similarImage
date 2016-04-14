@@ -23,6 +23,9 @@ import static org.junit.Assert.assertThat;
 import org.junit.Before;
 import org.junit.Test;
 
+import nl.jqno.equalsverifier.EqualsVerifier;
+import nl.jqno.equalsverifier.Warning;
+
 public class FilterRecordTest {
 	private static final String GUARD_MSG = "Guard condition failed";
 	private FilterRecord filterRecord;
@@ -67,35 +70,7 @@ public class FilterRecordTest {
 	}
 
 	@Test
-	public void testEqualsIsNotEqualReason() throws Exception {
-		FilterRecord other = new FilterRecord(42, "marvin");
-		assertThat(filterRecord.equals(other), is(false));
-	}
-
-	@Test
-	public void testEqualsIsNotEqualHash() throws Exception {
-		FilterRecord other = new FilterRecord(2, "dontPanic");
-		assertThat(filterRecord.equals(other), is(false));
-	}
-
-	@Test
-	public void testEqualsIsNotEqualHashAndPath() throws Exception {
-		FilterRecord other = new FilterRecord(2, "marvin");
-		assertThat(filterRecord.equals(other), is(false));
-	}
-
-	@Test
-	public void testEqualsNull() throws Exception {
-		assertThat(filterRecord.equals(null), is(false));
-	}
-
-	@Test
-	public void testEqualsSelf() throws Exception {
-		assertThat(filterRecord.equals(filterRecord), is(true));
-	}
-
-	@Test
-	public void testEqualsWrongType() throws Exception {
-		assertThat(filterRecord.equals(new Integer(5)), is(false));
+	public void testEquals() throws Exception {
+		EqualsVerifier.forClass(FilterRecord.class).suppress(Warning.NONFINAL_FIELDS).verify();
 	}
 }

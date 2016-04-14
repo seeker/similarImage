@@ -32,7 +32,7 @@ public class CompareHammingDistanceTest {
 	private static CompareHammingDistance chd;
 
 	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
+	public static void setUpBeforeClass() {
 		a = new Bucket<>(2L);
 		b = new Bucket<>(3L);
 		c = new Bucket<>(2L);

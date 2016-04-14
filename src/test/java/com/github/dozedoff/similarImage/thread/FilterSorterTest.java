@@ -43,6 +43,8 @@ import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.SortSimilar;
 import com.github.dozedoff.similarImage.gui.SimilarImageView;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 @RunWith(MockitoJUnitRunner.class)
 public class FilterSorterTest {
 	@Mock
@@ -55,7 +57,7 @@ public class FilterSorterTest {
 	private SortSimilar sorter;
 
 	private List<ImageRecord> records;
-	private FilterSorter filterSorter;
+	private FilterSorter filterSorter ;
 
 	private static final String ERROR_MSG = "This is a test";
 
@@ -79,7 +81,8 @@ public class FilterSorterTest {
 
 	@Test
 	public void testRunWithReason() throws Exception {
-		filterSorter.run();
+		filterSorter.start();
+		filterSorter.join();
 
 		InOrder inOrder = Mockito.inOrder(gui, persistence, sorter);
 
@@ -97,7 +100,8 @@ public class FilterSorterTest {
 		String reason = "";
 		filterSorter = new FilterSorter(2, reason, gui, sorter, persistence);
 
-		filterSorter.run();
+		filterSorter.start();
+		filterSorter.join();
 
 		InOrder inOrder = Mockito.inOrder(gui, persistence, sorter);
 
@@ -111,11 +115,16 @@ public class FilterSorterTest {
 	}
 
 	@Test
+	@SuppressFBWarnings(value = "NP_LOAD_OF_KNOWN_NULL_VALUE", justification = "Null as reason is a valid parameter")
 	public void testRunWithNullReason() throws Exception {
 		String reason = null;
 		filterSorter = new FilterSorter(2, reason, gui, sorter, persistence);
 
-		filterSorter.run();
+		// TODO create constructor FilterSorter(int hammingDistance,
+		// SimilarImageView gui, SortSimilar sorter, Persistence persistence)
+
+		filterSorter.start();
+		filterSorter.join();
 
 		InOrder inOrder = Mockito.inOrder(gui, persistence, sorter);
 
@@ -133,7 +142,8 @@ public class FilterSorterTest {
 		String reason = "*";
 		filterSorter = new FilterSorter(2, reason, gui, sorter, persistence);
 
-		filterSorter.run();
+		filterSorter.start();
+		filterSorter.join();
 
 		InOrder inOrder = Mockito.inOrder(gui, persistence, sorter);
 
@@ -154,7 +164,8 @@ public class FilterSorterTest {
 
 		filterSorter = new FilterSorter(2, reason, gui, sorter, persistence);
 
-		filterSorter.run();
+		filterSorter.start();
+		filterSorter.join();
 
 		InOrder inOrder = Mockito.inOrder(gui, persistence, sorter);
 
@@ -175,7 +186,8 @@ public class FilterSorterTest {
 
 		filterSorter = new FilterSorter(2, reason, gui, sorter, persistence);
 
-		filterSorter.run();
+		filterSorter.start();
+		filterSorter.join();
 
 		InOrder inOrder = Mockito.inOrder(gui, persistence, sorter);
 

@@ -35,10 +35,10 @@ public class DBWriterTest {
 	private Persistence persistence;
 	private DBWriter dBWriter;
 
-	private final int oneSize = 10;
-	private final int twoSize = 30;
+	private static final int oneSize = 10;
+	private static final int twoSize = 30;
 
-	private final long SLEEP_TIME = 100L;
+	private static final long SLEEP_TIME = 100L;
 
 	private LinkedList<ImageRecord> one, two;
 
