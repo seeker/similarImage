@@ -18,6 +18,7 @@
 package com.github.dozedoff.similarImage.duplicate;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -25,6 +26,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
 
 public abstract class DuplicateUtil {
 	private static final Logger logger = LoggerFactory.getLogger(DuplicateUtil.class);
@@ -32,6 +35,10 @@ public abstract class DuplicateUtil {
 	private static final ImageRecordComperator irc = new ImageRecordComperator();
 	private static final BucketComperator bucketComperator = new BucketComperator();
 
+	/**
+	 * Use {@link DuplicateUtil#groupByHash(Collection)} instead.
+	 */
+	@Deprecated
 	public static ArrayList<Bucket<Long, ImageRecord>> sortIntoBuckets(List<ImageRecord> dbRecords) {
 		ArrayList<ImageRecord> dbRecords2 = new ArrayList<>(dbRecords);
 		ArrayList<Bucket<Long, ImageRecord>> buckets = new ArrayList<>(dbRecords.size());
@@ -57,5 +64,26 @@ public abstract class DuplicateUtil {
 		buckets.trimToSize();
 
 		return buckets;
+	}
+
+	/**
+	 * Group records by hash using a one to many map.
+	 * 
+	 * @param dbRecords
+	 *            records to sort.
+	 * @return a one to many map with the hash vales as the key.
+	 */
+	public static Multimap<Long, ImageRecord> groupByHash(Collection<ImageRecord> dbRecords) {
+		Multimap<Long, ImageRecord> groupedByHash = MultimapBuilder.hashKeys().hashSetValues().build();
+
+		logger.info("Grouping records by hash...");
+
+		for (ImageRecord ir : dbRecords) {
+			groupedByHash.put(ir.getpHash(), ir);
+		}
+
+		logger.info("{} records, in {} groups", dbRecords.size(), groupedByHash.keySet().size());
+
+		return groupedByHash;
 	}
 }

@@ -30,7 +30,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
+import com.google.common.collect.Multimap;
 
+@SuppressWarnings("deprecation")
 public class DuplicateUtilTest {
 	private static final int NUM_OF_RECORDS = 10;
 	private LinkedList<ImageRecord> records;
@@ -40,16 +42,16 @@ public class DuplicateUtilTest {
 		records = new LinkedList<>();
 
 		for (int i = 0; i < NUM_OF_RECORDS; i++) {
-			createRecordWithHash(i);
+			createRecordWithHash(i, i);
 		}
 
 		records.add(new ImageRecord("foo", 2));
-		createRecordWithHash(5);
-		createRecordWithHash(5);
+		createRecordWithHash(5, 42);
+		createRecordWithHash(5, 43);
 	}
 
-	private void createRecordWithHash(long pHash) {
-		records.add(new ImageRecord("", pHash));
+	private void createRecordWithHash(long pHash, int sequenceNumber) {
+		records.add(new ImageRecord(Integer.toString(sequenceNumber), pHash));
 	}
 
 	@Test
@@ -94,4 +96,15 @@ public class DuplicateUtilTest {
 		assertThat(bucket.getSize(), is(3));
 	}
 
+	@Test
+	public void testGroupByHashNumberOfGroups() throws Exception {
+		Multimap<Long, ImageRecord> group = DuplicateUtil.groupByHash(records);
+		assertThat(group.keySet().size(), is(10));
+	}
+
+	@Test
+	public void testGroupByHashSizeOfGroup() throws Exception {
+		Multimap<Long, ImageRecord> group = DuplicateUtil.groupByHash(records);
+		assertThat(group.get(5L).size(), is(3));
+	}
 }
