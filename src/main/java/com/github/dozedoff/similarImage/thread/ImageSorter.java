@@ -71,12 +71,7 @@ public class ImageSorter extends Thread {
 			logger.warn("Failed to load records - {}", e.getMessage());
 		}
 
-		if (!path.equals(lastPath)) {
-			// TODO use tree cache instead of static field lastPath, see guava
-			// Cachebuilder
-			sorter.buildTree(dBrecords); // Force tree rebuild
-			lastPath = path;
-		}
+		sorter.buildTree(dBrecords);
 
 		if (hammingDistance == 0) {
 			sorter.sortExactMatch(dBrecords);

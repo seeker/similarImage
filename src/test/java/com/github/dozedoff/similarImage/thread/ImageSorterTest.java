@@ -19,7 +19,6 @@ package com.github.dozedoff.similarImage.thread;
 
 import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -131,20 +130,5 @@ public class ImageSorterTest {
 		verify(sorter).sortHammingDistance(eq(DISTANCE), anyListOf(ImageRecord.class));
 		verify(sorter).removeSingleImageGroups();
 		verify(gui).populateGroupList(anyListOf(Long.class));
-	}
-
-	@Test
-	public void testReRunSamePath() throws Exception {
-		imageSorter = new ImageSorter(DISTANCE, "", gui, sorter, persistence);
-		imageSorter.start();
-		imageSorter.join();
-
-		setUp();
-
-		imageSorter = new ImageSorter(DISTANCE, "", gui, sorter, persistence);
-		imageSorter.start();
-		imageSorter.join();
-
-		verify(sorter, never()).buildTree(anyListOf(ImageRecord.class));
 	}
 }

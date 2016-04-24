@@ -19,9 +19,6 @@ package com.github.dozedoff.similarImage.duplicate;
 
 import java.math.BigInteger;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -31,7 +28,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
-import org.everpeace.search.BKTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,12 +39,13 @@ public class SortSimilar {
 	private static final Logger logger = LoggerFactory.getLogger(SortSimilar.class);
 	private final Persistence persistence;
 
+	@Deprecated
 	HashMap<Long, Set<Bucket<Long, ImageRecord>>> sorted = new HashMap<Long, Set<Bucket<Long, ImageRecord>>>();
 	LinkedList<ImageRecord> ignoredImages = new LinkedList<ImageRecord>();
 
-	private BKTree<Bucket<Long, ImageRecord>> bkTree;
 	private boolean isTreeValid = false;
-	private ArrayList<Bucket<Long, ImageRecord>> buckets;
+	@Deprecated
+	private RecordSearch searcher;
 
 	public SortSimilar(Persistence persistence) {
 		this.persistence = persistence;
@@ -58,9 +55,7 @@ public class SortSimilar {
 		// logger.info("Removing ignored images...");
 		// dbRecords.removeAll(ignoredImages); //TODO replace this with db call
 
-		buckets = DuplicateUtil.sortIntoBuckets(dBrecords);
-		logger.info("Building BK-Tree from {} buckets", buckets.size());
-		bkTree = BKTree.build(buckets, new CompareHammingDistance());
+		searcher = new RecordSearch(dBrecords);
 	}
 
 	private void checkTree(List<ImageRecord> dBrecords) {
@@ -70,8 +65,9 @@ public class SortSimilar {
 		}
 	}
 
+	@Deprecated
 	public Set<Bucket<Long, ImageRecord>> searchTree(long pHash, long hammingDistance) {
-		return bkTree.searchWithin(new Bucket<Long, ImageRecord>(pHash), (double) hammingDistance);
+		return searcher.searchTreeLegacy(pHash, hammingDistance);
 	}
 
 	public void sortHammingDistance(int hammingDistance, List<ImageRecord> dBrecords) {
@@ -121,17 +117,13 @@ public class SortSimilar {
 
 		try {
 			filters = persistence.getAllFilters(reason);
-			Comparator<Bucket<Long, ImageRecord>> comp = new BucketComperator();
 
 			for (FilterRecord filter : filters) {
 				long pHash = filter.getpHash();
+				Set<Bucket<Long, ImageRecord>> result = searcher.searchTreeLegacy(pHash, hammingDistance);
 
-				int index = Collections.binarySearch(buckets, new Bucket<Long, ImageRecord>(pHash), comp);
-
-				if (index >= 0) {
-					Set<Bucket<Long, ImageRecord>> set = new HashSet<>();
-					set.add(buckets.get(index));
-					sorted.put(pHash, set);
+				if (!result.isEmpty()) {
+					sorted.put(pHash, searcher.searchTreeLegacy(pHash, hammingDistance));
 				}
 			}
 		} catch (SQLException e) {
@@ -153,19 +145,9 @@ public class SortSimilar {
 
 	public void sortExactMatch(List<ImageRecord> dbRecords) {
 		clear();
-		checkTree(dbRecords);
 
-		logger.info("Checking {} buckets for size greater than 1", buckets.size());
-
-		for (Bucket<Long, ImageRecord> b : buckets) {
-			if (b.getSize() > 1) {
-				Set<Bucket<Long, ImageRecord>> set = new HashSet<>();
-				set.add(b);
-				sorted.put(b.getId(), set);
-			}
-		}
-
-		logger.info("Found {} buckets with more than 1 image", sorted.size());
+		RecordSearch rs = new RecordSearch(dbRecords);
+		sorted = rs.sortExactMatchLegacy();
 	}
 
 	public LinkedList<Long> getDuplicateGroups() {
