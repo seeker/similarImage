@@ -1,8 +1,10 @@
 package com.github.dozedoff.similarImage.duplicate;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -90,6 +92,16 @@ public class RecordSearch {
 		}
 
 		return buckets;
+	}
+
+	/**
+	 * Return all groups with exact matches and more than one image per match.
+	 * 
+	 * @return distinct list of matches
+	 */
+	public List<Long> sortExactMatch() {
+		Multimap<Long, ImageRecord> multiImage = removeSingleImageGroups(groups);
+		return new ArrayList<>(multiImage.keySet());
 	}
 
 	@Deprecated

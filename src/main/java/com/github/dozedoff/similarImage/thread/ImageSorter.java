@@ -19,6 +19,7 @@ package com.github.dozedoff.similarImage.thread;
 
 import java.nio.file.Paths;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -27,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.duplicate.RecordSearch;
 import com.github.dozedoff.similarImage.duplicate.SortSimilar;
 import com.github.dozedoff.similarImage.gui.SimilarImageView;
 
@@ -36,6 +38,7 @@ public class ImageSorter extends Thread {
 	private int hammingDistance = 0;
 	private String path;
 	private SimilarImageView gui;
+	@Deprecated // dont use sort similar, use RecordSearch instead
 	private SortSimilar sorter;
 	private Persistence persistence;
 	private static String lastPath;
@@ -53,7 +56,6 @@ public class ImageSorter extends Thread {
 	public void run() {
 		List<ImageRecord> dBrecords = new LinkedList<ImageRecord>();
 
-		sorter.clear();
 		gui.setStatus("Sorting...");
 
 		if (path == null) {
@@ -62,6 +64,7 @@ public class ImageSorter extends Thread {
 
 		try {
 			if (path.equals("null") || path.isEmpty()) {
+				logger.info("Loading all records");
 				dBrecords = persistence.getAllRecords();
 			} else {
 				logger.info("Loading records for path {}", path);
@@ -71,18 +74,20 @@ public class ImageSorter extends Thread {
 			logger.warn("Failed to load records - {}", e.getMessage());
 		}
 
-		sorter.buildTree(dBrecords);
+		RecordSearch rs = new RecordSearch(dBrecords);
+
+		List<Long> groups = Collections.emptyList();
 
 		if (hammingDistance == 0) {
-			sorter.sortExactMatch(dBrecords);
+			groups = rs.sortExactMatch();
 		} else {
+			// TODO add method in RecordSearch
 			sorter.sortHammingDistance(hammingDistance, dBrecords);
 		}
 
 		sorter.removeSingleImageGroups();
-		gui.setStatus("" + sorter.getNumberOfGroups() + " Groups");
+		gui.setStatus("" + groups.size() + " Groups");
 
-		List<Long> groups = sorter.getDuplicateGroups();
 		gui.populateGroupList(groups);
 	}
 }

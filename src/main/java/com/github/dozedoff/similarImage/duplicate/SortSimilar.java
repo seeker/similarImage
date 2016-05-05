@@ -51,6 +51,7 @@ public class SortSimilar {
 		this.persistence = persistence;
 	}
 
+	@Deprecated
 	public void buildTree(List<ImageRecord> dBrecords) {
 		// logger.info("Removing ignored images...");
 		// dbRecords.removeAll(ignoredImages); //TODO replace this with db call
@@ -58,6 +59,7 @@ public class SortSimilar {
 		searcher = new RecordSearch(dBrecords);
 	}
 
+	@Deprecated
 	private void checkTree(List<ImageRecord> dBrecords) {
 		if (!isTreeValid) {
 			buildTree(dBrecords);
@@ -150,6 +152,7 @@ public class SortSimilar {
 		sorted = rs.sortExactMatchLegacy();
 	}
 
+	@Deprecated
 	public LinkedList<Long> getDuplicateGroups() {
 		Set<Long> keys = sorted.keySet();
 		LinkedList<Long> duplicateGroups = new LinkedList<Long>();
@@ -264,14 +267,17 @@ public class SortSimilar {
 		}
 	}
 
+	@Deprecated
 	public int getNumberOfGroups() {
 		return sorted.size();
 	}
 
+	@Deprecated
 	public boolean isEmpty() {
 		return sorted.isEmpty();
 	}
 
+	@Deprecated
 	public void clear() {
 		sorted.clear();
 	}
