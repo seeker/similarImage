@@ -108,18 +108,26 @@ public class RecordSearch {
 	public HashMap<Long, Set<Bucket<Long, ImageRecord>>> sortExactMatchLegacy() {
 		List<Long> keys = exactMatch();
 
-		HashMap<Long, Set<Bucket<Long, ImageRecord>>> exactMatches = new HashMap<>();
+		HashMap<Long, Set<Bucket<Long, ImageRecord>>> exactMatches;
 
 		logger.info("Checking {} groups for size greater than 1", numberOfHashes());
 
-		for (Long key : keys) {
-			Set<Bucket<Long, ImageRecord>> set = new HashSet<>();
-			set.add(new Bucket<Long, ImageRecord>(key, groups.get(key)));
-			exactMatches.put(key, set);
-		}
+		exactMatches = longToLegacyBucket(keys);
 
 		logger.info("Found {} groups with more than 1 image", numberOfHashes() - keys.size());
 
 		return exactMatches;
+	}
+
+	private HashMap<Long, Set<Bucket<Long, ImageRecord>>> longToLegacyBucket(List<Long> hashes) {
+		HashMap<Long, Set<Bucket<Long, ImageRecord>>> buckets = new HashMap<>();
+
+		for (Long key : hashes) {
+			Set<Bucket<Long, ImageRecord>> set = new HashSet<>();
+			set.add(new Bucket<Long, ImageRecord>(key, groups.get(key)));
+			buckets.put(key, set);
+		}
+
+		return buckets;
 	}
 }
