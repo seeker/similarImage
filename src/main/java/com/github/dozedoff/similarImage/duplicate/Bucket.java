@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
+@Deprecated
 public final class Bucket<I, T> {
 	private final I id;
 	private final LinkedList<T> bucket = new LinkedList<T>();
