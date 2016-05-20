@@ -87,7 +87,7 @@ public class SortSimilarTest {
 	public void testSortHammingDistance() {
 		sort.sortHammingDistance(1, testRecords);
 
-		assertThat(sort.getNumberOfGroups(), is(3));
+		assertThat(sort.getNumberOfGroups(), is(4));
 	}
 
 	@Test

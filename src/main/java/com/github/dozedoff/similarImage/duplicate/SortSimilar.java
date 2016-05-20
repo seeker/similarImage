@@ -73,19 +73,9 @@ public class SortSimilar {
 	}
 
 	public void sortHammingDistance(int hammingDistance, List<ImageRecord> dBrecords) {
-		clear();
-		checkTree(dBrecords);
-
-		for (ImageRecord ir : dBrecords) {
-			long pHash = ir.getpHash();
-
-			if (sorted.containsKey(pHash)) {
-				return; // prevent duplicates
-			}
-
-			Set<Bucket<Long, ImageRecord>> similar = searchTree(pHash, hammingDistance);
-			sorted.put(pHash, similar);
-		}
+		RecordSearch rs = new RecordSearch(dBrecords);
+		sorted.clear();
+		sorted.putAll(rs.sortHammingDistanceLegacy(hammingDistance));
 	}
 
 	public void sortFilter(int hammingDistance, String reason, List<ImageRecord> dBrecords, List<FilterRecord> filter) {
