@@ -99,7 +99,7 @@ public class RecordSearch {
 	 * 
 	 * @return distinct list of matches
 	 */
-	public List<Long> sortExactMatch() {
+	public List<Long> exactMatch() {
 		Multimap<Long, ImageRecord> multiImage = removeSingleImageGroups(groups);
 		return new ArrayList<>(multiImage.keySet());
 	}

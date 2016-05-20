@@ -79,7 +79,7 @@ public class ImageSorter extends Thread {
 		List<Long> groups = Collections.emptyList();
 
 		if (hammingDistance == 0) {
-			groups = rs.sortExactMatch();
+			groups = rs.exactMatch();
 		} else {
 			// TODO add method in RecordSearch
 			sorter.sortHammingDistance(hammingDistance, dBrecords);
