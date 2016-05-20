@@ -130,4 +130,31 @@ public class RecordSearch {
 
 		return buckets;
 	}
+
+	/**
+	 * For every hash, find the matches within the distance and add them to the
+	 * set. Only return matches with more than one image.
+	 * 
+	 * @param hammingDistance
+	 *            search for hashes up to and including this distance
+	 * @return a set of matches with more than one image
+	 */
+	public List<Long> distanceMatch(long hammingDistance) {
+		Set<Long> keySet = removeSingleImageGroups(groups).keySet();
+		Set<Long> resultSet = new HashSet<Long>();
+
+		for (Long key : keySet) {
+			resultSet.addAll(bkTree.searchWithin(key, (double) hammingDistance));
+		}
+
+		return new ArrayList<>(resultSet);
+	}
+
+	/**
+	 * For backwards compatibility, migration.
+	 */
+	@Deprecated
+	public HashMap<Long, Set<Bucket<Long, ImageRecord>>> sortHammingDistanceLegacy(long hammingDistance) {
+		return longToLegacyBucket(distanceMatch(hammingDistance));
+	}
 }

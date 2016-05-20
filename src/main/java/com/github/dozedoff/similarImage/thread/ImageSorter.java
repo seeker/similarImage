@@ -81,8 +81,7 @@ public class ImageSorter extends Thread {
 		if (hammingDistance == 0) {
 			groups = rs.exactMatch();
 		} else {
-			// TODO add method in RecordSearch
-			sorter.sortHammingDistance(hammingDistance, dBrecords);
+			groups = rs.distanceMatch(hammingDistance);
 		}
 
 		sorter.removeSingleImageGroups();
