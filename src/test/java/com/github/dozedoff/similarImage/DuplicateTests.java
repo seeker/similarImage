@@ -29,6 +29,7 @@ import com.github.dozedoff.similarImage.duplicate.DuplicateOperationsTest;
 import com.github.dozedoff.similarImage.duplicate.DuplicateUtilTest;
 import com.github.dozedoff.similarImage.duplicate.ImageInfoTest;
 import com.github.dozedoff.similarImage.duplicate.ImageRecordComperatorTest;
+import com.github.dozedoff.similarImage.duplicate.RecordSearchTest;
 import com.github.dozedoff.similarImage.duplicate.SortSimilarTest;
 
 //@formatter:off
@@ -42,6 +43,6 @@ import com.github.dozedoff.similarImage.duplicate.SortSimilarTest;
 	ImageInfoTest.class,
 	BucketComperatorTest.class,
 	DuplicateUtilTest.class,
-	ImageRecordComperatorTest.class
+		ImageRecordComperatorTest.class, RecordSearchTest.class
 })
 public class DuplicateTests {}
