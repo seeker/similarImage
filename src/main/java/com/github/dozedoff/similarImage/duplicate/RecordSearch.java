@@ -63,7 +63,7 @@ public class RecordSearch {
 	 * 
 	 * @return new map containing only multi-image groups.
 	 */
-	private Multimap<Long, ImageRecord> removeSingleImageGroups(Multimap<Long, ImageRecord> sourceGroups) {
+	public Multimap<Long, ImageRecord> removeSingleImageGroups(Multimap<Long, ImageRecord> sourceGroups) {
 		Multimap<Long, ImageRecord> multiImageGroups = MultimapBuilder.hashKeys().hashSetValues().build();
 
 		for (Entry<Long, Collection<ImageRecord>> group : sourceGroups.asMap().entrySet()) {
