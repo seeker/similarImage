@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import org.everpeace.search.BKTree;
@@ -15,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.MultimapBuilder;
 
 /**
  * Builds the necessary data structures from the supplied data to allow queries
@@ -59,20 +57,12 @@ public class RecordSearch {
 	}
 
 	/**
-	 * Create a map that only contains groups with more than one image.
-	 * 
-	 * @return new map containing only multi-image groups.
+	 * @deprecated Use {@link DuplicateUtil#removeSingleImageGroups(Multimap)}
+	 *             instead.
 	 */
 	public Multimap<Long, ImageRecord> removeSingleImageGroups(Multimap<Long, ImageRecord> sourceGroups) {
-		Multimap<Long, ImageRecord> multiImageGroups = MultimapBuilder.hashKeys().hashSetValues().build();
-
-		for (Entry<Long, Collection<ImageRecord>> group : sourceGroups.asMap().entrySet()) {
-			if (group.getValue().size() > 1) {
-				multiImageGroups.putAll(group.getKey(), group.getValue());
-			}
-		}
-		
-		return multiImageGroups;
+		DuplicateUtil.removeSingleImageGroups(sourceGroups);
+		return sourceGroups;
 	}
 
 	/**

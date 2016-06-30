@@ -20,7 +20,9 @@ package com.github.dozedoff.similarImage.duplicate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,5 +87,21 @@ public abstract class DuplicateUtil {
 		logger.info("{} records, in {} groups", dbRecords.size(), groupedByHash.keySet().size());
 
 		return groupedByHash;
+	}
+	
+	/**
+	 * Create a map that only contains groups with more than one image.
+	 * 
+	 * @return new map containing only multi-image groups.
+	 */
+	public static void removeSingleImageGroups(Multimap<Long, ImageRecord> sourceGroups) {
+		Iterator<Entry<Long, Collection<ImageRecord>>> iter = sourceGroups.asMap().entrySet().iterator();
+		// TODO add logging
+		while (iter.hasNext() ) {
+			Entry<Long, Collection<ImageRecord>> group = iter.next();
+			if (group.getValue().size() <= 1) {
+				iter.remove();
+			}
+		}
 	}
 }
