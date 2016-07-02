@@ -23,19 +23,26 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.junit.Assert.assertThat;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Set;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
 
 @SuppressWarnings("deprecation")
 public class DuplicateUtilTest {
 	private static final int NUM_OF_RECORDS = 10;
 	private LinkedList<ImageRecord> records;
+	private Set<Bucket<Long, ImageRecord>> conversionSet;
+
+	private Multimap<Long, ImageRecord> conversionMap;
 
 	@Before
 	public void setUp() throws Exception {
@@ -48,6 +55,18 @@ public class DuplicateUtilTest {
 		records.add(new ImageRecord("foo", 2));
 		createRecordWithHash(5, 42);
 		createRecordWithHash(5, 43);
+		
+		conversionSet = new HashSet<>();
+		conversionSet.add(new Bucket<Long, ImageRecord>(1L, new ImageRecord("a", 1L)));
+		conversionSet.add(
+				new Bucket<Long, ImageRecord>(2L, Arrays.asList(new ImageRecord[] { new ImageRecord("b", 2L), new ImageRecord("c", 2L) })));
+
+		conversionMap = MultimapBuilder.hashKeys().hashSetValues().build();
+		conversionMap.put(1L, new ImageRecord("a", 1L));
+
+		conversionMap.put(2L, new ImageRecord("b", 2L));
+		conversionMap.put(2L, new ImageRecord("c", 2L));
+
 	}
 
 	private void createRecordWithHash(long pHash, int sequenceNumber) {
@@ -106,5 +125,40 @@ public class DuplicateUtilTest {
 	public void testGroupByHashSizeOfGroup() throws Exception {
 		Multimap<Long, ImageRecord> group = DuplicateUtil.groupByHash(records);
 		assertThat(group.get(5L).size(), is(3));
+	}
+
+	@Test
+	public void testMultimapToBucketSetSize() throws Exception {
+		assertThat(DuplicateUtil.multimapToBucketSet(conversionMap).size(), is(2));
+	}
+
+	@Test
+	public void testMultimapToBucketSetKey1() throws Exception {
+		assertThat(DuplicateUtil.multimapToBucketSet(conversionMap).contains(new Bucket<Long, ImageRecord>(1L)), is(true));
+	}
+
+	@Test
+	public void testMultimapToBucketSetKey2() throws Exception {
+		assertThat(DuplicateUtil.multimapToBucketSet(conversionMap).contains(new Bucket<Long, ImageRecord>(2L)), is(true));
+	}
+
+	@Test
+	public void testMultimapToBucketSetKey2Size() throws Exception {
+		assertThat(DuplicateUtil.multimapToBucketSet(conversionMap).toArray().length, is(2));
+	}
+
+	@Test
+	public void testBucketSetToMultimapSetSize() throws Exception {
+		assertThat(DuplicateUtil.bucketSetToMultimap(conversionSet).keySet().size(), is(2));
+	}
+
+	@Test
+	public void testBucketSetToMultimapSet1Size() throws Exception {
+		assertThat(DuplicateUtil.bucketSetToMultimap(conversionSet).get(1L).size(), is(1));
+	}
+
+	@Test
+	public void testBucketSetToMultimapSet2Size() throws Exception {
+		assertThat(DuplicateUtil.bucketSetToMultimap(conversionSet).get(2L).size(), is(2));
 	}
 }
