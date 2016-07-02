@@ -233,7 +233,9 @@ public class SortSimilar {
 		return sum;
 	}
 
+
 	protected void mergeSets(Set<Bucket<Long, ImageRecord>> resultSet, Set<Bucket<Long, ImageRecord>> toMerge) {
+		// FIXME unique entries from toMerge are not added to resultSet
 		for (Bucket<Long, ImageRecord> b : resultSet) {
 			Bucket<Long, ImageRecord> merge = null;
 
