@@ -19,12 +19,14 @@ package com.github.dozedoff.similarImage.duplicate;
 
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.hasItems;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -35,17 +37,49 @@ import org.junit.Test;
 import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
+import com.google.common.collect.Lists;
 
 public class SortSimilarTest {
 	SortSimilar sort;
 	LinkedList<ImageRecord> testRecords;
 	Persistence mockPersistence;
+	Set<Bucket<Long, ImageRecord>> result;
+	Set<Bucket<Long, ImageRecord>> toMerge;
 
 	@Before
 	public void setUp() throws Exception {
 		mockPersistence = mock(Persistence.class);
 		sort = new SortSimilar(mockPersistence);
+
+		result = new HashSet<Bucket<Long, ImageRecord>>();
+		toMerge = new HashSet<Bucket<Long, ImageRecord>>();
+
+		buildTestSets();
 		createTestRecords();
+	}
+
+	private void buildTestSets() {
+		result.add(createBucketWithRecords(1, "a", "b"));
+		result.add(createBucketWithRecords(2, "c", "d"));
+		result.add(createBucketWithRecords(3, "e", "f"));
+
+		toMerge.add(createBucketWithRecords(1, "a", "h"));
+		toMerge.add(createBucketWithRecords(3, "g"));
+	}
+
+	private List<ImageRecord> createImageRecords(long id, String... paths) {
+		LinkedList<ImageRecord> records = new LinkedList<>();
+
+		for (String path : paths) {
+			records.add(new ImageRecord(path, id));
+		}
+
+		return records;
+	}
+
+	private Bucket<Long, ImageRecord> createBucketWithRecords(long id, String... paths) {
+		return new Bucket<Long, ImageRecord>(id, createImageRecords(id, paths));
+
 	}
 
 	private void createTestRecords() {
@@ -238,5 +272,46 @@ public class SortSimilarTest {
 
 		groups = sort.getDuplicateGroups();
 		assertThat(groups.size(), is(1));
+	}
+
+	@Test
+	public void testMergeSetsSetSize() {
+		sort.mergeSets(result, toMerge);
+
+		assertThat(result.size(), is(3));
+	}
+
+	@Test
+	public void testMergeSetsMergeGroup1() {
+		Bucket<Long, ImageRecord> toTest =null;
+		
+		sort.mergeSets(result, toMerge);
+
+		for(Bucket<Long, ImageRecord> bucket : result) {
+			if(bucket.getId() == 1) {
+				toTest = bucket;
+			}
+		}
+
+		assertThat(toTest, is(notNullValue())); // Guard condition
+
+		assertThat(toTest.getBucket(), hasItems(Lists.newArrayList(createImageRecords(1, "a", "b")).toArray(new ImageRecord[0])));
+	}
+
+	@Test
+	public void testMergeSetsMergeGroup3() {
+		Bucket<Long, ImageRecord> toTest = null;
+
+		sort.mergeSets(result, toMerge);
+
+		for (Bucket<Long, ImageRecord> bucket : result) {
+			if (bucket.getId() == 3) {
+				toTest = bucket;
+			}
+		}
+
+		assertThat(toTest, is(notNullValue())); // Guard condition
+
+		assertThat(toTest.getBucket(), hasItems(Lists.newArrayList(createImageRecords(3, "e", "f", "g")).toArray(new ImageRecord[0])));
 	}
 }

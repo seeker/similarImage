@@ -233,7 +233,7 @@ public class SortSimilar {
 		return sum;
 	}
 
-	private void mergeSets(Set<Bucket<Long, ImageRecord>> resultSet, Set<Bucket<Long, ImageRecord>> toMerge) {
+	protected void mergeSets(Set<Bucket<Long, ImageRecord>> resultSet, Set<Bucket<Long, ImageRecord>> toMerge) {
 		for (Bucket<Long, ImageRecord> b : resultSet) {
 			Bucket<Long, ImageRecord> merge = null;
 
