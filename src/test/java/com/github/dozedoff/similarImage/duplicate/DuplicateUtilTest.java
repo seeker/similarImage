@@ -74,48 +74,6 @@ public class DuplicateUtilTest {
 	}
 
 	@Test
-	public void testSortIntoBucketsSize() throws Exception {
-		ArrayList<Bucket<Long, ImageRecord>> buckets = DuplicateUtil.sortIntoBuckets(records);
-		assertThat(buckets.size(), is(10));
-	}
-
-	@Test
-	public void testSortIntoBucketsBucket2Size() throws Exception {
-		ArrayList<Bucket<Long, ImageRecord>> buckets = DuplicateUtil.sortIntoBuckets(records);
-		int index = Collections.binarySearch(buckets, new Bucket<Long, ImageRecord>(2L), new BucketComperator());
-		Bucket<Long, ImageRecord> bucket = buckets.get(index);
-
-		assertThat(bucket.getSize(), is(2));
-	}
-
-	@Test
-	public void testSortIntoBucketsBucket2Path() throws Exception {
-		ArrayList<Bucket<Long, ImageRecord>> buckets = DuplicateUtil.sortIntoBuckets(records);
-		int index = Collections.binarySearch(buckets, new Bucket<Long, ImageRecord>(2L), new BucketComperator());
-		Bucket<Long, ImageRecord> bucket = buckets.get(index);
-
-		assertThat(bucket.getBucket(), hasItem(new ImageRecord("foo", 2L)));
-	}
-
-	@Test
-	public void testSortIntoBucketsBucket2PathNot() throws Exception {
-		ArrayList<Bucket<Long, ImageRecord>> buckets = DuplicateUtil.sortIntoBuckets(records);
-		int index = Collections.binarySearch(buckets, new Bucket<Long, ImageRecord>(2L), new BucketComperator());
-		Bucket<Long, ImageRecord> bucket = buckets.get(index);
-
-		assertThat(bucket.getBucket(), not(hasItem(new ImageRecord("bar", 2L))));
-	}
-
-	@Test
-	public void testSortIntoBucketsBucket5Size() throws Exception {
-		ArrayList<Bucket<Long, ImageRecord>> buckets = DuplicateUtil.sortIntoBuckets(records);
-		int index = Collections.binarySearch(buckets, new Bucket<Long, ImageRecord>(5L), new BucketComperator());
-		Bucket<Long, ImageRecord> bucket = buckets.get(index);
-
-		assertThat(bucket.getSize(), is(3));
-	}
-
-	@Test
 	public void testGroupByHashNumberOfGroups() throws Exception {
 		Multimap<Long, ImageRecord> group = DuplicateUtil.groupByHash(records);
 		assertThat(group.keySet().size(), is(10));
@@ -125,6 +83,13 @@ public class DuplicateUtilTest {
 	public void testGroupByHashSizeOfGroup() throws Exception {
 		Multimap<Long, ImageRecord> group = DuplicateUtil.groupByHash(records);
 		assertThat(group.get(5L).size(), is(3));
+	}
+
+	@Test
+	public void testGroupByHashEntryPath() throws Exception {
+		Multimap<Long, ImageRecord> group = DuplicateUtil.groupByHash(records);
+
+		assertThat(group.get(2L), hasItem(new ImageRecord("foo", 2L)));
 	}
 
 	@Test

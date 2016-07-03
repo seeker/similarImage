@@ -17,12 +17,9 @@
  */
 package com.github.dozedoff.similarImage.duplicate;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -35,40 +32,6 @@ import com.google.common.collect.MultimapBuilder;
 
 public abstract class DuplicateUtil {
 	private static final Logger logger = LoggerFactory.getLogger(DuplicateUtil.class);
-
-	private static final ImageRecordComperator irc = new ImageRecordComperator();
-	private static final BucketComperator bucketComperator = new BucketComperator();
-
-	/**
-	 * Use {@link DuplicateUtil#groupByHash(Collection)} instead.
-	 */
-	@Deprecated
-	public static ArrayList<Bucket<Long, ImageRecord>> sortIntoBuckets(List<ImageRecord> dbRecords) {
-		ArrayList<ImageRecord> dbRecords2 = new ArrayList<>(dbRecords);
-		ArrayList<Bucket<Long, ImageRecord>> buckets = new ArrayList<>(dbRecords.size());
-
-		logger.info("Sorting records...");
-		Collections.sort(dbRecords2, irc);
-
-		logger.info("Populating buckets...");
-		for (ImageRecord ir : dbRecords2) {
-			int index = Collections.binarySearch(buckets, new Bucket<Long, ImageRecord>(ir.getpHash()), bucketComperator);
-
-			if (index < 0) {
-				Bucket<Long, ImageRecord> b = new Bucket<Long, ImageRecord>(ir.getpHash(), ir);
-				buckets.add(Math.abs(index + 1), b);
-			} else {
-				Bucket<Long, ImageRecord> b = buckets.get(index);
-				b.add(ir);
-			}
-		}
-
-		logger.info("Sorted {} records into {} buckets", dbRecords.size(), buckets.size());
-
-		buckets.trimToSize();
-
-		return buckets;
-	}
 
 	/**
 	 * Group records by hash using a one to many map.
