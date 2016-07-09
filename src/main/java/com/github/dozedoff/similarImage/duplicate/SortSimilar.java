@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
+import com.google.common.collect.Multimap;
 
 public class SortSimilar {
 	private static final Logger logger = LoggerFactory.getLogger(SortSimilar.class);
@@ -233,30 +234,19 @@ public class SortSimilar {
 		return sum;
 	}
 
+	protected void mergeSets(Multimap<Long, ImageRecord> resultSet, Multimap<Long, ImageRecord> toMerge) {
+		resultSet.putAll(toMerge);
+	}
 
+	/**
+	 * @deprecated Use {@link SortSimilar#mergeSets(Multimap, Multimap)} instead.
+	 */
 	protected void mergeSets(Set<Bucket<Long, ImageRecord>> resultSet, Set<Bucket<Long, ImageRecord>> toMerge) {
-		// FIXME unique entries from toMerge are not added to resultSet
-		for (Bucket<Long, ImageRecord> b : resultSet) {
-			Bucket<Long, ImageRecord> merge = null;
+		Multimap<Long, ImageRecord> foo = DuplicateUtil.bucketSetToMultimap(resultSet);
+		mergeSets(foo, DuplicateUtil.bucketSetToMultimap(toMerge));
 
-			for (Bucket<Long, ImageRecord> mergB : toMerge) {
-				if (mergB.equals(b)) {
-					merge = mergB;
-					break;
-				}
-			}
-
-			if (merge != null) {
-				Set<ImageRecord> merged = new HashSet<>();
-				List<ImageRecord> originalList = b.getBucket();
-
-				merged.addAll(originalList);
-				merged.addAll(merge.getBucket());
-
-				originalList.clear();
-				originalList.addAll(merged);
-			}
-		}
+		resultSet.clear();
+		resultSet.addAll(DuplicateUtil.multimapToBucketSet(foo));
 	}
 
 	@Deprecated

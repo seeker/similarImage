@@ -65,6 +65,7 @@ public class SortSimilarTest {
 
 		toMerge.add(createBucketWithRecords(1, "a", "h"));
 		toMerge.add(createBucketWithRecords(3, "g"));
+		toMerge.add(createBucketWithRecords(4, "i"));
 	}
 
 	private List<ImageRecord> createImageRecords(long id, String... paths) {
@@ -278,7 +279,7 @@ public class SortSimilarTest {
 	public void testMergeSetsSetSize() {
 		sort.mergeSets(result, toMerge);
 
-		assertThat(result.size(), is(3));
+		assertThat(result.size(), is(4));
 	}
 
 	@Test
@@ -313,5 +314,23 @@ public class SortSimilarTest {
 		assertThat(toTest, is(notNullValue())); // Guard condition
 
 		assertThat(toTest.getBucket(), hasItems(Lists.newArrayList(createImageRecords(3, "e", "f", "g")).toArray(new ImageRecord[0])));
+	}
+
+	@Test
+	public void testMergeSetsMergeGroup4() {
+		Bucket<Long, ImageRecord> toTest = null;
+
+		sort.mergeSets(result, toMerge);
+
+		for (Bucket<Long, ImageRecord> bucket : result) {
+			if (bucket.getId() == 4) {
+				toTest = bucket;
+			}
+		}
+
+		assertThat(toTest, is(notNullValue())); // Guard condition
+
+		assertThat(toTest.getBucket(),
+				hasItems(Lists.newArrayList(createImageRecords(4, "i")).toArray(new ImageRecord[0])));
 	}
 }
