@@ -17,9 +17,12 @@
  */
 package com.github.dozedoff.similarImage.duplicate;
 
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -27,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 
@@ -104,5 +108,43 @@ public abstract class DuplicateUtil {
 		}
 
 		return multimap;
+	}
+
+	/**
+	 * Remove results of queries with the same set of resulting hashes.
+	 * 
+	 * @param records
+	 *            to scan and merge if needed
+	 */
+	public static void removeDuplicateSets(Multimap<Long, Multimap<Long, ImageRecord>> records) {
+		Multimap<BigInteger, Collection<Long>> setHashes = MultimapBuilder.hashKeys().hashSetValues().build();
+		List<Long> keysToRemove = new LinkedList<Long>();
+		
+		logger.info("Checking {} queries for duplicates", records.keySet().size());
+		Stopwatch sw = Stopwatch.createStarted();
+
+		for(Entry<Long, Multimap<Long, ImageRecord>> entry : records.entries()) {
+			if (!setHashes.put(hashSum(entry.getValue().keySet()), entry.getValue().keySet())) {
+				keysToRemove.add(entry.getKey());
+			}
+		}
+
+		logger.info("Hashed queries in {}", sw);
+
+		for (Long key : keysToRemove) {
+			records.removeAll(key);
+		}
+
+		logger.info("Removed {} identical queries ", keysToRemove.size());
+	}
+
+	protected static final BigInteger hashSum(Collection<Long> hashes) {
+		BigInteger hashSum = BigInteger.ZERO;
+
+		for (Long hash : hashes) {
+			hashSum = hashSum.add(BigInteger.valueOf(hash));
+		}
+
+		return hashSum;
 	}
 }

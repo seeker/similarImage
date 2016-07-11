@@ -18,15 +18,15 @@
 package com.github.dozedoff.similarImage.duplicate;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.hasItem;
 import static org.junit.Assert.assertThat;
 
-import java.util.ArrayList;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import org.junit.Before;
@@ -43,6 +43,7 @@ public class DuplicateUtilTest {
 	private Set<Bucket<Long, ImageRecord>> conversionSet;
 
 	private Multimap<Long, ImageRecord> conversionMap;
+	private Multimap<Long, Multimap<Long, ImageRecord>> mergeTest;
 
 	@Before
 	public void setUp() throws Exception {
@@ -67,10 +68,29 @@ public class DuplicateUtilTest {
 		conversionMap.put(2L, new ImageRecord("b", 2L));
 		conversionMap.put(2L, new ImageRecord("c", 2L));
 
+		setupMergeTest();
+	}
+
+	private void setupMergeTest() {
+		mergeTest = MultimapBuilder.hashKeys().hashSetValues().build();
+
+		mergeTest.put(1L, buildMapWithHashes(2L, 3L, 5L));
+		mergeTest.put(3L, buildMapWithHashes(3L, 2L, 5L));
+		mergeTest.put(4L, buildMapWithHashes(2L, 8L));
 	}
 
 	private void createRecordWithHash(long pHash, int sequenceNumber) {
 		records.add(new ImageRecord(Integer.toString(sequenceNumber), pHash));
+	}
+
+	private Multimap<Long, ImageRecord> buildMapWithHashes(long... hashes) {
+		Multimap<Long, ImageRecord> result = MultimapBuilder.hashKeys().hashSetValues().build();
+
+		for (long hash : hashes) {
+			result.put(hash, null);
+		}
+
+		return result;
 	}
 
 	@Test
@@ -125,5 +145,31 @@ public class DuplicateUtilTest {
 	@Test
 	public void testBucketSetToMultimapSet2Size() throws Exception {
 		assertThat(DuplicateUtil.bucketSetToMultimap(conversionSet).get(2L).size(), is(2));
+	}
+
+	@Test
+	public void testMergeSetSize() throws Exception {
+		assertThat(mergeTest.keySet().size(), is(3));
+	}
+
+	@Test
+	public void testRemoveDuplicateSets() throws Exception {
+		DuplicateUtil.removeDuplicateSets(mergeTest);
+
+		assertThat(mergeTest.keySet().size(), is(2));
+	}
+
+	@Test
+	public void testHashSumNoHashes() throws Exception {
+		assertThat(DuplicateUtil.hashSum(Collections.emptyList()), is(BigInteger.ZERO));
+	}
+
+	@Test
+	public void testHashSum() throws Exception {
+		List<Long> hashes = new LinkedList<Long>();
+		hashes.add(2L);
+		hashes.add(3L);
+
+		assertThat(DuplicateUtil.hashSum(hashes), is(new BigInteger("5")));
 	}
 }
