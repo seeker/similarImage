@@ -180,7 +180,7 @@ public class SortSimilar {
 		logger.info("Removed {} result groups with size <= 1", (startSize - sorted.size()));
 	}
 
-	private void mergeIdenticalSets(LinkedList<Long> duplicateGroups) {
+	public void mergeIdenticalSets(LinkedList<Long> duplicateGroups) {
 		logger.info("Merging duplicate sets...");
 		TreeMap<BigInteger, Set<Bucket<Long, ImageRecord>>> tree = new TreeMap<>();
 		Iterator<Long> ite = duplicateGroups.iterator();

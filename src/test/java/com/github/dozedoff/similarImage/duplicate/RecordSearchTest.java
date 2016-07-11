@@ -41,19 +41,16 @@ public class RecordSearchTest {
 
 	private Collection<ImageRecord> dbRecords;
 
-	private ImageRecord imageRecord;
-	
 	@Before
 	public void setUp() throws Exception {
-		imageRecord = new ImageRecord("foo", 42L);
-
 		dbRecords = new LinkedList<ImageRecord>();
-		dbRecords.add(imageRecord);
-
-		cut = new RecordSearch(dbRecords);
 		records = MultimapBuilder.hashKeys().hashSetValues().build();
 
 		populateRecords();
+
+		dbRecords.addAll(records.values());
+
+		cut = new RecordSearch(dbRecords);
 	}
 
 	private void populateRecords() throws IOException {
@@ -64,7 +61,10 @@ public class RecordSearchTest {
 
 		records.put(3L, generateRecord(3L));
 		records.put(3L, generateRecord(3L));
-		records.put(3L, generateRecord(3L));
+
+		records.put(6L, generateRecord(6L));
+		records.put(6L, generateRecord(6L));
+		records.put(6L, generateRecord(6L));
 	}
 
 	private ImageRecord generateRecord(long hash) throws IOException {
@@ -73,18 +73,74 @@ public class RecordSearchTest {
 
 	@Test
 	public void testValidateRecordsDistinctKeys() throws Exception {
-		assertThat(records.keySet().size(), is(3));
+		assertThat(records.keySet().size(), is(4));
 	}
 
 	@Test
 	public void testValidateRecordsTotalPairs() throws Exception {
-		assertThat(records.size(), is(6));
+		assertThat(records.size(), is(8));
 	}
 
 	@Test
 	public void testRemoveSingleImageGroups() throws Exception {
-		Multimap<Long, ImageRecord> result = cut.removeSingleImageGroups(records);
+		DuplicateUtil.removeSingleImageGroups(records);
 
-		assertThat(result.keySet().size(), is(2));
+		assertThat(records.keySet().size(), is(3));
+	}
+
+	@Test
+	public void testDistanceMatchRadius0Size() throws Exception {
+		Multimap<Long, ImageRecord> result = cut.distanceMatch(2L, 0L);
+
+		assertThat(result.keySet().size(), is(1));
+	}
+
+	@Test
+	public void testDistanceMatchRadius0Hash() throws Exception {
+		Multimap<Long, ImageRecord> result = cut.distanceMatch(2L, 0L);
+
+		assertThat(result.get(2L).size(), is(2));
+	}
+
+	@Test
+	public void testDistanceMatchRadius1Size() throws Exception {
+		Multimap<Long, ImageRecord> result = cut.distanceMatch(2L, 1L);
+
+		assertThat(result.keySet().size(), is(3));
+	}
+
+	@Test
+	public void testDistanceMatchRadius1Hash2() throws Exception {
+		Multimap<Long, ImageRecord> result = cut.distanceMatch(2L, 1L);
+
+		assertThat(result.containsKey(2L), is(true));
+	}
+
+	@Test
+	public void testDistanceMatchRadius1Hash3() throws Exception {
+		Multimap<Long, ImageRecord> result = cut.distanceMatch(2L, 1L);
+
+		assertThat(result.containsKey(3L), is(true));
+	}
+
+	@Test
+	public void testDistanceMatchRadius1Hash6() throws Exception {
+		Multimap<Long, ImageRecord> result = cut.distanceMatch(2L, 1L);
+
+		assertThat(result.containsKey(6L), is(true));
+	}
+
+	@Test
+	public void testDistanceMatchRadius2Size() throws Exception {
+		Multimap<Long, ImageRecord> result = cut.distanceMatch(2L, 2L);
+
+		assertThat(result.keySet().size(), is(4));
+	}
+
+	@Test
+	public void testDistanceMatchRadius2Hash1() throws Exception {
+		Multimap<Long, ImageRecord> result = cut.distanceMatch(2L, 2L);
+
+		assertThat(result.containsKey(1L), is(true));
 	}
 }
