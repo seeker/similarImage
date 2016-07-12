@@ -46,7 +46,26 @@ public class RecordSearch {
 	private Multimap<Long, ImageRecord> groups;
 	private BKTree<Long> bkTree;
 
+	/**
+	 * @deprecated Use {@link RecordSearch#build(Collection)} instead.
+	 */
 	public RecordSearch(Collection<ImageRecord> dbRecords) {
+		this();
+		this.build(dbRecords);
+	}
+
+	public RecordSearch() {
+		groups = MultimapBuilder.hashKeys().hashSetValues().build();
+		bkTree = new BKTree<Long>(new CompareHammingDistance(), 0L);
+	}
+
+	/**
+	 * Sort the given records into groups and build a tree to query them.
+	 * 
+	 * @param dbRecords
+	 *            that should eventually be queried.
+	 */
+	public void build(Collection<ImageRecord> dbRecords) {
 		logger.info("Building Record search from {} records...", dbRecords.size());
 
 		groupRecords(dbRecords);

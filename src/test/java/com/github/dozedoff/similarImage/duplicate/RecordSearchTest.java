@@ -50,7 +50,8 @@ public class RecordSearchTest {
 
 		dbRecords.addAll(records.values());
 
-		cut = new RecordSearch(dbRecords);
+		cut = new RecordSearch();
+		cut.build(dbRecords);
 	}
 
 	private void populateRecords() throws IOException {
