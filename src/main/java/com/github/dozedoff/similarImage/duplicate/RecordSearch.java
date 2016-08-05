@@ -167,8 +167,9 @@ public class RecordSearch {
 	 *            search for hashes up to and including this distance
 	 * @return a set of matches with more than one image
 	 * 
-	 * @Deprecated This method yields incorrect results. Use {@link RecordSearch#distanceMatch(long, long)} instead.
+	 * @deprecated This method yields incorrect results. Use {@link RecordSearch#distanceMatch(long, long)} instead.
 	 */
+	@Deprecated
 	public List<Long> distanceMatch(long hammingDistance) {
 		Set<Long> keySet = removeSingleImageGroups(groups).keySet();
 		Set<Long> resultSet = new HashSet<Long>();
