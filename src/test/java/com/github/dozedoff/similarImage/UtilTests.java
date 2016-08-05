@@ -1,4 +1,4 @@
-/*  Copyright (C) 2014  Nicholas Wright
+/*  Copyright (C) 2016  Nicholas Wright
     
     This file is part of similarImage - A similar image finder using pHash
     
@@ -21,15 +21,10 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
+import com.github.dozedoff.similarImage.util.StringUtilTest;
+
 @RunWith(Suite.class)
-// @formatter:off
-@SuiteClasses({
-	DuplicateTests.class,
-	AppTests.class,
-	DbTests.class,
-	ThreadTests.class,
-	GuiTests.class,
-	IoTests.class,
-	UtilTests.class
-})
-public class AllTestsSimilarImage {}
+@SuiteClasses({ StringUtilTest.class })
+public class UtilTests {
+
+}

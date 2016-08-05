@@ -26,6 +26,7 @@ import java.util.concurrent.Callable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.dozedoff.similarImage.util.StringUtil;
 import com.j256.ormlite.dao.CloseableWrappedIterable;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
@@ -42,7 +43,6 @@ public class Persistence {
 	private static final Logger logger = LoggerFactory.getLogger(Persistence.class);
 	private final static String defaultDbPath = "similarImage.db";
 	private final static String dbPrefix = "jdbc:sqlite:";
-	public static final String MATCH_ALL_TAGS = "*";
 
 	Dao<ImageRecord, String> imageRecordDao;
 	Dao<FilterRecord, Long> filterRecordDao;
@@ -206,7 +206,7 @@ public class Persistence {
 	 *             if a database error occurred
 	 */
 	public List<FilterRecord> getAllFilters(String reason) throws SQLException {
-		if (MATCH_ALL_TAGS.equals(reason)) {
+		if (StringUtil.MATCH_ALL_TAGS.equals(reason)) {
 			return getAllFilters();
 		} else {
 			FilterRecord query = new FilterRecord(0, reason);
