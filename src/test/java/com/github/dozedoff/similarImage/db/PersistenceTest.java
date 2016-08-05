@@ -262,6 +262,13 @@ public class PersistenceTest {
 	}
 
 	@Test
+	public void testGetAllFiltersStringVerifyAllGroup() throws Exception {
+		List<FilterRecord> filters = persistence.getAllFilters("*");
+
+		assertThat(filters, hasSize(4));
+	}
+
+	@Test
 	public void testGetFilterReasonsVerifyEntries() throws Exception {
 		List<String> reasons = persistence.getFilterReasons();
 

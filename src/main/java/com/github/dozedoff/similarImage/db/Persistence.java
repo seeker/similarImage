@@ -42,6 +42,7 @@ public class Persistence {
 	private static final Logger logger = LoggerFactory.getLogger(Persistence.class);
 	private final static String defaultDbPath = "similarImage.db";
 	private final static String dbPrefix = "jdbc:sqlite:";
+	public static final String MATCH_ALL_TAGS = "*";
 
 	Dao<ImageRecord, String> imageRecordDao;
 	Dao<FilterRecord, Long> filterRecordDao;
@@ -195,9 +196,22 @@ public class Persistence {
 		return filterRecordDao.queryForAll();
 	}
 
+	/**
+	 * Get all {@link FilterRecord} for the given tag. If * is used as the reason, then <b>ALL</b> tags are returned.
+	 * 
+	 * @param reason
+	 *            the tag to search for
+	 * @return a list of all filters matching the tag
+	 * @throws SQLException
+	 *             if a database error occurred
+	 */
 	public List<FilterRecord> getAllFilters(String reason) throws SQLException {
-		FilterRecord query = new FilterRecord(0, reason);
-		return filterRecordDao.queryForMatching(query);
+		if (MATCH_ALL_TAGS.equals(reason)) {
+			return getAllFilters();
+		} else {
+			FilterRecord query = new FilterRecord(0, reason);
+			return filterRecordDao.queryForMatching(query);
+		}
 	}
 
 	public List<String> getFilterReasons() {
