@@ -122,7 +122,7 @@ public class SimilarImageController {
 	}
 
 	public void sortFilter(int hammingDistance, String reason) {
-		Thread t = new FilterSorter(hammingDistance, reason, gui, sorter, persistence);
+		Thread t = new FilterSorter(hammingDistance, reason, gui, persistence);
 		t.start();
 	}
 
