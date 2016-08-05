@@ -17,6 +17,7 @@
       <property name="scope" value="package"/>
       <property name="excludeScope" value="private"/>
       <property name="suppressLoadErrors" value="true"/>
+      <property name="ignoreMethodNamesRegex" value="run"/>
     </module>
     <module name="MissingDeprecated"/>
     <module name="MissingOverride"/>
