@@ -47,6 +47,8 @@ import com.google.common.collect.MultimapBuilder;
 public class SimilarImageController {
 	private final Logger logger = LoggerFactory.getLogger(SimilarImageController.class);
 
+	private static final String GUI_MSG_SORTING = "Sorting...";
+
 	private final int THUMBNAIL_DIMENSION = 500;
 	private final int PRODUCER_QUEUE_SIZE = 400;
 
@@ -95,7 +97,7 @@ public class SimilarImageController {
 	 */
 	public synchronized void setResults(Multimap<Long, ImageRecord> results) {
 		this.results = results;
-		gui.populateGroupList(results.keySet());
+		updateGUI();
 	}
 
 
@@ -132,6 +134,11 @@ public class SimilarImageController {
 		displayGroup.displayImages(group, images);
 	}
 
+	private void updateGUI() {
+		gui.setStatus("" + results.keySet().size() + " Groups");
+		gui.populateGroupList(results.keySet());
+	}
+
 	public void indexImages(String path) {
 		ImageFindJobVisitor visitor = new ImageFindJobVisitor(new SimpleImageFilter(), threadPool, persistence, new ImagePHash(),
 				statistics);
@@ -142,6 +149,7 @@ public class SimilarImageController {
 	}
 
 	public void sortDuplicates(int hammingDistance, String path) {
+		gui.setStatus(GUI_MSG_SORTING);
 		Thread t = new ImageSorter(hammingDistance, path, gui, sorter, persistence);
 		t.start();
 	}
