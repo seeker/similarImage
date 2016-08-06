@@ -1,4 +1,4 @@
-/*  Copyright (C) 2014  Nicholas Wright
+/*  Copyright (C) 2016  Nicholas Wright
     
     This file is part of similarImage - A similar image finder using pHash
     
@@ -88,5 +88,26 @@ public final class ImageRecord implements Comparable<ImageRecord> {
 		} else {
 			return -1;
 		}
+	}
+
+	/**
+	 * Display the class name and data in a human readable form.
+	 * 
+	 * @return Class information and state
+	 */
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+
+		sb.append("ImageRecord");
+		sb.append("{");
+		sb.append("path:");
+		sb.append(path);
+		sb.append(",");
+		sb.append("hash:");
+		sb.append(pHash);
+		sb.append("}");
+
+		return sb.toString();
 	}
 }
