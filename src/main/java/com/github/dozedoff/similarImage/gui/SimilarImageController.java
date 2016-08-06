@@ -150,7 +150,7 @@ public class SimilarImageController {
 
 	public void sortDuplicates(int hammingDistance, String path) {
 		gui.setStatus(GUI_MSG_SORTING);
-		Thread t = new ImageSorter(hammingDistance, path, gui, sorter, persistence);
+		Thread t = new ImageSorter(hammingDistance, path, this, persistence);
 		t.start();
 	}
 

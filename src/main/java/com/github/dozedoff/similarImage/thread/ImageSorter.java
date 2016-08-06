@@ -1,4 +1,4 @@
-/*  Copyright (C) 2014  Nicholas Wright
+/*  Copyright (C) 2016  Nicholas Wright
     
     This file is part of similarImage - A similar image finder using pHash
     
@@ -19,8 +19,8 @@ package com.github.dozedoff.similarImage.thread;
 
 import java.nio.file.Paths;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -28,42 +28,44 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.duplicate.DuplicateUtil;
 import com.github.dozedoff.similarImage.duplicate.RecordSearch;
-import com.github.dozedoff.similarImage.duplicate.SortSimilar;
-import com.github.dozedoff.similarImage.gui.SimilarImageView;
+import com.github.dozedoff.similarImage.gui.SimilarImageController;
+import com.google.common.base.Stopwatch;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
 
 public class ImageSorter extends Thread {
 	private static final Logger logger = LoggerFactory.getLogger(ImageSorter.class);
 
-	private int hammingDistance = 0;
-	private String path;
-	private SimilarImageView gui;
-	@Deprecated // dont use sort similar, use RecordSearch instead
-	private SortSimilar sorter;
-	private Persistence persistence;
-	private static String lastPath;
+	private static final String NULL = "null";
 
-	public ImageSorter(int hammingDistance, String path, SimilarImageView gui, SortSimilar sorter, Persistence persistence) {
+	private int hammingDistance;
+	private String path;
+	private SimilarImageController controller;
+	private Persistence persistence;
+
+	public ImageSorter(int hammingDistance, String path, SimilarImageController controller, Persistence persistence) {
 		super();
 		this.hammingDistance = hammingDistance;
 		this.path = path;
-		this.gui = gui;
-		this.sorter = sorter;
+		this.controller = controller;
 		this.persistence = persistence;
 	}
 
 	@Override
 	public void run() {
-		List<ImageRecord> dBrecords = new LinkedList<ImageRecord>();
+		logger.info("Looking for matching images...");
+		Stopwatch sw = Stopwatch.createStarted();
 
-		gui.setStatus("Sorting...");
+		List<ImageRecord> dBrecords = Collections.emptyList();
 
 		if (path == null) {
-			path = "null";
+			path = NULL;
 		}
 
 		try {
-			if (path.equals("null") || path.isEmpty()) {
+			if (NULL.equals(path) || path.isEmpty()) {
 				logger.info("Loading all records");
 				dBrecords = persistence.getAllRecords();
 			} else {
@@ -74,19 +76,24 @@ public class ImageSorter extends Thread {
 			logger.warn("Failed to load records - {}", e.getMessage());
 		}
 
-		RecordSearch rs = new RecordSearch(dBrecords);
+		RecordSearch rs = new RecordSearch();
+		rs.build(dBrecords);
 
-		List<Long> groups = Collections.emptyList();
+		Multimap<Long, ImageRecord> results = findAllHashesInRange(rs, dBrecords);
+		DuplicateUtil.removeSingleImageGroups(results);
 
-		if (hammingDistance == 0) {
-			groups = rs.exactMatch();
-		} else {
-			groups = rs.distanceMatch(hammingDistance);
+		logger.info("Found {} similar images out of {} in {}", results.keySet().size(), dBrecords.size(), sw);
+		controller.setResults(results);
+	}
+
+	private Multimap<Long, ImageRecord> findAllHashesInRange(RecordSearch rs, Collection<ImageRecord> records) {
+		Multimap<Long, ImageRecord> results = MultimapBuilder.hashKeys().hashSetValues().build();
+
+		for (ImageRecord record : records) {
+			long key = record.getpHash();
+			results.putAll(key, rs.distanceMatch(key, hammingDistance).values());
 		}
 
-		sorter.removeSingleImageGroups();
-		gui.setStatus("" + groups.size() + " Groups");
-
-		gui.populateGroupList(groups);
+		return results;
 	}
 }

@@ -1,4 +1,4 @@
-/*  Copyright (C) 2014  Nicholas Wright
+/*  Copyright (C) 2016  Nicholas Wright
     
     This file is part of similarImage - A similar image finder using pHash
     
@@ -17,31 +17,47 @@
  */
 package com.github.dozedoff.similarImage.thread;
 
-import static org.mockito.Matchers.anyListOf;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.verify;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.Executors;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.SortSimilar;
+import com.github.dozedoff.similarImage.gui.SimilarImageController;
 import com.github.dozedoff.similarImage.gui.SimilarImageView;
+import com.github.dozedoff.similarImage.io.Statistics;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
 
-@Ignore("All verify tests are bad (brittle)")
 @RunWith(MockitoJUnitRunner.class)
 public class ImageSorterTest {
+	private static final long HASH_ONE = 1L;
+	private static final long HASH_TWO = 2L;
+	private static final long HASH_THREE = 3L;
+	private static final long HASH_SIX = 6L;
+
+	private static final String TEST_PATH = "/foo/bar/";
+
+	private static final String TEST_EXCEPTION_MESSAGE = "Testing...";
+
+	private SimilarImageController controllerMock;
+
 	@Mock
 	private SimilarImageView gui;
 
@@ -51,86 +67,134 @@ public class ImageSorterTest {
 	@Mock
 	private SortSimilar sorter;
 
-	private ImageSorter imageSorter;
+	@Mock
+	private Statistics statistics;
 
-	private static final int DISTANCE = 2;
+	private ImageSorter imageSorter;
+	private Multimap<Long, ImageRecord> result;
+
+	private static final int DISTANCE = 0;
 	private Path path;
+
+	private ImageRecord recordOneOne;
+	private ImageRecord recordTwoOne;
+	private ImageRecord recordTwoTwo;
+	private ImageRecord recordThreeThree;
+	private ImageRecord recordSixSix;
 
 	@Before
 	public void setUp() throws Exception {
-		MockitoAnnotations.initMocks(this);
-
 		path = Files.createTempFile(ImageSorterTest.class.getSimpleName(), ".dat");
 
-		imageSorter = new ImageSorter(DISTANCE, path.toString(), gui, sorter, persistence);
+		List<ImageRecord> records = buildRecords();
+		when(persistence.getAllRecords()).thenReturn(records);
+		when(persistence.filterByPath(path)).thenReturn(Arrays.asList(recordOneOne, recordTwoOne, recordTwoTwo));
+		
+		result = MultimapBuilder.hashKeys().hashSetValues().build();
+
+		controllerMock = new SimilarImageController(persistence, Executors.newCachedThreadPool(), statistics);
+		imageSorter = new ImageSorter(DISTANCE, "", controllerMock, persistence);
+	}
+
+	private List<ImageRecord> buildRecords() {
+		recordOneOne = new ImageRecord(TEST_PATH + "1", HASH_ONE);
+		recordTwoOne = new ImageRecord(TEST_PATH + "2", HASH_ONE);
+		recordTwoTwo = new ImageRecord(TEST_PATH + "2", HASH_TWO);
+		recordThreeThree = new ImageRecord("3", HASH_THREE);
+		recordSixSix = new ImageRecord("6", HASH_SIX);
+
+		List<ImageRecord> records = new LinkedList<ImageRecord>();
+		records.add(recordOneOne);
+		records.add(recordTwoOne);
+		records.add(recordTwoTwo);
+		records.add(recordThreeThree);
+		records.add(recordSixSix);
+
+		return records;
+	}
+
+	private void runCutAndWaitForFinish() throws InterruptedException {
+		imageSorter.start();
+		imageSorter.join();
 	}
 
 	@Test
-	public void testRun() throws Exception {
-		imageSorter.start();
-		imageSorter.join();
+	public void testDistanceZeroRecords() throws Exception {
+		runCutAndWaitForFinish();
 
-		verify(persistence).filterByPath(path);
-		verify(sorter).buildTree(anyListOf(ImageRecord.class));
-		verify(sorter).sortHammingDistance(eq(DISTANCE), anyListOf(ImageRecord.class));
-		verify(sorter).removeSingleImageGroups();
-		verify(gui).populateGroupList(anyListOf(Long.class));
+		assertThat(controllerMock.getGroup(HASH_ONE), containsInAnyOrder(recordOneOne, recordTwoOne));
 	}
 
 	@Test
-	public void testRunDistanceZero() throws Exception {
-		imageSorter = new ImageSorter(0, path.toString(), gui, sorter, persistence);
+	public void testDistanceZeroNumberOfGroups() throws Exception {
+		runCutAndWaitForFinish();
 
-		imageSorter.start();
-		imageSorter.join();
-
-		verify(persistence).filterByPath(path);
-		verify(sorter).buildTree(anyListOf(ImageRecord.class));
-		verify(sorter).sortExactMatch(anyListOf(ImageRecord.class));
-		verify(sorter).removeSingleImageGroups();
-		verify(gui).populateGroupList(anyListOf(Long.class));
+		assertThat(controllerMock.getGroup(HASH_TWO).size(), is(0));
+		assertThat(controllerMock.getGroup(HASH_THREE).size(), is(0));
+		assertThat(controllerMock.getGroup(HASH_SIX).size(), is(0));
 	}
 
 	@Test
-	public void testRunNullPath() throws Exception {
-		imageSorter = new ImageSorter(DISTANCE, null, gui, sorter, persistence);
+	public void testDistanceOneGroupOne() throws Exception {
+		imageSorter = new ImageSorter(1, "", controllerMock, persistence);
 
-		imageSorter.start();
-		imageSorter.join();
+		runCutAndWaitForFinish();
 
-		verify(persistence).getAllRecords();
-		verify(sorter).buildTree(anyListOf(ImageRecord.class));
-		verify(sorter).sortHammingDistance(eq(DISTANCE), anyListOf(ImageRecord.class));
-		verify(sorter).removeSingleImageGroups();
-		verify(gui).populateGroupList(anyListOf(Long.class));
+		assertThat(controllerMock.getGroup(HASH_ONE), containsInAnyOrder(recordOneOne, recordTwoOne, recordThreeThree));
 	}
 
 	@Test
-	public void testRunEmptyPath() throws Exception {
-		imageSorter = new ImageSorter(DISTANCE, "", gui, sorter, persistence);
+	public void testDistanceOneGroupTwo() throws Exception {
+		imageSorter = new ImageSorter(1, "", controllerMock, persistence);
 
-		imageSorter.start();
-		imageSorter.join();
+		runCutAndWaitForFinish();
 
-		verify(persistence).getAllRecords();
-		verify(sorter).buildTree(anyListOf(ImageRecord.class));
-		verify(sorter).sortHammingDistance(eq(DISTANCE), anyListOf(ImageRecord.class));
-		verify(sorter).removeSingleImageGroups();
-		verify(gui).populateGroupList(anyListOf(Long.class));
+		assertThat(controllerMock.getGroup(HASH_TWO), containsInAnyOrder(recordTwoTwo, recordThreeThree, recordSixSix));
 	}
 
 	@Test
-	public void testRunSQLException() throws Exception {
-		when(persistence.getAllRecords()).thenThrow(new SQLException("This is a test"));
-		imageSorter = new ImageSorter(DISTANCE, "", gui, sorter, persistence);
+	public void testDistanceOneGroupThree() throws Exception {
+		imageSorter = new ImageSorter(1, "", controllerMock, persistence);
 
-		imageSorter.start();
-		imageSorter.join();
+		runCutAndWaitForFinish();
 
-		verify(persistence).getAllRecords();
-		verify(sorter).buildTree(anyListOf(ImageRecord.class));
-		verify(sorter).sortHammingDistance(eq(DISTANCE), anyListOf(ImageRecord.class));
-		verify(sorter).removeSingleImageGroups();
-		verify(gui).populateGroupList(anyListOf(Long.class));
+		assertThat(controllerMock.getGroup(HASH_THREE), containsInAnyOrder(recordThreeThree, recordOneOne, recordTwoOne, recordTwoTwo));
+	}
+
+	@Test
+	public void testDistanceOneGroupSix() throws Exception {
+		imageSorter = new ImageSorter(1, "", controllerMock, persistence);
+
+		runCutAndWaitForFinish();
+
+		assertThat(controllerMock.getGroup(HASH_SIX), containsInAnyOrder(recordSixSix, recordTwoTwo));
+	}
+
+	@Test
+	public void testNullPath() throws Exception {
+		imageSorter = new ImageSorter(DISTANCE, null, controllerMock, persistence);
+
+		runCutAndWaitForFinish();
+
+		assertThat(controllerMock.getGroup(HASH_ONE), containsInAnyOrder(recordOneOne, recordTwoOne));
+	}
+
+	@Test
+	public void testTestPath() throws Exception {
+		imageSorter = new ImageSorter(1, TEST_PATH, controllerMock, persistence);
+
+		runCutAndWaitForFinish();
+
+		assertThat(controllerMock.getGroup(HASH_THREE).size(), is(0));
+	}
+
+	@Test
+	public void testSqlException() throws Exception {
+		when(persistence.getAllRecords()).thenThrow(new SQLException(TEST_EXCEPTION_MESSAGE));
+		imageSorter = new ImageSorter(1, "", controllerMock, persistence);
+		
+		runCutAndWaitForFinish();
+
+		assertThat(controllerMock.getGroup(HASH_ONE).size(), is(0));
 	}
 }
