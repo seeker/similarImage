@@ -1,4 +1,4 @@
-/*  Copyright (C) 2014  Nicholas Wright
+/*  Copyright (C) 2016  Nicholas Wright
     
     This file is part of similarImage - A similar image finder using pHash
     
@@ -17,6 +17,8 @@
  */
 package com.github.dozedoff.similarImage.thread;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -30,8 +32,8 @@ public class GroupListPopulator implements Runnable {
 	private List<Long> groups;
 	private DefaultListModel<Long> groupListModel;
 
-	public GroupListPopulator(List<Long> groups, DefaultListModel<Long> groupListModel) {
-		this.groups = groups;
+	public GroupListPopulator(Collection<Long> groups, DefaultListModel<Long> groupListModel) {
+		this.groups = new ArrayList<Long>(groups);
 		this.groupListModel = groupListModel;
 	}
 

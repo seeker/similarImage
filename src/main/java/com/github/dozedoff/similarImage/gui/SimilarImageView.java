@@ -1,4 +1,4 @@
-/*  Copyright (C) 2014  Nicholas Wright
+/*  Copyright (C) 2016  Nicholas Wright
     
     This file is part of similarImage - A similar image finder using pHash
     
@@ -23,7 +23,7 @@ import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
+import java.util.Collection;
 import java.util.Set;
 
 import javax.swing.DefaultListModel;
@@ -280,7 +280,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 		progress.setMaximum(numOfFiles);
 	}
 
-	public void populateGroupList(List<Long> groups) {
+	public void populateGroupList(Collection<Long> groups) {
 		SwingUtilities.invokeLater(new GroupListPopulator(groups, groupListModel));
 	}
 
