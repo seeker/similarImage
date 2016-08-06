@@ -21,6 +21,7 @@ import java.awt.Dimension;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -40,6 +41,8 @@ import com.github.dozedoff.similarImage.thread.FilterSorter;
 import com.github.dozedoff.similarImage.thread.ImageFindJob;
 import com.github.dozedoff.similarImage.thread.ImageFindJobVisitor;
 import com.github.dozedoff.similarImage.thread.ImageSorter;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
 
 public class SimilarImageController {
 	private final Logger logger = LoggerFactory.getLogger(SimilarImageController.class);
@@ -49,7 +52,9 @@ public class SimilarImageController {
 
 	private final Persistence persistence;
 
+	@Deprecated
 	private SortSimilar sorter;
+	private Multimap<Long, ImageRecord> results;
 	private DisplayGroupView displayGroup;
 	private SimilarImageView gui;
 	private final ExecutorService threadPool;
@@ -59,6 +64,7 @@ public class SimilarImageController {
 		this.persistence = persistence;
 
 		sorter = new SortSimilar(persistence);
+		results = MultimapBuilder.hashKeys().hashSetValues().build();
 		displayGroup = new DisplayGroupView();
 		gui = new SimilarImageView(this, new DuplicateOperations(persistence), PRODUCER_QUEUE_SIZE);
 		statistics.addStatisticsListener(gui);
@@ -70,9 +76,28 @@ public class SimilarImageController {
 		sorter.ignore(toIgnore);
 	}
 
+	/**
+	 * Get the images associated with this group.
+	 * 
+	 * @param group
+	 *            to query
+	 * @return images matched to this group
+	 */
 	public Set<ImageRecord> getGroup(long group) {
-		return sorter.getGroup(group);
+		return new HashSet<ImageRecord>(results.get(group));
 	}
+
+	/**
+	 * Update the search results and refresh the GUI.
+	 * 
+	 * @param results
+	 *            to use in GUI selections
+	 */
+	public synchronized void setResults(Multimap<Long, ImageRecord> results) {
+		this.results = results;
+		gui.populateGroupList(results.keySet());
+	}
+
 
 	public void displayGroup(long group) {
 		int maxGroupSize = 30;
