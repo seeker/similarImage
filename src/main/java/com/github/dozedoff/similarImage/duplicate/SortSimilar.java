@@ -18,7 +18,6 @@
 package com.github.dozedoff.similarImage.duplicate;
 
 import java.math.BigInteger;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -31,7 +30,6 @@ import java.util.TreeMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.google.common.collect.Multimap;
@@ -77,51 +75,6 @@ public class SortSimilar {
 		RecordSearch rs = new RecordSearch(dBrecords);
 		sorted.clear();
 		sorted.putAll(rs.sortHammingDistanceLegacy(hammingDistance));
-	}
-
-	public void sortFilter(int hammingDistance, String reason, List<ImageRecord> dBrecords, List<FilterRecord> filter) {
-		clear();
-		checkTree(dBrecords);
-
-		String logReason = reason;
-
-		if (logReason == null || logReason.equals("")) {
-			logReason = "*";
-		}
-
-		Object[] logData = { dBrecords.size(), filter.size(), logReason, hammingDistance };
-		logger.info("Matching {} image records against {} filter records (reason: {}), with a distance of {}", logData);
-
-		if (hammingDistance == 0) {
-			sortFilterExact(hammingDistance, reason);
-			return;
-		}
-
-		for (FilterRecord fr : filter) {
-			long pHash = fr.getpHash();
-
-			Set<Bucket<Long, ImageRecord>> similar = searchTree(pHash, hammingDistance);
-			sorted.put(pHash, similar);
-		}
-	}
-
-	private void sortFilterExact(int hammingDistance, String reason) {
-		List<FilterRecord> filters;
-
-		try {
-			filters = persistence.getAllFilters(reason);
-
-			for (FilterRecord filter : filters) {
-				long pHash = filter.getpHash();
-				Set<Bucket<Long, ImageRecord>> result = searcher.searchTreeLegacy(pHash, hammingDistance);
-
-				if (!result.isEmpty()) {
-					sorted.put(pHash, searcher.searchTreeLegacy(pHash, hammingDistance));
-				}
-			}
-		} catch (SQLException e) {
-			logger.warn("Failed to load filter records - {}", e.getMessage());
-		}
 	}
 
 	public Set<ImageRecord> getGroup(long pHash) {
