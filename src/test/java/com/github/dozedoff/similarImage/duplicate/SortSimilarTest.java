@@ -23,9 +23,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.hasItems;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
-import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -146,103 +144,6 @@ public class SortSimilarTest {
 		assertThat(sort.isEmpty(), is(true));
 	}
 
-	@Test
-	public void testSortFilterHashOneGroupSize() {
-		sort.sortFilter(1, "foo", testRecords, createFilterRecords("foo", 1L));
-		List<Long> groups = sort.getDuplicateGroups();
-
-		assertThat(groups, hasItem(1L));
-		assertThat(groups.size(), is(1));
-	}
-
-	@Test
-	public void testSortFilterHashOneRecords() {
-		sort.sortFilter(1, "foo", testRecords, createFilterRecords("foo", 1L));
-
-		assertGroupOneCorrect();
-	}
-
-	@Test
-	public void testSortFilterHashTwoGroupSize() {
-		sort.sortFilter(1, "foo", testRecords, createFilterRecords("foo", 2L));
-		List<Long> groups = sort.getDuplicateGroups();
-
-		assertThat(groups, hasItem(2L));
-		assertThat(groups.size(), is(1));
-	}
-
-	@Test
-	public void testSortFilterHashTwoRecords() {
-		sort.sortFilter(1, "foo", testRecords, createFilterRecords("foo", 2L));
-
-		assertGroupTwoCorrect();
-	}
-
-	@Test
-	public void testSortFilterMultipleFiltersGroupSize() {
-		sort.sortFilter(1, "foo", testRecords, createFilterRecords("foo", 1L, 2L));
-		List<Long> groups = sort.getDuplicateGroups();
-
-		assertThat(groups, hasItem(1L));
-		assertThat(groups, hasItem(2L));
-		assertThat(groups.size(), is(2));
-	}
-
-	@Test
-	public void testSortFilterMultipleFiltersRecords() {
-		sort.sortFilter(1, "foo", testRecords, createFilterRecords("foo", 1L, 2L));
-
-		assertGroupOneCorrect();
-		assertGroupTwoCorrect();
-	}
-
-	@Test
-	public void testSortFilterHashZeroDistanceGroupSize() throws SQLException {
-		List<FilterRecord> filterRecords = createFilterRecords("foo", 4L);
-		when(mockPersistence.getAllFilters("foo")).thenReturn(filterRecords);
-
-		sort.sortFilter(0, "foo", testRecords, filterRecords);
-		List<Long> groups = sort.getDuplicateGroups();
-
-		assertThat(groups, hasItem(4L));
-		assertThat(groups.size(), is(1));
-	}
-
-	@Test
-	public void testSortFilterHashZeroDistanceRecords() throws SQLException {
-		List<FilterRecord> filterRecords = createFilterRecords("foo", 4L);
-		when(mockPersistence.getAllFilters("foo")).thenReturn(filterRecords);
-
-		sort.sortFilter(0, "foo", testRecords, filterRecords);
-
-		Set<ImageRecord> group = sort.getGroup(4L);
-
-		assertThat(group, hasItem(testRecords.get(1)));
-		assertThat(group.size(), is(1));
-	}
-
-	@Test
-	public void testSortFilterHashZeroDistanceSQLError() throws SQLException {
-		List<FilterRecord> filterRecords = createFilterRecords("foo", 4L);
-		when(mockPersistence.getAllFilters("foo")).thenThrow(new SQLException("This is a test"));
-
-		sort.sortFilter(0, "foo", testRecords, filterRecords);
-		List<Long> groups = sort.getDuplicateGroups();
-
-		assertThat(groups.size(), is(0));
-	}
-
-	@Test
-	public void testSortFilterHashZeroDistanceNoMatch() throws SQLException {
-		List<FilterRecord> filterRecords = createFilterRecords("foo", 42L);
-		when(mockPersistence.getAllFilters("foo")).thenReturn(filterRecords);
-
-		sort.sortFilter(0, "foo", testRecords, filterRecords);
-		List<Long> groups = sort.getDuplicateGroups();
-
-		assertThat(groups.size(), is(0));
-	}
-
 	private void assertGroupOneCorrect() {
 		Set<ImageRecord> group = sort.getGroup(1L);
 		assertThat(group, hasItem(testRecords.get(0)));
@@ -258,21 +159,6 @@ public class SortSimilarTest {
 		assertThat(group, hasItem(testRecords.get(3)));
 		assertThat(group, hasItem(testRecords.get(5)));
 		assertThat(group.size(), is(3));
-	}
-
-	@Test
-	public void testRemoveSingleImageGroups() throws SQLException {
-		List<FilterRecord> filterRecords = createFilterRecords("foo", 4L, 3L);
-		when(mockPersistence.getAllFilters("foo")).thenReturn(filterRecords);
-
-		sort.sortFilter(0, "foo", testRecords, filterRecords);
-		List<Long> groups = sort.getDuplicateGroups();
-		assertThat(groups.size(), is(2));
-
-		sort.removeSingleImageGroups();
-
-		groups = sort.getDuplicateGroups();
-		assertThat(groups.size(), is(1));
 	}
 
 	@Test
