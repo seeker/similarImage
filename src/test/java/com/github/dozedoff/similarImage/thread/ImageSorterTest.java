@@ -38,7 +38,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
-import com.github.dozedoff.similarImage.duplicate.SortSimilar;
 import com.github.dozedoff.similarImage.gui.SimilarImageController;
 import com.github.dozedoff.similarImage.gui.SimilarImageView;
 import com.github.dozedoff.similarImage.io.Statistics;
@@ -63,9 +62,6 @@ public class ImageSorterTest {
 
 	@Mock
 	private Persistence persistence;
-
-	@Mock
-	private SortSimilar sorter;
 
 	@Mock
 	private Statistics statistics;

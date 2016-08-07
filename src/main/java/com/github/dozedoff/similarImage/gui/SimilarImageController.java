@@ -35,7 +35,6 @@ import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
-import com.github.dozedoff.similarImage.duplicate.SortSimilar;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.thread.FilterSorter;
 import com.github.dozedoff.similarImage.thread.ImageFindJob;
@@ -53,9 +52,6 @@ public class SimilarImageController {
 	private final int PRODUCER_QUEUE_SIZE = 400;
 
 	private final Persistence persistence;
-
-	@Deprecated
-	private SortSimilar sorter;
 	private Multimap<Long, ImageRecord> results;
 	private DisplayGroupView displayGroup;
 	private SimilarImageView gui;
@@ -65,7 +61,6 @@ public class SimilarImageController {
 	public SimilarImageController(Persistence persistence, ExecutorService threadPool, Statistics statistics) {
 		this.persistence = persistence;
 
-		sorter = new SortSimilar(persistence);
 		results = MultimapBuilder.hashKeys().hashSetValues().build();
 		displayGroup = new DisplayGroupView();
 		gui = new SimilarImageView(this, new DuplicateOperations(persistence), PRODUCER_QUEUE_SIZE);
@@ -75,7 +70,7 @@ public class SimilarImageController {
 	}
 
 	public void ignoreImage(ImageRecord toIgnore) {
-		sorter.ignore(toIgnore);
+		throw new RuntimeException("Not implemented yet");
 	}
 
 	/**
