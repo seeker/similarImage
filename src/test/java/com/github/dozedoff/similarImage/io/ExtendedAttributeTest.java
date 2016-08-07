@@ -29,7 +29,7 @@ import org.junit.Test;
 
 public class ExtendedAttributeTest {
 	private static final String TEMP_FILE_PREFIX = "ExtendedAttributeTest";
-	private static final String TEST_NAME = "user.similarimage.junit";
+	private static final String TEST_NAME = ExtendedAttribute.SIMILARIMAGE_NAMESPACE + ".junit";
 	private static final String TEST_VALUE = "foobar";
 
 	private Path tempFile;
@@ -71,5 +71,11 @@ public class ExtendedAttributeTest {
 		ExtendedAttribute.setExtendedAttribute(tempFile, TEST_NAME, TEST_VALUE);
 
 		assertThat(ExtendedAttribute.isExtendedAttributeSet(tempFile, TEST_NAME), is(true));
+	}
+
+	@Test
+	public void testCreateName() throws Exception {
+		assertThat(ExtendedAttribute.createName("foo", "bar"),
+				is(ExtendedAttribute.SIMILARIMAGE_NAMESPACE + ".foo.bar"));
 	}
 }

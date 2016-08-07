@@ -37,9 +37,30 @@ import org.slf4j.LoggerFactory;
 public class ExtendedAttribute {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ExtendedAttribute.class);
 
-	private static final String XATTR_TEST_NAME = "user.similarimage.test";
+	public static final String SIMILARIMAGE_NAMESPACE = "user.similarimage";
+	private static final String XATTR_TEST_NAME = SIMILARIMAGE_NAMESPACE + "test";
+
 
 	private ExtendedAttribute(){
+	}
+
+	/**
+	 * Create a name for an extended attribute with {@link ExtendedAttribute#SIMILARIMAGE_NAMESPACE} as the prefix. The
+	 * values provided in names are separated with a '.'.
+	 * 
+	 * @param names
+	 *            elements to use for namespaces and name
+	 * @return the full name for the attribute
+	 */
+	public static String createName(String... names) {
+		StringBuilder sb = new StringBuilder(SIMILARIMAGE_NAMESPACE);
+
+		for (String name : names) {
+			sb.append(".");
+			sb.append(name);
+		}
+
+		return sb.toString();
 	}
 
 	/**
