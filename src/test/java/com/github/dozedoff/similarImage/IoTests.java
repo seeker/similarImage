@@ -22,12 +22,14 @@ import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
 import com.github.dozedoff.similarImage.io.ExtendedAttributeTest;
+import com.github.dozedoff.similarImage.io.HashAttributeTest;
 import com.github.dozedoff.similarImage.io.StatisticsTest;
 
 //@formatter:off
 @RunWith(Suite.class)
 @SuiteClasses({
 		StatisticsTest.class,
-		ExtendedAttributeTest.class
+		ExtendedAttributeTest.class,
+		HashAttributeTest.class
 })
 public class IoTests {}
