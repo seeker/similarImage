@@ -183,8 +183,8 @@ public class SimilarImageController {
 		
 		List<HashHandler> handlers = new ArrayList<HashHandler>();
 		
-		handlers.add(new ExtendedAttributeHandler(hashAttribute, persistence));
 		handlers.add(new DatabaseHandler(persistence, statistics));
+		handlers.add(new ExtendedAttributeHandler(hashAttribute, persistence));
 		handlers.add(new HashingHandler(threadPool, new ImagePHash(), persistence, statistics, hashAttribute));
 
 		ImageFindJobVisitor visitor = new ImageFindJobVisitor(new SimpleImageFilter(), handlers, statistics);
