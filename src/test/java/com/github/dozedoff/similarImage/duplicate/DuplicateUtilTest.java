@@ -153,10 +153,26 @@ public class DuplicateUtilTest {
 	}
 
 	@Test
-	public void testRemoveDuplicateSets() throws Exception {
-		DuplicateUtil.removeDuplicateSets(mergeTest);
+	public void testRemoveDuplicateSetsIdenticalSets() throws Exception {
+		Multimap<Long, ImageRecord> map = MultimapBuilder.hashKeys().hashSetValues().build();
+		map.putAll(1L, records);
+		map.putAll(2L, records);
 
-		assertThat(mergeTest.keySet().size(), is(2));
+		DuplicateUtil.removeDuplicateSets(map);
+
+		assertThat(map.keySet().size(), is(1));
+	}
+
+	@Test
+	public void testRemoveDuplicateSetsNonIdenticalSets() throws Exception {
+		Multimap<Long, ImageRecord> map = MultimapBuilder.hashKeys().hashSetValues().build();
+		map.putAll(1L, records);
+		map.putAll(2L, records);
+		map.put(2L, new ImageRecord("foo", 1L));
+
+		DuplicateUtil.removeDuplicateSets(map);
+
+		assertThat(map.keySet().size(), is(2));
 	}
 
 	@Test

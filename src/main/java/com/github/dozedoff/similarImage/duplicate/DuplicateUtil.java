@@ -21,8 +21,6 @@ import java.math.BigInteger;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -116,26 +114,24 @@ public abstract class DuplicateUtil {
 	 * @param records
 	 *            to scan and merge if needed
 	 */
-	public static void removeDuplicateSets(Multimap<Long, Multimap<Long, ImageRecord>> records) {
-		Multimap<BigInteger, Collection<Long>> setHashes = MultimapBuilder.hashKeys().hashSetValues().build();
-		List<Long> keysToRemove = new LinkedList<Long>();
-		
-		logger.info("Checking {} queries for duplicates", records.keySet().size());
+	public static void removeDuplicateSets(Multimap<Long, ImageRecord> records) {
+		logger.info("Checking {} groups for duplicates", records.keySet().size());
 		Stopwatch sw = Stopwatch.createStarted();
+		Set<Collection<ImageRecord>> uniqueRecords = new HashSet<Collection<ImageRecord>>(records.keySet().size());
 
-		for(Entry<Long, Multimap<Long, ImageRecord>> entry : records.entries()) {
-			if (!setHashes.put(hashSum(entry.getValue().keySet()), entry.getValue().keySet())) {
-				keysToRemove.add(entry.getKey());
+		Iterator<Collection<ImageRecord>> recordIter = records.asMap().values().iterator();
+		long removedGroups = 0;
+
+		while (recordIter.hasNext()) {
+			Collection<ImageRecord> next = recordIter.next();
+
+			if (!uniqueRecords.add(next)) {
+				recordIter.remove();
+				removedGroups++;
 			}
 		}
 
-		logger.info("Hashed queries in {}", sw);
-
-		for (Long key : keysToRemove) {
-			records.removeAll(key);
-		}
-
-		logger.info("Removed {} identical queries ", keysToRemove.size());
+		logger.info("Checked groups in {}, removed {} identical groups", sw, removedGroups);
 	}
 
 	protected static final BigInteger hashSum(Collection<Long> hashes) {
