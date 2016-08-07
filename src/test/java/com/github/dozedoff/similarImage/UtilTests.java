@@ -1,4 +1,4 @@
-/*  Copyright (C) 2014  Nicholas Wright
+/*  Copyright (C) 2016  Nicholas Wright
     
     This file is part of similarImage - A similar image finder using pHash
     
@@ -15,28 +15,16 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.dozedoff.similarImage.duplicate;
+package com.github.dozedoff.similarImage;
 
-import java.io.Serializable;
-import java.util.Comparator;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
+import org.junit.runners.Suite.SuiteClasses;
 
-import com.github.dozedoff.similarImage.db.ImageRecord;
+import com.github.dozedoff.similarImage.util.StringUtilTest;
 
-public class BucketComperator implements Comparator<Bucket<Long, ImageRecord>>, Serializable {
-	private static final long serialVersionUID = 5900233220884625603L;
+@RunWith(Suite.class)
+@SuiteClasses({ StringUtilTest.class })
+public class UtilTests {
 
-	// TODO null should be treated smaller as a record
-	@Override
-	public int compare(Bucket<Long, ImageRecord> o1, Bucket<Long, ImageRecord> o2) {
-		long l1 = o1.getId();
-		long l2 = o2.getId();
-
-		if (l1 < l2) {
-			return -1;
-		} else if (l1 == l2) {
-			return 0;
-		} else {
-			return 1;
-		}
-	}
 }

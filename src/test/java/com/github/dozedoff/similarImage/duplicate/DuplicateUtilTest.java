@@ -18,80 +18,129 @@
 package com.github.dozedoff.similarImage.duplicate;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.hasItem;
 import static org.junit.Assert.assertThat;
 
-import java.util.ArrayList;
+import java.math.BigInteger;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
 
 public class DuplicateUtilTest {
 	private static final int NUM_OF_RECORDS = 10;
 	private LinkedList<ImageRecord> records;
+
+	private Multimap<Long, ImageRecord> conversionMap;
+	private Multimap<Long, Multimap<Long, ImageRecord>> mergeTest;
 
 	@Before
 	public void setUp() throws Exception {
 		records = new LinkedList<>();
 
 		for (int i = 0; i < NUM_OF_RECORDS; i++) {
-			createRecordWithHash(i);
+			createRecordWithHash(i, i);
 		}
 
 		records.add(new ImageRecord("foo", 2));
-		createRecordWithHash(5);
-		createRecordWithHash(5);
+		createRecordWithHash(5, 42);
+		createRecordWithHash(5, 43);
+		
+		conversionMap = MultimapBuilder.hashKeys().hashSetValues().build();
+		conversionMap.put(1L, new ImageRecord("a", 1L));
+
+		conversionMap.put(2L, new ImageRecord("b", 2L));
+		conversionMap.put(2L, new ImageRecord("c", 2L));
+
+		setupMergeTest();
 	}
 
-	private void createRecordWithHash(long pHash) {
-		records.add(new ImageRecord("", pHash));
+	private void setupMergeTest() {
+		mergeTest = MultimapBuilder.hashKeys().hashSetValues().build();
+
+		mergeTest.put(1L, buildMapWithHashes(2L, 3L, 5L));
+		mergeTest.put(3L, buildMapWithHashes(3L, 2L, 5L));
+		mergeTest.put(4L, buildMapWithHashes(2L, 8L));
 	}
 
-	@Test
-	public void testSortIntoBucketsSize() throws Exception {
-		ArrayList<Bucket<Long, ImageRecord>> buckets = DuplicateUtil.sortIntoBuckets(records);
-		assertThat(buckets.size(), is(10));
+	private void createRecordWithHash(long pHash, int sequenceNumber) {
+		records.add(new ImageRecord(Integer.toString(sequenceNumber), pHash));
 	}
 
-	@Test
-	public void testSortIntoBucketsBucket2Size() throws Exception {
-		ArrayList<Bucket<Long, ImageRecord>> buckets = DuplicateUtil.sortIntoBuckets(records);
-		int index = Collections.binarySearch(buckets, new Bucket<Long, ImageRecord>(2L), new BucketComperator());
-		Bucket<Long, ImageRecord> bucket = buckets.get(index);
+	private Multimap<Long, ImageRecord> buildMapWithHashes(long... hashes) {
+		Multimap<Long, ImageRecord> result = MultimapBuilder.hashKeys().hashSetValues().build();
 
-		assertThat(bucket.getSize(), is(2));
-	}
+		for (long hash : hashes) {
+			result.put(hash, null);
+		}
 
-	@Test
-	public void testSortIntoBucketsBucket2Path() throws Exception {
-		ArrayList<Bucket<Long, ImageRecord>> buckets = DuplicateUtil.sortIntoBuckets(records);
-		int index = Collections.binarySearch(buckets, new Bucket<Long, ImageRecord>(2L), new BucketComperator());
-		Bucket<Long, ImageRecord> bucket = buckets.get(index);
-
-		assertThat(bucket.getBucket(), hasItem(new ImageRecord("foo", 2L)));
-	}
-
-	@Test
-	public void testSortIntoBucketsBucket2PathNot() throws Exception {
-		ArrayList<Bucket<Long, ImageRecord>> buckets = DuplicateUtil.sortIntoBuckets(records);
-		int index = Collections.binarySearch(buckets, new Bucket<Long, ImageRecord>(2L), new BucketComperator());
-		Bucket<Long, ImageRecord> bucket = buckets.get(index);
-
-		assertThat(bucket.getBucket(), not(hasItem(new ImageRecord("bar", 2L))));
+		return result;
 	}
 
 	@Test
-	public void testSortIntoBucketsBucket5Size() throws Exception {
-		ArrayList<Bucket<Long, ImageRecord>> buckets = DuplicateUtil.sortIntoBuckets(records);
-		int index = Collections.binarySearch(buckets, new Bucket<Long, ImageRecord>(5L), new BucketComperator());
-		Bucket<Long, ImageRecord> bucket = buckets.get(index);
-
-		assertThat(bucket.getSize(), is(3));
+	public void testGroupByHashNumberOfGroups() throws Exception {
+		Multimap<Long, ImageRecord> group = DuplicateUtil.groupByHash(records);
+		assertThat(group.keySet().size(), is(10));
 	}
 
+	@Test
+	public void testGroupByHashSizeOfGroup() throws Exception {
+		Multimap<Long, ImageRecord> group = DuplicateUtil.groupByHash(records);
+		assertThat(group.get(5L).size(), is(3));
+	}
+
+	@Test
+	public void testGroupByHashEntryPath() throws Exception {
+		Multimap<Long, ImageRecord> group = DuplicateUtil.groupByHash(records);
+
+		assertThat(group.get(2L), hasItem(new ImageRecord("foo", 2L)));
+	}
+
+	@Test
+	public void testMergeSetSize() throws Exception {
+		assertThat(mergeTest.keySet().size(), is(3));
+	}
+
+	@Test
+	public void testRemoveDuplicateSetsIdenticalSets() throws Exception {
+		Multimap<Long, ImageRecord> map = MultimapBuilder.hashKeys().hashSetValues().build();
+		map.putAll(1L, records);
+		map.putAll(2L, records);
+
+		DuplicateUtil.removeDuplicateSets(map);
+
+		assertThat(map.keySet().size(), is(1));
+	}
+
+	@Test
+	public void testRemoveDuplicateSetsNonIdenticalSets() throws Exception {
+		Multimap<Long, ImageRecord> map = MultimapBuilder.hashKeys().hashSetValues().build();
+		map.putAll(1L, records);
+		map.putAll(2L, records);
+		map.put(2L, new ImageRecord("foo", 1L));
+
+		DuplicateUtil.removeDuplicateSets(map);
+
+		assertThat(map.keySet().size(), is(2));
+	}
+
+	@Test
+	public void testHashSumNoHashes() throws Exception {
+		assertThat(DuplicateUtil.hashSum(Collections.emptyList()), is(BigInteger.ZERO));
+	}
+
+	@Test
+	public void testHashSum() throws Exception {
+		List<Long> hashes = new LinkedList<Long>();
+		hashes.add(2L);
+		hashes.add(3L);
+
+		assertThat(DuplicateUtil.hashSum(hashes), is(new BigInteger("5")));
+	}
 }

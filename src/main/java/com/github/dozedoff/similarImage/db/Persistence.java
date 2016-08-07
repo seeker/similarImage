@@ -26,6 +26,7 @@ import java.util.concurrent.Callable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.dozedoff.similarImage.util.StringUtil;
 import com.j256.ormlite.dao.CloseableWrappedIterable;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
@@ -195,9 +196,22 @@ public class Persistence {
 		return filterRecordDao.queryForAll();
 	}
 
+	/**
+	 * Get all {@link FilterRecord} for the given tag. If * is used as the reason, then <b>ALL</b> tags are returned.
+	 * 
+	 * @param reason
+	 *            the tag to search for
+	 * @return a list of all filters matching the tag
+	 * @throws SQLException
+	 *             if a database error occurred
+	 */
 	public List<FilterRecord> getAllFilters(String reason) throws SQLException {
-		FilterRecord query = new FilterRecord(0, reason);
-		return filterRecordDao.queryForMatching(query);
+		if (StringUtil.MATCH_ALL_TAGS.equals(reason)) {
+			return getAllFilters();
+		} else {
+			FilterRecord query = new FilterRecord(0, reason);
+			return filterRecordDao.queryForMatching(query);
+		}
 	}
 
 	public List<String> getFilterReasons() {

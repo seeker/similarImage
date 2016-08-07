@@ -1,4 +1,4 @@
-/*  Copyright (C) 2014  Nicholas Wright
+/*  Copyright (C) 2016  Nicholas Wright
     
     This file is part of similarImage - A similar image finder using pHash
     
@@ -15,21 +15,26 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.dozedoff.similarImage;
+package com.github.dozedoff.similarImage.util;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.junit.runners.Suite.SuiteClasses;
+public class StringUtil {
+	public static final String MATCH_ALL_TAGS = "*";
 
-@RunWith(Suite.class)
-// @formatter:off
-@SuiteClasses({
-	DuplicateTests.class,
-	AppTests.class,
-	DbTests.class,
-	ThreadTests.class,
-	GuiTests.class,
-	IoTests.class,
-	UtilTests.class
-})
-public class AllTestsSimilarImage {}
+	private StringUtil() {
+	}
+
+	/**
+	 * Checks if the provided tag is valid, if not it will be replaced with the "query all" tag.
+	 * 
+	 * @param tagFromGui
+	 *            the tag to search for
+	 * @return a sanitized and correct tag
+	 */
+	public static String sanitizeTag(String tagFromGui) {
+		if (tagFromGui == null || "".equals(tagFromGui)) {
+			return MATCH_ALL_TAGS;
+		}
+
+		return tagFromGui;
+	}
+}

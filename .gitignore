@@ -6,3 +6,5 @@
 .project
 .classpath
 .settings/
+/bin/
+.checkstyle

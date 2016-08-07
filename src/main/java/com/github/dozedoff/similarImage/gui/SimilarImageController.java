@@ -21,6 +21,7 @@ import java.awt.Dimension;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -32,47 +33,93 @@ import com.github.dozedoff.commonj.filefilter.SimpleImageFilter;
 import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
-import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
-import com.github.dozedoff.similarImage.duplicate.SortSimilar;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.thread.FilterSorter;
 import com.github.dozedoff.similarImage.thread.ImageFindJob;
 import com.github.dozedoff.similarImage.thread.ImageFindJobVisitor;
 import com.github.dozedoff.similarImage.thread.ImageSorter;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
 
 public class SimilarImageController {
 	private final Logger logger = LoggerFactory.getLogger(SimilarImageController.class);
 
+	private static final String GUI_MSG_SORTING = "Sorting...";
+
 	private final int THUMBNAIL_DIMENSION = 500;
-	private final int PRODUCER_QUEUE_SIZE = 400;
 
 	private final Persistence persistence;
-
-	private SortSimilar sorter;
+	private Multimap<Long, ImageRecord> results;
 	private DisplayGroupView displayGroup;
 	private SimilarImageView gui;
 	private final ExecutorService threadPool;
 	private final Statistics statistics;
 
-	public SimilarImageController(Persistence persistence, ExecutorService threadPool, Statistics statistics) {
+	/**
+	 * Performs actions initiated by the user
+	 * 
+	 * @param persistence
+	 *            database access
+	 * @param displayGroup
+	 *            view for displaying images for groups
+	 * 
+	 * @param threadPool
+	 *            for performing tasks
+	 * @param statistics
+	 *            tracking stats
+	 */
+	public SimilarImageController(Persistence persistence, DisplayGroupView displayGroup, ExecutorService threadPool,
+			Statistics statistics) {
 		this.persistence = persistence;
 
-		sorter = new SortSimilar(persistence);
-		displayGroup = new DisplayGroupView();
-		gui = new SimilarImageView(this, new DuplicateOperations(persistence), PRODUCER_QUEUE_SIZE);
-		statistics.addStatisticsListener(gui);
+		results = MultimapBuilder.hashKeys().hashSetValues().build();
+		this.displayGroup = displayGroup;
 		this.threadPool = threadPool; 
 		this.statistics = statistics;
 	}
 
-	public void ignoreImage(ImageRecord toIgnore) {
-		sorter.ignore(toIgnore);
+	/**
+	 * Set the user interface this controller should interact with, and register it with the statistics tracker.
+	 * 
+	 * @param gui
+	 *            the view to use
+	 */
+	public final void setGui(SimilarImageView gui) {
+		if (this.gui != null) {
+			statistics.removeStatisticsListener(this.gui);
+		}
+
+		this.gui = gui;
+		statistics.addStatisticsListener(gui);
 	}
 
-	public Set<ImageRecord> getGroup(long group) {
-		return sorter.getGroup(group);
+	public void ignoreImage(ImageRecord toIgnore) {
+		throw new RuntimeException("Not implemented yet");
 	}
+
+	/**
+	 * Get the images associated with this group.
+	 * 
+	 * @param group
+	 *            to query
+	 * @return images matched to this group
+	 */
+	public Set<ImageRecord> getGroup(long group) {
+		return new HashSet<ImageRecord>(results.get(group));
+	}
+
+	/**
+	 * Update the search results and refresh the GUI.
+	 * 
+	 * @param results
+	 *            to use in GUI selections
+	 */
+	public synchronized void setResults(Multimap<Long, ImageRecord> results) {
+		this.results = results;
+		updateGUI();
+	}
+
 
 	public void displayGroup(long group) {
 		int maxGroupSize = 30;
@@ -107,6 +154,22 @@ public class SimilarImageController {
 		displayGroup.displayImages(group, images);
 	}
 
+	private void updateGUI() {
+		setGUIStatus("" + results.keySet().size() + " Groups");
+		gui.populateGroupList(results.keySet());
+	}
+
+	private void setGUIStatus(String message) {
+		guiSetCheck();
+		gui.setStatus(message);
+	}
+
+	private void guiSetCheck() {
+		if (gui == null) {
+			throw new RuntimeException("GUI was not set for the controller! Use setGui()!");
+		}
+	}
+
 	public void indexImages(String path) {
 		ImageFindJobVisitor visitor = new ImageFindJobVisitor(new SimpleImageFilter(), threadPool, persistence, new ImagePHash(),
 				statistics);
@@ -117,12 +180,13 @@ public class SimilarImageController {
 	}
 
 	public void sortDuplicates(int hammingDistance, String path) {
-		Thread t = new ImageSorter(hammingDistance, path, gui, sorter, persistence);
+		setGUIStatus(GUI_MSG_SORTING);
+		Thread t = new ImageSorter(hammingDistance, path, this, persistence);
 		t.start();
 	}
 
 	public void sortFilter(int hammingDistance, String reason) {
-		Thread t = new FilterSorter(hammingDistance, reason, gui, sorter, persistence);
+		Thread t = new FilterSorter(hammingDistance, reason, gui, persistence);
 		t.start();
 	}
 

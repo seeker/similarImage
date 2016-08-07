@@ -1,4 +1,4 @@
-/*  Copyright (C) 2014  Nicholas Wright
+/*  Copyright (C) 2016  Nicholas Wright
     
     This file is part of similarImage - A similar image finder using pHash
     
@@ -17,58 +17,62 @@
  */
 package com.github.dozedoff.similarImage.thread;
 
-import static org.mockito.Matchers.anyListOf;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InOrder;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
-import com.github.dozedoff.similarImage.duplicate.SortSimilar;
 import com.github.dozedoff.similarImage.gui.SimilarImageView;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import com.github.dozedoff.similarImage.util.StringUtil;
 
 @RunWith(MockitoJUnitRunner.class)
 public class FilterSorterTest {
-	@Mock
-	private SimilarImageView gui;
+	private static final String TAG_LANDSCAPE = "landscape";
+	private static final String TAG_SUNSET = "sunset";
+	private static final String TAG_EXCEPTION = "exception";
+
+	private static final long HASH_THREE = 3;
+
+	private static final int SEARCH_DISTANCE = 0;
+
+	private static final String EXCEPTION_MESSAGE = "Testig...";
 
 	@Mock
-	private Persistence persistence;
+	private SimilarImageView guiMock;
 
 	@Mock
-	private SortSimilar sorter;
+	private Persistence persistenceMock;
 
 	private List<ImageRecord> records;
-	private FilterSorter filterSorter ;
-
-	private static final String ERROR_MSG = "This is a test";
+	private FilterSorter cut ;
 
 	@Before
 	public void setUp() throws Exception {
 		MockitoAnnotations.initMocks(this);
 
 		createRecords();
-		when(persistence.getAllRecords()).thenReturn(records);
 
-		filterSorter = new FilterSorter(2, "test", gui, sorter, persistence);
+		when(persistenceMock.getAllRecords()).thenReturn(records);
+		when(persistenceMock.getAllFilters(TAG_LANDSCAPE))
+				.thenReturn(Arrays.asList(new FilterRecord(0, TAG_LANDSCAPE)));
+		when(persistenceMock.getAllFilters(StringUtil.MATCH_ALL_TAGS))
+				.thenReturn(Arrays.asList(new FilterRecord(0, TAG_LANDSCAPE), new FilterRecord(1, TAG_SUNSET)));
+
+		when(persistenceMock.getAllFilters(TAG_EXCEPTION)).thenThrow(new SQLException(EXCEPTION_MESSAGE));
 	}
 
 	private void createRecords() {
@@ -76,127 +80,45 @@ public class FilterSorterTest {
 
 		records.add(new ImageRecord("foo", 0));
 		records.add(new ImageRecord("bar", 1));
-		records.add(new ImageRecord("foobar", 3));
+		records.add(new ImageRecord("foobar", HASH_THREE));
+	}
+
+	private void runCutAndWaitForFinish() throws InterruptedException {
+		cut.start();
+		cut.join();
 	}
 
 	@Test
-	public void testRunWithReason() throws Exception {
-		filterSorter.start();
-		filterSorter.join();
+	public void testFilterForSingleTag() throws Exception {
+		cut = new FilterSorter(SEARCH_DISTANCE, TAG_LANDSCAPE, guiMock, persistenceMock);
+		runCutAndWaitForFinish();
 
-		InOrder inOrder = Mockito.inOrder(gui, persistence, sorter);
-
-		inOrder.verify(gui).setStatus(eq("Sorting..."));
-		inOrder.verify(persistence).getAllRecords();
-		inOrder.verify(persistence).getAllFilters("test");
-		inOrder.verify(sorter).sortFilter(eq(2), eq("test"), eq(records), anyListOf(FilterRecord.class));
-		inOrder.verify(gui).setStatus(anyString());
-		inOrder.verify(sorter).getDuplicateGroups();
-		inOrder.verify(gui).populateGroupList(anyListOf(Long.class));
+		verify(guiMock).populateGroupList(Arrays.asList(0L));
 	}
 
 	@Test
-	public void testRunWithBlankReason() throws Exception {
-		String reason = "";
-		filterSorter = new FilterSorter(2, reason, gui, sorter, persistence);
+	public void testFilterForMatchAllTag() throws Exception {
+		cut = new FilterSorter(SEARCH_DISTANCE, StringUtil.MATCH_ALL_TAGS, guiMock, persistenceMock);
+		runCutAndWaitForFinish();
 
-		filterSorter.start();
-		filterSorter.join();
-
-		InOrder inOrder = Mockito.inOrder(gui, persistence, sorter);
-
-		inOrder.verify(gui).setStatus(eq("Sorting..."));
-		inOrder.verify(persistence).getAllRecords();
-		inOrder.verify(persistence).getAllFilters();
-		inOrder.verify(sorter).sortFilter(eq(2), eq(reason), eq(records), anyListOf(FilterRecord.class));
-		inOrder.verify(gui).setStatus(anyString());
-		inOrder.verify(sorter).getDuplicateGroups();
-		inOrder.verify(gui).populateGroupList(anyListOf(Long.class));
+		verify(guiMock).populateGroupList(Arrays.asList(0L, 1L));
 	}
 
 	@Test
-	@SuppressFBWarnings(value = "NP_LOAD_OF_KNOWN_NULL_VALUE", justification = "Null as reason is a valid parameter")
-	public void testRunWithNullReason() throws Exception {
-		String reason = null;
-		filterSorter = new FilterSorter(2, reason, gui, sorter, persistence);
+	public void testFilterLoadException() throws Exception {
+		cut = new FilterSorter(SEARCH_DISTANCE, TAG_EXCEPTION, guiMock, persistenceMock);
+		runCutAndWaitForFinish();
 
-		// TODO create constructor FilterSorter(int hammingDistance,
-		// SimilarImageView gui, SortSimilar sorter, Persistence persistence)
-
-		filterSorter.start();
-		filterSorter.join();
-
-		InOrder inOrder = Mockito.inOrder(gui, persistence, sorter);
-
-		inOrder.verify(gui).setStatus(eq("Sorting..."));
-		inOrder.verify(persistence).getAllRecords();
-		inOrder.verify(persistence).getAllFilters();
-		inOrder.verify(sorter).sortFilter(eq(2), eq(reason), eq(records), anyListOf(FilterRecord.class));
-		inOrder.verify(gui).setStatus(anyString());
-		inOrder.verify(sorter).getDuplicateGroups();
-		inOrder.verify(gui).populateGroupList(anyListOf(Long.class));
+		verify(guiMock).populateGroupList(Collections.emptyList());
 	}
 
 	@Test
-	public void testRunWithAsteriskReason() throws Exception {
-		String reason = "*";
-		filterSorter = new FilterSorter(2, reason, gui, sorter, persistence);
+	public void testRecordLoadException() throws Exception {
+		when(persistenceMock.getAllRecords()).thenThrow(new SQLException(EXCEPTION_MESSAGE));
+		
+		cut = new FilterSorter(SEARCH_DISTANCE, TAG_SUNSET, guiMock, persistenceMock);
+		runCutAndWaitForFinish();
 
-		filterSorter.start();
-		filterSorter.join();
-
-		InOrder inOrder = Mockito.inOrder(gui, persistence, sorter);
-
-		inOrder.verify(gui).setStatus(eq("Sorting..."));
-		inOrder.verify(persistence).getAllRecords();
-		inOrder.verify(persistence).getAllFilters();
-		inOrder.verify(sorter).sortFilter(eq(2), eq(reason), eq(records), anyListOf(FilterRecord.class));
-		inOrder.verify(gui).setStatus(anyString());
-		inOrder.verify(sorter).getDuplicateGroups();
-		inOrder.verify(gui).populateGroupList(anyListOf(Long.class));
-	}
-
-	@Test
-	public void testRunSQLExceptionWithReason() throws Exception {
-		String reason = "*";
-
-		when(persistence.getAllRecords()).thenThrow(new SQLException(ERROR_MSG));
-
-		filterSorter = new FilterSorter(2, reason, gui, sorter, persistence);
-
-		filterSorter.start();
-		filterSorter.join();
-
-		InOrder inOrder = Mockito.inOrder(gui, persistence, sorter);
-
-		inOrder.verify(gui).setStatus(eq("Sorting..."));
-		inOrder.verify(sorter).sortFilter(eq(2), eq(reason), eq(new LinkedList<ImageRecord>()), anyListOf(FilterRecord.class));
-		inOrder.verify(gui).setStatus(anyString());
-		inOrder.verify(sorter).getDuplicateGroups();
-		inOrder.verify(gui).populateGroupList(anyListOf(Long.class));
-
-		verify(persistence, never()).getAllFilters();
-	}
-
-	@Test
-	public void testRunSQLExceptionNoReason() throws Exception {
-		String reason = "foo";
-
-		when(persistence.getAllRecords()).thenThrow(new SQLException(ERROR_MSG));
-
-		filterSorter = new FilterSorter(2, reason, gui, sorter, persistence);
-
-		filterSorter.start();
-		filterSorter.join();
-
-		InOrder inOrder = Mockito.inOrder(gui, persistence, sorter);
-
-		inOrder.verify(gui).setStatus(eq("Sorting..."));
-		inOrder.verify(sorter).sortFilter(eq(2), eq(reason), eq(new LinkedList<ImageRecord>()), anyListOf(FilterRecord.class));
-		inOrder.verify(gui).setStatus(anyString());
-		inOrder.verify(sorter).getDuplicateGroups();
-		inOrder.verify(gui).populateGroupList(anyListOf(Long.class));
-
-		verify(persistence, never()).getAllFilters(reason);
+		verify(guiMock).populateGroupList(Collections.emptyList());
 	}
 }

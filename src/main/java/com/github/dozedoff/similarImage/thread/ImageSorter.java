@@ -1,4 +1,4 @@
-/*  Copyright (C) 2014  Nicholas Wright
+/*  Copyright (C) 2016  Nicholas Wright
     
     This file is part of similarImage - A similar image finder using pHash
     
@@ -19,7 +19,8 @@ package com.github.dozedoff.similarImage.thread;
 
 import java.nio.file.Paths;
 import java.sql.SQLException;
-import java.util.LinkedList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -27,41 +28,45 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
-import com.github.dozedoff.similarImage.duplicate.SortSimilar;
-import com.github.dozedoff.similarImage.gui.SimilarImageView;
+import com.github.dozedoff.similarImage.duplicate.DuplicateUtil;
+import com.github.dozedoff.similarImage.duplicate.RecordSearch;
+import com.github.dozedoff.similarImage.gui.SimilarImageController;
+import com.google.common.base.Stopwatch;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
 
 public class ImageSorter extends Thread {
 	private static final Logger logger = LoggerFactory.getLogger(ImageSorter.class);
 
-	private int hammingDistance = 0;
-	private String path;
-	private SimilarImageView gui;
-	private SortSimilar sorter;
-	private Persistence persistence;
-	private static String lastPath;
+	private static final String NULL = "null";
 
-	public ImageSorter(int hammingDistance, String path, SimilarImageView gui, SortSimilar sorter, Persistence persistence) {
+	private int hammingDistance;
+	private String path;
+	private SimilarImageController controller;
+	private Persistence persistence;
+
+	public ImageSorter(int hammingDistance, String path, SimilarImageController controller, Persistence persistence) {
 		super();
 		this.hammingDistance = hammingDistance;
 		this.path = path;
-		this.gui = gui;
-		this.sorter = sorter;
+		this.controller = controller;
 		this.persistence = persistence;
 	}
 
 	@Override
 	public void run() {
-		List<ImageRecord> dBrecords = new LinkedList<ImageRecord>();
+		logger.info("Looking for matching images...");
+		Stopwatch sw = Stopwatch.createStarted();
 
-		sorter.clear();
-		gui.setStatus("Sorting...");
+		List<ImageRecord> dBrecords = Collections.emptyList();
 
 		if (path == null) {
-			path = "null";
+			path = NULL;
 		}
 
 		try {
-			if (path.equals("null") || path.isEmpty()) {
+			if (NULL.equals(path) || path.isEmpty()) {
+				logger.info("Loading all records");
 				dBrecords = persistence.getAllRecords();
 			} else {
 				logger.info("Loading records for path {}", path);
@@ -71,23 +76,26 @@ public class ImageSorter extends Thread {
 			logger.warn("Failed to load records - {}", e.getMessage());
 		}
 
-		if (!path.equals(lastPath)) {
-			// TODO use tree cache instead of static field lastPath, see guava
-			// Cachebuilder
-			sorter.buildTree(dBrecords); // Force tree rebuild
-			lastPath = path;
+		RecordSearch rs = new RecordSearch();
+		rs.build(dBrecords);
+
+		Multimap<Long, ImageRecord> results = findAllHashesInRange(rs, dBrecords);
+
+		DuplicateUtil.removeSingleImageGroups(results);
+		DuplicateUtil.removeDuplicateSets(results);
+
+		logger.info("Found {} similar images out of {} in {}", results.keySet().size(), dBrecords.size(), sw);
+		controller.setResults(results);
+	}
+
+	private Multimap<Long, ImageRecord> findAllHashesInRange(RecordSearch rs, Collection<ImageRecord> records) {
+		Multimap<Long, ImageRecord> results = MultimapBuilder.hashKeys().hashSetValues().build();
+
+		for (ImageRecord record : records) {
+			long key = record.getpHash();
+			results.putAll(key, rs.distanceMatch(key, hammingDistance).values());
 		}
 
-		if (hammingDistance == 0) {
-			sorter.sortExactMatch(dBrecords);
-		} else {
-			sorter.sortHammingDistance(hammingDistance, dBrecords);
-		}
-
-		sorter.removeSingleImageGroups();
-		gui.setStatus("" + sorter.getNumberOfGroups() + " Groups");
-
-		List<Long> groups = sorter.getDuplicateGroups();
-		gui.populateGroupList(groups);
+		return results;
 	}
 }

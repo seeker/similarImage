@@ -17,6 +17,7 @@
       <property name="scope" value="package"/>
       <property name="excludeScope" value="private"/>
       <property name="suppressLoadErrors" value="true"/>
+      <property name="ignoreMethodNamesRegex" value="run"/>
     </module>
     <module name="MissingDeprecated"/>
     <module name="MissingOverride"/>
@@ -74,7 +75,10 @@
       <property name="tokens" value="POST_INC,POST_DEC,LITERAL_SWITCH"/>
     </module>
     <module name="IllegalInstantiation"/>
-    <module name="HiddenField"/>
+    <module name="HiddenField">
+      <property name="ignoreConstructorParameter" value="true"/>
+      <property name="ignoreSetter" value="true"/>
+    </module>
     <module name="IllegalType">
       <property name="tokens" value="METHOD_DEF,PARAMETER_DEF,VARIABLE_DEF"/>
     </module>

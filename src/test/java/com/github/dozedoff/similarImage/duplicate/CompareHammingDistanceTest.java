@@ -24,19 +24,17 @@ import static org.junit.Assert.assertThat;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.github.dozedoff.similarImage.db.ImageRecord;
-
 public class CompareHammingDistanceTest {
 
-	private static Bucket<Long, ImageRecord> a, b, c, d;
+	private static Long a, b, c, d;
 	private static CompareHammingDistance chd;
 
 	@BeforeClass
 	public static void setUpBeforeClass() {
-		a = new Bucket<>(2L);
-		b = new Bucket<>(3L);
-		c = new Bucket<>(2L);
-		d = new Bucket<>(4L);
+		a = 2L;
+		b = 3L;
+		c = 2L;
+		d = 4L;
 
 		chd = new CompareHammingDistance();
 	}
@@ -59,7 +57,7 @@ public class CompareHammingDistanceTest {
 	@Test
 	public void testEvalDistanceAxiom1() throws Exception {
 		assertThat(chd.eval(a, c), is(0.0));
-		assertThat(a.getId(), is(c.getId()));
+		assertThat(a, is(c));
 	}
 
 	@Test

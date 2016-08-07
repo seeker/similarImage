@@ -1,4 +1,4 @@
-/*  Copyright (C) 2014  Nicholas Wright
+/*  Copyright (C) 2016  Nicholas Wright
     
     This file is part of similarImage - A similar image finder using pHash
     
@@ -27,6 +27,8 @@ import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
 
 public class ImageRecordTest {
+	private static final String EXPECTED_TO_STRING = "ImageRecord{path:foo,hash:42}";
+
 	private ImageRecord imageRecord;
 
 	@Before
@@ -72,5 +74,10 @@ public class ImageRecordTest {
 	@Test
 	public void testEquals() throws Exception {
 		EqualsVerifier.forClass(ImageRecord.class).suppress(Warning.NONFINAL_FIELDS).verify();
+	}
+
+	@Test
+	public void testToString() throws Exception {
+		assertThat(imageRecord.toString(), is(EXPECTED_TO_STRING));
 	}
 }

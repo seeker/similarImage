@@ -17,45 +17,94 @@
  */
 package com.github.dozedoff.similarImage.duplicate;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.math.BigInteger;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
+import com.google.common.base.Stopwatch;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
 
 public abstract class DuplicateUtil {
 	private static final Logger logger = LoggerFactory.getLogger(DuplicateUtil.class);
 
-	private static final ImageRecordComperator irc = new ImageRecordComperator();
-	private static final BucketComperator bucketComperator = new BucketComperator();
+	/**
+	 * Group records by hash using a one to many map.
+	 * 
+	 * @param dbRecords
+	 *            records to sort.
+	 * @return a one to many map with the hash vales as the key.
+	 */
+	public static Multimap<Long, ImageRecord> groupByHash(Collection<ImageRecord> dbRecords) {
+		Multimap<Long, ImageRecord> groupedByHash = MultimapBuilder.hashKeys().hashSetValues().build();
 
-	public static ArrayList<Bucket<Long, ImageRecord>> sortIntoBuckets(List<ImageRecord> dbRecords) {
-		ArrayList<ImageRecord> dbRecords2 = new ArrayList<>(dbRecords);
-		ArrayList<Bucket<Long, ImageRecord>> buckets = new ArrayList<>(dbRecords.size());
+		logger.info("Grouping records by hash...");
 
-		logger.info("Sorting records...");
-		Collections.sort(dbRecords2, irc);
+		for (ImageRecord ir : dbRecords) {
+			groupedByHash.put(ir.getpHash(), ir);
+		}
 
-		logger.info("Populating buckets...");
-		for (ImageRecord ir : dbRecords2) {
-			int index = Collections.binarySearch(buckets, new Bucket<Long, ImageRecord>(ir.getpHash()), bucketComperator);
+		logger.info("{} records, in {} groups", dbRecords.size(), groupedByHash.keySet().size());
 
-			if (index < 0) {
-				Bucket<Long, ImageRecord> b = new Bucket<Long, ImageRecord>(ir.getpHash(), ir);
-				buckets.add(Math.abs(index + 1), b);
-			} else {
-				Bucket<Long, ImageRecord> b = buckets.get(index);
-				b.add(ir);
+		return groupedByHash;
+	}
+	
+	/**
+	 * Create a map that only contains groups with more than one image.
+	 * 
+	 * @return new map containing only multi-image groups.
+	 */
+	public static void removeSingleImageGroups(Multimap<Long, ImageRecord> sourceGroups) {
+		Iterator<Entry<Long, Collection<ImageRecord>>> iter = sourceGroups.asMap().entrySet().iterator();
+		// TODO add logging
+		while (iter.hasNext() ) {
+			Entry<Long, Collection<ImageRecord>> group = iter.next();
+			if (group.getValue().size() <= 1) {
+				iter.remove();
+			}
+		}
+	}
+
+	/**
+	 * Remove results of queries with the same set of resulting hashes.
+	 * 
+	 * @param records
+	 *            to scan and merge if needed
+	 */
+	public static void removeDuplicateSets(Multimap<Long, ImageRecord> records) {
+		logger.info("Checking {} groups for duplicates", records.keySet().size());
+		Stopwatch sw = Stopwatch.createStarted();
+		Set<Collection<ImageRecord>> uniqueRecords = new HashSet<Collection<ImageRecord>>(records.keySet().size());
+
+		Iterator<Collection<ImageRecord>> recordIter = records.asMap().values().iterator();
+		long removedGroups = 0;
+
+		while (recordIter.hasNext()) {
+			Collection<ImageRecord> next = recordIter.next();
+
+			if (!uniqueRecords.add(next)) {
+				recordIter.remove();
+				removedGroups++;
 			}
 		}
 
-		logger.info("Sorted {} records into {} buckets", dbRecords.size(), buckets.size());
+		logger.info("Checked groups in {}, removed {} identical groups", sw, removedGroups);
+	}
 
-		buckets.trimToSize();
+	protected static final BigInteger hashSum(Collection<Long> hashes) {
+		BigInteger hashSum = BigInteger.ZERO;
 
-		return buckets;
+		for (Long hash : hashes) {
+			hashSum = hashSum.add(BigInteger.valueOf(hash));
+		}
+
+		return hashSum;
 	}
 }
