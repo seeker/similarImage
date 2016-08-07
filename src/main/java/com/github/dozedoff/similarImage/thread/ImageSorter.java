@@ -80,7 +80,9 @@ public class ImageSorter extends Thread {
 		rs.build(dBrecords);
 
 		Multimap<Long, ImageRecord> results = findAllHashesInRange(rs, dBrecords);
+
 		DuplicateUtil.removeSingleImageGroups(results);
+		DuplicateUtil.removeDuplicateSets(results);
 
 		logger.info("Found {} similar images out of {} in {}", results.keySet().size(), dBrecords.size(), sw);
 		controller.setResults(results);
