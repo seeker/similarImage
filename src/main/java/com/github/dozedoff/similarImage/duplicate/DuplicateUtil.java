@@ -73,42 +73,6 @@ public abstract class DuplicateUtil {
 	}
 
 	/**
-	 * Converts a multimap to buckets. This serves as an adapter to the legacy
-	 * data structure.
-	 * 
-	 * @param multimap
-	 *            to convert
-	 * @return Bucket representation of the mutimap
-	 */
-	public static Set<Bucket<Long, ImageRecord>> multimapToBucketSet(Multimap<Long, ImageRecord> multimap) {
-		Set<Bucket<Long, ImageRecord>> buckets = new HashSet<>();
-
-		for (Long key : multimap.keySet()) {
-			buckets.add(new Bucket<Long, ImageRecord>(key, multimap.get(key)));
-		}
-
-		return buckets;
-	}
-
-	/**
-	 * Converts a Bucket set to a multimap. This serves as an adapter to the
-	 * legacy data structure.
-	 * 
-	 * @param buckets
-	 *            to convert
-	 * @return Multimap representation of the Bucket set
-	 */
-	public static Multimap<Long, ImageRecord> bucketSetToMultimap(Set<Bucket<Long, ImageRecord>> buckets) {
-		Multimap<Long, ImageRecord> multimap = MultimapBuilder.hashKeys().hashSetValues().build();
-
-		for (Bucket<Long, ImageRecord> bucket : buckets) {
-			multimap.putAll(bucket.getId(), bucket.getBucket());
-		}
-
-		return multimap;
-	}
-
-	/**
 	 * Remove results of queries with the same set of resulting hashes.
 	 * 
 	 * @param records

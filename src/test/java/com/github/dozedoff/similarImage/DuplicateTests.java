@@ -21,8 +21,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
-import com.github.dozedoff.similarImage.duplicate.BucketComperatorTest;
-import com.github.dozedoff.similarImage.duplicate.BucketTest;
 import com.github.dozedoff.similarImage.duplicate.CompareHammingDistanceTest;
 import com.github.dozedoff.similarImage.duplicate.CompareTest;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperationsTest;
@@ -35,11 +33,9 @@ import com.github.dozedoff.similarImage.duplicate.RecordSearchTest;
 @RunWith(Suite.class)
 @SuiteClasses({
 	CompareTest.class,
-	BucketTest.class,
 	CompareHammingDistanceTest.class,
 	DuplicateOperationsTest.class,
 	ImageInfoTest.class,
-	BucketComperatorTest.class,
 	DuplicateUtilTest.class,
 	ImageRecordComperatorTest.class,
 	RecordSearchTest.class

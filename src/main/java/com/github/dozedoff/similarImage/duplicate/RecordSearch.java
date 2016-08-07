@@ -20,7 +20,6 @@ package com.github.dozedoff.similarImage.duplicate;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -104,25 +103,6 @@ public class RecordSearch {
 	}
 
 	/**
-	 * For backwards compatibility, migration.
-	 * 
-	 * @param pHash
-	 * @param hammingDistance
-	 * @return
-	 */
-	@Deprecated
-	public Set<Bucket<Long, ImageRecord>> searchTreeLegacy(long pHash, long hammingDistance) {
-		Set<Long> hashes = bkTree.searchWithin(pHash, (double) hammingDistance);
-		Set<Bucket<Long, ImageRecord>> buckets = new HashSet<>();
-
-		for (Long hash : hashes) {
-			buckets.add(new Bucket<Long, ImageRecord>(hash, groups.get(hash)));
-		}
-
-		return buckets;
-	}
-
-	/**
 	 * Return all groups with exact matches and more than one image per match.
 	 * 
 	 * @return distinct list of matches
@@ -130,33 +110,6 @@ public class RecordSearch {
 	public List<Long> exactMatch() {
 		Multimap<Long, ImageRecord> multiImage = removeSingleImageGroups(groups);
 		return new ArrayList<>(multiImage.keySet());
-	}
-
-	@Deprecated
-	public HashMap<Long, Set<Bucket<Long, ImageRecord>>> sortExactMatchLegacy() {
-		List<Long> keys = exactMatch();
-
-		HashMap<Long, Set<Bucket<Long, ImageRecord>>> exactMatches;
-
-		logger.info("Checking {} groups for size greater than 1", numberOfHashes());
-
-		exactMatches = longToLegacyBucket(keys);
-
-		logger.info("Found {} groups with more than 1 image", numberOfHashes() - keys.size());
-
-		return exactMatches;
-	}
-
-	private HashMap<Long, Set<Bucket<Long, ImageRecord>>> longToLegacyBucket(List<Long> hashes) {
-		HashMap<Long, Set<Bucket<Long, ImageRecord>>> buckets = new HashMap<>();
-
-		for (Long key : hashes) {
-			Set<Bucket<Long, ImageRecord>> set = new HashSet<>();
-			set.add(new Bucket<Long, ImageRecord>(key, groups.get(key)));
-			buckets.put(key, set);
-		}
-
-		return buckets;
 	}
 
 	/**
@@ -200,13 +153,5 @@ public class RecordSearch {
 		}
 
 		return searchResult;
-	}
-
-	/**
-	 * For backwards compatibility, migration.
-	 */
-	@Deprecated
-	public HashMap<Long, Set<Bucket<Long, ImageRecord>>> sortHammingDistanceLegacy(long hammingDistance) {
-		return longToLegacyBucket(distanceMatch(hammingDistance));
 	}
 }
