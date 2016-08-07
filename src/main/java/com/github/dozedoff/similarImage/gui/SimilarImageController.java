@@ -21,8 +21,10 @@ import java.awt.Dimension;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
@@ -34,6 +36,12 @@ import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
+import com.github.dozedoff.similarImage.handler.DatabaseHandler;
+import com.github.dozedoff.similarImage.handler.ExtendedAttributeHandler;
+import com.github.dozedoff.similarImage.handler.HashHandler;
+import com.github.dozedoff.similarImage.handler.HashNames;
+import com.github.dozedoff.similarImage.handler.HashingHandler;
+import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.thread.FilterSorter;
 import com.github.dozedoff.similarImage.thread.ImageFindJob;
@@ -171,8 +179,16 @@ public class SimilarImageController {
 	}
 
 	public void indexImages(String path) {
-		ImageFindJobVisitor visitor = new ImageFindJobVisitor(new SimpleImageFilter(), threadPool, persistence, new ImagePHash(),
-				statistics);
+		HashAttribute hashAttribute = new HashAttribute(HashNames.DEFAULT_DCT_HASH_2);
+		
+		List<HashHandler> handlers = new ArrayList<HashHandler>();
+		
+		handlers.add(new ExtendedAttributeHandler(hashAttribute, persistence));
+		handlers.add(new DatabaseHandler(persistence, statistics));
+		handlers.add(new HashingHandler(threadPool, new ImagePHash(), persistence, statistics, hashAttribute));
+
+		ImageFindJobVisitor visitor = new ImageFindJobVisitor(new SimpleImageFilter(), handlers, statistics);
+
 		// TODO use a priority queue to let FindJobs run first
 		Thread t = new Thread(new ImageFindJob(path, visitor));
 		t.setName("Image Find Job");

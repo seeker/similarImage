@@ -1,101 +1,119 @@
+/*  Copyright (C) 2016  Nicholas Wright
+    
+    This file is part of similarImage - A similar image finder using pHash
+    
+    similarImage is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package com.github.dozedoff.similarImage.thread;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.sql.SQLException;
-import java.util.concurrent.ExecutorService;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Collection;
+import java.util.LinkedList;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
-import com.github.dozedoff.commonj.hash.ImagePHash;
-import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.handler.HashHandler;
 import com.github.dozedoff.similarImage.io.Statistics;
 
+@RunWith(MockitoJUnitRunner.class)
 public class ImageFindJobVisitorTest {
-	private static final int DEFAULT_TIMEOUT = 2000;
+	@Mock
+	private Filter<Path> fileFilter;
 
-	@SuppressWarnings("unchecked")
-	private Filter<Path> fileFilter = mock(Filter.class);
+	@Mock
+	private HashHandler handler;
 
-	private Persistence persistence = mock(Persistence.class);
+	private Collection<HashHandler> handlers;
 
-	private ExecutorService threadPool = mock(ExecutorService.class);
-	private ImagePHash imagePHash = mock(ImagePHash.class);
-	private Statistics statistics = mock(Statistics.class);
+	private Statistics statistics;
 
-	private ImageFindJobVisitor loadJobVisitor;
+	@Mock
+	private Path path;
 
-	private Path testPath;
+	@Mock
+	private BasicFileAttributes attrs;
 
-	public void createLoadJobVisitor() throws Exception {
-		when(fileFilter.accept(any(Path.class))).thenReturn(true);
-		when(persistence.isBadFile(any(Path.class))).thenReturn(false);
-		when(persistence.isPathRecorded(any(Path.class))).thenReturn(false);
+	private ImageFindJobVisitor cut;
 
-		loadJobVisitor = new ImageFindJobVisitor(fileFilter, threadPool, persistence, imagePHash, statistics);
-	}
 
 	@Before
 	public void setUp() throws Exception {
-		createLoadJobVisitor();
-		testPath = Paths.get("fooBar");
-	}
+		when(fileFilter.accept(any())).thenReturn(true);
+		when(handler.handle(path)).thenReturn(true);
 
-	@After
-	public void tearDown() {
-		threadPool.shutdown();
-	}
+		handlers = new LinkedList<HashHandler>();
+		handlers.add(handler);
 
-	@Test
-	public void testVisitFileValidUnknown() throws Exception {
-		loadJobVisitor.visitFile(testPath, null);
+		statistics = new Statistics();
 
-		verify(threadPool, timeout(DEFAULT_TIMEOUT)).execute(any(ImageHashJob.class));
+		cut = new ImageFindJobVisitor(fileFilter, handlers, statistics);
 	}
 
 	@Test
-	public void testVisitFileInvalid() throws Exception {
-		when(fileFilter.accept(any(Path.class))).thenReturn(false);
-
-		loadJobVisitor.visitFile(testPath, null);
-
-		verify(threadPool, never()).execute(any(ImageHashJob.class));
+	public void testVisitFileAccepted() throws Exception {
+		cut.visitFile(path, attrs);
+		
+		assertThat(cut.getFileCount(), is(1));
 	}
 
 	@Test
-	public void testVisitFileKnownBad() throws Exception {
-		when(persistence.isBadFile(any(Path.class))).thenReturn(true);
+	public void testVisitFileNotAccepted() throws Exception {
+		when(fileFilter.accept(any())).thenReturn(false);
 
-		loadJobVisitor.visitFile(testPath, null);
+		cut.visitFile(path, attrs);
 
-		verify(threadPool, never()).execute(any(ImageHashJob.class));
+		assertThat(cut.getFileCount(), is(0));
 	}
 
 	@Test
-	public void testVisitFileKnownHash() throws Exception {
-		when(persistence.isPathRecorded(any(Path.class))).thenReturn(true);
+	public void testVisitFileOkProcessedFiles() throws Exception {
+		cut.visitFile(path, attrs);
 
-		loadJobVisitor.visitFile(testPath, null);
-
-		verify(threadPool, never()).execute(any(ImageHashJob.class));
+		assertThat(statistics.getProcessedFiles(), is(1));
 	}
 
 	@Test
-	public void testVisitFileDBerror() throws Exception {
-		when(persistence.isPathRecorded(any(Path.class))).thenThrow(new SQLException("Testing"));
+	public void testVisitFileOkFailedFiles() throws Exception {
+		cut.visitFile(path, attrs);
 
-		loadJobVisitor.visitFile(testPath, null);
+		assertThat(statistics.getFailedFiles(), is(0));
+	}
 
-		verify(threadPool, never()).execute(any(ImageHashJob.class));
+	@Test
+	public void testVisitNotHandled() throws Exception {
+		when(handler.handle(path)).thenReturn(false);
+
+		cut.visitFile(path, attrs);
+
+		assertThat(statistics.getFailedFiles(), is(1));
+	}
+
+	@Test
+	public void testGetFileCount() throws Exception {
+		cut.visitFile(path, attrs);
+
+		assertThat(cut.getFileCount(), is(1));
 	}
 }
