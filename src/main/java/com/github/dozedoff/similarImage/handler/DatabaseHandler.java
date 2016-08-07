@@ -60,8 +60,10 @@ public class DatabaseHandler implements HashHandler {
 	 */
 	@Override
 	public boolean handle(Path file) {
+		LOGGER.trace("Handling {} with {}", file, ExtendedAttributeHandler.class.getSimpleName());
 		try {
 			if (isInDatabase(file)) {
+				LOGGER.trace("{} was found in the database");
 				statistics.incrementSkippedFiles();
 				statistics.incrementProcessedFiles();
 				return true;

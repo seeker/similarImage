@@ -64,9 +64,13 @@ public class ExtendedAttributeHandler implements HashHandler {
 	 */
 	@Override
 	public boolean handle(Path file) {
+		LOGGER.trace("Handling {} with {}", file, ExtendedAttributeHandler.class.getSimpleName());
 		if (hashAttribute.areAttributesValid(file)) {
+			LOGGER.trace("{} has valid extended attributes", file);
 			try {
 				persistence.addRecord(new ImageRecord(file.toString(), hashAttribute.readHash(file)));
+				// Successfully
+				LOGGER.trace("Successfully read and stored the hash for {}", file);
 				return true;
 			} catch (InvalidAttributeValueException | IOException e) {
 				LOGGER.error("Failed to read extended attribute from {}", file, e);

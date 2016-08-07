@@ -20,6 +20,9 @@ package com.github.dozedoff.similarImage.handler;
 import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.io.HashAttribute;
@@ -33,6 +36,8 @@ import com.github.dozedoff.similarImage.thread.ImageHashJob;
  *
  */
 public class HashingHandler implements HashHandler {
+	private static final Logger LOGGER = LoggerFactory.getLogger(HashingHandler.class);
+
 	private final Persistence persistence;
 	private final ImagePHash hasher;
 	private final Statistics statistics;
@@ -72,6 +77,8 @@ public class HashingHandler implements HashHandler {
 	 */
 	@Override
 	public boolean handle(Path file) {
+		LOGGER.trace("Handling {} with {}", file, HashingHandler.class.getSimpleName());
+
 		ImageHashJob job = new ImageHashJob(file, hasher, persistence, statistics);
 		job.setHashAttribute(hashAttribute);
 		threadPool.execute(job);
