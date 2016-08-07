@@ -33,22 +33,36 @@ import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.db.BadFileRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.io.Statistics;
 
 /**
- * Load an image and calculate the hash, then store the result in the database.
+ * Load an image and calculate the hash, then store the result in the database and as an extended attribute.
  * 
  * @author Nicholas Wright
  *
  */
 public class ImageHashJob implements Runnable {
-	private static final Logger logger = LoggerFactory.getLogger(ImageHashJob.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(ImageHashJob.class);
 
 	private final Persistence persistence;
 	private final Path image;
 	private final ImagePHash hasher;
 	private final Statistics statistics;
+	private HashAttribute hashAttribute;
 	
+	/**
+	 * Create a class that will hash an image an store the result.
+	 * 
+	 * @param image
+	 *            to hash
+	 * @param hasher
+	 *            class that does the hash computation
+	 * @param persistence
+	 *            database access to store the result
+	 * @param statistics
+	 *            tracking file stats
+	 */
 	public ImageHashJob(Path image, ImagePHash hasher, Persistence persistence, Statistics statistics) {
 		this.image = image;
 		this.persistence = persistence;
@@ -56,32 +70,47 @@ public class ImageHashJob implements Runnable {
 		this.statistics = statistics;
 	}
 
+	/**
+	 * Set a {@link HashAttribute} to additionally write the hash as an extended attribute.
+	 * 
+	 * @param hashAttribute
+	 *            to use for writing extended attributes
+	 */
+	public final void setHashAttribute(HashAttribute hashAttribute) {
+		this.hashAttribute = hashAttribute;
+	}
+
 	@Override
 	public void run() {
 		try {
-			processFile(image);
+			long hash = processFile(image);
+
+			if (hashAttribute != null) {
+				hashAttribute.writeHash(image, hash);
+			}
 		} catch (IIOException e) {
-			logger.warn("Failed to process image(IIO) - {}", e.getMessage());
+			LOGGER.warn("Failed to process image(IIO) - {}", e.getMessage());
 			try {
 				persistence.addBadFile(new BadFileRecord(image));
 			} catch (SQLException e1) {
-				logger.warn("Failed to add bad file record for {} - {}", image, e.getMessage());
+				LOGGER.warn("Failed to add bad file record for {} - {}", image, e.getMessage());
 			}
 			statistics.incrementFailedFiles();
 		} catch (IOException e) {
-			logger.warn("Failed to load file - {}", e.getMessage());
+			LOGGER.warn("Failed to load file - {}", e.getMessage());
 			statistics.incrementFailedFiles();
 		} catch (SQLException e) {
-			logger.warn("Failed to query database - {}", e.getMessage());
+			LOGGER.warn("Failed to query database - {}", e.getMessage());
 			statistics.incrementFailedFiles();
 		}
 	}
 
-	private void processFile(Path next) throws SQLException, IOException {
+	private long processFile(Path next) throws SQLException, IOException {
 		statistics.incrementProcessedFiles();
 		try (InputStream bis = new BufferedInputStream(Files.newInputStream(next))) {
 			long hash = hasher.getLongHash(bis);
 			persistence.addRecord(new ImageRecord(next.toString(), hash));
+			return hash;
 		}
 	}
 }

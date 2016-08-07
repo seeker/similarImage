@@ -18,6 +18,7 @@
 package com.github.dozedoff.similarImage.thread;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import java.nio.file.Path;
@@ -38,6 +39,7 @@ import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.db.BadFileRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.io.Statistics;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -50,6 +52,9 @@ public class ImageHashJobTest {
 
 	@Mock
 	private Statistics statistics;
+
+	@Mock
+	private HashAttribute hashAttributeMock;
 
 	private ImageHashJob imageLoadJob;
 
@@ -79,5 +84,22 @@ public class ImageHashJobTest {
 		imageLoadJob.run();
 
 		verify(persistence).addBadFile(any(BadFileRecord.class));
+	}
+
+	@Test
+	public void testWriteExtendedAttributes() throws Exception {
+		imageLoadJob.setHashAttribute(hashAttributeMock);
+		imageLoadJob.run();
+
+		verify(hashAttributeMock).writeHash(testImage, 0);
+	}
+
+	@Test
+	public void testDoNotWriteExtendedAttributes() throws Exception {
+		Mockito.doThrow(IIOException.class).when(persistence).addRecord(any(ImageRecord.class));
+		imageLoadJob.setHashAttribute(hashAttributeMock);
+		imageLoadJob.run();
+
+		verify(hashAttributeMock, never()).writeHash(testImage, 0);
 	}
 }
