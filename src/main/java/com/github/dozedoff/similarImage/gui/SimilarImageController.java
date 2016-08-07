@@ -33,7 +33,6 @@ import com.github.dozedoff.commonj.filefilter.SimpleImageFilter;
 import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
-import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.thread.FilterSorter;
@@ -49,7 +48,6 @@ public class SimilarImageController {
 	private static final String GUI_MSG_SORTING = "Sorting...";
 
 	private final int THUMBNAIL_DIMENSION = 500;
-	private final int PRODUCER_QUEUE_SIZE = 400;
 
 	private final Persistence persistence;
 	private Multimap<Long, ImageRecord> results;
@@ -58,15 +56,42 @@ public class SimilarImageController {
 	private final ExecutorService threadPool;
 	private final Statistics statistics;
 
-	public SimilarImageController(Persistence persistence, ExecutorService threadPool, Statistics statistics) {
+	/**
+	 * Performs actions initiated by the user
+	 * 
+	 * @param persistence
+	 *            database access
+	 * @param displayGroup
+	 *            view for displaying images for groups
+	 * 
+	 * @param threadPool
+	 *            for performing tasks
+	 * @param statistics
+	 *            tracking stats
+	 */
+	public SimilarImageController(Persistence persistence, DisplayGroupView displayGroup, ExecutorService threadPool,
+			Statistics statistics) {
 		this.persistence = persistence;
 
 		results = MultimapBuilder.hashKeys().hashSetValues().build();
-		displayGroup = new DisplayGroupView();
-		gui = new SimilarImageView(this, new DuplicateOperations(persistence), PRODUCER_QUEUE_SIZE);
-		statistics.addStatisticsListener(gui);
+		this.displayGroup = displayGroup;
 		this.threadPool = threadPool; 
 		this.statistics = statistics;
+	}
+
+	/**
+	 * Set the user interface this controller should interact with, and register it with the statistics tracker.
+	 * 
+	 * @param gui
+	 *            the view to use
+	 */
+	public final void setGui(SimilarImageView gui) {
+		if (this.gui != null) {
+			statistics.removeStatisticsListener(this.gui);
+		}
+
+		this.gui = gui;
+		statistics.addStatisticsListener(gui);
 	}
 
 	public void ignoreImage(ImageRecord toIgnore) {
@@ -130,8 +155,19 @@ public class SimilarImageController {
 	}
 
 	private void updateGUI() {
-		gui.setStatus("" + results.keySet().size() + " Groups");
+		setGUIStatus("" + results.keySet().size() + " Groups");
 		gui.populateGroupList(results.keySet());
+	}
+
+	private void setGUIStatus(String message) {
+		guiSetCheck();
+		gui.setStatus(message);
+	}
+
+	private void guiSetCheck() {
+		if (gui == null) {
+			throw new RuntimeException("GUI was not set for the controller! Use setGui()!");
+		}
 	}
 
 	public void indexImages(String path) {
@@ -144,7 +180,7 @@ public class SimilarImageController {
 	}
 
 	public void sortDuplicates(int hammingDistance, String path) {
-		gui.setStatus(GUI_MSG_SORTING);
+		setGUIStatus(GUI_MSG_SORTING);
 		Thread t = new ImageSorter(hammingDistance, path, this, persistence);
 		t.start();
 	}

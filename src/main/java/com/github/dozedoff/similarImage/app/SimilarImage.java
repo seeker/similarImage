@@ -24,7 +24,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
+import com.github.dozedoff.similarImage.gui.DisplayGroupView;
 import com.github.dozedoff.similarImage.gui.SimilarImageController;
+import com.github.dozedoff.similarImage.gui.SimilarImageView;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.thread.NamedThreadFactory;
 
@@ -32,6 +35,7 @@ public class SimilarImage {
 	private final static Logger logger = LoggerFactory.getLogger(SimilarImage.class);
 
 	private final String PROPERTIES_FILENAME = "similarImage.properties";
+	private final int PRODUCER_QUEUE_SIZE = 400;
 
 	private Persistence persistence;
 	private ExecutorService threadPool;
@@ -56,6 +60,11 @@ public class SimilarImage {
 		settings.loadPropertiesFromFile(PROPERTIES_FILENAME);
 		persistence = new Persistence();
 		statistics = new Statistics();
-		new SimilarImageController(persistence, threadPool, statistics);
+		SimilarImageController controller = new SimilarImageController(persistence, new DisplayGroupView(), threadPool,
+				statistics);
+		SimilarImageView gui = new SimilarImageView(controller, new DuplicateOperations(persistence),
+				PRODUCER_QUEUE_SIZE);
+
+		controller.setGui(gui);
 	}
 }
