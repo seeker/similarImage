@@ -41,6 +41,7 @@ import com.github.dozedoff.similarImage.handler.ExtendedAttributeHandler;
 import com.github.dozedoff.similarImage.handler.HashHandler;
 import com.github.dozedoff.similarImage.handler.HashNames;
 import com.github.dozedoff.similarImage.handler.HashingHandler;
+import com.github.dozedoff.similarImage.io.ExtendedAttribute;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.thread.FilterSorter;
@@ -184,8 +185,15 @@ public class SimilarImageController {
 		List<HashHandler> handlers = new ArrayList<HashHandler>();
 		
 		handlers.add(new DatabaseHandler(persistence, statistics));
-		handlers.add(new ExtendedAttributeHandler(hashAttribute, persistence));
-		handlers.add(new HashingHandler(threadPool, new ImagePHash(), persistence, statistics, hashAttribute));
+		
+		if (ExtendedAttribute.supportsExtendedAttributes(Paths.get(path))) {
+			handlers.add(new ExtendedAttributeHandler(hashAttribute, persistence));
+			handlers.add(new HashingHandler(threadPool, new ImagePHash(), persistence, statistics, hashAttribute));
+			logger.info("Extended attributes are supported for {}", path);
+		} else {
+			logger.info("Extended attributes are NOT supported for {}, disabling...", path);
+			handlers.add(new HashingHandler(threadPool, new ImagePHash(), persistence, statistics, null));
+		}
 
 		ImageFindJobVisitor visitor = new ImageFindJobVisitor(new SimpleImageFilter(), handlers, statistics);
 
