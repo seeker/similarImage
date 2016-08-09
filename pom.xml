@@ -13,13 +13,6 @@
 	<description>Programm for finding visually similar images</description>
 	<url>https://github.com/dozedoff/similarImage</url>
 	
-	<repositories>
-		<repository>
-		    <id>jitpack.io</id>
-		    <url>https://jitpack.io</url>
-		</repository>
-	</repositories>
-
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
