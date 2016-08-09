@@ -18,11 +18,8 @@
 package com.github.dozedoff.similarImage.thread;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,10 +29,12 @@ import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.RecordSearch;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
+import com.github.dozedoff.similarImage.event.GuiGroupEvent;
 import com.github.dozedoff.similarImage.event.GuiStatusEvent;
 import com.github.dozedoff.similarImage.util.StringUtil;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
 import com.google.common.eventbus.EventBus;
 
 /**
@@ -70,8 +69,8 @@ public class FilterSorter extends Thread {
 		dBrecords = Collections.emptyList();
 	}
 
-	private List<Long> getFilterMatches(RecordSearch recordSearch, String sanitizedTag) {
-		Set<Long> uniqueGroups = new HashSet<Long>();
+	private Multimap<Long, ImageRecord> getFilterMatches(RecordSearch recordSearch, String sanitizedTag) {
+		Multimap<Long, ImageRecord> uniqueGroups = MultimapBuilder.hashKeys().hashSetValues().build();
 		List<FilterRecord> matchingFilters = Collections.emptyList();
 
 		try {
@@ -83,10 +82,10 @@ public class FilterSorter extends Thread {
 
 		for (FilterRecord filter : matchingFilters) {
 			Multimap<Long, ImageRecord> match = recordSearch.distanceMatch(filter.getpHash(), hammingDistance);
-			uniqueGroups.addAll(match.keySet());
+			uniqueGroups.putAll(filter.getpHash(), match.values());
 		}
 
-		return new ArrayList<Long>(uniqueGroups);
+		return uniqueGroups;
 	}
 
 	@Override
@@ -99,7 +98,7 @@ public class FilterSorter extends Thread {
 
 		RecordSearch rs = new RecordSearch();
 		String sanitizedTag = StringUtil.sanitizeTag(reason);
-		List<Long> groups = Collections.emptyList();
+		Multimap<Long, ImageRecord> groups = MultimapBuilder.hashKeys().hashSetValues().build();
 
 		try {
 			dBrecords = persistence.getAllRecords();
@@ -113,6 +112,6 @@ public class FilterSorter extends Thread {
 			logger.warn("Failed to load from database - {}", e.getMessage());
 		}
 
-		guiEvents.post(groups);
+		guiEvents.post(new GuiGroupEvent(groups));
 	}
 }
