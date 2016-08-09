@@ -17,6 +17,8 @@
  */
 package com.github.dozedoff.similarImage.gui;
 
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.nio.file.Path;
 
 import javax.swing.JFrame;
@@ -26,7 +28,21 @@ import javax.swing.JScrollPane;
 
 import net.miginfocom.swing.MigLayout;
 
+/**
+ * Displays images in a separate window.
+ * 
+ * @author Nicholas Wright
+ *
+ */
 public class FullImageView {
+	/**
+	 * Build a simple frame with scrollbars to display an image.
+	 * 
+	 * @param largeImage
+	 *            the image to display
+	 * @param path
+	 *            path to the image, used for title
+	 */
 	public FullImageView(JLabel largeImage, Path path) {
 		JPanel imagePanel = new JPanel(new MigLayout());
 		JScrollPane scroll = new JScrollPane(imagePanel);
@@ -36,8 +52,17 @@ public class FullImageView {
 
 		imagePanel.add(largeImage);
 		imageFrame.add(scroll);
+
+		largeImage.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getButton() == MouseEvent.BUTTON1) {
+					imageFrame.dispose();
+				}
+			}
+		});
+
 		imageFrame.pack();
 		imageFrame.setVisible(true);
 	}
-
 }
