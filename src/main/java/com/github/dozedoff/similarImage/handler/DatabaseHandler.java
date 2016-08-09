@@ -69,7 +69,7 @@ public class DatabaseHandler implements HashHandler {
 				return true;
 			}
 		} catch (SQLException e) {
-			LOGGER.error("Failed to check the database for {}", file, e);
+			LOGGER.error("Failed to check the database for {} ({})", file, e.toString());
 		}
 
 		return false;

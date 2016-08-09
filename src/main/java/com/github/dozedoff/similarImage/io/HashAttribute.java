@@ -62,7 +62,7 @@ public class HashAttribute {
 		try {
 			return ExtendedAttribute.isExtendedAttributeSet(path, hashNamespace) && verifyTimestamp(path);
 		} catch (IOException e) {
-			LOGGER.error("Failed to check hash for {}", path, e);
+			LOGGER.error("Failed to check hash for {} ({})", path, e.toString());
 		}
 
 		return false;
@@ -70,7 +70,7 @@ public class HashAttribute {
 
 	private boolean verifyTimestamp(Path path) throws IOException {
 		if (!ExtendedAttribute.isExtendedAttributeSet(path, HASH_TIMESTAMP_NAME)) {
-			LOGGER.warn("{} does not have a timestamp", path);
+			LOGGER.error("{} does not have a timestamp", path);
 			return false;
 		}
 
@@ -124,7 +124,7 @@ public class HashAttribute {
 					Long.toString(Files.getLastModifiedTime(path).toMillis()));
 
 		} catch (IOException e) {
-			LOGGER.warn("Failed to write hash to file {}", path, e);
+			LOGGER.warn("Failed to write hash to file {} ({})", path, e.toString());
 		}
 	}
 }

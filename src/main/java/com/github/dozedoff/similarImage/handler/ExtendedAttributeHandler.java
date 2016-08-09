@@ -73,9 +73,9 @@ public class ExtendedAttributeHandler implements HashHandler {
 				LOGGER.trace("Successfully read and stored the hash for {}", file);
 				return true;
 			} catch (InvalidAttributeValueException | IOException e) {
-				LOGGER.error("Failed to read extended attribute from {}", file, e);
+				LOGGER.error("Failed to read extended attribute from {} ({})", file, e.toString());
 			} catch (SQLException e) {
-				LOGGER.error("Failed to access database for {}", file, e);
+				LOGGER.error("Failed to access database for {} ({})", file, e.toString());
 			}
 		}
 

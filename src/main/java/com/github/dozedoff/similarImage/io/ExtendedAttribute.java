@@ -76,12 +76,12 @@ public class ExtendedAttribute {
 			setExtendedAttribute(path, XATTR_TEST_NAME, Charset.defaultCharset().encode("xattr support test"));
 			return true;
 		} catch (IOException e) {
-			LOGGER.error("Failed to write test attribute", e);
+			LOGGER.error("Failed to write test attribute ({})", e.toString());
 		} finally {
 			try {
 				deleteExtendedAttribute(path, XATTR_TEST_NAME);
 			} catch (IOException e) {
-				LOGGER.error("Failed to delete test attribute", e);
+				LOGGER.error("Failed to delete test attribute ({})", e.toString());
 			}
 		}
 
