@@ -1,4 +1,4 @@
-/*  Copyright (C) 2014  Nicholas Wright
+/*  Copyright (C) 2016  Nicholas Wright
     
     This file is part of similarImage - A similar image finder using pHash
     
@@ -15,21 +15,23 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.dozedoff.similarImage;
+package com.github.dozedoff.similarImage.handler;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.junit.runners.Suite.SuiteClasses;
+import java.nio.file.Path;
 
-import com.github.dozedoff.similarImage.io.ExtendedAttributeTest;
-import com.github.dozedoff.similarImage.io.HashAttributeTest;
-import com.github.dozedoff.similarImage.io.StatisticsTest;
-
-//@formatter:off
-@RunWith(Suite.class)
-@SuiteClasses({
-		StatisticsTest.class,
-		ExtendedAttributeTest.class,
-		HashAttributeTest.class
-})
-public class IoTests {}
+/**
+ * Interface for handlers that can provide hashes for files.
+ * 
+ * @author Nicholas Wright
+ *
+ */
+public interface HashHandler {
+	/**
+	 * Acquire a hash for the given file and make it available to the porgramm.
+	 * 
+	 * @param file
+	 *            for which a hash is required
+	 * @return true if the handler could successfully provide a hash
+	 */
+	boolean handle(Path file);
+}

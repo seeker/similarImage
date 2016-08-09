@@ -30,6 +30,7 @@ import org.junit.runners.Suite.SuiteClasses;
 	ThreadTests.class,
 	GuiTests.class,
 	IoTests.class,
-	UtilTests.class
+	UtilTests.class,
+	HandlerTests.class,
 })
 public class AllTestsSimilarImage {}

@@ -1,4 +1,4 @@
-/*  Copyright (C) 2014  Nicholas Wright
+/*  Copyright (C) 2016  Nicholas Wright
     
     This file is part of similarImage - A similar image finder using pHash
     
@@ -21,15 +21,16 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
-import com.github.dozedoff.similarImage.io.ExtendedAttributeTest;
-import com.github.dozedoff.similarImage.io.HashAttributeTest;
-import com.github.dozedoff.similarImage.io.StatisticsTest;
+import com.github.dozedoff.similarImage.handler.DatabaseHandlerTest;
+import com.github.dozedoff.similarImage.handler.ExtendedAttributeHandlerTest;
+import com.github.dozedoff.similarImage.handler.HashingHandlerTest;
 
-//@formatter:off
 @RunWith(Suite.class)
+//@formatter:off
 @SuiteClasses({
-		StatisticsTest.class,
-		ExtendedAttributeTest.class,
-		HashAttributeTest.class
+	HashingHandlerTest.class,
+	DatabaseHandlerTest.class,
+	ExtendedAttributeHandlerTest.class,
 })
-public class IoTests {}
+public class HandlerTests {
+}
