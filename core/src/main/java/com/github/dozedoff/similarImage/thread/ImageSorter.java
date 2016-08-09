@@ -30,7 +30,8 @@ import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.DuplicateUtil;
 import com.github.dozedoff.similarImage.duplicate.RecordSearch;
-import com.github.dozedoff.similarImage.gui.SimilarImageController;
+import com.github.dozedoff.similarImage.event.GuiEventBus;
+import com.github.dozedoff.similarImage.event.GuiGroupEvent;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
@@ -42,14 +43,12 @@ public class ImageSorter extends Thread {
 
 	private int hammingDistance;
 	private String path;
-	private SimilarImageController controller;
 	private Persistence persistence;
 
-	public ImageSorter(int hammingDistance, String path, SimilarImageController controller, Persistence persistence) {
+	public ImageSorter(int hammingDistance, String path, Persistence persistence) {
 		super();
 		this.hammingDistance = hammingDistance;
 		this.path = path;
-		this.controller = controller;
 		this.persistence = persistence;
 	}
 
@@ -85,7 +84,7 @@ public class ImageSorter extends Thread {
 		DuplicateUtil.removeDuplicateSets(results);
 
 		logger.info("Found {} similar images out of {} in {}", results.keySet().size(), dBrecords.size(), sw);
-		controller.setResults(results);
+		GuiEventBus.getInstance().post(new GuiGroupEvent(results));
 	}
 
 	private Multimap<Long, ImageRecord> findAllHashesInRange(RecordSearch rs, Collection<ImageRecord> records) {

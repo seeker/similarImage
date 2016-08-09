@@ -18,11 +18,8 @@
 package com.github.dozedoff.similarImage.thread;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,10 +28,14 @@ import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.RecordSearch;
-import com.github.dozedoff.similarImage.gui.SimilarImageView;
+import com.github.dozedoff.similarImage.event.GuiEventBus;
+import com.github.dozedoff.similarImage.event.GuiGroupEvent;
+import com.github.dozedoff.similarImage.event.GuiStatusEvent;
 import com.github.dozedoff.similarImage.util.StringUtil;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
+import com.google.common.eventbus.EventBus;
 
 /**
  * Match the hashes corresponding the given tag to the records. This allows the user to search for similar images
@@ -48,7 +49,6 @@ public class FilterSorter extends Thread {
 	private int hammingDistance;
 	private String reason;
 	private List<ImageRecord> dBrecords;
-	private SimilarImageView gui;
 	private Persistence persistence;
 
 	/**
@@ -58,22 +58,19 @@ public class FilterSorter extends Thread {
 	 *            maximum distance to consider for a match
 	 * @param tag
 	 *            to search for
-	 * @param gui
-	 *            GUI instance where the results will be displayed
 	 * @param persistence
 	 *            instance for database access
 	 */
-	public FilterSorter(int hammingDistance, String tag, SimilarImageView gui, Persistence persistence) {
+	public FilterSorter(int hammingDistance, String tag, Persistence persistence) {
 		this.hammingDistance = hammingDistance;
 		this.reason = tag;
-		this.gui = gui;
 		this.persistence = persistence;
 
 		dBrecords = Collections.emptyList();
 	}
 
-	private List<Long> getFilterMatches(RecordSearch recordSearch, String sanitizedTag) {
-		Set<Long> uniqueGroups = new HashSet<Long>();
+	private Multimap<Long, ImageRecord> getFilterMatches(RecordSearch recordSearch, String sanitizedTag) {
+		Multimap<Long, ImageRecord> uniqueGroups = MultimapBuilder.hashKeys().hashSetValues().build();
 		List<FilterRecord> matchingFilters = Collections.emptyList();
 
 		try {
@@ -85,34 +82,36 @@ public class FilterSorter extends Thread {
 
 		for (FilterRecord filter : matchingFilters) {
 			Multimap<Long, ImageRecord> match = recordSearch.distanceMatch(filter.getpHash(), hammingDistance);
-			uniqueGroups.addAll(match.keySet());
+			uniqueGroups.putAll(filter.getpHash(), match.values());
 		}
 
-		return new ArrayList<Long>(uniqueGroups);
+		return uniqueGroups;
 	}
 
 	@Override
 	public void run() {
-		gui.setStatus("Sorting...");
+		EventBus guiEvents = GuiEventBus.getInstance();
+
+		guiEvents.post(new GuiStatusEvent("Sorting..."));
 		logger.info("Searching for hashes that match given filter");
 		Stopwatch sw = Stopwatch.createStarted();
 
 		RecordSearch rs = new RecordSearch();
 		String sanitizedTag = StringUtil.sanitizeTag(reason);
-		List<Long> groups = Collections.emptyList();
+		Multimap<Long, ImageRecord> groups = MultimapBuilder.hashKeys().hashSetValues().build();
 
 		try {
 			dBrecords = persistence.getAllRecords();
 			rs.build(dBrecords);
 			groups = getFilterMatches(rs, sanitizedTag);
 
-			gui.setStatus("" + groups.size() + " Groups");
+			guiEvents.post(new GuiStatusEvent("" + groups.size() + " Groups"));
 			logger.info("Found {} groups for tag {} in {}", groups.size(), sanitizedTag, sw.toString());
 		} catch (SQLException e) {
-			gui.setStatus("Database error");
+			guiEvents.post(new GuiStatusEvent("Database error"));
 			logger.warn("Failed to load from database - {}", e.getMessage());
 		}
 
-		gui.populateGroupList(groups);
+		guiEvents.post(new GuiGroupEvent(groups));
 	}
 }

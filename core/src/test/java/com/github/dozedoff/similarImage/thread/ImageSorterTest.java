@@ -28,7 +28,6 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.Executors;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -38,12 +37,12 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
-import com.github.dozedoff.similarImage.gui.DisplayGroupView;
-import com.github.dozedoff.similarImage.gui.SimilarImageController;
-import com.github.dozedoff.similarImage.gui.SimilarImageView;
+import com.github.dozedoff.similarImage.event.GuiEventBus;
+import com.github.dozedoff.similarImage.event.GuiGroupEvent;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
+import com.google.common.eventbus.Subscribe;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ImageSorterTest {
@@ -56,19 +55,11 @@ public class ImageSorterTest {
 
 	private static final String TEST_EXCEPTION_MESSAGE = "Testing...";
 
-	private SimilarImageController controller;
-
-	@Mock
-	private SimilarImageView gui;
-
 	@Mock
 	private Persistence persistence;
 
 	@Mock
 	private Statistics statistics;
-
-	@Mock
-	private DisplayGroupView groupViewMock;
 
 	private ImageSorter imageSorter;
 	private Multimap<Long, ImageRecord> result;
@@ -84,6 +75,8 @@ public class ImageSorterTest {
 
 	@Before
 	public void setUp() throws Exception {
+		GuiEventBus.getInstance().register(this);
+
 		path = Files.createTempFile(ImageSorterTest.class.getSimpleName(), ".dat");
 
 		List<ImageRecord> records = buildRecords();
@@ -91,11 +84,18 @@ public class ImageSorterTest {
 		when(persistence.filterByPath(path)).thenReturn(Arrays.asList(recordOneOne, recordTwoOne, recordTwoTwo));
 		
 		result = MultimapBuilder.hashKeys().hashSetValues().build();
+		imageSorter = new ImageSorter(DISTANCE, "", persistence);
+	}
 
-		controller = new SimilarImageController(persistence, groupViewMock, Executors.newCachedThreadPool(),
-				statistics);
-		controller.setGui(gui);
-		imageSorter = new ImageSorter(DISTANCE, "", controller, persistence);
+	/**
+	 * Listen to GUI group events and store the updated group information.
+	 * 
+	 * @param event
+	 *            the group update event
+	 */
+	@Subscribe
+	public void guiGroupEvents(GuiGroupEvent event) {
+		result = event.getGroups();
 	}
 
 	private List<ImageRecord> buildRecords() {
@@ -124,79 +124,80 @@ public class ImageSorterTest {
 	public void testDistanceZeroRecords() throws Exception {
 		runCutAndWaitForFinish();
 
-		assertThat(controller.getGroup(HASH_ONE), containsInAnyOrder(recordOneOne, recordTwoOne));
+		assertThat(result.get(HASH_ONE), containsInAnyOrder(recordOneOne, recordTwoOne));
 	}
 
 	@Test
 	public void testDistanceZeroNumberOfGroups() throws Exception {
 		runCutAndWaitForFinish();
 
-		assertThat(controller.getGroup(HASH_TWO).size(), is(0));
-		assertThat(controller.getGroup(HASH_THREE).size(), is(0));
-		assertThat(controller.getGroup(HASH_SIX).size(), is(0));
+		assertThat(result.get(HASH_TWO).size(), is(0));
+		assertThat(result.get(HASH_THREE).size(), is(0));
+		assertThat(result.get(HASH_SIX).size(), is(0));
 	}
 
 	@Test
 	public void testDistanceOneGroupOne() throws Exception {
-		imageSorter = new ImageSorter(1, "", controller, persistence);
+		imageSorter = new ImageSorter(1, "", persistence);
 
 		runCutAndWaitForFinish();
 
-		assertThat(controller.getGroup(HASH_ONE), containsInAnyOrder(recordOneOne, recordTwoOne, recordThreeThree));
+		assertThat(result.get(HASH_ONE), containsInAnyOrder(recordOneOne, recordTwoOne, recordThreeThree));
 	}
 
 	@Test
 	public void testDistanceOneGroupTwo() throws Exception {
-		imageSorter = new ImageSorter(1, "", controller, persistence);
+		imageSorter = new ImageSorter(1, "", persistence);
 
 		runCutAndWaitForFinish();
 
-		assertThat(controller.getGroup(HASH_TWO), containsInAnyOrder(recordTwoTwo, recordThreeThree, recordSixSix));
+		assertThat(result.get(HASH_TWO), containsInAnyOrder(recordTwoTwo, recordThreeThree, recordSixSix));
 	}
 
 	@Test
 	public void testDistanceOneGroupThree() throws Exception {
-		imageSorter = new ImageSorter(1, "", controller, persistence);
+		imageSorter = new ImageSorter(1, "", persistence);
 
 		runCutAndWaitForFinish();
 
-		assertThat(controller.getGroup(HASH_THREE), containsInAnyOrder(recordThreeThree, recordOneOne, recordTwoOne, recordTwoTwo));
+		assertThat(result.get(HASH_THREE),
+				containsInAnyOrder(recordThreeThree, recordOneOne, recordTwoOne, recordTwoTwo));
 	}
 
 	@Test
 	public void testDistanceOneGroupSix() throws Exception {
-		imageSorter = new ImageSorter(1, "", controller, persistence);
+		imageSorter = new ImageSorter(1, "", persistence);
 
 		runCutAndWaitForFinish();
 
-		assertThat(controller.getGroup(HASH_SIX), containsInAnyOrder(recordSixSix, recordTwoTwo));
+		assertThat(result.get(HASH_SIX), containsInAnyOrder(recordSixSix, recordTwoTwo));
 	}
 
 	@Test
 	public void testNullPath() throws Exception {
-		imageSorter = new ImageSorter(DISTANCE, null, controller, persistence);
+		imageSorter = new ImageSorter(DISTANCE, null, persistence);
 
 		runCutAndWaitForFinish();
 
-		assertThat(controller.getGroup(HASH_ONE), containsInAnyOrder(recordOneOne, recordTwoOne));
+		assertThat(result.get(HASH_ONE), containsInAnyOrder(recordOneOne, recordTwoOne));
 	}
 
 	@Test
 	public void testTestPath() throws Exception {
-		imageSorter = new ImageSorter(1, TEST_PATH, controller, persistence);
+		imageSorter = new ImageSorter(1, TEST_PATH, persistence);
 
 		runCutAndWaitForFinish();
 
-		assertThat(controller.getGroup(HASH_THREE).size(), is(0));
+		assertThat(result.get(HASH_THREE).size(), is(0));
 	}
 
 	@Test
 	public void testSqlException() throws Exception {
 		when(persistence.getAllRecords()).thenThrow(new SQLException(TEST_EXCEPTION_MESSAGE));
-		imageSorter = new ImageSorter(1, "", controller, persistence);
+		imageSorter = new ImageSorter(1, "", persistence);
 		
 		runCutAndWaitForFinish();
 
-		assertThat(controller.getGroup(HASH_ONE).size(), is(0));
+		assertThat(result.get(HASH_ONE).size(), is(0));
 	}
 }

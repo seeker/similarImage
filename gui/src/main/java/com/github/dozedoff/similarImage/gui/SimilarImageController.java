@@ -36,6 +36,7 @@ import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
+import com.github.dozedoff.similarImage.event.GuiGroupEvent;
 import com.github.dozedoff.similarImage.handler.DatabaseHandler;
 import com.github.dozedoff.similarImage.handler.ExtendedAttributeHandler;
 import com.github.dozedoff.similarImage.handler.HashHandler;
@@ -50,6 +51,7 @@ import com.github.dozedoff.similarImage.thread.ImageFindJobVisitor;
 import com.github.dozedoff.similarImage.thread.ImageSorter;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
+import com.google.common.eventbus.Subscribe;
 
 public class SimilarImageController {
 	private final Logger logger = LoggerFactory.getLogger(SimilarImageController.class);
@@ -205,16 +207,21 @@ public class SimilarImageController {
 
 	public void sortDuplicates(int hammingDistance, String path) {
 		setGUIStatus(GUI_MSG_SORTING);
-		Thread t = new ImageSorter(hammingDistance, path, this, persistence);
+		Thread t = new ImageSorter(hammingDistance, path, persistence);
 		t.start();
 	}
 
 	public void sortFilter(int hammingDistance, String reason) {
-		Thread t = new FilterSorter(hammingDistance, reason, gui, persistence);
+		Thread t = new FilterSorter(hammingDistance, reason, persistence);
 		t.start();
 	}
 
 	public void stopWorkers() {
 		logger.info("Clearing all queues...");
+	}
+
+	@Subscribe
+	public void updateGroup(GuiGroupEvent event) {
+		setResults(event.getGroups());
 	}
 }
