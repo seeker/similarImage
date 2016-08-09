@@ -27,11 +27,26 @@ import javax.swing.JPanel;
 
 import net.miginfocom.swing.MigLayout;
 
+/**
+ * Displays images and the corresponding information. Displays the full image or a context menu depending on the mouse
+ * click.
+ * 
+ * @author Nicholas Wright
+ *
+ */
 public class DuplicateEntryView implements View {
 	private JPanel view;
 	private JLabel image;
 	private DuplicateEntryController controller;
 
+	/**
+	 * Creates a default view with no image and no information. A placeholder "NO IMAGE" is displayed.
+	 * 
+	 * @param controller
+	 *            responsible for handling image requests
+	 * @param opMenu
+	 *            menu containing the possible operations for this image
+	 */
 	public DuplicateEntryView(DuplicateEntryController controller, OperationsMenu opMenu) {
 		this.controller = controller;
 		view = new JPanel();

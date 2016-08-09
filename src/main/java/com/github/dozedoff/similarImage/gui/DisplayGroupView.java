@@ -25,11 +25,20 @@ import javax.swing.JScrollPane;
 
 import net.miginfocom.swing.MigLayout;
 
+/**
+ * Display {@link View}s in a grid with width 4.
+ * 
+ * @author Nicholas Wright
+ *
+ */
 public class DisplayGroupView {
 	private JFrame view;
 	private JPanel content = new JPanel();
 	private JScrollPane scroll = new JScrollPane(content);
 
+	/**
+	 * Setup for displaying duplicate images.
+	 */
 	public DisplayGroupView() {
 		view = new JFrame();
 		view.setSize(500, 500);
