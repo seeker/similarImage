@@ -17,12 +17,14 @@
  */
 package com.github.dozedoff.similarImage.thread;
 
-import static org.mockito.Mockito.verify;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.empty;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 
 import java.sql.SQLException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -36,8 +38,9 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
-import com.github.dozedoff.similarImage.gui.SimilarImageView;
+import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.util.StringUtil;
+import com.google.common.eventbus.Subscribe;
 
 @RunWith(MockitoJUnitRunner.class)
 public class FilterSorterTest {
@@ -52,17 +55,16 @@ public class FilterSorterTest {
 	private static final String EXCEPTION_MESSAGE = "Testig...";
 
 	@Mock
-	private SimilarImageView guiMock;
-
-	@Mock
 	private Persistence persistenceMock;
 
 	private List<ImageRecord> records;
+	private List<Long> result;
 	private FilterSorter cut ;
 
 	@Before
 	public void setUp() throws Exception {
 		MockitoAnnotations.initMocks(this);
+		GuiEventBus.getInstance().register(this);
 
 		createRecords();
 
@@ -73,6 +75,17 @@ public class FilterSorterTest {
 				.thenReturn(Arrays.asList(new FilterRecord(0, TAG_LANDSCAPE), new FilterRecord(1, TAG_SUNSET)));
 
 		when(persistenceMock.getAllFilters(TAG_EXCEPTION)).thenThrow(new SQLException(EXCEPTION_MESSAGE));
+	}
+
+	/**
+	 * Listen for deprecated group events.
+	 * 
+	 * @param event
+	 *            deprecated group list
+	 */
+	@Subscribe
+	public void listenGroupEvent(List<Long> event) {
+		result = event;
 	}
 
 	private void createRecords() {
@@ -90,35 +103,35 @@ public class FilterSorterTest {
 
 	@Test
 	public void testFilterForSingleTag() throws Exception {
-		cut = new FilterSorter(SEARCH_DISTANCE, TAG_LANDSCAPE, guiMock, persistenceMock);
+		cut = new FilterSorter(SEARCH_DISTANCE, TAG_LANDSCAPE, persistenceMock);
 		runCutAndWaitForFinish();
 
-		verify(guiMock).populateGroupList(Arrays.asList(0L));
+		assertThat(result, containsInAnyOrder(0L));
 	}
 
 	@Test
 	public void testFilterForMatchAllTag() throws Exception {
-		cut = new FilterSorter(SEARCH_DISTANCE, StringUtil.MATCH_ALL_TAGS, guiMock, persistenceMock);
+		cut = new FilterSorter(SEARCH_DISTANCE, StringUtil.MATCH_ALL_TAGS, persistenceMock);
 		runCutAndWaitForFinish();
 
-		verify(guiMock).populateGroupList(Arrays.asList(0L, 1L));
+		assertThat(result, containsInAnyOrder(0L, 1L));
 	}
 
 	@Test
 	public void testFilterLoadException() throws Exception {
-		cut = new FilterSorter(SEARCH_DISTANCE, TAG_EXCEPTION, guiMock, persistenceMock);
+		cut = new FilterSorter(SEARCH_DISTANCE, TAG_EXCEPTION, persistenceMock);
 		runCutAndWaitForFinish();
 
-		verify(guiMock).populateGroupList(Collections.emptyList());
+		assertThat(result, is(empty()));
 	}
 
 	@Test
 	public void testRecordLoadException() throws Exception {
 		when(persistenceMock.getAllRecords()).thenThrow(new SQLException(EXCEPTION_MESSAGE));
 		
-		cut = new FilterSorter(SEARCH_DISTANCE, TAG_SUNSET, guiMock, persistenceMock);
+		cut = new FilterSorter(SEARCH_DISTANCE, TAG_SUNSET, persistenceMock);
 		runCutAndWaitForFinish();
 
-		verify(guiMock).populateGroupList(Collections.emptyList());
+		assertThat(result, is(empty()));
 	}
 }

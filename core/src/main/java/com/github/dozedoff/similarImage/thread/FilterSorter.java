@@ -31,10 +31,12 @@ import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.RecordSearch;
-import com.github.dozedoff.similarImage.gui.SimilarImageView;
+import com.github.dozedoff.similarImage.event.GuiEventBus;
+import com.github.dozedoff.similarImage.event.GuiStatusEvent;
 import com.github.dozedoff.similarImage.util.StringUtil;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Multimap;
+import com.google.common.eventbus.EventBus;
 
 /**
  * Match the hashes corresponding the given tag to the records. This allows the user to search for similar images
@@ -48,7 +50,6 @@ public class FilterSorter extends Thread {
 	private int hammingDistance;
 	private String reason;
 	private List<ImageRecord> dBrecords;
-	private SimilarImageView gui;
 	private Persistence persistence;
 
 	/**
@@ -58,15 +59,12 @@ public class FilterSorter extends Thread {
 	 *            maximum distance to consider for a match
 	 * @param tag
 	 *            to search for
-	 * @param gui
-	 *            GUI instance where the results will be displayed
 	 * @param persistence
 	 *            instance for database access
 	 */
-	public FilterSorter(int hammingDistance, String tag, SimilarImageView gui, Persistence persistence) {
+	public FilterSorter(int hammingDistance, String tag, Persistence persistence) {
 		this.hammingDistance = hammingDistance;
 		this.reason = tag;
-		this.gui = gui;
 		this.persistence = persistence;
 
 		dBrecords = Collections.emptyList();
@@ -93,7 +91,9 @@ public class FilterSorter extends Thread {
 
 	@Override
 	public void run() {
-		gui.setStatus("Sorting...");
+		EventBus guiEvents = GuiEventBus.getInstance();
+
+		guiEvents.post(new GuiStatusEvent("Sorting..."));
 		logger.info("Searching for hashes that match given filter");
 		Stopwatch sw = Stopwatch.createStarted();
 
@@ -106,13 +106,13 @@ public class FilterSorter extends Thread {
 			rs.build(dBrecords);
 			groups = getFilterMatches(rs, sanitizedTag);
 
-			gui.setStatus("" + groups.size() + " Groups");
+			guiEvents.post(new GuiStatusEvent("" + groups.size() + " Groups"));
 			logger.info("Found {} groups for tag {} in {}", groups.size(), sanitizedTag, sw.toString());
 		} catch (SQLException e) {
-			gui.setStatus("Database error");
+			guiEvents.post(new GuiStatusEvent("Database error"));
 			logger.warn("Failed to load from database - {}", e.getMessage());
 		}
 
-		gui.populateGroupList(groups);
+		guiEvents.post(groups);
 	}
 }
