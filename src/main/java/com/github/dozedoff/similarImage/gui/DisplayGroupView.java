@@ -34,7 +34,7 @@ public class DisplayGroupView {
 		view = new JFrame();
 		view.setSize(500, 500);
 		view.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-		view.setFocusableWindowState(false);
+		view.setFocusableWindowState(true);
 	}
 
 	public void displayImages(long group, List<View> duplicates) {
