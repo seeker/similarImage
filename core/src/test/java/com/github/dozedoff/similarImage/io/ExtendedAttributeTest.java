@@ -20,12 +20,13 @@ package com.github.dozedoff.similarImage.io;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.junit.Before;
 import org.junit.Test;
+
+import com.github.dozedoff.similarImage.util.TestUtil;
 
 public class ExtendedAttributeTest {
 	private static final String TEMP_FILE_PREFIX = "ExtendedAttributeTest";
@@ -36,7 +37,7 @@ public class ExtendedAttributeTest {
 
 	@Before
 	public void setUp() throws Exception {
-		tempFile = Files.createTempFile(TEMP_FILE_PREFIX, null);
+		tempFile = TestUtil.getTempFileWithExtendedAttributeSupport(TEMP_FILE_PREFIX);
 	}
 
 	@Test
@@ -75,7 +76,6 @@ public class ExtendedAttributeTest {
 
 	@Test
 	public void testCreateName() throws Exception {
-		assertThat(ExtendedAttribute.createName("foo", "bar"),
-				is(ExtendedAttribute.SIMILARIMAGE_NAMESPACE + ".foo.bar"));
+		assertThat(ExtendedAttribute.createName("foo", "bar"), is(ExtendedAttribute.SIMILARIMAGE_NAMESPACE + ".foo.bar"));
 	}
 }

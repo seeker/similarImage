@@ -34,6 +34,8 @@ import javax.management.InvalidAttributeValueException;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.github.dozedoff.similarImage.util.TestUtil;
+
 public class HashAttributeTest {
 	private static final String TEMP_FILE_PREFIX = "HashAttributeTest";
 	private static final String TEST_HASH_NAME = "testhash";
@@ -42,17 +44,18 @@ public class HashAttributeTest {
 	private static final long TEST_VALUE = 42;
 	private static final int HEXADECIMAL_RADIX = 16;
 	private static final String INVALID_FILE_PATH = "foo";
-
+	private static final String ALTERNATIVE_TEMP_DIR = "/var/tmp";
 
 	private Path tempFile;
 	private HashAttribute cut;
 
 	private String testHashFullName;
 	private String timestampFullName;
+	private static boolean useAlternativeTemp;
 
 	@Before
 	public void setUp() throws Exception {
-		tempFile = Files.createTempFile(TEMP_FILE_PREFIX, null);
+		tempFile = TestUtil.getTempFileWithExtendedAttributeSupport(TEMP_FILE_PREFIX);
 		cut = new HashAttribute(TEST_HASH_NAME);
 
 		testHashFullName = ExtendedAttribute.createName(TEST_HASH_NAME);
@@ -62,10 +65,8 @@ public class HashAttributeTest {
 	@Test
 	public void testWrittenHashValue() throws Exception {
 		cut.writeHash(tempFile, TEST_VALUE);
-		
-		assertThat(
-				Long.parseUnsignedLong(ExtendedAttribute.readExtendedAttributeAsString(tempFile, testHashFullName),
-						HEXADECIMAL_RADIX),
+
+		assertThat(Long.parseUnsignedLong(ExtendedAttribute.readExtendedAttributeAsString(tempFile, testHashFullName), HEXADECIMAL_RADIX),
 				is(TEST_VALUE));
 	}
 
@@ -83,7 +84,7 @@ public class HashAttributeTest {
 	public void testAreAttributesValidNoHashOrTimestamp() throws Exception {
 		assertThat(cut.areAttributesValid(tempFile), is(false));
 	}
-	
+
 	@Test
 	public void testAreAttributesValidHashButNoTimestamp() throws Exception {
 		ExtendedAttribute.setExtendedAttribute(tempFile, testHashFullName, Long.toString(TEST_VALUE));
