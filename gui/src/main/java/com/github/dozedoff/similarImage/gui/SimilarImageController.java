@@ -36,6 +36,7 @@ import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
+import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiGroupEvent;
 import com.github.dozedoff.similarImage.handler.DatabaseHandler;
 import com.github.dozedoff.similarImage.handler.ExtendedAttributeHandler;
@@ -88,6 +89,7 @@ public class SimilarImageController {
 		this.displayGroup = displayGroup;
 		this.threadPool = threadPool; 
 		this.statistics = statistics;
+		GuiEventBus.getInstance().register(this);
 	}
 
 	/**
