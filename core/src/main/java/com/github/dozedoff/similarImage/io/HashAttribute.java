@@ -109,6 +109,7 @@ public class HashAttribute {
 		return Long.parseUnsignedLong(encodedHash, HEXADECIMAL_RADIX);
 	}
 
+	// TODO throw exception instead of logging
 	/**
 	 * Write the hash value and the modified time of the file as extended attributes.
 	 * 
