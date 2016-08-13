@@ -4,15 +4,15 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.github.dozedoff</groupId>
-	<artifactId>similarImage-gui</artifactId>
+	<artifactId>similarImage-cli</artifactId>
 	<version>0.2.0-SNAPSHOT</version>
-	<description>Classes used for the similar image GUI</description>
+	<description>CLI tool for SimilarImage</description>
 	<packaging>jar</packaging>
 
-	<name>similarImage-gui</name>
+	<name>similarImage-cli</name>
 	<url>https://github.com/dozedoff/similarImage</url>
-	
-		<parent>
+
+	<parent>
 		<groupId>com.github.dozedoff</groupId>
 	<artifactId>similarImage</artifactId>
 	<version>0.2.0-SNAPSHOT</version>
@@ -23,7 +23,7 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 	</properties>
 	
-	<build>
+		<build>
 		<plugins>
 					<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
@@ -33,7 +33,7 @@
 					</descriptorRefs>
 					<archive>
 						<manifest>
-							<mainClass>com.github.dozedoff.similarImage.app.SimilarImage</mainClass>
+							<mainClass>com.github.dozedoff.similarImage.cli.SimilarImageCli</mainClass>
 							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
               				<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
 						</manifest>
@@ -57,10 +57,10 @@
 	<artifactId>similarImage-core</artifactId>
 	<version>0.2.0-SNAPSHOT</version>
 	</dependency>
-		<dependency>
-			<groupId>com.miglayout</groupId>
-			<artifactId>miglayout-swing</artifactId>
-			<version>4.2</version>
-		</dependency>
+	<dependency>
+  <groupId>net.sourceforge.argparse4j</groupId>
+  <artifactId>argparse4j</artifactId>
+  <version>0.7.0</version>
+</dependency>
 	</dependencies>
 </project>
