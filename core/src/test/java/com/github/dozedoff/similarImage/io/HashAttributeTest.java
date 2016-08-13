@@ -39,27 +39,24 @@ import com.github.dozedoff.similarImage.util.TestUtil;
 public class HashAttributeTest {
 	private static final String TEMP_FILE_PREFIX = "HashAttributeTest";
 	private static final String TEST_HASH_NAME = "testhash";
-	private static final String TIMESTAMP_NAME = "hash_timestamp";
 	private static final long TIMESTAMP_TOLERANCE = 10;
 	private static final long TEST_VALUE = 42;
 	private static final int HEXADECIMAL_RADIX = 16;
 	private static final String INVALID_FILE_PATH = "foo";
-	private static final String ALTERNATIVE_TEMP_DIR = "/var/tmp";
 
 	private Path tempFile;
 	private HashAttribute cut;
 
 	private String testHashFullName;
 	private String timestampFullName;
-	private static boolean useAlternativeTemp;
 
 	@Before
 	public void setUp() throws Exception {
 		tempFile = TestUtil.getTempFileWithExtendedAttributeSupport(TEMP_FILE_PREFIX);
 		cut = new HashAttribute(TEST_HASH_NAME);
 
-		testHashFullName = ExtendedAttribute.createName(TEST_HASH_NAME);
-		timestampFullName = ExtendedAttribute.createName(TIMESTAMP_NAME);
+		testHashFullName = cut.getHashFQN();
+		timestampFullName = cut.getTimestampFQN();
 	}
 
 	@Test
@@ -141,5 +138,15 @@ public class HashAttributeTest {
 		cut.writeHash(tempFile, TEST_VALUE);
 
 		assertThat(cut.readHash(tempFile), is(TEST_VALUE));
+	}
+
+	@Test
+	public void testGetHashFQN() throws Exception {
+		assertThat(cut.getHashFQN(), is(ExtendedAttribute.createName("hash", TEST_HASH_NAME)));
+	}
+
+	@Test
+	public void testGetTimestampFQN() throws Exception {
+		assertThat(cut.getTimestampFQN(), is(ExtendedAttribute.createName("timestamp", TEST_HASH_NAME)));
 	}
 }

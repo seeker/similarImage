@@ -34,12 +34,13 @@ import org.slf4j.LoggerFactory;
  */
 public class HashAttribute {
 	private static final Logger LOGGER = LoggerFactory.getLogger(HashAttribute.class);
-	
+
 	private static final long TIMESTAMP_TOLERANCE = 10;
 	private static final int HEXADECIMAL_RADIX = 16;
 
-	private final String hashNamespace;
-	private static final String HASH_TIMESTAMP_NAME = ExtendedAttribute.SIMILARIMAGE_NAMESPACE + ".hash_timestamp";
+	private final String hashFQN;
+	private final String timestampFQN;
+	private final String hashName;
 
 	/**
 	 * Create a class that can be used to read and write hashes as extended attributes.
@@ -48,7 +49,9 @@ public class HashAttribute {
 	 *            name used to identify the hash
 	 */
 	public HashAttribute(String hashName) {
-		hashNamespace = ExtendedAttribute.createName(hashName);
+		this.hashName = hashName;
+		hashFQN = ExtendedAttribute.createName("hash", hashName);
+		timestampFQN = ExtendedAttribute.createName("timestamp", hashName);
 	}
 
 	/**
@@ -60,7 +63,7 @@ public class HashAttribute {
 	 */
 	public boolean areAttributesValid(Path path) {
 		try {
-			return ExtendedAttribute.isExtendedAttributeSet(path, hashNamespace) && verifyTimestamp(path);
+			return ExtendedAttribute.isExtendedAttributeSet(path, hashFQN) && verifyTimestamp(path);
 		} catch (IOException e) {
 			LOGGER.error("Failed to check hash for {} ({})", path, e.toString());
 		}
@@ -69,21 +72,20 @@ public class HashAttribute {
 	}
 
 	private boolean verifyTimestamp(Path path) throws IOException {
-		if (!ExtendedAttribute.isExtendedAttributeSet(path, HASH_TIMESTAMP_NAME)) {
-			LOGGER.error("{} does not have a timestamp", path);
+		if (!ExtendedAttribute.isExtendedAttributeSet(path, timestampFQN)) {
+			LOGGER.error("{} does not have a timestamp for hash {}", path, hashName);
 			return false;
 		}
 
 		long fileModifiedTime = Files.getLastModifiedTime(path).toMillis();
-		long storedTimestamp = Long.parseUnsignedLong(
-				ExtendedAttribute.readExtendedAttributeAsString(path, HASH_TIMESTAMP_NAME));
+		long storedTimestamp = Long.parseUnsignedLong(ExtendedAttribute.readExtendedAttributeAsString(path, timestampFQN));
 
 		if (storedTimestamp > fileModifiedTime + TIMESTAMP_TOLERANCE) {
-			LOGGER.warn("The file modification time of {} is newer than the Timestamp", path);
+			LOGGER.warn("The file modification time of {} is newer than the Timestamp for {}", path, hashName);
 		}
 
 		if (storedTimestamp < fileModifiedTime - TIMESTAMP_TOLERANCE) {
-			LOGGER.warn("{} has been modified since the hash was recorded", path);
+			LOGGER.warn("{} has been modified since the hash for {} was recorded", path, hashName);
 		}
 
 		return Math.abs(fileModifiedTime - storedTimestamp) <= TIMESTAMP_TOLERANCE;
@@ -104,8 +106,8 @@ public class HashAttribute {
 		if (!areAttributesValid(path)) {
 			throw new InvalidAttributeValueException("The required attributes are not set or invalid");
 		}
-		
-		String encodedHash = ExtendedAttribute.readExtendedAttributeAsString(path, hashNamespace);
+
+		String encodedHash = ExtendedAttribute.readExtendedAttributeAsString(path, hashFQN);
 		return Long.parseUnsignedLong(encodedHash, HEXADECIMAL_RADIX);
 	}
 
@@ -120,12 +122,29 @@ public class HashAttribute {
 	 */
 	public void writeHash(Path path, long hash) {
 		try {
-			ExtendedAttribute.setExtendedAttribute(path, hashNamespace, Long.toHexString(hash));
-			ExtendedAttribute.setExtendedAttribute(path, HASH_TIMESTAMP_NAME,
-					Long.toString(Files.getLastModifiedTime(path).toMillis()));
+			ExtendedAttribute.setExtendedAttribute(path, hashFQN, Long.toHexString(hash));
+			ExtendedAttribute.setExtendedAttribute(path, timestampFQN, Long.toString(Files.getLastModifiedTime(path).toMillis()));
 
 		} catch (IOException e) {
 			LOGGER.warn("Failed to write hash to file {} ({})", path, e.toString());
 		}
+	}
+
+	/**
+	 * Get the extended attribute name for the hash.
+	 * 
+	 * @return the FQN of the hash
+	 */
+	public String getHashFQN() {
+		return hashFQN;
+	}
+
+	/**
+	 * Get the extended attribute name for the timestamp of this hash.
+	 * 
+	 * @return the FQN of the timestamp
+	 */
+	public String getTimestampFQN() {
+		return timestampFQN;
 	}
 }
