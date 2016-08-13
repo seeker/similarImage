@@ -1,4 +1,4 @@
-/*  Copyright (C) 2014  Nicholas Wright
+/*  Copyright (C) 2016  Nicholas Wright
     
     This file is part of similarImage - A similar image finder using pHash
     
