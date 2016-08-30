@@ -28,6 +28,7 @@ import java.util.Set;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -100,6 +101,21 @@ public class SimilarImageView implements StatisticsChangedListener {
 		}
 	}
 
+	private JComponent buildActiveTagsList(JTextField tagField) {
+		JList<String> activeTags = new JList<String>(duplicateOperations.getFilterTags().toArray(new String[0]));
+		activeTags.addListSelectionListener(new ListSelectionListener() {
+			@Override
+			public void valueChanged(ListSelectionEvent e) {
+				String selectedValue = activeTags.getSelectedValue();
+				if (selectedValue != null) {
+					tagField.setText(selectedValue);
+				}
+			}
+		});
+
+		return new JScrollPane(activeTags);
+	}
+
 	private void setupComponents() {
 		path = new JTextField(20);
 		find = new JButton("Find");
@@ -140,16 +156,16 @@ public class SimilarImageView implements StatisticsChangedListener {
 		sortFilter.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				// TODO display option dialog to select reason - null or empty
-				// mean all
-				JTextField reason = new JTextField(20);
-				Object[] message = { "Reason: ", reason };
+				JTextField tag = new JTextField(DEFAULT_TEXTFIELD_WIDTH);
+				tag.setToolTipText("Limit search to Tag. Empty tag or * will select ALL tags");
+
+				Object[] message = { "Tag: ", tag, "Active Tags:", buildActiveTagsList(tag) };
 				JOptionPane pane = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
-				JDialog getTopicDialog = pane.createDialog(null, "Select directory");
+				JDialog getTopicDialog = pane.createDialog(null, "Select Tag to use in search");
 				getTopicDialog.setVisible(true);
 
 				if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION) {
-					String r = reason.getText();
+					String r = tag.getText();
 					controller.sortFilter(hammingDistance.getValue(), r);
 				}
 			}
@@ -200,7 +216,6 @@ public class SimilarImageView implements StatisticsChangedListener {
 	private void setupMenu() {
 
 		JMenuItem directoryTag;
-		JMenuItem folderBlock;
 		JMenuItem pruneRecords;
 
 
@@ -216,7 +231,10 @@ public class SimilarImageView implements StatisticsChangedListener {
 			public void actionPerformed(ActionEvent arg0) {
 				JTextField directoryField = new JTextField(DEFAULT_TEXTFIELD_WIDTH);
 				JTextField tagField = new JTextField(DEFAULT_TEXTFIELD_WIDTH);
-				Object[] message = { "Directory: ", directoryField, "Tag:", tagField };
+
+				Object[] message = { "Directory: ", directoryField, "Tag:", tagField, "Active Tags:",
+						buildActiveTagsList(tagField) };
+
 				JOptionPane pane = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
 				JDialog getTopicDialog = pane.createDialog(null, "Tag all images in directory");
 				getTopicDialog.setVisible(true);

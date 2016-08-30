@@ -199,4 +199,13 @@ public class DuplicateOperations {
 			logger.warn("Failed to ignore pHash {} - {}", pHash, e.getMessage());
 		}
 	}
+
+	/**
+	 * Get a list of in-use filter tags
+	 * 
+	 * @return list of tags
+	 */
+	public List<String> getFilterTags() {
+		return persistence.getFilterTags();
+	}
 }
