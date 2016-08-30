@@ -269,15 +269,15 @@ public class PersistenceTest {
 	}
 
 	@Test
-	public void testGetFilterReasonsVerifyEntries() throws Exception {
-		List<String> reasons = persistence.getFilterReasons();
+	public void testGetFilterTagsVerifyEntries() throws Exception {
+		List<String> reasons = persistence.getFilterTags();
 
 		assertThat(reasons, hasItems("other", "frogs", "animals"));
 	}
 
 	@Test
-	public void testGetFilterReasonsVerifySize() throws Exception {
-		List<String> reasons = persistence.getFilterReasons();
+	public void testGetFilterTagsVerifySize() throws Exception {
+		List<String> reasons = persistence.getFilterTags();
 
 		assertThat(reasons, hasSize(3));
 	}

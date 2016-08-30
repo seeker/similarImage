@@ -214,7 +214,13 @@ public class Persistence {
 		}
 	}
 
-	public List<String> getFilterReasons() {
+
+	/**
+	 * Returns a distinct list of all tags currently in use.
+	 * 
+	 * @return list of tags
+	 */
+	public List<String> getFilterTags() {
 		List<String> reasons = new LinkedList<String>();
 
 		CloseableWrappedIterable<FilterRecord> iterator = filterRecordDao.getWrappedIterable();
@@ -234,6 +240,14 @@ public class Persistence {
 		}
 
 		return reasons;
+	}
+
+	/**
+	 * @deprecated Use {@link Persistence#getFilterTags()} instead, better naming.
+	 */
+	@Deprecated
+	public List<String> getFilterReasons() {
+		return getFilterTags();
 	}
 
 	public List<ImageRecord> filterByPath(Path directory) throws SQLException {
