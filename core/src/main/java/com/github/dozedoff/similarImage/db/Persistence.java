@@ -49,6 +49,8 @@ public class Persistence {
 	Dao<BadFileRecord, String> badFileRecordDao;
 	Dao<IgnoreRecord, Long> ignoreRecordDao;
 
+	private final ConnectionSource cs;
+
 	PreparedQuery<ImageRecord> filterPrepQuery, distinctPrepQuery;
 
 	SelectArg pathArg = new SelectArg();
@@ -64,7 +66,7 @@ public class Persistence {
 	public Persistence(String dbPath) {
 		try {
 			String fullDbPath = dbPrefix + dbPath;
-			ConnectionSource cs = new JdbcConnectionSource(fullDbPath);
+			cs = new JdbcConnectionSource(fullDbPath);
 			setupDatabase(cs);
 			setupDAO(cs);
 			createPreparedStatements();
@@ -280,5 +282,14 @@ public class Persistence {
 		} else {
 			return true;
 		}
+	}
+
+	/**
+	 * Get the {@link ConnectionSource} for the database.
+	 * 
+	 * @return current {@link ConnectionSource}
+	 */
+	public final ConnectionSource getCs() {
+		return cs;
 	}
 }
