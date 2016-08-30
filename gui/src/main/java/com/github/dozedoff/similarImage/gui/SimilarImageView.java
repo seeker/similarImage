@@ -46,6 +46,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import com.github.dozedoff.similarImage.db.CustomUserTag;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.io.Statistics.StatisticsEvent;
@@ -130,7 +131,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 
 		groupListModel = new DefaultListModel<Long>();
 		groups = new JList<Long>(groupListModel);
-		groups.setComponentPopupMenu(new OperationsMenu());
+		groups.setComponentPopupMenu(new OperationsMenu(utsController));
 		groupScrollPane = new JScrollPane(groups);
 		hammingDistance = new JScrollBar(JScrollBar.HORIZONTAL, 0, 2, 0, 64);
 		hammingValue = new JLabel();
@@ -276,7 +277,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 		userTags.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				new UserTagSettingView(utsController);
+				new UserTagSettingView(utsController, SimilarImageView.this);
 			}
 		});
 
@@ -339,6 +340,13 @@ public class SimilarImageView implements StatisticsChangedListener {
 	}
 
 	/**
+	 * Rebuild menu with new user tags.
+	 */
+	public void updateMenuOnUserTagChange() {
+		groups.setComponentPopupMenu(new OperationsMenu(utsController));
+	}
+
+	/**
 	 * Operations for the group window context menu
 	 * 
 	 * @author Nicholas Wright
@@ -347,7 +355,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 	class OperationsMenu extends JPopupMenu {
 		private static final long serialVersionUID = 1L;
 
-		public OperationsMenu() {
+		public OperationsMenu(UserTagSettingController utsController) {
 			JMenuItem deleteAll = new JMenuItem("Delete all");
 			deleteAll.addActionListener(new ActionListener() {
 				@Override
@@ -366,6 +374,28 @@ public class SimilarImageView implements StatisticsChangedListener {
 
 			this.add(deleteAll);
 			this.add(dnwAll);
+
+			addUserTags(utsController);
+		}
+
+		/**
+		 * Create mark menu items for all user tags
+		 * 
+		 * @param tagController
+		 *            {@link UserTagSettingController} to use
+		 */
+		private void addUserTags(UserTagSettingController tagController) {
+			for (CustomUserTag tag : tagController.getAllUserTags()) {
+				JMenuItem menu = new JMenuItem("Tag " + tag.toString());
+				menu.addActionListener(new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						duplicateOperations.markAll(controller.getGroup(getSelectedGroup()), tag.toString());
+					}
+				});
+
+				this.add(menu);
+			}
 		}
 	}
 
