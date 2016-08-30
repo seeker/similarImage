@@ -103,7 +103,6 @@ public class DuplicateOperations {
 
 	public void markAs(Path path, String reason) {
 		// TODO do this with transaction
-		// TODO get "Mark as" strings from options
 		try {
 			ImageRecord ir = persistence.getRecord(path);
 			if (ir == null) {

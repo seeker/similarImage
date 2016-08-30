@@ -56,6 +56,8 @@ import net.miginfocom.swing.MigLayout;
 public class SimilarImageView implements StatisticsChangedListener {
 	private JFrame view;
 
+	private static final int DEFAULT_TEXTFIELD_WIDTH = 20;
+
 	private final SimilarImageController controller;
 
 	private JTextField path;
@@ -196,47 +198,33 @@ public class SimilarImageView implements StatisticsChangedListener {
 	}
 
 	private void setupMenu() {
-		JMenuBar menuBar = new JMenuBar();
-		JMenu file, help;
-		JMenuItem folderDnw, folderBlock, pruneRecords, about;
 
-		file = new JMenu("File");
-		help = new JMenu("Help");
+		JMenuItem directoryTag;
+		JMenuItem folderBlock;
+		JMenuItem pruneRecords;
 
-		folderDnw = new JMenuItem("Add folder as dnw");
-		folderBlock = new JMenuItem("Add folder as block");
+
+		directoryTag = new JMenuItem("Tag directory");
+		directoryTag.setToolTipText("Tag all images in a directory");
+
 		pruneRecords = new JMenuItem("Prune records");
 
-		about = new JMenuItem("About");
+		JMenuItem about = new JMenuItem("About");
 
-		folderDnw.addActionListener(new ActionListener() {
+		directoryTag.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				JTextField directory = new JTextField(20);
-				Object[] message = { "Directory: ", directory };
+				JTextField directoryField = new JTextField(DEFAULT_TEXTFIELD_WIDTH);
+				JTextField tagField = new JTextField(DEFAULT_TEXTFIELD_WIDTH);
+				Object[] message = { "Directory: ", directoryField, "Tag:", tagField };
 				JOptionPane pane = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
-				JDialog getTopicDialog = pane.createDialog(null, "Select directory");
+				JDialog getTopicDialog = pane.createDialog(null, "Tag all images in directory");
 				getTopicDialog.setVisible(true);
 
 				if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION) {
-					Path path = Paths.get(directory.getText());
-					duplicateOperations.markDirectoryAs(path, DuplicateOperations.Tags.DNW.toString());
-				}
-			}
-		});
-
-		folderBlock.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				JTextField directory = new JTextField(20);
-				Object[] message = { "Directory: ", directory };
-				JOptionPane pane = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
-				JDialog getTopicDialog = pane.createDialog(null, "Select directory");
-				getTopicDialog.setVisible(true);
-
-				if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION) {
-					Path path = Paths.get(directory.getText());
-					duplicateOperations.markDirectoryAs(path, "BLOCK");
+					Path selectedPath = Paths.get(directoryField.getText());
+					String tag = tagField.getText();
+					duplicateOperations.markDirectoryAs(selectedPath, tag);
 				}
 			}
 		});
@@ -261,12 +249,15 @@ public class SimilarImageView implements StatisticsChangedListener {
 			}
 		});
 
-		file.add(folderDnw);
-		file.add(folderBlock);
+		JMenu file = new JMenu("File");
+		JMenu help = new JMenu("Help");
+
+		file.add(directoryTag);
 		file.add(pruneRecords);
 
 		help.add(about);
 
+		JMenuBar menuBar = new JMenuBar();
 		menuBar.add(file);
 		menuBar.add(help);
 		view.setJMenuBar(menuBar);
