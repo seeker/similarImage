@@ -69,4 +69,14 @@ public class CustomUserTag {
 	public final void setTag(String tag) {
 		this.tag = tag;
 	}
+
+	/**
+	 * Uses the tag as the display string.
+	 * 
+	 * @return the tag represented by this class
+	 */
+	@Override
+	public String toString() {
+		return this.tag;
+	}
 }

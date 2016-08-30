@@ -17,19 +17,23 @@
  */
 package com.github.dozedoff.similarImage.app;
 
+import java.sql.SQLException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.dozedoff.similarImage.db.CustomUserTag;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.gui.DisplayGroupView;
 import com.github.dozedoff.similarImage.gui.SimilarImageController;
 import com.github.dozedoff.similarImage.gui.SimilarImageView;
+import com.github.dozedoff.similarImage.gui.UserTagSettingController;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.thread.NamedThreadFactory;
+import com.j256.ormlite.dao.DaoManager;
 
 public class SimilarImage {
 	private final static Logger logger = LoggerFactory.getLogger(SimilarImage.class);
@@ -42,10 +46,15 @@ public class SimilarImage {
 	private Statistics statistics;
 
 	public static void main(String[] args) {
-		new SimilarImage().init();
+		try {
+			new SimilarImage().init();
+		} catch (SQLException e) {
+			logger.error("Startup failed: {}", e.toString());
+			e.printStackTrace();
+		}
 	}
 
-	public void init() {
+	public void init() throws SQLException {
 		String version = this.getClass().getPackage().getImplementationVersion();
 
 		if (version == null) {
@@ -63,7 +72,8 @@ public class SimilarImage {
 		SimilarImageController controller = new SimilarImageController(persistence, new DisplayGroupView(), threadPool,
 				statistics);
 		SimilarImageView gui = new SimilarImageView(controller, new DuplicateOperations(persistence),
-				PRODUCER_QUEUE_SIZE);
+				PRODUCER_QUEUE_SIZE,
+				new UserTagSettingController(DaoManager.createDao(persistence.getCs(), CustomUserTag.class)));
 
 		controller.setGui(gui);
 	}

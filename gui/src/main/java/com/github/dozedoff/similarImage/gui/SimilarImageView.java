@@ -70,10 +70,14 @@ public class SimilarImageView implements StatisticsChangedListener {
 	private DefaultListModel<Long> groupListModel;
 	private JScrollPane groupScrollPane;
 	private JScrollBar hammingDistance;
+
+	private final UserTagSettingController utsController;
 	final DuplicateOperations duplicateOperations;
 
-	public SimilarImageView(SimilarImageController controller, DuplicateOperations duplicateOperations, int maxBufferSize) {
+	public SimilarImageView(SimilarImageController controller, DuplicateOperations duplicateOperations,
+			int maxBufferSize, UserTagSettingController utsController) {
 		this.controller = controller;
+		this.utsController = utsController;
 
 		view = new JFrame();
 
@@ -217,6 +221,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 
 		JMenuItem directoryTag;
 		JMenuItem pruneRecords;
+		JMenuItem userTags;
 
 
 		directoryTag = new JMenuItem("Tag directory");
@@ -267,16 +272,27 @@ public class SimilarImageView implements StatisticsChangedListener {
 			}
 		});
 
-		JMenu file = new JMenu("File");
-		JMenu help = new JMenu("Help");
+		userTags = new JMenuItem("User Tags");
+		userTags.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				new UserTagSettingView(utsController);
+			}
+		});
 
+		JMenu file = new JMenu("File");
 		file.add(directoryTag);
 		file.add(pruneRecords);
 
+		JMenu help = new JMenu("Help");
 		help.add(about);
+
+		JMenu settings = new JMenu("Settings");
+		settings.add(userTags);
 
 		JMenuBar menuBar = new JMenuBar();
 		menuBar.add(file);
+		menuBar.add(settings);
 		menuBar.add(help);
 		view.setJMenuBar(menuBar);
 	}
