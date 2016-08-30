@@ -96,6 +96,7 @@ public class Persistence {
 		TableUtils.createTableIfNotExists(cs, FilterRecord.class);
 		TableUtils.createTableIfNotExists(cs, BadFileRecord.class);
 		TableUtils.createTableIfNotExists(cs, IgnoreRecord.class);
+		TableUtils.createTableIfNotExists(cs, CustomUserTag.class);
 	}
 
 	private void setupDAO(ConnectionSource cs) throws SQLException {
