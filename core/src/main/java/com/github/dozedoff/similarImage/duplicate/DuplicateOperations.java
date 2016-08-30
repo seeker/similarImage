@@ -86,6 +86,24 @@ public class DuplicateOperations {
 		}
 	}
 
+	/**
+	 * Add filter records with the given tag for all records.
+	 * 
+	 * @param records
+	 *            to add filter records for
+	 * @param tag
+	 *            tag to use for filter records
+	 */
+	public void markAll(Collection<ImageRecord> records, String tag) {
+		for (ImageRecord record : records) {
+			try {
+				persistence.addFilter(new FilterRecord(record.getpHash(), tag));
+			} catch (SQLException e) {
+				logger.warn("Failed to add tag for {}: {}", record.getPath(), e.toString());
+			}
+		}
+	}
+
 	public void markDnwAndDelete(Collection<ImageRecord> records) {
 		for (ImageRecord ir : records) {
 			long pHash = ir.getpHash();

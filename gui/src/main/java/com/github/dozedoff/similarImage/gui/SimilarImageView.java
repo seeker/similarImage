@@ -299,10 +299,18 @@ public class SimilarImageView implements StatisticsChangedListener {
 		groupListModel.removeElement(group);
 	}
 
-	private void dnwAll(long group) {
-		Set<ImageRecord> set = controller.getGroup(group);
-		duplicateOperations.markDnwAndDelete(set);
-		groupListModel.removeElement(group);
+	private void tagAll(long group) {
+		JTextField tagField = new JTextField(DEFAULT_TEXTFIELD_WIDTH);
+
+		Object[] message = { "Tag:", tagField, "Active Tags:", buildActiveTagsList(tagField) };
+
+		JOptionPane pane = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+		JDialog getTopicDialog = pane.createDialog(null, "Tag all images");
+		getTopicDialog.setVisible(true);
+
+		if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION) {
+			duplicateOperations.markAll(controller.getGroup(group), tagField.getText());
+		}
 	}
 
 	public boolean okToDisplayLargeGroup(int groupSize) {
@@ -314,6 +322,12 @@ public class SimilarImageView implements StatisticsChangedListener {
 		return (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION);
 	}
 
+	/**
+	 * Operations for the group window context menu
+	 * 
+	 * @author Nicholas Wright
+	 *
+	 */
 	class OperationsMenu extends JPopupMenu {
 		private static final long serialVersionUID = 1L;
 
@@ -324,14 +338,13 @@ public class SimilarImageView implements StatisticsChangedListener {
 				public void actionPerformed(ActionEvent arg0) {
 					deleteAll(getSelectedGroup());
 				}
-
 			});
 
-			JMenuItem dnwAll = new JMenuItem("Mark dnw & delete all");
+			JMenuItem dnwAll = new JMenuItem("Tag all");
 			dnwAll.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent arg0) {
-					dnwAll(getSelectedGroup());
+					tagAll(getSelectedGroup());
 				}
 			});
 

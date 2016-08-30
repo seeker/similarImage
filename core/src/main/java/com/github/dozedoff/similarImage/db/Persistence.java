@@ -170,6 +170,14 @@ public class Persistence {
 		return imageRecordDao.queryForAll();
 	}
 
+	/**
+	 * Updates an existing {@link FilterRecord} or creates a new one if does not exist.
+	 * 
+	 * @param filter
+	 *            to update or create
+	 * @throws SQLException
+	 *             if there is an issue accessing the database
+	 */
 	public void addFilter(FilterRecord filter) throws SQLException {
 		filterRecordDao.createOrUpdate(filter);
 	}
