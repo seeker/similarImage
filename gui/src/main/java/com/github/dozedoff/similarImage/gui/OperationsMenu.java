@@ -25,13 +25,19 @@ import java.util.HashMap;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
+import com.github.dozedoff.similarImage.db.CustomUserTag;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
+import com.github.dozedoff.similarImage.event.GuiEventBus;
+import com.github.dozedoff.similarImage.event.GuiUserTagChangedEvent;
+import com.google.common.eventbus.Subscribe;
 
 public class OperationsMenu {
 	private final DuplicateOperations duplicateOperations;
-	private final JPopupMenu menu;
+	private final UserTagSettingController utsController;
+	private JPopupMenu menu;
+	private final HashMap<Operations, ActionListener> actions = new HashMap<OperationsMenu.Operations, ActionListener>();
 
 	private enum Operations {
 		Delete, MarkAndDeleteDNW, MarkBlocked, Ignore
@@ -39,18 +45,18 @@ public class OperationsMenu {
 
 	private final ImageInfo imageInfo;
 
-	public OperationsMenu(ImageInfo imageInfo, Persistence persistence) {
+	public OperationsMenu(ImageInfo imageInfo, Persistence persistence, UserTagSettingController utsController) {
 		super();
 		this.duplicateOperations = new DuplicateOperations(persistence);
 		this.imageInfo = imageInfo;
 		this.menu = new JPopupMenu();
+		this.utsController = utsController;
 
 		setupPopupMenu();
+		GuiEventBus.getInstance().register(this);
 	}
 
 	private void setupPopupMenu() {
-		HashMap<Operations, ActionListener> actions = new HashMap<OperationsMenu.Operations, ActionListener>();
-
 		actions.put(Operations.Delete, new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -86,6 +92,20 @@ public class OperationsMenu {
 		createMenuItems(actions);
 	}
 
+	private void createUserTags() {
+		for (CustomUserTag cut : utsController.getAllUserTags()) {
+			JMenuItem menuItem = new JMenuItem("Tag " + cut.getTag());
+			menuItem.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+					duplicateOperations.markAs(imageInfo.getPath(), cut.getTag());
+				}
+			});
+
+			menu.add(menuItem);
+		}
+	}
+
 	private void createMenuItems(HashMap<Operations, ActionListener> actions) {
 		for (Operations op : Operations.values()) {
 			ActionListener listener = actions.get(op);
@@ -96,6 +116,15 @@ public class OperationsMenu {
 				menu.add(jmi);
 			}
 		}
+
+		createUserTags();
+	}
+
+	@Subscribe
+	private void reCreateMenu(GuiUserTagChangedEvent event) {
+		menu = new JPopupMenu();
+		createMenuItems(actions);
+		createUserTags();
 	}
 
 	public JPopupMenu getMenu() {

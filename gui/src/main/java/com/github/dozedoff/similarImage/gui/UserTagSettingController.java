@@ -25,6 +25,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.similarImage.db.CustomUserTag;
+import com.github.dozedoff.similarImage.event.GuiEventBus;
+import com.github.dozedoff.similarImage.event.GuiUserTagChangedEvent;
 import com.j256.ormlite.dao.Dao;
 
 /**
@@ -61,6 +63,10 @@ public class UserTagSettingController {
 		}
 	}
 
+	private void triggerUserTagsChangedEvent() {
+		GuiEventBus.getInstance().post(new GuiUserTagChangedEvent());
+	}
+
 	/**
 	 * Remove the tag from the database
 	 * 
@@ -70,6 +76,7 @@ public class UserTagSettingController {
 	public void removeTag(CustomUserTag tag) {
 		try {
 			dao.delete(tag);
+			triggerUserTagsChangedEvent();
 		} catch (SQLException e) {
 			LOGGER.error("Failed to delete user tag {}: {}", tag, e.toString());
 		}
@@ -87,6 +94,7 @@ public class UserTagSettingController {
 
 		try {
 			dao.create(dbTag);
+			triggerUserTagsChangedEvent();
 		} catch (SQLException e) {
 			LOGGER.error("Failed to persist tag {}: {}", tag, e.toString());
 		}
