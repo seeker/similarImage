@@ -49,9 +49,12 @@ import javax.swing.event.ListSelectionListener;
 import com.github.dozedoff.similarImage.db.CustomUserTag;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
+import com.github.dozedoff.similarImage.event.GuiEventBus;
+import com.github.dozedoff.similarImage.event.GuiUserTagChangedEvent;
 import com.github.dozedoff.similarImage.io.Statistics.StatisticsEvent;
 import com.github.dozedoff.similarImage.io.StatisticsChangedListener;
 import com.github.dozedoff.similarImage.thread.GroupListPopulator;
+import com.google.common.eventbus.Subscribe;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -98,6 +101,8 @@ public class SimilarImageView implements StatisticsChangedListener {
 		setupMenu();
 		updateHammingDisplay();
 		view.setVisible(true);
+
+		GuiEventBus.getInstance().register(this);
 	}
 
 	public void setStatus(String statusMsg) {
@@ -277,7 +282,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 		userTags.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				new UserTagSettingView(utsController, SimilarImageView.this);
+				new UserTagSettingView(utsController);
 			}
 		});
 
@@ -342,7 +347,8 @@ public class SimilarImageView implements StatisticsChangedListener {
 	/**
 	 * Rebuild menu with new user tags.
 	 */
-	public void updateMenuOnUserTagChange() {
+	@Subscribe
+	private void updateMenuOnUserTagChange(GuiUserTagChangedEvent event) {
 		groups.setComponentPopupMenu(new OperationsMenu(utsController));
 	}
 

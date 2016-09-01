@@ -33,7 +33,6 @@ import net.miginfocom.swing.MigLayout;
 
 public class UserTagSettingView {
 	private final UserTagSettingController controller;
-	private final SimilarImageView parent;
 
 	private JFrame mainWindow;
 
@@ -43,15 +42,10 @@ public class UserTagSettingView {
 	 * @param controller
 	 *            to use
 	 */
-	public UserTagSettingView(UserTagSettingController controller, SimilarImageView parent) {
+	public UserTagSettingView(UserTagSettingController controller) {
 		this.controller = controller;
-		this.parent = parent;
 
 		setup();
-	}
-
-	private void updateParentMenu() {
-		parent.updateMenuOnUserTagChange();
 	}
 
 	private void setup() {
@@ -77,7 +71,6 @@ public class UserTagSettingView {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				tagModel.addElement(controller.addTag(tagField.getText()));
-				updateParentMenu();
 			}
 		});
 		
@@ -89,7 +82,6 @@ public class UserTagSettingView {
 				if (selectedTag != null) {
 					controller.removeTag(selectedTag);
 					tagModel.removeElement(selectedTag);
-					updateParentMenu();
 				}
 			}
 		});
