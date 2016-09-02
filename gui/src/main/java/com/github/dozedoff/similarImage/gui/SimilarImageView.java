@@ -380,6 +380,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 
 			this.add(deleteAll);
 			this.add(dnwAll);
+			this.addSeparator();
 
 			addUserTags(utsController);
 		}

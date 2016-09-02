@@ -117,6 +117,8 @@ public class OperationsMenu {
 			}
 		}
 
+		menu.addSeparator();
+
 		createUserTags();
 	}
 
