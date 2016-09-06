@@ -368,8 +368,8 @@ public class SimilarImageView implements StatisticsChangedListener {
 				}
 			});
 
-			JMenuItem dnwAll = new JMenuItem("Tag all");
-			dnwAll.addActionListener(new ActionListener() {
+			JMenuItem tagAll = new JMenuItem("Tag all");
+			tagAll.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent arg0) {
 					tagAll(getSelectedGroup());
@@ -377,7 +377,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 			});
 
 			this.add(deleteAll);
-			this.add(dnwAll);
+			this.add(tagAll);
 			this.addSeparator();
 
 			addUserTags(utsController);
