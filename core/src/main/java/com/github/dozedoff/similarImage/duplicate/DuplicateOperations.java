@@ -33,6 +33,7 @@ import javax.swing.JOptionPane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.dozedoff.commonj.file.DirectoryVisitor;
 import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
@@ -161,10 +162,25 @@ public class DuplicateOperations {
 					addCount++;
 				}
 			}
-			
+
 			logger.info("Added {} images from {} to filter list", addCount, directory);
 		} catch (IOException e) {
 			logger.error("Failed to add images to filter list, {}", e);
+		}
+	}
+
+	public void markDirectoryAndChildrenAs(Path rootDirectory, String tag) {
+		LinkedList<Path> directories = new LinkedList<>();
+		DirectoryVisitor dv = new DirectoryVisitor(directories);
+
+		try {
+			Files.walkFileTree(rootDirectory, dv);
+		} catch (IOException e) {
+			logger.error("Failed to walk directory {}: {}", rootDirectory, e.toString());
+		}
+
+		for (Path dir : directories) {
+			markDirectoryAs(dir, tag);
 		}
 	}
 

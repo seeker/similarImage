@@ -78,8 +78,8 @@ public class SimilarImageView implements StatisticsChangedListener {
 	private final UserTagSettingController utsController;
 	final DuplicateOperations duplicateOperations;
 
-	public SimilarImageView(SimilarImageController controller, DuplicateOperations duplicateOperations,
-			int maxBufferSize, UserTagSettingController utsController) {
+	public SimilarImageView(SimilarImageController controller, DuplicateOperations duplicateOperations, int maxBufferSize,
+			UserTagSettingController utsController) {
 		this.controller = controller;
 		this.utsController = utsController;
 
@@ -229,9 +229,8 @@ public class SimilarImageView implements StatisticsChangedListener {
 		JMenuItem pruneRecords;
 		JMenuItem userTags;
 
-
 		directoryTag = new JMenuItem("Tag directory");
-		directoryTag.setToolTipText("Tag all images in a directory");
+		directoryTag.setToolTipText("Tag all images in a directory and sub-directories");
 
 		pruneRecords = new JMenuItem("Prune records");
 
@@ -243,8 +242,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 				JTextField directoryField = new JTextField(DEFAULT_TEXTFIELD_WIDTH);
 				JTextField tagField = new JTextField(DEFAULT_TEXTFIELD_WIDTH);
 
-				Object[] message = { "Directory: ", directoryField, "Tag:", tagField, "Active Tags:",
-						buildActiveTagsList(tagField) };
+				Object[] message = { "Directory: ", directoryField, "Tag:", tagField, "Active Tags:", buildActiveTagsList(tagField) };
 
 				JOptionPane pane = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
 				JDialog getTopicDialog = pane.createDialog(null, "Tag all images in directory");
@@ -253,7 +251,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 				if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION) {
 					Path selectedPath = Paths.get(directoryField.getText());
 					String tag = tagField.getText();
-					duplicateOperations.markDirectoryAs(selectedPath, tag);
+					duplicateOperations.markDirectoryAndChildrenAs(selectedPath, tag);
 				}
 			}
 		});
