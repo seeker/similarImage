@@ -176,7 +176,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 
 				if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION) {
 					String r = tag.getText();
-					controller.sortFilter(hammingDistance.getValue(), r);
+					controller.sortFilter(hammingDistance.getValue(), r, path.getText());
 				}
 			}
 		});

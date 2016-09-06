@@ -22,6 +22,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -50,6 +51,8 @@ public class FilterSorterTest {
 	private static final String TAG_SUNSET = "sunset";
 	private static final String TAG_EXCEPTION = "exception";
 
+	private static final String PATH_ZERO = "foo";
+
 	private static final long HASH_THREE = 3;
 
 	private static final int SEARCH_DISTANCE = 0;
@@ -62,7 +65,7 @@ public class FilterSorterTest {
 	private List<ImageRecord> records;
 	private Multimap<Long, ImageRecord> result;
 	private Multimap<Long, ImageRecord> emptyMultiMap = MultimapBuilder.hashKeys().hashSetValues().build();
-	private FilterSorter cut ;
+	private FilterSorter cut;
 
 	@Before
 	public void setUp() throws Exception {
@@ -75,8 +78,8 @@ public class FilterSorterTest {
 		createRecords();
 
 		when(persistenceMock.getAllRecords()).thenReturn(records);
-		when(persistenceMock.getAllFilters(TAG_LANDSCAPE))
-				.thenReturn(Arrays.asList(new FilterRecord(0, TAG_LANDSCAPE)));
+		when(persistenceMock.filterByPath(Paths.get(PATH_ZERO))).thenReturn(Arrays.asList(new ImageRecord(PATH_ZERO, 0)));
+		when(persistenceMock.getAllFilters(TAG_LANDSCAPE)).thenReturn(Arrays.asList(new FilterRecord(0, TAG_LANDSCAPE)));
 		when(persistenceMock.getAllFilters(StringUtil.MATCH_ALL_TAGS))
 				.thenReturn(Arrays.asList(new FilterRecord(0, TAG_LANDSCAPE), new FilterRecord(1, TAG_SUNSET)));
 
@@ -97,7 +100,7 @@ public class FilterSorterTest {
 	private void createRecords() {
 		records = new LinkedList<>();
 
-		records.add(new ImageRecord("foo", 0));
+		records.add(new ImageRecord(PATH_ZERO, 0));
 		records.add(new ImageRecord("bar", 1));
 		records.add(new ImageRecord("foobar", HASH_THREE));
 	}
@@ -135,10 +138,26 @@ public class FilterSorterTest {
 	@Test
 	public void testRecordLoadException() throws Exception {
 		when(persistenceMock.getAllRecords()).thenThrow(new SQLException(EXCEPTION_MESSAGE));
-		
+
 		cut = new FilterSorter(SEARCH_DISTANCE, TAG_SUNSET, persistenceMock);
 		runCutAndWaitForFinish();
 
 		assertThat(result, is(emptyMultiMap));
+	}
+
+	@Test
+	public void testFilterByPathNoMatch() throws Exception {
+		cut = new FilterSorter(SEARCH_DISTANCE, TAG_LANDSCAPE, persistenceMock, Paths.get("bar"));
+		runCutAndWaitForFinish();
+
+		assertThat(result, is(emptyMultiMap));
+	}
+
+	@Test
+	public void testFilterByPath() throws Exception {
+		cut = new FilterSorter(SEARCH_DISTANCE, TAG_LANDSCAPE, persistenceMock, Paths.get(PATH_ZERO));
+		runCutAndWaitForFinish();
+
+		assertThat(result.get(0L), containsInAnyOrder(records.get(0)));
 	}
 }

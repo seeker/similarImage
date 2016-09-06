@@ -90,7 +90,7 @@ public class SimilarImageController {
 
 		results = MultimapBuilder.hashKeys().hashSetValues().build();
 		this.displayGroup = displayGroup;
-		this.threadPool = threadPool; 
+		this.threadPool = threadPool;
 		this.statistics = statistics;
 		GuiEventBus.getInstance().register(this);
 	}
@@ -135,7 +135,6 @@ public class SimilarImageController {
 		this.results = results;
 		updateGUI();
 	}
-
 
 	public void displayGroup(long group) {
 		int maxGroupSize = 30;
@@ -194,11 +193,11 @@ public class SimilarImageController {
 
 	public void indexImages(String path) {
 		HashAttribute hashAttribute = new HashAttribute(HashNames.DEFAULT_DCT_HASH_2);
-		
+
 		List<HashHandler> handlers = new ArrayList<HashHandler>();
-		
+
 		handlers.add(new DatabaseHandler(persistence, statistics));
-		
+
 		if (ExtendedAttribute.supportsExtendedAttributes(Paths.get(path))) {
 			handlers.add(new ExtendedAttributeHandler(hashAttribute, persistence));
 			handlers.add(new HashingHandler(threadPool, new ImagePHash(), persistence, statistics, hashAttribute));
@@ -222,8 +221,13 @@ public class SimilarImageController {
 		t.start();
 	}
 
-	public void sortFilter(int hammingDistance, String reason) {
-		Thread t = new FilterSorter(hammingDistance, reason, persistence);
+	public void sortFilter(int hammingDistance, String reason, String path) {
+		Thread t;
+		if (path.isEmpty()) {
+			t = new FilterSorter(hammingDistance, reason, persistence);
+		} else {
+			t = new FilterSorter(hammingDistance, reason, persistence, Paths.get(path));
+		}
 		t.start();
 	}
 
