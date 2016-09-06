@@ -99,6 +99,7 @@ public class DuplicateOperations {
 		for (ImageRecord record : records) {
 			try {
 				persistence.addFilter(new FilterRecord(record.getpHash(), tag));
+				logger.info("Adding pHash {} to filter, tag {}, source file {}", record.getpHash(), tag, record.getPath());
 			} catch (SQLException e) {
 				logger.warn("Failed to add tag for {}: {}", record.getPath(), e.toString());
 			}
