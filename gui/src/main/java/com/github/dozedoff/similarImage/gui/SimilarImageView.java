@@ -28,6 +28,7 @@ import java.util.Set;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -45,16 +46,22 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import com.github.dozedoff.similarImage.db.CustomUserTag;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
+import com.github.dozedoff.similarImage.event.GuiEventBus;
+import com.github.dozedoff.similarImage.event.GuiUserTagChangedEvent;
 import com.github.dozedoff.similarImage.io.Statistics.StatisticsEvent;
 import com.github.dozedoff.similarImage.io.StatisticsChangedListener;
 import com.github.dozedoff.similarImage.thread.GroupListPopulator;
+import com.google.common.eventbus.Subscribe;
 
 import net.miginfocom.swing.MigLayout;
 
 public class SimilarImageView implements StatisticsChangedListener {
 	private JFrame view;
+
+	private static final int DEFAULT_TEXTFIELD_WIDTH = 20;
 
 	private final SimilarImageController controller;
 
@@ -67,10 +74,14 @@ public class SimilarImageView implements StatisticsChangedListener {
 	private DefaultListModel<Long> groupListModel;
 	private JScrollPane groupScrollPane;
 	private JScrollBar hammingDistance;
+
+	private final UserTagSettingController utsController;
 	final DuplicateOperations duplicateOperations;
 
-	public SimilarImageView(SimilarImageController controller, DuplicateOperations duplicateOperations, int maxBufferSize) {
+	public SimilarImageView(SimilarImageController controller, DuplicateOperations duplicateOperations, int maxBufferSize,
+			UserTagSettingController utsController) {
 		this.controller = controller;
+		this.utsController = utsController;
 
 		view = new JFrame();
 
@@ -90,12 +101,29 @@ public class SimilarImageView implements StatisticsChangedListener {
 		setupMenu();
 		updateHammingDisplay();
 		view.setVisible(true);
+
+		GuiEventBus.getInstance().register(this);
 	}
 
 	public void setStatus(String statusMsg) {
 		if (status != null) {
 			status.setText(statusMsg);
 		}
+	}
+
+	private JComponent buildActiveTagsList(JTextField tagField) {
+		JList<String> activeTags = new JList<String>(duplicateOperations.getFilterTags().toArray(new String[0]));
+		activeTags.addListSelectionListener(new ListSelectionListener() {
+			@Override
+			public void valueChanged(ListSelectionEvent e) {
+				String selectedValue = activeTags.getSelectedValue();
+				if (selectedValue != null) {
+					tagField.setText(selectedValue);
+				}
+			}
+		});
+
+		return new JScrollPane(activeTags);
 	}
 
 	private void setupComponents() {
@@ -108,7 +136,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 
 		groupListModel = new DefaultListModel<Long>();
 		groups = new JList<Long>(groupListModel);
-		groups.setComponentPopupMenu(new OperationsMenu());
+		groups.setComponentPopupMenu(new OperationsMenu(utsController));
 		groupScrollPane = new JScrollPane(groups);
 		hammingDistance = new JScrollBar(JScrollBar.HORIZONTAL, 0, 2, 0, 64);
 		hammingValue = new JLabel();
@@ -138,17 +166,17 @@ public class SimilarImageView implements StatisticsChangedListener {
 		sortFilter.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				// TODO display option dialog to select reason - null or empty
-				// mean all
-				JTextField reason = new JTextField(20);
-				Object[] message = { "Reason: ", reason };
+				JTextField tag = new JTextField(DEFAULT_TEXTFIELD_WIDTH);
+				tag.setToolTipText("Limit search to Tag. Empty tag or * will select ALL tags");
+
+				Object[] message = { "Tag: ", tag, "Active Tags:", buildActiveTagsList(tag) };
 				JOptionPane pane = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
-				JDialog getTopicDialog = pane.createDialog(null, "Select directory");
+				JDialog getTopicDialog = pane.createDialog(null, "Select Tag to use in search");
 				getTopicDialog.setVisible(true);
 
 				if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION) {
-					String r = reason.getText();
-					controller.sortFilter(hammingDistance.getValue(), r);
+					String r = tag.getText();
+					controller.sortFilter(hammingDistance.getValue(), r, path.getText());
 				}
 			}
 		});
@@ -196,47 +224,34 @@ public class SimilarImageView implements StatisticsChangedListener {
 	}
 
 	private void setupMenu() {
-		JMenuBar menuBar = new JMenuBar();
-		JMenu file, help;
-		JMenuItem folderDnw, folderBlock, pruneRecords, about;
 
-		file = new JMenu("File");
-		help = new JMenu("Help");
+		JMenuItem directoryTag;
+		JMenuItem pruneRecords;
+		JMenuItem userTags;
 
-		folderDnw = new JMenuItem("Add folder as dnw");
-		folderBlock = new JMenuItem("Add folder as block");
+		directoryTag = new JMenuItem("Tag directory");
+		directoryTag.setToolTipText("Tag all images in a directory and sub-directories");
+
 		pruneRecords = new JMenuItem("Prune records");
 
-		about = new JMenuItem("About");
+		JMenuItem about = new JMenuItem("About");
 
-		folderDnw.addActionListener(new ActionListener() {
+		directoryTag.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				JTextField directory = new JTextField(20);
-				Object[] message = { "Directory: ", directory };
+				JTextField directoryField = new JTextField(DEFAULT_TEXTFIELD_WIDTH);
+				JTextField tagField = new JTextField(DEFAULT_TEXTFIELD_WIDTH);
+
+				Object[] message = { "Directory: ", directoryField, "Tag:", tagField, "Active Tags:", buildActiveTagsList(tagField) };
+
 				JOptionPane pane = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
-				JDialog getTopicDialog = pane.createDialog(null, "Select directory");
+				JDialog getTopicDialog = pane.createDialog(null, "Tag all images in directory");
 				getTopicDialog.setVisible(true);
 
 				if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION) {
-					Path path = Paths.get(directory.getText());
-					duplicateOperations.markDirectoryAs(path, DuplicateOperations.Tags.DNW.toString());
-				}
-			}
-		});
-
-		folderBlock.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				JTextField directory = new JTextField(20);
-				Object[] message = { "Directory: ", directory };
-				JOptionPane pane = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
-				JDialog getTopicDialog = pane.createDialog(null, "Select directory");
-				getTopicDialog.setVisible(true);
-
-				if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION) {
-					Path path = Paths.get(directory.getText());
-					duplicateOperations.markDirectoryAs(path, "BLOCK");
+					Path selectedPath = Paths.get(directoryField.getText());
+					String tag = tagField.getText();
+					duplicateOperations.markDirectoryAndChildrenAs(selectedPath, tag);
 				}
 			}
 		});
@@ -261,13 +276,27 @@ public class SimilarImageView implements StatisticsChangedListener {
 			}
 		});
 
-		file.add(folderDnw);
-		file.add(folderBlock);
+		userTags = new JMenuItem("User Tags");
+		userTags.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				new UserTagSettingView(utsController);
+			}
+		});
+
+		JMenu file = new JMenu("File");
+		file.add(directoryTag);
 		file.add(pruneRecords);
 
+		JMenu help = new JMenu("Help");
 		help.add(about);
 
+		JMenu settings = new JMenu("Settings");
+		settings.add(userTags);
+
+		JMenuBar menuBar = new JMenuBar();
 		menuBar.add(file);
+		menuBar.add(settings);
 		menuBar.add(help);
 		view.setJMenuBar(menuBar);
 	}
@@ -290,10 +319,18 @@ public class SimilarImageView implements StatisticsChangedListener {
 		groupListModel.removeElement(group);
 	}
 
-	private void dnwAll(long group) {
-		Set<ImageRecord> set = controller.getGroup(group);
-		duplicateOperations.markDnwAndDelete(set);
-		groupListModel.removeElement(group);
+	private void tagAll(long group) {
+		JTextField tagField = new JTextField(DEFAULT_TEXTFIELD_WIDTH);
+
+		Object[] message = { "Tag:", tagField, "Active Tags:", buildActiveTagsList(tagField) };
+
+		JOptionPane pane = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+		JDialog getTopicDialog = pane.createDialog(null, "Tag all images");
+		getTopicDialog.setVisible(true);
+
+		if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION) {
+			duplicateOperations.markAll(controller.getGroup(group), tagField.getText());
+		}
 	}
 
 	public boolean okToDisplayLargeGroup(int groupSize) {
@@ -305,29 +342,65 @@ public class SimilarImageView implements StatisticsChangedListener {
 		return (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION);
 	}
 
+	/**
+	 * Rebuild menu with new user tags.
+	 */
+	@Subscribe
+	private void updateMenuOnUserTagChange(GuiUserTagChangedEvent event) {
+		groups.setComponentPopupMenu(new OperationsMenu(utsController));
+	}
+
+	/**
+	 * Operations for the group window context menu
+	 * 
+	 * @author Nicholas Wright
+	 *
+	 */
 	class OperationsMenu extends JPopupMenu {
 		private static final long serialVersionUID = 1L;
 
-		public OperationsMenu() {
+		public OperationsMenu(UserTagSettingController utsController) {
 			JMenuItem deleteAll = new JMenuItem("Delete all");
 			deleteAll.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent arg0) {
 					deleteAll(getSelectedGroup());
 				}
-
 			});
 
-			JMenuItem dnwAll = new JMenuItem("Mark dnw & delete all");
-			dnwAll.addActionListener(new ActionListener() {
+			JMenuItem tagAll = new JMenuItem("Tag all");
+			tagAll.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent arg0) {
-					dnwAll(getSelectedGroup());
+					tagAll(getSelectedGroup());
 				}
 			});
 
 			this.add(deleteAll);
-			this.add(dnwAll);
+			this.add(tagAll);
+			this.addSeparator();
+
+			addUserTags(utsController);
+		}
+
+		/**
+		 * Create mark menu items for all user tags
+		 * 
+		 * @param tagController
+		 *            {@link UserTagSettingController} to use
+		 */
+		private void addUserTags(UserTagSettingController tagController) {
+			for (CustomUserTag tag : tagController.getAllUserTags()) {
+				JMenuItem menu = new JMenuItem("Tag " + tag.toString());
+				menu.addActionListener(new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						duplicateOperations.markAll(controller.getGroup(getSelectedGroup()), tag.toString());
+					}
+				});
+
+				this.add(menu);
+			}
 		}
 	}
 

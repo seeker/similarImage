@@ -287,6 +287,20 @@ public class DuplicateOperationsTest {
 		verify(persistence).deleteRecord(ghost);
 	}
 
+	@Test
+	public void testMarkAll() throws Exception {
+		LinkedList<ImageRecord> records = new LinkedList<ImageRecord>();
+		records.add(new ImageRecord("foo", 0));
+		records.add(new ImageRecord("bar", 1));
+
+		String testTag = "test";
+
+		dupOp.markAll(records, testTag);
+
+		verify(persistence).addFilter(new FilterRecord(0, testTag));
+		verify(persistence).addFilter(new FilterRecord(1, testTag));
+	}
+
 	private LinkedList<Path> createTempTestFiles(int amount) throws IOException {
 		LinkedList<Path> tempFiles = new LinkedList<>();
 		tempDirectory = Files.createTempDirectory("DuplicateOperationsTest");

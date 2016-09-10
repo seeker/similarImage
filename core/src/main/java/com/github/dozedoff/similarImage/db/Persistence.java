@@ -49,6 +49,8 @@ public class Persistence {
 	Dao<BadFileRecord, String> badFileRecordDao;
 	Dao<IgnoreRecord, Long> ignoreRecordDao;
 
+	private final ConnectionSource cs;
+
 	PreparedQuery<ImageRecord> filterPrepQuery, distinctPrepQuery;
 
 	SelectArg pathArg = new SelectArg();
@@ -64,7 +66,7 @@ public class Persistence {
 	public Persistence(String dbPath) {
 		try {
 			String fullDbPath = dbPrefix + dbPath;
-			ConnectionSource cs = new JdbcConnectionSource(fullDbPath);
+			cs = new JdbcConnectionSource(fullDbPath);
 			setupDatabase(cs);
 			setupDAO(cs);
 			createPreparedStatements();
@@ -96,6 +98,7 @@ public class Persistence {
 		TableUtils.createTableIfNotExists(cs, FilterRecord.class);
 		TableUtils.createTableIfNotExists(cs, BadFileRecord.class);
 		TableUtils.createTableIfNotExists(cs, IgnoreRecord.class);
+		TableUtils.createTableIfNotExists(cs, CustomUserTag.class);
 	}
 
 	private void setupDAO(ConnectionSource cs) throws SQLException {
@@ -170,6 +173,14 @@ public class Persistence {
 		return imageRecordDao.queryForAll();
 	}
 
+	/**
+	 * Updates an existing {@link FilterRecord} or creates a new one if does not exist.
+	 * 
+	 * @param filter
+	 *            to update or create
+	 * @throws SQLException
+	 *             if there is an issue accessing the database
+	 */
 	public void addFilter(FilterRecord filter) throws SQLException {
 		filterRecordDao.createOrUpdate(filter);
 	}
@@ -214,7 +225,13 @@ public class Persistence {
 		}
 	}
 
-	public List<String> getFilterReasons() {
+
+	/**
+	 * Returns a distinct list of all tags currently in use.
+	 * 
+	 * @return list of tags
+	 */
+	public List<String> getFilterTags() {
 		List<String> reasons = new LinkedList<String>();
 
 		CloseableWrappedIterable<FilterRecord> iterator = filterRecordDao.getWrappedIterable();
@@ -234,6 +251,14 @@ public class Persistence {
 		}
 
 		return reasons;
+	}
+
+	/**
+	 * @deprecated Use {@link Persistence#getFilterTags()} instead, better naming.
+	 */
+	@Deprecated
+	public List<String> getFilterReasons() {
+		return getFilterTags();
 	}
 
 	public List<ImageRecord> filterByPath(Path directory) throws SQLException {
@@ -257,5 +282,14 @@ public class Persistence {
 		} else {
 			return true;
 		}
+	}
+
+	/**
+	 * Get the {@link ConnectionSource} for the database.
+	 * 
+	 * @return current {@link ConnectionSource}
+	 */
+	public final ConnectionSource getCs() {
+		return cs;
 	}
 }

@@ -21,6 +21,7 @@ import java.awt.Dimension;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -33,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.filefilter.SimpleImageFilter;
 import com.github.dozedoff.commonj.hash.ImagePHash;
+import com.github.dozedoff.similarImage.db.CustomUserTag;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
@@ -53,6 +55,7 @@ import com.github.dozedoff.similarImage.thread.ImageSorter;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.eventbus.Subscribe;
+import com.j256.ormlite.dao.DaoManager;
 
 public class SimilarImageController {
 	private final Logger logger = LoggerFactory.getLogger(SimilarImageController.class);
@@ -87,7 +90,7 @@ public class SimilarImageController {
 
 		results = MultimapBuilder.hashKeys().hashSetValues().build();
 		this.displayGroup = displayGroup;
-		this.threadPool = threadPool; 
+		this.threadPool = threadPool;
 		this.statistics = statistics;
 		GuiEventBus.getInstance().register(this);
 	}
@@ -133,7 +136,6 @@ public class SimilarImageController {
 		updateGUI();
 	}
 
-
 	public void displayGroup(long group) {
 		int maxGroupSize = 30;
 
@@ -154,11 +156,17 @@ public class SimilarImageController {
 
 			if (Files.exists(path)) {
 				ImageInfo info = new ImageInfo(path, rec.getpHash());
-				OperationsMenu opMenu = new OperationsMenu(info, persistence);
+				OperationsMenu opMenu;
+				try {
+					opMenu = new OperationsMenu(info, persistence,
+							new UserTagSettingController(DaoManager.createDao(persistence.getCs(), CustomUserTag.class)));
+					DuplicateEntryController entry = new DuplicateEntryController(info, imageDim);
+					new DuplicateEntryView(entry, opMenu);
+					images.add(entry);
+				} catch (SQLException e) {
+					logger.warn("Failed to create Operations menu for {}: {}", info.getPath(), e.toString());
+				}
 
-				DuplicateEntryController entry = new DuplicateEntryController(info, imageDim);
-				new DuplicateEntryView(entry, opMenu);
-				images.add(entry);
 			} else {
 				logger.warn("Image {} not found, skipping...", path);
 			}
@@ -185,11 +193,11 @@ public class SimilarImageController {
 
 	public void indexImages(String path) {
 		HashAttribute hashAttribute = new HashAttribute(HashNames.DEFAULT_DCT_HASH_2);
-		
+
 		List<HashHandler> handlers = new ArrayList<HashHandler>();
-		
+
 		handlers.add(new DatabaseHandler(persistence, statistics));
-		
+
 		if (ExtendedAttribute.supportsExtendedAttributes(Paths.get(path))) {
 			handlers.add(new ExtendedAttributeHandler(hashAttribute, persistence));
 			handlers.add(new HashingHandler(threadPool, new ImagePHash(), persistence, statistics, hashAttribute));
@@ -213,8 +221,13 @@ public class SimilarImageController {
 		t.start();
 	}
 
-	public void sortFilter(int hammingDistance, String reason) {
-		Thread t = new FilterSorter(hammingDistance, reason, persistence);
+	public void sortFilter(int hammingDistance, String reason, String path) {
+		Thread t;
+		if (path.isEmpty()) {
+			t = new FilterSorter(hammingDistance, reason, persistence);
+		} else {
+			t = new FilterSorter(hammingDistance, reason, persistence, Paths.get(path));
+		}
 		t.start();
 	}
 

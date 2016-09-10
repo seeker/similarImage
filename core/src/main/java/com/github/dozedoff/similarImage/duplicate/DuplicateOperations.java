@@ -33,6 +33,7 @@ import javax.swing.JOptionPane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.dozedoff.commonj.file.DirectoryVisitor;
 import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
@@ -86,6 +87,25 @@ public class DuplicateOperations {
 		}
 	}
 
+	/**
+	 * Add filter records with the given tag for all records.
+	 * 
+	 * @param records
+	 *            to add filter records for
+	 * @param tag
+	 *            tag to use for filter records
+	 */
+	public void markAll(Collection<ImageRecord> records, String tag) {
+		for (ImageRecord record : records) {
+			try {
+				persistence.addFilter(new FilterRecord(record.getpHash(), tag));
+				logger.info("Adding pHash {} to filter, tag {}, source file {}", record.getpHash(), tag, record.getPath());
+			} catch (SQLException e) {
+				logger.warn("Failed to add tag for {}: {}", record.getPath(), e.toString());
+			}
+		}
+	}
+
 	public void markDnwAndDelete(Collection<ImageRecord> records) {
 		for (ImageRecord ir : records) {
 			long pHash = ir.getpHash();
@@ -103,7 +123,6 @@ public class DuplicateOperations {
 
 	public void markAs(Path path, String reason) {
 		// TODO do this with transaction
-		// TODO get "Mark as" strings from options
 		try {
 			ImageRecord ir = persistence.getRecord(path);
 			if (ir == null) {
@@ -144,10 +163,25 @@ public class DuplicateOperations {
 					addCount++;
 				}
 			}
-			
+
 			logger.info("Added {} images from {} to filter list", addCount, directory);
 		} catch (IOException e) {
 			logger.error("Failed to add images to filter list, {}", e);
+		}
+	}
+
+	public void markDirectoryAndChildrenAs(Path rootDirectory, String tag) {
+		LinkedList<Path> directories = new LinkedList<>();
+		DirectoryVisitor dv = new DirectoryVisitor(directories);
+
+		try {
+			Files.walkFileTree(rootDirectory, dv);
+		} catch (IOException e) {
+			logger.error("Failed to walk directory {}: {}", rootDirectory, e.toString());
+		}
+
+		for (Path dir : directories) {
+			markDirectoryAs(dir, tag);
 		}
 	}
 
@@ -199,5 +233,14 @@ public class DuplicateOperations {
 		} catch (SQLException e) {
 			logger.warn("Failed to ignore pHash {} - {}", pHash, e.getMessage());
 		}
+	}
+
+	/**
+	 * Get a list of in-use filter tags
+	 * 
+	 * @return list of tags
+	 */
+	public List<String> getFilterTags() {
+		return persistence.getFilterTags();
 	}
 }

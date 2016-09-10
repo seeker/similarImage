@@ -17,6 +17,7 @@
  */
 package com.github.dozedoff.similarImage.thread;
 
+import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
@@ -38,8 +39,8 @@ import com.google.common.collect.MultimapBuilder;
 import com.google.common.eventbus.EventBus;
 
 /**
- * Match the hashes corresponding the given tag to the records. This allows the user to search for similar images
- * matching a given tag or category.
+ * Match the hashes corresponding the given tag to the records. This allows the user to search for similar images matching a given tag or
+ * category.
  * 
  * @author Nicholas Wright
  */
@@ -50,6 +51,7 @@ public class FilterSorter extends Thread {
 	private String reason;
 	private List<ImageRecord> dBrecords;
 	private Persistence persistence;
+	private Path scope;
 
 	/**
 	 * Create a class that will search for matches of the given tag within the hamming distance.
@@ -65,6 +67,28 @@ public class FilterSorter extends Thread {
 		this.hammingDistance = hammingDistance;
 		this.reason = tag;
 		this.persistence = persistence;
+
+		dBrecords = Collections.emptyList();
+	}
+
+	/**
+	 * Create a class that will search for matches of the given tag within the hamming distance, only records starting with the given path
+	 * are considered.
+	 * 
+	 * @param hammingDistance
+	 *            maximum distance to consider for a match
+	 * @param tag
+	 *            to search for
+	 * @param persistence
+	 *            instance for database access
+	 * @param scope
+	 *            limit results to this path
+	 */
+	public FilterSorter(int hammingDistance, String tag, Persistence persistence, Path scope) {
+		this.hammingDistance = hammingDistance;
+		this.reason = tag;
+		this.persistence = persistence;
+		this.scope = scope;
 
 		dBrecords = Collections.emptyList();
 	}
@@ -101,7 +125,12 @@ public class FilterSorter extends Thread {
 		Multimap<Long, ImageRecord> groups = MultimapBuilder.hashKeys().hashSetValues().build();
 
 		try {
-			dBrecords = persistence.getAllRecords();
+			if (scope == null) {
+				dBrecords = persistence.getAllRecords();
+			} else {
+				dBrecords = persistence.filterByPath(scope);
+			}
+
 			rs.build(dBrecords);
 			groups = getFilterMatches(rs, sanitizedTag);
 
