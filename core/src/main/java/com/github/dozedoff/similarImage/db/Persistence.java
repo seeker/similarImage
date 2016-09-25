@@ -19,6 +19,7 @@ package com.github.dozedoff.similarImage.db;
 
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -139,8 +140,28 @@ public class Persistence {
 		return imageRecordDao.queryForMatching(searchRecord);
 	}
 
+	/**
+	 * Remove the record from the database.
+	 * 
+	 * @param record
+	 *            to remove
+	 * @throws SQLException
+	 *             if an error occurs during database operations
+	 */
 	public void deleteRecord(ImageRecord record) throws SQLException {
 		imageRecordDao.delete(record);
+	}
+
+	/**
+	 * Remove all records in the list from the database.
+	 * 
+	 * @param records
+	 *            to remove
+	 * @throws SQLException
+	 *             if an error occurs during database operations
+	 */
+	public void deleteRecord(Collection<ImageRecord> records) throws SQLException {
+		imageRecordDao.delete(records);
 	}
 
 	public boolean isPathRecorded(Path path) throws SQLException {
@@ -224,7 +245,6 @@ public class Persistence {
 			return filterRecordDao.queryForMatching(query);
 		}
 	}
-
 
 	/**
 	 * Returns a distinct list of all tags currently in use.

@@ -252,9 +252,7 @@ public class DuplicateOperations {
 			dialog.setVisible(true);
 
 			if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION) {
-				for (ImageRecord ir : toPrune) {
-					persistence.deleteRecord(ir);
-				}
+				persistence.deleteRecord(toPrune);
 			} else {
 				logger.info("User aborted prune operation for {}", directory);
 			}
