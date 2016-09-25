@@ -24,6 +24,7 @@ import java.awt.event.AdjustmentListener;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 import javax.swing.DefaultListModel;
@@ -46,6 +47,9 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.dozedoff.similarImage.db.CustomUserTag;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
@@ -59,6 +63,8 @@ import com.google.common.eventbus.Subscribe;
 import net.miginfocom.swing.MigLayout;
 
 public class SimilarImageView implements StatisticsChangedListener {
+	private static final Logger LOGGER = LoggerFactory.getLogger(SimilarImageView.class);
+
 	private JFrame view;
 
 	private static final int DEFAULT_TEXTFIELD_WIDTH = 20;
@@ -259,7 +265,22 @@ public class SimilarImageView implements StatisticsChangedListener {
 		pruneRecords.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				duplicateOperations.pruneRecords(Paths.get(path.getText()));
+				Path directory = Paths.get(path.getText());
+
+				List<ImageRecord> toPrune = duplicateOperations.findMissingFiles(directory);
+
+				LOGGER.info("Found {} non-existant records", toPrune.size());
+
+				Object options[] = { "Prune " + toPrune.size() + " records?" };
+				JOptionPane pane = new JOptionPane(options, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+				JDialog dialog = pane.createDialog("Prune records");
+				dialog.setVisible(true);
+
+				if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION) {
+					duplicateOperations.deleteAll(toPrune);
+				} else {
+					LOGGER.info("User aborted prune operation for {}", directory);
+				}
 			}
 		});
 

@@ -23,12 +23,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-
-import javax.swing.JDialog;
-import javax.swing.JOptionPane;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,6 +60,7 @@ public class DuplicateOperations {
 		}
 	}
 
+	// TODO directly delete via Imagerecord
 	public void deleteFile(Path path) {
 		try {
 			if (path == null) {
@@ -189,42 +188,45 @@ public class DuplicateOperations {
 		return directory != null && Files.exists(directory) && Files.isDirectory(directory);
 	}
 
-	public void pruneRecords(Path directory) {
+	/**
+	 * Returns a list of {@link ImageRecord} that are in the database, but the corresponding file does not exist. <b>Caution:</b> may return
+	 * false positives if a source is offline (like a network share or external disk)
+	 * 
+	 * @param directory
+	 *            to scan for missing files
+	 * @return a list f missing files
+	 */
+	public List<ImageRecord> findMissingFiles(Path directory) {
 		if (!isDirectory(directory)) {
-			logger.warn("Directory {} not valid, aborting.", directory);
-			return;
+			logger.error("Directory is null or missing, aborting");
+			return Collections.emptyList();
 		}
+
+		if (!Files.exists(directory)) {
+			logger.warn("Directory {} does not exist.", directory);
+		}
+
+		List<ImageRecord> records = Collections.emptyList();
 
 		try {
-			List<ImageRecord> records = persistence.filterByPath(directory);
-			LinkedList<Path> toPrune = new LinkedList<Path>();
-
-			for (ImageRecord ir : records) {
-				Path path = Paths.get(ir.getPath());
-
-				if (!Files.exists(path)) {
-					toPrune.add(path);
-				}
-			}
-
-			logger.info("Found {} non-existant records", toPrune.size());
-
-			Object options[] = { "Prune " + toPrune.size() + " records?" };
-			JOptionPane pane = new JOptionPane(options, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
-			JDialog dialog = pane.createDialog("Prune records");
-			dialog.setVisible(true);
-
-			if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION) {
-				for (Path path : toPrune) {
-					ImageRecord ir = new ImageRecord(path.toString(), 0);
-					persistence.deleteRecord(ir);
-				}
-			} else {
-				logger.info("User aborted prune operation for {}", directory);
-			}
+			records = persistence.filterByPath(directory);
 		} catch (SQLException e) {
-			logger.warn("Failed to prune records for {} - {}", directory, e.getMessage());
+			logger.error("Failed to get records from database: {}", e.toString());
 		}
+
+		LinkedList<ImageRecord> toPrune = new LinkedList<>();
+
+		for (ImageRecord ir : records) {
+			Path path = Paths.get(ir.getPath());
+
+			if (!Files.exists(path)) {
+				toPrune.add(ir);
+			}
+		}
+
+		logger.info("Found {} non-existant records", toPrune.size());
+
+		return toPrune;
 	}
 
 	public void ignore(long pHash) {
