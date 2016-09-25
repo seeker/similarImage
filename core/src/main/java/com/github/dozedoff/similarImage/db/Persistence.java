@@ -217,18 +217,42 @@ public class Persistence {
 		badFileRecordDao.createOrUpdate(badFile);
 	}
 
+	/**
+	 * Check if the {@link FilterRecord} with the given hash exists.
+	 * 
+	 * @param pHash
+	 *            to query
+	 * @return true if a record is found
+	 * @throws SQLException
+	 *             in case of a database error
+	 * @deprecated This will no longer work if a hash can have multiple tags
+	 */
+	@Deprecated
 	public boolean filterExists(long pHash) throws SQLException {
-		FilterRecord filter = filterRecordDao.queryForId(pHash);
+		List<FilterRecord> filter = filterRecordDao.queryForMatchingArgs(new FilterRecord(pHash, null, null));
 
-		if (filter != null) {
-			return true;
-		} else {
-			return false;
-		}
+		return !filter.isEmpty();
 	}
 
+	/**
+	 * Get the filter for the given hash.
+	 * 
+	 * @param pHash
+	 *            to query
+	 * @return {@link FilterRecord} if one is found else null
+	 * @throws SQLException
+	 *             in case of a database error
+	 * @deprecated This will no longer work if a hash can have multiple tags
+	 */
+	@Deprecated
 	public FilterRecord getFilter(long pHash) throws SQLException {
-		return filterRecordDao.queryForId(pHash);
+		List<FilterRecord> matchingFilters = filterRecordDao.queryForMatchingArgs(new FilterRecord(pHash, null, null));
+
+		if (matchingFilters.isEmpty()) {
+			return null;
+		} else {
+			return matchingFilters.get(0);
+		}
 	}
 
 	public List<FilterRecord> getAllFilters() throws SQLException {

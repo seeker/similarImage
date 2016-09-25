@@ -22,22 +22,51 @@ import com.j256.ormlite.table.DatabaseTable;
 
 @DatabaseTable
 public final class FilterRecord {
-	@DatabaseField(id = true, canBeNull = false)
+	@DatabaseField(generatedId = true)
+	private int id;
+	@DatabaseField(canBeNull = false, index = true)
 	private long pHash;
-	@DatabaseField(canBeNull = false)
-	private String reason;
+	@DatabaseField(canBeNull = false, index = true)
+	private String tag;
+	@DatabaseField(foreign = true)
+	private Thumbnail thumbnail;
 
 	/**
 	 * Intended for DAO only
+	 * 
+	 * @deprecated Use the constructor with arguments instead
 	 */
 	@Deprecated
 	public FilterRecord() {
 	}
 
+	/**
+	 * 
+	 * @param pHash
+	 * @param reason
+	 * @deprecated Use constructor {@link FilterRecord#FilterRecord(long, String, Thumbnail)} instead.
+	 */
+	@Deprecated
 	public FilterRecord(long pHash, String reason) {
+		this.pHash = pHash;
+		this.tag = reason;
+	}
+
+	/**
+	 * Create a new record with the given values
+	 * 
+	 * @param pHash
+	 *            the similarity hash for the image
+	 * @param tag
+	 *            for the image
+	 * @param thumbnail
+	 *            thumbnail image for the record, can be null
+	 */
+	public FilterRecord(long pHash, String tag, Thumbnail thumbnail) {
 		super();
 		this.pHash = pHash;
-		this.reason = reason;
+		this.tag = tag;
+		this.thumbnail = thumbnail;
 	}
 
 	public long getpHash() {
@@ -48,40 +77,88 @@ public final class FilterRecord {
 		this.pHash = pHash;
 	}
 
+	/**
+	 * @deprecated Replaced by {@link FilterRecord#getTag()}
+	 * @return The reason for this filter
+	 */
+	@Deprecated
 	public String getReason() {
-		return reason;
+		return tag;
 	}
 
+	public String getTag() {
+		return tag;
+	}
+
+	/**
+	 * @deprecated Replaced by {@link FilterRecord#setTag(String)}
+	 * @param reason
+	 *            for this filter
+	 */
+	@Deprecated
 	public void setReason(String reason) {
-		this.reason = reason;
+		this.tag = reason;
 	}
 
-	
+	public void setTag(String tag) {
+		this.tag = tag;
+	}
+
+	public Thumbnail getThumbnail() {
+		return thumbnail;
+	}
+
+	/**
+	 * Create a hashcode using hash, tag and thumbnail
+	 * 
+	 * @return generated hashcode
+	 */
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + (int) (pHash ^ (pHash >>> 32));
-		result = prime * result + ((reason == null) ? 0 : reason.hashCode());
+		result = prime * result + ((tag == null) ? 0 : tag.hashCode());
+		result = prime * result + ((thumbnail == null) ? 0 : thumbnail.hashCode());
 		return result;
 	}
 
+	/**
+	 * Compare an object to check if it is equal. Hash, Tag and thumbnail will be used for comparison.
+	 * 
+	 * @param obj
+	 *            object to compare
+	 * @return true if the object is identical
+	 */
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		FilterRecord other = (FilterRecord) obj;
-		if (pHash != other.pHash)
+		if (pHash != other.pHash) {
 			return false;
-		if (reason == null) {
-			if (other.reason != null)
+		}
+		if (tag == null) {
+			if (other.tag != null) {
 				return false;
-		} else if (!reason.equals(other.reason))
+			}
+		} else if (!tag.equals(other.tag)) {
 			return false;
+		}
+		if (thumbnail == null) {
+			if (other.thumbnail != null) {
+				return false;
+			}
+		} else if (!thumbnail.equals(other.thumbnail)) {
+			return false;
+		}
 		return true;
 	}
 }

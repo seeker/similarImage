@@ -196,7 +196,7 @@ public class PersistenceTest {
 	public void testAddFilter() throws Exception {
 		assertThat(GUARD_MSG, persistence.filterExists(55), is(false));
 
-		persistence.addFilter(new FilterRecord(55, "another"));
+		persistence.addFilter(new FilterRecord(55, "another", null));
 
 		assertThat(persistence.filterExists(55), is(true));
 	}
@@ -222,7 +222,7 @@ public class PersistenceTest {
 
 	@Test
 	public void testGetFilterExists() throws Exception {
-		assertThat(persistence.getFilter(3), is(new FilterRecord(3, "frogs")));
+		assertThat(persistence.getFilter(3), is(new FilterRecord(3, "frogs", null)));
 	}
 
 	@Test
