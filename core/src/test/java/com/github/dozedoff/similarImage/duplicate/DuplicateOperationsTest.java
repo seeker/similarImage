@@ -18,10 +18,10 @@
 package com.github.dozedoff.similarImage.duplicate;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -31,21 +31,27 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 
+@RunWith(MockitoJUnitRunner.class)
 public class DuplicateOperationsTest {
 	private static final String GUARD_MSG = "Guard condition failed";
 
+	@Mock
 	private Persistence persistence;
 	private DuplicateOperations dupOp;
 
@@ -53,10 +59,9 @@ public class DuplicateOperationsTest {
 
 	@Before
 	public void setUp() throws Exception {
-		persistence = mock(Persistence.class);
 		dupOp = new DuplicateOperations(persistence);
 
-		tempDirectory = null;
+		tempDirectory = Files.createTempDirectory("DuplicateOperationsTest");
 	}
 
 	@Ignore("Not implemented yet")
@@ -266,7 +271,6 @@ public class DuplicateOperationsTest {
 		verify(persistence, never()).addFilter(any(FilterRecord.class));
 	}
 
-	@Ignore("GUI elements need to be removed first")
 	@Test
 	public void testPruneRecords() throws Exception {
 		List<Path> files = createTempTestFiles(10);
@@ -324,5 +328,16 @@ public class DuplicateOperationsTest {
 		for (Path p : files) {
 			assertThat(GUARD_MSG, Files.exists(p), is(false));
 		}
+	}
+
+	@Test
+	public void testFindMissingFiles() throws Exception {
+		Path testFile = Files.createTempFile(tempDirectory, "findmissingfilestest", null);
+		ImageRecord missingRecord = new ImageRecord(testFile.getParent().resolve("foo").toString(), 0);
+		when(persistence.filterByPath(tempDirectory)).thenReturn(Arrays.asList(new ImageRecord(testFile.toString(), 0), missingRecord));
+
+		List<ImageRecord> missing = dupOp.findMissingFiles(tempDirectory);
+
+		assertThat(missing, containsInAnyOrder(missingRecord));
 	}
 }
