@@ -272,26 +272,6 @@ public class DuplicateOperationsTest {
 	}
 
 	@Test
-	public void testPruneRecords() throws Exception {
-		List<Path> files = createTempTestFiles(10);
-
-		LinkedList<ImageRecord> records = new LinkedList<>();
-
-		for (Path p : files) {
-			records.add(new ImageRecord(p.toString(), 0));
-		}
-
-		ImageRecord ghost = new ImageRecord(tempDirectory.resolve("ghost.jpg").toString(), 0);
-		records.add(ghost);
-
-		when(persistence.filterByPath(tempDirectory)).thenReturn(records);
-
-		dupOp.pruneRecords(tempDirectory);
-
-		verify(persistence).deleteRecord(ghost);
-	}
-
-	@Test
 	public void testMarkAll() throws Exception {
 		LinkedList<ImageRecord> records = new LinkedList<ImageRecord>();
 		records.add(new ImageRecord("foo", 0));
@@ -326,7 +306,7 @@ public class DuplicateOperationsTest {
 
 	private void assertFilesDoNotExist(List<Path> files) {
 		for (Path p : files) {
-			assertThat(GUARD_MSG, Files.exists(p), is(false));
+			assertThat(GUARD_MSG + " for " + p.toString(), Files.exists(p), is(false));
 		}
 	}
 

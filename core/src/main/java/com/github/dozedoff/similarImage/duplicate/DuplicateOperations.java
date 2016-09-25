@@ -28,9 +28,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import javax.swing.JDialog;
-import javax.swing.JOptionPane;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -230,35 +227,6 @@ public class DuplicateOperations {
 		logger.info("Found {} non-existant records", toPrune.size());
 
 		return toPrune;
-	}
-
-	/**
-	 * Checks all known paths for the given directory and removes those that no longer exist.
-	 * 
-	 * @param directory
-	 *            directory to scan for missing files
-	 * @deprecated use call to get number to prune, then separate call to prune.
-	 */
-	@Deprecated
-	public void pruneRecords(Path directory) {
-		try {
-			List<ImageRecord> toPrune = findMissingFiles(directory);
-
-			logger.info("Found {} non-existant records", toPrune.size());
-
-			Object options[] = { "Prune " + toPrune.size() + " records?" };
-			JOptionPane pane = new JOptionPane(options, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
-			JDialog dialog = pane.createDialog("Prune records");
-			dialog.setVisible(true);
-
-			if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION) {
-				persistence.deleteRecord(toPrune);
-			} else {
-				logger.info("User aborted prune operation for {}", directory);
-			}
-		} catch (SQLException e) {
-			logger.warn("Failed to prune records for {} - {}", directory, e.getMessage());
-		}
 	}
 
 	public void ignore(long pHash) {

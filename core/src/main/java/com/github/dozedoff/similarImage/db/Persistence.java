@@ -160,8 +160,14 @@ public class Persistence {
 	 * @throws SQLException
 	 *             if an error occurs during database operations
 	 */
-	public void deleteRecord(Collection<ImageRecord> records) throws SQLException {
-		imageRecordDao.delete(records);
+	public void deleteRecord(Collection<ImageRecord> records) {
+		for (ImageRecord rec : records) {
+			try {
+				deleteRecord(rec);
+			} catch (SQLException e) {
+				logger.warn("Failed to delete record for {}: {}", rec.getPath(), e.toString());
+			}
+		}
 	}
 
 	public boolean isPathRecorded(Path path) throws SQLException {
