@@ -28,44 +28,50 @@ import nl.jqno.equalsverifier.Warning;
 
 public class FilterRecordTest {
 	private static final String GUARD_MSG = "Guard condition failed";
+
+	private static final String TEST_TAG_ONE = "dontPanic";
+	private static final String TEST_TAG_TWO = "towel";
+	private static final long HASH_ONE = 42L;
+	private static final long HASH_TWO = 7L;
+
 	private FilterRecord filterRecord;
 
 	@Before
 	public void setUp() throws Exception {
-		filterRecord = new FilterRecord(42, "dontPanic");
+		filterRecord = new FilterRecord(HASH_ONE, TEST_TAG_ONE, null);
 	}
 
 	@Test
 	public void testGetpHash() throws Exception {
-		assertThat(filterRecord.getpHash(), is(42L));
+		assertThat(filterRecord.getpHash(), is(HASH_ONE));
 	}
 
 	@Test
 	public void testSetpHash() throws Exception {
-		assertThat(GUARD_MSG, filterRecord.getpHash(), is(42L));
+		assertThat(GUARD_MSG, filterRecord.getpHash(), is(HASH_ONE));
 
-		filterRecord.setpHash(7L);
+		filterRecord.setpHash(HASH_TWO);
 
-		assertThat(filterRecord.getpHash(), is(7L));
+		assertThat(filterRecord.getpHash(), is(HASH_TWO));
 	}
 
 	@Test
 	public void testGetReason() throws Exception {
-		assertThat(filterRecord.getReason(), is("dontPanic"));
+		assertThat(filterRecord.getTag(), is(TEST_TAG_ONE));
 	}
 
 	@Test
 	public void testSetReason() throws Exception {
-		assertThat(GUARD_MSG, filterRecord.getReason(), is("dontPanic"));
+		assertThat(GUARD_MSG, filterRecord.getTag(), is(TEST_TAG_ONE));
 
-		filterRecord.setReason("towel");
+		filterRecord.setTag(TEST_TAG_TWO);
 
-		assertThat(filterRecord.getReason(), is("towel"));
+		assertThat(filterRecord.getTag(), is(TEST_TAG_TWO));
 	}
 
 	@Test
 	public void testEqualsIsEqual() throws Exception {
-		FilterRecord other = new FilterRecord(42, "dontPanic");
+		FilterRecord other = new FilterRecord(HASH_ONE, TEST_TAG_ONE, null);
 		assertThat(filterRecord.equals(other), is(true));
 	}
 
