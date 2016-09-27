@@ -35,17 +35,43 @@ import com.github.dozedoff.commonj.file.DirectoryVisitor;
 import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.db.repository.FilterRepository;
+import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 
 public class DuplicateOperations {
 	private static final Logger logger = LoggerFactory.getLogger(DuplicateOperations.class);
 	private final Persistence persistence;
+	private final FilterRepository filterRepository;
 
 	public enum Tags {
 		DNW, BLOCK
 	}
 
+	/**
+	 * Create with the legacy god class. Odd are things will break spectacularly.
+	 * 
+	 * @param persistence
+	 *            legacy DAO god class
+	 * @deprecated Use {@link DuplicateOperations#DuplicateOperations(Persistence, FilterRepository)}, or things will
+	 *             break.
+	 */
+	@Deprecated
 	public DuplicateOperations(Persistence persistence) {
 		this.persistence = persistence;
+		this.filterRepository = null;
+	}
+
+	/**
+	 * Create with the given classes to access the data.
+	 * 
+	 * @param persistence
+	 *            legacy DAO god class
+	 * @param filterRepository
+	 *            Data access for {@link FilterRecord}
+	 */
+	public DuplicateOperations(Persistence persistence, FilterRepository filterRepository) {
+		this.persistence = persistence;
+		this.filterRepository = filterRepository;
 	}
 
 	public void moveToDnw(Path path) {
@@ -97,14 +123,20 @@ public class DuplicateOperations {
 	public void markAll(Collection<ImageRecord> records, String tag) {
 		for (ImageRecord record : records) {
 			try {
-				persistence.addFilter(new FilterRecord(record.getpHash(), tag));
+				filterRepository.storeFilter(new FilterRecord(record.getpHash(), tag));
 				logger.info("Adding pHash {} to filter, tag {}, source file {}", record.getpHash(), tag, record.getPath());
-			} catch (SQLException e) {
+			} catch (RepositoryException e) {
 				logger.warn("Failed to add tag for {}: {}", record.getPath(), e.toString());
 			}
 		}
 	}
 
+	/**
+	 * Add {@link FilterRecord} for the images and delete the files.
+	 * 
+	 * @param records
+	 *            to filter and delete
+	 */
 	public void markDnwAndDelete(Collection<ImageRecord> records) {
 		for (ImageRecord ir : records) {
 			long pHash = ir.getpHash();
@@ -112,18 +144,26 @@ public class DuplicateOperations {
 
 			FilterRecord fr = new FilterRecord(pHash, Tags.DNW.toString());
 			try {
-				persistence.addFilter(fr);
+				filterRepository.storeFilter(fr);
 				deleteFile(path);
-			} catch (SQLException e) {
+			} catch (RepositoryException e) {
 				logger.warn("Failed to add filter entry for {} - {}", path, e.getMessage());
 			}
 		}
 	}
 
+	/**
+	 * Add a {@link FilterRecord} for the given path.
+	 * 
+	 * @param path
+	 *            to tag
+	 * @param reason
+	 *            reason/tag to use
+	 */
 	public void markAs(Path path, String reason) {
-		// TODO do this with transaction
 		try {
 			ImageRecord ir = persistence.getRecord(path);
+
 			if (ir == null) {
 				logger.warn("No record found for {}", path);
 				return;
@@ -131,16 +171,9 @@ public class DuplicateOperations {
 
 			long pHash = ir.getpHash();
 			logger.info("Adding pHash {} to filter, reason {}", pHash, reason);
-			FilterRecord fr = persistence.getFilter(pHash);
 
-			if (fr != null) {
-				fr.setReason(reason);
-			} else {
-				fr = new FilterRecord(pHash, reason);
-			}
-
-			persistence.addFilter(fr);
-		} catch (SQLException e) {
+			filterRepository.storeFilter(new FilterRecord(pHash, reason));
+		} catch (RepositoryException | SQLException e) {
 			logger.warn("Add filter operation failed for {} - {}", path, e.getMessage());
 		}
 	}

@@ -53,6 +53,7 @@ public class Persistence {
 	Dao<FilterRecord, Integer> filterRecordDao;
 	Dao<BadFileRecord, String> badFileRecordDao;
 	Dao<IgnoreRecord, Long> ignoreRecordDao;
+	Dao<Thumbnail, Integer> thumbnailDao;
 
 	private FilterRepository filterRepository;
 
@@ -77,7 +78,7 @@ public class Persistence {
 			setupDatabase(cs);
 			setupDAO(cs);
 			createPreparedStatements();
-			filterRepository = new OrmliteFilterRepository(filterRecordDao, DaoManager.createDao(cs, Thumbnail.class));
+			filterRepository = new OrmliteFilterRepository(filterRecordDao, thumbnailDao);
 			logger.info("Loaded database");
 		} catch (SQLException e) {
 			logger.error("Failed to setup database {}", dbPath, e);
@@ -116,6 +117,7 @@ public class Persistence {
 		filterRecordDao = DaoManager.createDao(cs, FilterRecord.class);
 		badFileRecordDao = DaoManager.createDao(cs, BadFileRecord.class);
 		ignoreRecordDao = DaoManager.createDao(cs, IgnoreRecord.class);
+		thumbnailDao = DaoManager.createDao(cs, Thumbnail.class);
 
 		imageRecordDao.setObjectCache(new LruObjectCache(5000));
 		filterRecordDao.setObjectCache(new LruObjectCache(1000));
@@ -206,24 +208,6 @@ public class Persistence {
 
 	public List<ImageRecord> getAllRecords() throws SQLException {
 		return imageRecordDao.queryForAll();
-	}
-
-	/**
-	 * Updates an existing {@link FilterRecord} or creates a new one if does not exist.
-	 * 
-	 * @param filter
-	 *            to update or create
-	 * @throws SQLException
-	 *             if there is an issue accessing the database
-	 * @deprecated Use {@link FilterRepository} instead.
-	 */
-	@Deprecated
-	public void addFilter(FilterRecord filter) throws SQLException {
-		try {
-			filterRepository.storeFilter(filter);
-		} catch (RepositoryException e) {
-			reThrowSQLException(e);
-		}
 	}
 
 	private void reThrowSQLException(RepositoryException e) throws SQLException {

@@ -34,17 +34,23 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.github.dozedoff.similarImage.db.repository.FilterRepository;
+import com.github.dozedoff.similarImage.db.repository.RepositoryException;
+import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteFilterRepository;
 import com.j256.ormlite.dao.CloseableWrappedIterable;
 
 public class PersistenceTest {
 	private static final String GUARD_MSG = "Guard condition failed";
 
 	private Persistence persistence;
+	private FilterRepository filterRepository;
 	private ArrayList<ImageRecord> imageRecords;
 
 	@Before
 	public void setUp() throws Exception {
 		persistence = new Persistence(Files.createTempFile("PersistenceTest", ".db"));
+
+		filterRepository = new OrmliteFilterRepository(persistence.filterRecordDao, persistence.thumbnailDao);
 
 		createImageRecords();
 		persistence.batchAddRecord(imageRecords);
@@ -64,12 +70,12 @@ public class PersistenceTest {
 		imageRecords.add(new ImageRecord("croak", 3));
 	}
 
-	private void addFilterRecords() throws SQLException {
-		persistence.addFilter(new FilterRecord(3, "frogs"));
-		persistence.addFilter(new FilterRecord(2, "animals"));
+	private void addFilterRecords() throws RepositoryException {
+		filterRepository.storeFilter(new FilterRecord(3, "frogs"));
+		filterRepository.storeFilter(new FilterRecord(2, "animals"));
 
-		persistence.addFilter(new FilterRecord(0, "other"));
-		persistence.addFilter(new FilterRecord(1, "other"));
+		filterRepository.storeFilter(new FilterRecord(0, "other"));
+		filterRepository.storeFilter(new FilterRecord(1, "other"));
 	}
 
 	private void addBadFilesRecords() throws SQLException {
@@ -190,15 +196,6 @@ public class PersistenceTest {
 		List<ImageRecord> records = persistence.getAllRecords();
 
 		assertThat(records, hasSize(6));
-	}
-
-	@Test
-	public void testAddFilter() throws Exception {
-		assertThat(GUARD_MSG, persistence.filterExists(55), is(false));
-
-		persistence.addFilter(new FilterRecord(55, "another", null));
-
-		assertThat(persistence.filterExists(55), is(true));
 	}
 
 	@Test

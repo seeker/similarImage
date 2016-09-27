@@ -46,22 +46,39 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.db.repository.FilterRepository;
+import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DuplicateOperationsTest {
 	private static final String GUARD_MSG = "Guard condition failed";
 
+	private static final long TEST_HASH = 42L;
+	private static final int RECORD_NUMBER = 15;
+
+	private static final String TAG_FOO = "foo";
+	private static final String TAG_BAR = "bar";
+	private static final String TAG_DNW = "DNW";
+
 	@Mock
 	private Persistence persistence;
+
+	@Mock
+	private FilterRepository filterRepository;
+
 	private DuplicateOperations dupOp;
 
 	private Path tempDirectory = null;
 
+	private FilterRecord fooFilter;
+
 	@Before
 	public void setUp() throws Exception {
-		dupOp = new DuplicateOperations(persistence);
+		dupOp = new DuplicateOperations(persistence, filterRepository);
 
 		tempDirectory = Files.createTempDirectory("DuplicateOperationsTest");
+		
+		fooFilter = new FilterRecord(TEST_HASH, TAG_FOO);
 	}
 
 	@Ignore("Not implemented yet")
@@ -74,8 +91,8 @@ public class DuplicateOperationsTest {
 
 		assertThat(Files.exists(file), is(true));
 
-		verify(persistence).deleteRecord(new ImageRecord(file.toString(), 42));
-		verify(persistence).addFilter(new FilterRecord(anyLong(), "DNW"));
+		verify(persistence).deleteRecord(new ImageRecord(file.toString(), TEST_HASH));
+		verify(filterRepository).storeFilter(new FilterRecord(anyLong(), TAG_DNW));
 	}
 
 	@Test
@@ -146,7 +163,7 @@ public class DuplicateOperationsTest {
 
 	@Test
 	public void testMarkDnwAndDelete() throws Exception {
-		List<Path> files = createTempTestFiles(15);
+		List<Path> files = createTempTestFiles(RECORD_NUMBER);
 		LinkedList<ImageRecord> records = new LinkedList<>();
 
 		for (Path p : files) {
@@ -157,16 +174,17 @@ public class DuplicateOperationsTest {
 
 		assertFilesDoNotExist(files);
 
-		verify(persistence, times(15)).addFilter(new FilterRecord(anyLong(), "DNW"));
-		verify(persistence, times(15)).deleteRecord(any(ImageRecord.class));
+		verify(filterRepository, times(RECORD_NUMBER)).storeFilter(new FilterRecord(anyLong(), TAG_DNW));
+		verify(persistence, times(RECORD_NUMBER)).deleteRecord(any(ImageRecord.class));
 	}
 
 	@Test
 	public void testMarkDnwAndDeleteDBerror() throws Exception {
-		List<Path> files = createTempTestFiles(15);
+		List<Path> files = createTempTestFiles(RECORD_NUMBER);
 		LinkedList<ImageRecord> records = new LinkedList<>();
 
-		Mockito.doThrow(new SQLException("This is a test")).when(persistence).addFilter(any(FilterRecord.class));
+		Mockito.doThrow(new RepositoryException("This is a test")).when(filterRepository)
+				.storeFilter(any(FilterRecord.class));
 
 		for (Path p : files) {
 			records.add(new ImageRecord(p.toString(), 0));
@@ -176,7 +194,7 @@ public class DuplicateOperationsTest {
 
 		guardFilesExist(files);
 
-		verify(persistence, times(15)).addFilter(new FilterRecord(anyLong(), "DNW"));
+		verify(filterRepository, times(RECORD_NUMBER)).storeFilter(new FilterRecord(anyLong(), TAG_DNW));
 		verify(persistence, never()).deleteRecord(any(ImageRecord.class));
 	}
 
@@ -188,7 +206,7 @@ public class DuplicateOperationsTest {
 		dupOp.markAs(file, "foo");
 
 		verify(persistence).getRecord(any(Path.class));
-		verify(persistence, never()).addFilter(any(FilterRecord.class));
+		verify(filterRepository, never()).storeFilter(any(FilterRecord.class));
 	}
 
 	@Test
@@ -196,12 +214,11 @@ public class DuplicateOperationsTest {
 		List<Path> files = createTempTestFiles(1);
 		Path file = files.get(0);
 
-		when(persistence.getRecord(file)).thenReturn(new ImageRecord(file.toString(), 42));
+		when(persistence.getRecord(file)).thenReturn(new ImageRecord(file.toString(), TEST_HASH));
 
 		dupOp.markAs(file, "foo");
 
-		verify(persistence).getFilter(42);
-		verify(persistence).addFilter(new FilterRecord(42, "foo"));
+		verify(filterRepository).storeFilter(fooFilter);
 	}
 
 	@Test
@@ -214,7 +231,7 @@ public class DuplicateOperationsTest {
 		dupOp.markAs(file, "foo");
 
 		verify(persistence, never()).getFilter(anyLong());
-		verify(persistence, never()).addFilter(any(FilterRecord.class));
+		verify(filterRepository, never()).storeFilter(any(FilterRecord.class));
 	}
 
 	@Test
@@ -227,7 +244,7 @@ public class DuplicateOperationsTest {
 
 		dupOp.markAs(file, "foo");
 
-		verify(persistence).addFilter(new FilterRecord(42, "foo"));
+		verify(filterRepository).storeFilter(new FilterRecord(42, "foo"));
 	}
 
 	@Test
@@ -237,7 +254,7 @@ public class DuplicateOperationsTest {
 		dupOp.markDirectoryAs(tempDirectory, "foo");
 
 		verify(persistence, times(3)).getRecord(any(Path.class));
-		verify(persistence, never()).addFilter(any(FilterRecord.class));
+		verify(filterRepository, never()).storeFilter(any(FilterRecord.class));
 	}
 
 	@Test
@@ -248,7 +265,7 @@ public class DuplicateOperationsTest {
 		dupOp.markDirectoryAs(file, "foo");
 
 		verify(persistence, never()).getRecord(any(Path.class));
-		verify(persistence, never()).addFilter(any(FilterRecord.class));
+		verify(filterRepository, never()).storeFilter(any(FilterRecord.class));
 	}
 
 	@Test
@@ -258,7 +275,7 @@ public class DuplicateOperationsTest {
 		dupOp.markDirectoryAs(null, "foo");
 
 		verify(persistence, never()).getRecord(any(Path.class));
-		verify(persistence, never()).addFilter(any(FilterRecord.class));
+		verify(filterRepository, never()).storeFilter(any(FilterRecord.class));
 	}
 
 	@Test
@@ -268,21 +285,21 @@ public class DuplicateOperationsTest {
 		dupOp.markDirectoryAs(tempDirectory.resolve("foobar"), "foo");
 
 		verify(persistence, never()).getRecord(any(Path.class));
-		verify(persistence, never()).addFilter(any(FilterRecord.class));
+		verify(filterRepository, never()).storeFilter(any(FilterRecord.class));
 	}
 
 	@Test
 	public void testMarkAll() throws Exception {
 		LinkedList<ImageRecord> records = new LinkedList<ImageRecord>();
-		records.add(new ImageRecord("foo", 0));
-		records.add(new ImageRecord("bar", 1));
+		records.add(new ImageRecord(TAG_FOO, 0));
+		records.add(new ImageRecord(TAG_BAR, 1));
 
 		String testTag = "test";
 
 		dupOp.markAll(records, testTag);
 
-		verify(persistence).addFilter(new FilterRecord(0, testTag));
-		verify(persistence).addFilter(new FilterRecord(1, testTag));
+		verify(filterRepository).storeFilter(new FilterRecord(0, testTag));
+		verify(filterRepository).storeFilter(new FilterRecord(1, testTag));
 	}
 
 	private LinkedList<Path> createTempTestFiles(int amount) throws IOException {
