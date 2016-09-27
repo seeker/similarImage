@@ -17,6 +17,11 @@
  */
 package com.github.dozedoff.similarImage.db;
 
+import java.util.List;
+
+import com.github.dozedoff.similarImage.db.repository.FilterRepository;
+import com.github.dozedoff.similarImage.db.repository.RepositoryException;
+import com.github.dozedoff.similarImage.util.StringUtil;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
@@ -175,5 +180,24 @@ public final class FilterRecord {
 			return false;
 		}
 		return true;
+	}
+
+	/**
+	 * Checks for special tags and loads the correct tags. If the tag is * all tags will be loaded.
+	 * 
+	 * @param repository
+	 *            to use for query
+	 * @param tag
+	 *            to load
+	 * @return list of matching tags
+	 * @throws RepositoryException
+	 *             on errors during data access
+	 */
+	public static List<FilterRecord> getTags(FilterRepository repository, String tag) throws RepositoryException {
+		if (StringUtil.MATCH_ALL_TAGS.equals(tag)) {
+			return repository.getAllFilters();
+		} else {
+			return repository.getFiltersByTag(tag);
+		}
 	}
 }

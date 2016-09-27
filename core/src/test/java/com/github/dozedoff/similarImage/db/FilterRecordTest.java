@@ -19,13 +19,21 @@ package com.github.dozedoff.similarImage.db;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.verify;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
+
+import com.github.dozedoff.similarImage.db.repository.FilterRepository;
+import com.github.dozedoff.similarImage.util.StringUtil;
 
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
 
+@RunWith(MockitoJUnitRunner.class)
 public class FilterRecordTest {
 	private static final String GUARD_MSG = "Guard condition failed";
 
@@ -35,6 +43,9 @@ public class FilterRecordTest {
 	private static final long HASH_TWO = 7L;
 
 	private FilterRecord filterRecord;
+
+	@Mock
+	private FilterRepository filterRepository;
 
 	@Before
 	public void setUp() throws Exception {
@@ -78,5 +89,19 @@ public class FilterRecordTest {
 	@Test
 	public void testEquals() throws Exception {
 		EqualsVerifier.forClass(FilterRecord.class).suppress(Warning.NONFINAL_FIELDS).verify();
+	}
+
+	@Test
+	public void testGetTags() throws Exception {
+		FilterRecord.getTags(filterRepository, TEST_TAG_ONE);
+
+		verify(filterRepository).getFiltersByTag(TEST_TAG_ONE);
+	}
+
+	@Test
+	public void testGetTagsAllTags() throws Exception {
+		FilterRecord.getTags(filterRepository, StringUtil.MATCH_ALL_TAGS);
+
+		verify(filterRepository).getAllFilters();
 	}
 }
