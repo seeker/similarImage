@@ -218,54 +218,6 @@ public class PersistenceTest {
 	}
 
 	@Test
-	public void testGetFilterExists() throws Exception {
-		assertThat(persistence.getFilter(3), is(new FilterRecord(3, "frogs", null)));
-	}
-
-	@Test
-	public void testGetFilterNonExistant() throws Exception {
-		assertThat(persistence.getFilter(42), nullValue());
-	}
-
-	@Test
-	public void testGetAllFiltersVerifyEntries() throws Exception {
-		List<FilterRecord> filters = persistence.getAllFilters();
-
-		assertThat(
-				filters,
-				hasItems(new FilterRecord(3, "frogs"), new FilterRecord(2, "animals"), new FilterRecord(0, "other"), new FilterRecord(1,
-						"other")));
-	}
-
-	@Test
-	public void testGetAllFiltersVerifySize() throws Exception {
-		List<FilterRecord> filters = persistence.getAllFilters();
-
-		assertThat(filters, hasSize(4));
-	}
-
-	@Test
-	public void testGetAllFiltersStringVerifyEntries() throws Exception {
-		List<FilterRecord> filters = persistence.getAllFilters("other");
-
-		assertThat(filters, hasItems(new FilterRecord(0, "other"), new FilterRecord(1, "other")));
-	}
-
-	@Test
-	public void testGetAllFiltersStringVerifySize() throws Exception {
-		List<FilterRecord> filters = persistence.getAllFilters("other");
-
-		assertThat(filters, hasSize(2));
-	}
-
-	@Test
-	public void testGetAllFiltersStringVerifyAllGroup() throws Exception {
-		List<FilterRecord> filters = persistence.getAllFilters("*");
-
-		assertThat(filters, hasSize(4));
-	}
-
-	@Test
 	public void testGetFilterTagsVerifyEntries() throws Exception {
 		List<String> reasons = persistence.getFilterTags();
 

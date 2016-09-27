@@ -230,7 +230,6 @@ public class DuplicateOperationsTest {
 
 		dupOp.markAs(file, "foo");
 
-		verify(persistence, never()).getFilter(anyLong());
 		verify(filterRepository, never()).storeFilter(any(FilterRecord.class));
 	}
 
@@ -240,7 +239,6 @@ public class DuplicateOperationsTest {
 		Path file = files.get(0);
 
 		when(persistence.getRecord(file)).thenReturn(new ImageRecord(file.toString(), 42));
-		when(persistence.getFilter(42)).thenReturn(new FilterRecord(42, "bar"));
 
 		dupOp.markAs(file, "foo");
 

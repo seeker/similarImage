@@ -38,6 +38,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.db.repository.FilterRepository;
+import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiGroupEvent;
 import com.github.dozedoff.similarImage.util.StringUtil;
@@ -61,6 +63,9 @@ public class FilterSorterTest {
 
 	@Mock
 	private Persistence persistenceMock;
+	
+	@Mock
+	private FilterRepository filterRepository;
 
 	private List<ImageRecord> records;
 	private Multimap<Long, ImageRecord> result;
@@ -79,11 +84,12 @@ public class FilterSorterTest {
 
 		when(persistenceMock.getAllRecords()).thenReturn(records);
 		when(persistenceMock.filterByPath(Paths.get(PATH_ZERO))).thenReturn(Arrays.asList(new ImageRecord(PATH_ZERO, 0)));
-		when(persistenceMock.getAllFilters(TAG_LANDSCAPE)).thenReturn(Arrays.asList(new FilterRecord(0, TAG_LANDSCAPE)));
-		when(persistenceMock.getAllFilters(StringUtil.MATCH_ALL_TAGS))
-				.thenReturn(Arrays.asList(new FilterRecord(0, TAG_LANDSCAPE), new FilterRecord(1, TAG_SUNSET)));
+		when(filterRepository.getFiltersByTag(TAG_LANDSCAPE))
+				.thenReturn(Arrays.asList(new FilterRecord(0, TAG_LANDSCAPE)));
 
-		when(persistenceMock.getAllFilters(TAG_EXCEPTION)).thenThrow(new SQLException(EXCEPTION_MESSAGE));
+		when(filterRepository.getFiltersByTag(TAG_EXCEPTION)).thenThrow(new RepositoryException(EXCEPTION_MESSAGE));
+		when(filterRepository.getAllFilters())
+				.thenReturn(Arrays.asList(new FilterRecord(0, TAG_LANDSCAPE), new FilterRecord(1, TAG_SUNSET)));
 	}
 
 	/**
@@ -112,7 +118,7 @@ public class FilterSorterTest {
 
 	@Test
 	public void testFilterForSingleTag() throws Exception {
-		cut = new FilterSorter(SEARCH_DISTANCE, TAG_LANDSCAPE, persistenceMock);
+		cut = new FilterSorter(SEARCH_DISTANCE, TAG_LANDSCAPE, persistenceMock, filterRepository);
 		runCutAndWaitForFinish();
 
 		assertThat(result.get(0L), containsInAnyOrder(records.get(0)));
@@ -120,7 +126,7 @@ public class FilterSorterTest {
 
 	@Test
 	public void testFilterForMatchAllTag() throws Exception {
-		cut = new FilterSorter(SEARCH_DISTANCE, StringUtil.MATCH_ALL_TAGS, persistenceMock);
+		cut = new FilterSorter(SEARCH_DISTANCE, StringUtil.MATCH_ALL_TAGS, persistenceMock, filterRepository);
 		runCutAndWaitForFinish();
 
 		assertThat(result.get(0L), containsInAnyOrder(records.get(0)));
@@ -129,7 +135,7 @@ public class FilterSorterTest {
 
 	@Test
 	public void testFilterLoadException() throws Exception {
-		cut = new FilterSorter(SEARCH_DISTANCE, TAG_EXCEPTION, persistenceMock);
+		cut = new FilterSorter(SEARCH_DISTANCE, TAG_EXCEPTION, persistenceMock, filterRepository);
 		runCutAndWaitForFinish();
 
 		assertThat(result, is(emptyMultiMap));
@@ -139,7 +145,7 @@ public class FilterSorterTest {
 	public void testRecordLoadException() throws Exception {
 		when(persistenceMock.getAllRecords()).thenThrow(new SQLException(EXCEPTION_MESSAGE));
 
-		cut = new FilterSorter(SEARCH_DISTANCE, TAG_SUNSET, persistenceMock);
+		cut = new FilterSorter(SEARCH_DISTANCE, TAG_SUNSET, persistenceMock, filterRepository);
 		runCutAndWaitForFinish();
 
 		assertThat(result, is(emptyMultiMap));
@@ -147,7 +153,7 @@ public class FilterSorterTest {
 
 	@Test
 	public void testFilterByPathNoMatch() throws Exception {
-		cut = new FilterSorter(SEARCH_DISTANCE, TAG_LANDSCAPE, persistenceMock, Paths.get("bar"));
+		cut = new FilterSorter(SEARCH_DISTANCE, TAG_LANDSCAPE, persistenceMock, filterRepository, Paths.get("bar"));
 		runCutAndWaitForFinish();
 
 		assertThat(result, is(emptyMultiMap));
@@ -155,7 +161,7 @@ public class FilterSorterTest {
 
 	@Test
 	public void testFilterByPath() throws Exception {
-		cut = new FilterSorter(SEARCH_DISTANCE, TAG_LANDSCAPE, persistenceMock, Paths.get(PATH_ZERO));
+		cut = new FilterSorter(SEARCH_DISTANCE, TAG_LANDSCAPE, persistenceMock, filterRepository, Paths.get(PATH_ZERO));
 		runCutAndWaitForFinish();
 
 		assertThat(result.get(0L), containsInAnyOrder(records.get(0)));

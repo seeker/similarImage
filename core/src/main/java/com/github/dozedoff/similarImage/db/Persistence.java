@@ -20,7 +20,6 @@ package com.github.dozedoff.similarImage.db;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -31,7 +30,6 @@ import org.slf4j.LoggerFactory;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteFilterRepository;
-import com.github.dozedoff.similarImage.util.StringUtil;
 import com.j256.ormlite.dao.CloseableWrappedIterable;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
@@ -239,78 +237,6 @@ public class Persistence {
 			reThrowSQLException(e);
 			return true;
 		}
-	}
-
-	/**
-	 * Get the filter for the given hash.
-	 * 
-	 * @param pHash
-	 *            to query
-	 * @return {@link FilterRecord} if one is found else null
-	 * @throws SQLException
-	 *             in case of a database error
-	 * @deprecated This will no longer work if a hash can have multiple tags
-	 */
-	@Deprecated
-	public FilterRecord getFilter(long pHash) throws SQLException {
-		List<FilterRecord> matchingFilters;
-		FilterRecord result = null;
-
-		try {
-			matchingFilters = filterRepository.getFiltersByHash(pHash);
-			if (!matchingFilters.isEmpty()) {
-				return matchingFilters.get(0);
-			}
-		} catch (RepositoryException e) {
-			reThrowSQLException(e);
-		}
-
-		return result;
-	}
-
-	/**
-	 * Get a list of all {@link FilterRecord}
-	 * 
-	 * @return a list of all filters
-	 * @throws SQLException
-	 *             if an error occurred accessing the database
-	 * @deprecated Use {@link FilterRepository} instead.
-	 */
-	@Deprecated
-	public List<FilterRecord> getAllFilters() throws SQLException {
-		try {
-			return filterRepository.getAllFilters();
-		} catch (RepositoryException e) {
-			reThrowSQLException(e);
-			return Collections.emptyList();
-		}
-	}
-
-	/**
-	 * Get all {@link FilterRecord} for the given tag. If * is used as the reason, then <b>ALL</b> tags are returned.
-	 * 
-	 * @param reason
-	 *            the tag to search for
-	 * @return a list of all filters matching the tag
-	 * @throws SQLException
-	 *             if a database error occurred
-	 * @deprecated Use {@link FilterRepository} instead.
-	 */
-	@Deprecated
-	public List<FilterRecord> getAllFilters(String reason) throws SQLException {
-		List<FilterRecord> result = Collections.emptyList();
-
-		try {
-			if (StringUtil.MATCH_ALL_TAGS.equals(reason)) {
-				result = filterRepository.getAllFilters();
-			} else {
-				result = filterRepository.getFiltersByTag(reason);
-			}
-		} catch (RepositoryException e) {
-			reThrowSQLException(e);
-		}
-
-		return result;
 	}
 
 	/**

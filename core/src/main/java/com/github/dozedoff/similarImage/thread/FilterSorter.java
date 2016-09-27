@@ -28,6 +28,8 @@ import org.slf4j.LoggerFactory;
 import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.db.repository.FilterRepository;
+import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.duplicate.RecordSearch;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiGroupEvent;
@@ -51,6 +53,7 @@ public class FilterSorter extends Thread {
 	private String reason;
 	private List<ImageRecord> dBrecords;
 	private Persistence persistence;
+	private FilterRepository filterRepository;
 	private Path scope;
 
 	/**
@@ -62,7 +65,10 @@ public class FilterSorter extends Thread {
 	 *            to search for
 	 * @param persistence
 	 *            instance for database access
+	 * 
+	 * @deprecated Use {@link FilterSorter#FilterSorter(int, String, Persistence, FilterRepository)} instead.
 	 */
+	@Deprecated
 	public FilterSorter(int hammingDistance, String tag, Persistence persistence) {
 		this.hammingDistance = hammingDistance;
 		this.reason = tag;
@@ -72,8 +78,29 @@ public class FilterSorter extends Thread {
 	}
 
 	/**
-	 * Create a class that will search for matches of the given tag within the hamming distance, only records starting with the given path
-	 * are considered.
+	 * Create a class that will search for matches of the given tag within the hamming distance.
+	 * 
+	 * @param hammingDistance
+	 *            maximum distance to consider for a match
+	 * @param tag
+	 *            to search for
+	 * @param persistence
+	 *            legacy DAO god class
+	 * @param filterRepository
+	 *            instance for data access
+	 */
+	public FilterSorter(int hammingDistance, String tag, Persistence persistence, FilterRepository filterRepository) {
+		this.hammingDistance = hammingDistance;
+		this.reason = tag;
+		this.persistence = persistence;
+		this.filterRepository = filterRepository;
+
+		dBrecords = Collections.emptyList();
+	}
+
+	/**
+	 * Create a class that will search for matches of the given tag within the hamming distance, only records starting
+	 * with the given path are considered.
 	 * 
 	 * @param hammingDistance
 	 *            maximum distance to consider for a match
@@ -83,11 +110,39 @@ public class FilterSorter extends Thread {
 	 *            instance for database access
 	 * @param scope
 	 *            limit results to this path
+	 * @deprecated Use {@link FilterSorter#FilterSorter(int, String, Persistence, FilterRepository, Path)} instead.
 	 */
+	@Deprecated
 	public FilterSorter(int hammingDistance, String tag, Persistence persistence, Path scope) {
 		this.hammingDistance = hammingDistance;
 		this.reason = tag;
 		this.persistence = persistence;
+		this.scope = scope;
+
+		dBrecords = Collections.emptyList();
+	}
+
+	/**
+	 * Create a class that will search for matches of the given tag within the hamming distance, only records starting
+	 * with the given path are considered.
+	 * 
+	 * @param hammingDistance
+	 *            maximum distance to consider for a match
+	 * @param tag
+	 *            to search for
+	 * @param persistence
+	 *            legacy DAO god class
+	 * @param filterRepository
+	 *            instance for data access
+	 * @param scope
+	 *            limit results to this path
+	 */
+	public FilterSorter(int hammingDistance, String tag, Persistence persistence, FilterRepository filterRepository,
+			Path scope) {
+		this.hammingDistance = hammingDistance;
+		this.reason = tag;
+		this.persistence = persistence;
+		this.filterRepository = filterRepository;
 		this.scope = scope;
 
 		dBrecords = Collections.emptyList();
@@ -98,9 +153,9 @@ public class FilterSorter extends Thread {
 		List<FilterRecord> matchingFilters = Collections.emptyList();
 
 		try {
-			matchingFilters = persistence.getAllFilters(sanitizedTag);
+			matchingFilters = FilterRecord.getTags(filterRepository, sanitizedTag);
 			logger.info("Found {} filters for tag {}", matchingFilters.size(), sanitizedTag);
-		} catch (SQLException e) {
+		} catch (RepositoryException e) {
 			logger.error("Aborted tag search for {}, reason: {}", sanitizedTag, e.getMessage());
 		}
 
