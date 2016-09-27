@@ -24,11 +24,11 @@ import com.j256.ormlite.table.DatabaseTable;
 public final class FilterRecord {
 	@DatabaseField(generatedId = true)
 	private int id;
-	@DatabaseField(canBeNull = false, index = true)
+	@DatabaseField(canBeNull = false, index = true, uniqueCombo = true)
 	private long pHash;
-	@DatabaseField(canBeNull = false, index = true)
+	@DatabaseField(canBeNull = false, index = true, uniqueCombo = true)
 	private String tag;
-	@DatabaseField(foreign = true)
+	@DatabaseField(foreign = true, foreignAutoRefresh = true)
 	private Thumbnail thumbnail;
 
 	/**
@@ -41,19 +41,21 @@ public final class FilterRecord {
 	}
 
 	/**
+	 * Create a new {@link FilterRecord} without a {@link Thumbnail}.
 	 * 
-	 * @param pHash
-	 * @param reason
-	 * @deprecated Use constructor {@link FilterRecord#FilterRecord(long, String, Thumbnail)} instead.
+	 * @param hash
+	 *            the similarity hash for the image
+	 * @param tag
+	 *            for the image
 	 */
-	@Deprecated
-	public FilterRecord(long pHash, String reason) {
-		this.pHash = pHash;
-		this.tag = reason;
+	public FilterRecord(long hash, String tag) {
+		this.pHash = hash;
+		this.tag = tag;
+		this.thumbnail = null;
 	}
 
 	/**
-	 * Create a new record with the given values
+	 * Create a new {@link FilterRecord} with a {@link Thumbnail}.
 	 * 
 	 * @param pHash
 	 *            the similarity hash for the image
@@ -106,6 +108,19 @@ public final class FilterRecord {
 
 	public Thumbnail getThumbnail() {
 		return thumbnail;
+	}
+
+	public final void setThumbnail(Thumbnail thumbnail) {
+		this.thumbnail = thumbnail;
+	}
+
+	/**
+	 * Checks if a thumbnail is set for this {@link FilterRecord}.
+	 * 
+	 * @return true if a thumbnail is set
+	 */
+	public boolean hasThumbnail() {
+		return thumbnail != null;
 	}
 
 	/**
