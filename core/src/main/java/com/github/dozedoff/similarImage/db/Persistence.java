@@ -20,6 +20,7 @@ package com.github.dozedoff.similarImage.db;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -27,6 +28,9 @@ import java.util.concurrent.Callable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.dozedoff.similarImage.db.repository.FilterRepository;
+import com.github.dozedoff.similarImage.db.repository.RepositoryException;
+import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteFilterRepository;
 import com.github.dozedoff.similarImage.util.StringUtil;
 import com.j256.ormlite.dao.CloseableWrappedIterable;
 import com.j256.ormlite.dao.Dao;
@@ -46,9 +50,11 @@ public class Persistence {
 	private final static String dbPrefix = "jdbc:sqlite:";
 
 	Dao<ImageRecord, String> imageRecordDao;
-	Dao<FilterRecord, Long> filterRecordDao;
+	Dao<FilterRecord, Integer> filterRecordDao;
 	Dao<BadFileRecord, String> badFileRecordDao;
 	Dao<IgnoreRecord, Long> ignoreRecordDao;
+
+	private FilterRepository filterRepository;
 
 	private final ConnectionSource cs;
 
@@ -71,6 +77,7 @@ public class Persistence {
 			setupDatabase(cs);
 			setupDAO(cs);
 			createPreparedStatements();
+			filterRepository = new OrmliteFilterRepository(filterRecordDao, DaoManager.createDao(cs, Thumbnail.class));
 			logger.info("Loaded database");
 		} catch (SQLException e) {
 			logger.error("Failed to setup database {}", dbPath, e);
@@ -208,9 +215,19 @@ public class Persistence {
 	 *            to update or create
 	 * @throws SQLException
 	 *             if there is an issue accessing the database
+	 * @deprecated Use {@link FilterRepository} instead.
 	 */
+	@Deprecated
 	public void addFilter(FilterRecord filter) throws SQLException {
-		filterRecordDao.createOrUpdate(filter);
+		try {
+			filterRepository.storeFilter(filter);
+		} catch (RepositoryException e) {
+			reThrowSQLException(e);
+		}
+	}
+
+	private void reThrowSQLException(RepositoryException e) throws SQLException {
+		throw new SQLException(e.getCause());
 	}
 
 	public void addBadFile(BadFileRecord badFile) throws SQLException {
@@ -229,9 +246,15 @@ public class Persistence {
 	 */
 	@Deprecated
 	public boolean filterExists(long pHash) throws SQLException {
-		List<FilterRecord> filter = filterRecordDao.queryForMatchingArgs(new FilterRecord(pHash, null, null));
 
-		return !filter.isEmpty();
+		List<FilterRecord> filter;
+		try {
+			filter = filterRepository.getFiltersByHash(pHash);
+			return !filter.isEmpty();
+		} catch (RepositoryException e) {
+			reThrowSQLException(e);
+			return true;
+		}
 	}
 
 	/**
@@ -246,17 +269,37 @@ public class Persistence {
 	 */
 	@Deprecated
 	public FilterRecord getFilter(long pHash) throws SQLException {
-		List<FilterRecord> matchingFilters = filterRecordDao.queryForMatchingArgs(new FilterRecord(pHash, null, null));
+		List<FilterRecord> matchingFilters;
+		FilterRecord result = null;
 
-		if (matchingFilters.isEmpty()) {
-			return null;
-		} else {
-			return matchingFilters.get(0);
+		try {
+			matchingFilters = filterRepository.getFiltersByHash(pHash);
+			if (!matchingFilters.isEmpty()) {
+				return matchingFilters.get(0);
+			}
+		} catch (RepositoryException e) {
+			reThrowSQLException(e);
 		}
+
+		return result;
 	}
 
+	/**
+	 * Get a list of all {@link FilterRecord}
+	 * 
+	 * @return a list of all filters
+	 * @throws SQLException
+	 *             if an error occurred accessing the database
+	 * @deprecated Use {@link FilterRepository} instead.
+	 */
+	@Deprecated
 	public List<FilterRecord> getAllFilters() throws SQLException {
-		return filterRecordDao.queryForAll();
+		try {
+			return filterRepository.getAllFilters();
+		} catch (RepositoryException e) {
+			reThrowSQLException(e);
+			return Collections.emptyList();
+		}
 	}
 
 	/**
@@ -267,14 +310,23 @@ public class Persistence {
 	 * @return a list of all filters matching the tag
 	 * @throws SQLException
 	 *             if a database error occurred
+	 * @deprecated Use {@link FilterRepository} instead.
 	 */
+	@Deprecated
 	public List<FilterRecord> getAllFilters(String reason) throws SQLException {
-		if (StringUtil.MATCH_ALL_TAGS.equals(reason)) {
-			return getAllFilters();
-		} else {
-			FilterRecord query = new FilterRecord(0, reason);
-			return filterRecordDao.queryForMatching(query);
+		List<FilterRecord> result = Collections.emptyList();
+
+		try {
+			if (StringUtil.MATCH_ALL_TAGS.equals(reason)) {
+				result = filterRepository.getAllFilters();
+			} else {
+				result = filterRepository.getFiltersByTag(reason);
+			}
+		} catch (RepositoryException e) {
+			reThrowSQLException(e);
 		}
+
+		return result;
 	}
 
 	/**
