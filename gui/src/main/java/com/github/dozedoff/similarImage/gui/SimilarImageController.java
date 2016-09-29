@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.filefilter.SimpleImageFilter;
 import com.github.dozedoff.commonj.hash.ImagePHash;
-import com.github.dozedoff.similarImage.db.CustomUserTag;
+import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
@@ -159,7 +159,7 @@ public class SimilarImageController {
 				OperationsMenu opMenu;
 				try {
 					opMenu = new OperationsMenu(info, persistence,
-							new UserTagSettingController(DaoManager.createDao(persistence.getCs(), CustomUserTag.class)));
+							new UserTagSettingController(DaoManager.createDao(persistence.getCs(), Tag.class)));
 					DuplicateEntryController entry = new DuplicateEntryController(info, imageDim);
 					new DuplicateEntryView(entry, opMenu);
 					images.add(entry);

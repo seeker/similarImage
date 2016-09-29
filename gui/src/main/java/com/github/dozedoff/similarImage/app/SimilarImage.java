@@ -24,7 +24,7 @@ import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.dozedoff.similarImage.db.CustomUserTag;
+import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.gui.DisplayGroupView;
@@ -73,7 +73,7 @@ public class SimilarImage {
 				statistics);
 		SimilarImageView gui = new SimilarImageView(controller, new DuplicateOperations(persistence),
 				PRODUCER_QUEUE_SIZE,
-				new UserTagSettingController(DaoManager.createDao(persistence.getCs(), CustomUserTag.class)));
+				new UserTagSettingController(DaoManager.createDao(persistence.getCs(), Tag.class)));
 
 		controller.setGui(gui);
 	}

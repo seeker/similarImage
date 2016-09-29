@@ -24,7 +24,7 @@ import java.util.Collections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.dozedoff.similarImage.db.CustomUserTag;
+import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiUserTagChangedEvent;
 import com.j256.ormlite.dao.Dao;
@@ -37,7 +37,7 @@ import com.j256.ormlite.dao.Dao;
  */
 public class UserTagSettingController {
 	private static final Logger LOGGER = LoggerFactory.getLogger(UserTagSettingController.class);
-	private final Dao<CustomUserTag, Long> dao;
+	private final Dao<Tag, Long> dao;
 
 	/**
 	 * Create a controller using the given DAO.
@@ -45,7 +45,7 @@ public class UserTagSettingController {
 	 * @param dao
 	 *            to use
 	 */
-	public UserTagSettingController(Dao<CustomUserTag, Long> dao) {
+	public UserTagSettingController(Dao<Tag, Long> dao) {
 		this.dao = dao;
 	}
 
@@ -54,7 +54,7 @@ public class UserTagSettingController {
 	 * 
 	 * @return a collection of tags
 	 */
-	public Collection<CustomUserTag> getAllUserTags() {
+	public Collection<Tag> getAllUserTags() {
 		try {
 			return dao.queryForAll();
 		} catch (SQLException e) {
@@ -73,7 +73,7 @@ public class UserTagSettingController {
 	 * @param tag
 	 *            to remove
 	 */
-	public void removeTag(CustomUserTag tag) {
+	public void removeTag(Tag tag) {
 		try {
 			dao.delete(tag);
 			triggerUserTagsChangedEvent();
@@ -89,8 +89,8 @@ public class UserTagSettingController {
 	 *            to add
 	 * @return created data object
 	 */
-	public CustomUserTag addTag(String tag) {
-		CustomUserTag dbTag = new CustomUserTag(tag);
+	public Tag addTag(String tag) {
+		Tag dbTag = new Tag(tag);
 
 		try {
 			dao.create(dbTag);

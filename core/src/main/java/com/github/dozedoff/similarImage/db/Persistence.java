@@ -105,7 +105,7 @@ public class Persistence {
 		TableUtils.createTableIfNotExists(cs, FilterRecord.class);
 		TableUtils.createTableIfNotExists(cs, BadFileRecord.class);
 		TableUtils.createTableIfNotExists(cs, IgnoreRecord.class);
-		TableUtils.createTableIfNotExists(cs, CustomUserTag.class);
+		TableUtils.createTableIfNotExists(cs, Tag.class);
 		TableUtils.createTableIfNotExists(cs, Thumbnail.class);
 	}
 

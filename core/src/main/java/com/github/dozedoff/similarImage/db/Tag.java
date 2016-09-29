@@ -20,12 +20,12 @@ package com.github.dozedoff.similarImage.db;
 import com.j256.ormlite.field.DatabaseField;
 
 /**
- * Tag defined by the user, used for context menu.
+ * Tag defined by the user, used to group {@link FilterRecord}.
  * 
  * @author Nicholas Wright
  *
  */
-public class CustomUserTag {
+public class Tag {
 	/**
 	 * This field is for DAO internal use only.
 	 */
@@ -38,7 +38,7 @@ public class CustomUserTag {
 	 * @deprecated For DAO use only.
 	 */
 	@Deprecated
-	public CustomUserTag() {
+	public Tag() {
 	}
 
 	/**
@@ -47,7 +47,7 @@ public class CustomUserTag {
 	 * @param tag
 	 *            name of the tag
 	 */
-	public CustomUserTag(String tag) {
+	public Tag(String tag) {
 		this.tag = tag;
 	}
 

@@ -25,7 +25,7 @@ import java.util.HashMap;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
-import com.github.dozedoff.similarImage.db.CustomUserTag;
+import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
@@ -93,7 +93,7 @@ public class OperationsMenu {
 	}
 
 	private void createUserTags() {
-		for (CustomUserTag cut : utsController.getAllUserTags()) {
+		for (Tag cut : utsController.getAllUserTags()) {
 			JMenuItem menuItem = new JMenuItem("Tag " + cut.getTag());
 			menuItem.addActionListener(new ActionListener() {
 				@Override

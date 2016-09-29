@@ -50,7 +50,7 @@ import javax.swing.event.ListSelectionListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.dozedoff.similarImage.db.CustomUserTag;
+import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
@@ -411,7 +411,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 		 *            {@link UserTagSettingController} to use
 		 */
 		private void addUserTags(UserTagSettingController tagController) {
-			for (CustomUserTag tag : tagController.getAllUserTags()) {
+			for (Tag tag : tagController.getAllUserTags()) {
 				JMenuItem menu = new JMenuItem("Tag " + tag.toString());
 				menu.addActionListener(new ActionListener() {
 					@Override
