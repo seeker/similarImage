@@ -34,6 +34,9 @@ public class Tag {
 	@DatabaseField(canBeNull = false)
 	private String tag;
 
+	@DatabaseField(canBeNull = false)
+	private boolean contextMenu;
+
 	/**
 	 * @deprecated For DAO use only.
 	 */
@@ -42,13 +45,28 @@ public class Tag {
 	}
 
 	/**
-	 * Create a new tag.
+	 * Create a new tag which will not be displayed in the context menu.
 	 * 
 	 * @param tag
 	 *            name of the tag
 	 */
 	public Tag(String tag) {
 		this.tag = tag;
+		this.contextMenu = false;
+	}
+
+	/**
+	 * Create a new tag which can be displayed in the context menu.
+	 * 
+	 * @param tag
+	 *            name of the tag
+	 * 
+	 * @param contextMenu
+	 *            true if the tag should be displayed in the context menu
+	 */
+	public Tag(String tag, boolean contextMenu) {
+		this.tag = tag;
+		this.contextMenu = contextMenu;
 	}
 
 	/**
@@ -68,6 +86,25 @@ public class Tag {
 	 */
 	public final void setTag(String tag) {
 		this.tag = tag;
+	}
+
+	/**
+	 * Get whether the tag shows up in the context menu.
+	 * 
+	 * @return true if the tag is shown in the context menu
+	 */
+	public final boolean isContextMenu() {
+		return contextMenu;
+	}
+
+	/**
+	 * Set whether the tag shows up in the context menu.
+	 * 
+	 * @param contextMenu
+	 *            true if the tag should be shown in the context menu
+	 */
+	public final void setContextMenu(boolean contextMenu) {
+		this.contextMenu = contextMenu;
 	}
 
 	/**
