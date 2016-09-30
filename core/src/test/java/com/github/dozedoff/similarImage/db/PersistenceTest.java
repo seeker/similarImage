@@ -71,11 +71,11 @@ public class PersistenceTest {
 	}
 
 	private void addFilterRecords() throws RepositoryException {
-		filterRepository.storeFilter(new FilterRecord(3, "frogs"));
-		filterRepository.storeFilter(new FilterRecord(2, "animals"));
+		filterRepository.store(new FilterRecord(3, "frogs"));
+		filterRepository.store(new FilterRecord(2, "animals"));
 
-		filterRepository.storeFilter(new FilterRecord(0, "other"));
-		filterRepository.storeFilter(new FilterRecord(1, "other"));
+		filterRepository.store(new FilterRecord(0, "other"));
+		filterRepository.store(new FilterRecord(1, "other"));
 	}
 
 	private void addBadFilesRecords() throws SQLException {

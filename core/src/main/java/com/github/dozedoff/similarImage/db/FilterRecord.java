@@ -195,9 +195,9 @@ public final class FilterRecord {
 	 */
 	public static List<FilterRecord> getTags(FilterRepository repository, String tag) throws RepositoryException {
 		if (StringUtil.MATCH_ALL_TAGS.equals(tag)) {
-			return repository.getAllFilters();
+			return repository.getAll();
 		} else {
-			return repository.getFiltersByTag(tag);
+			return repository.getByTag(tag);
 		}
 	}
 }

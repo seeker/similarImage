@@ -95,13 +95,13 @@ public class FilterRecordTest {
 	public void testGetTags() throws Exception {
 		FilterRecord.getTags(filterRepository, TEST_TAG_ONE);
 
-		verify(filterRepository).getFiltersByTag(TEST_TAG_ONE);
+		verify(filterRepository).getByTag(TEST_TAG_ONE);
 	}
 
 	@Test
 	public void testGetTagsAllTags() throws Exception {
 		FilterRecord.getTags(filterRepository, StringUtil.MATCH_ALL_TAGS);
 
-		verify(filterRepository).getAllFilters();
+		verify(filterRepository).getAll();
 	}
 }

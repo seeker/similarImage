@@ -119,105 +119,105 @@ public class OrmliteFilterRepositoryTest {
 	}
 
 	@Test
-	public void testGetFiltersByHash() throws Exception {
-		List<FilterRecord> filters = cut.getFiltersByHash(HASH_TWO);
-		
-		assertThat(filters, containsInAnyOrder(new FilterRecord(HASH_TWO, TAG_TWO, null)));
-	}
+		public void testGetByHash() throws Exception {
+			List<FilterRecord> filters = cut.getByHash(HASH_TWO);
+			
+			assertThat(filters, containsInAnyOrder(new FilterRecord(HASH_TWO, TAG_TWO, null)));
+		}
 
 	@Test(expected = RepositoryException.class)
-	public void testGetFiltersByHashException() throws Exception {
-		deleteFilterTable();
-
-		cut.getFiltersByHash(HASH_TWO);
-	}
+		public void testGetByHashException() throws Exception {
+			deleteFilterTable();
+	
+			cut.getByHash(HASH_TWO);
+		}
 
 	@Test
-	public void testGetFiltersByTag() throws Exception {
-		List<FilterRecord> filters = cut.getFiltersByTag(TAG_ONE);
-		
-		assertThat(filters, containsInAnyOrder(new FilterRecord(HASH_ONE, TAG_ONE, null)));
-	}
+		public void testGetByTag() throws Exception {
+			List<FilterRecord> filters = cut.getByTag(TAG_ONE);
+			
+			assertThat(filters, containsInAnyOrder(new FilterRecord(HASH_ONE, TAG_ONE, null)));
+		}
 
 	@Test(expected = RepositoryException.class)
-	public void testGetFiltersByTagException() throws Exception {
-		deleteFilterTable();
-
-		cut.getFiltersByTag(TAG_ONE);
-	}
+		public void testGetByTagException() throws Exception {
+			deleteFilterTable();
+	
+			cut.getByTag(TAG_ONE);
+		}
 
 	@Test
-	public void testGetAllFilters() throws Exception {
-		List<FilterRecord> filters = cut.getAllFilters();
-
-		assertThat(filters, containsInAnyOrder(allFilters.toArray(new FilterRecord[0])));
-	}
+		public void testGetAll() throws Exception {
+			List<FilterRecord> filters = cut.getAll();
+	
+			assertThat(filters, containsInAnyOrder(allFilters.toArray(new FilterRecord[0])));
+		}
 
 	@Test(expected = RepositoryException.class)
-	public void testGetAllFiltersException() throws Exception {
-		deleteFilterTable();
-
-		cut.getAllFilters();
-	}
+		public void testGetAllException() throws Exception {
+			deleteFilterTable();
+	
+			cut.getAll();
+		}
 
 	@Test
-	public void testStoreFilterWithExistingThumb() throws Exception {
-		cut.storeFilter(new FilterRecord(HASH_NEW_THUMBNAIL, TAG_ONE, newThumbnail));
-
-		List<FilterRecord> filters = cut.getFiltersByHash(HASH_NEW_THUMBNAIL);
-
-		assertThat(filters, containsInAnyOrder(new FilterRecord(HASH_NEW_THUMBNAIL, TAG_ONE, newThumbnail)));
-	}
+		public void testStoreWithExistingThumb() throws Exception {
+			cut.store(new FilterRecord(HASH_NEW_THUMBNAIL, TAG_ONE, newThumbnail));
+	
+			List<FilterRecord> filters = cut.getByHash(HASH_NEW_THUMBNAIL);
+	
+			assertThat(filters, containsInAnyOrder(new FilterRecord(HASH_NEW_THUMBNAIL, TAG_ONE, newThumbnail)));
+		}
 
 	@Test(expected = RepositoryException.class)
-	public void testStoreFilterThumbnailException() throws Exception {
-		TableUtils.dropTable(cs, Thumbnail.class, false);
-
-		cut.storeFilter(new FilterRecord(HASH_NEW_THUMBNAIL, TAG_ONE, newThumbnail));
-	}
+		public void testStoreThumbnailException() throws Exception {
+			TableUtils.dropTable(cs, Thumbnail.class, false);
+	
+			cut.store(new FilterRecord(HASH_NEW_THUMBNAIL, TAG_ONE, newThumbnail));
+		}
 
 	@Test(expected = RepositoryException.class)
-	public void testStoreFilterFilterException() throws Exception {
-		TableUtils.dropTable(cs, FilterRecord.class, false);
-
-		cut.storeFilter(new FilterRecord(HASH_NEW_THUMBNAIL, TAG_ONE, null));
-	}
-
-	@Test
-	public void testStoreFilterWithNewThumb() throws Exception {
-		cut.storeFilter(new FilterRecord(HASH_EXISTING_THUMBNAIL, TAG_ONE, exsitingThumbnail));
-
-		List<FilterRecord> filters = cut.getFiltersByHash(HASH_EXISTING_THUMBNAIL);
-
-		assertThat(filters, containsInAnyOrder(new FilterRecord(HASH_EXISTING_THUMBNAIL, TAG_ONE, exsitingThumbnail)));
-	}
+		public void testStoreFilterException() throws Exception {
+			TableUtils.dropTable(cs, FilterRecord.class, false);
+	
+			cut.store(new FilterRecord(HASH_NEW_THUMBNAIL, TAG_ONE, null));
+		}
 
 	@Test
-	public void testStoreFilterWithThumbMatchingHash() throws Exception {
-		Thumbnail matchingHashThumb = new Thumbnail(THUMB_HASH_EXISTING, new byte[] {});
-		cut.storeFilter(new FilterRecord(HASH_NEW_THUMBNAIL, TAG_ONE, matchingHashThumb));
-
-		List<FilterRecord> filters = cut.getFiltersByHash(HASH_NEW_THUMBNAIL);
-
-		assertThat(filters, containsInAnyOrder(new FilterRecord(HASH_NEW_THUMBNAIL, TAG_ONE, exsitingThumbnail)));
-	}
-
-	@Test
-	public void testStoreFilterWithNoThumb() throws Exception {
-		cut.storeFilter(new FilterRecord(HASH_NEW_THUMBNAIL, TAG_ONE, null));
-
-		List<FilterRecord> filters = cut.getFiltersByHash(HASH_NEW_THUMBNAIL);
-
-		assertThat(filters, containsInAnyOrder(new FilterRecord(HASH_NEW_THUMBNAIL, TAG_ONE, null)));
-	}
+		public void testStoreWithNewThumb() throws Exception {
+			cut.store(new FilterRecord(HASH_EXISTING_THUMBNAIL, TAG_ONE, exsitingThumbnail));
+	
+			List<FilterRecord> filters = cut.getByHash(HASH_EXISTING_THUMBNAIL);
+	
+			assertThat(filters, containsInAnyOrder(new FilterRecord(HASH_EXISTING_THUMBNAIL, TAG_ONE, exsitingThumbnail)));
+		}
 
 	@Test
-	public void testStoreFilterDuplicate() throws Exception {
-		cut.storeFilter(new FilterRecord(HASH_NEW_THUMBNAIL, TAG_ONE, null));
-		cut.storeFilter(new FilterRecord(HASH_NEW_THUMBNAIL, TAG_ONE, null));
+		public void testStoreWithThumbMatchingHash() throws Exception {
+			Thumbnail matchingHashThumb = new Thumbnail(THUMB_HASH_EXISTING, new byte[] {});
+			cut.store(new FilterRecord(HASH_NEW_THUMBNAIL, TAG_ONE, matchingHashThumb));
+	
+			List<FilterRecord> filters = cut.getByHash(HASH_NEW_THUMBNAIL);
+	
+			assertThat(filters, containsInAnyOrder(new FilterRecord(HASH_NEW_THUMBNAIL, TAG_ONE, exsitingThumbnail)));
+		}
 
-		List<FilterRecord> filters = cut.getFiltersByHash(HASH_NEW_THUMBNAIL);
+	@Test
+		public void testStoreWithNoThumb() throws Exception {
+			cut.store(new FilterRecord(HASH_NEW_THUMBNAIL, TAG_ONE, null));
+	
+			List<FilterRecord> filters = cut.getByHash(HASH_NEW_THUMBNAIL);
+	
+			assertThat(filters, containsInAnyOrder(new FilterRecord(HASH_NEW_THUMBNAIL, TAG_ONE, null)));
+		}
 
-		assertThat(filters, containsInAnyOrder(new FilterRecord(HASH_NEW_THUMBNAIL, TAG_ONE, null)));
-	}
+	@Test
+		public void testStoreDuplicate() throws Exception {
+			cut.store(new FilterRecord(HASH_NEW_THUMBNAIL, TAG_ONE, null));
+			cut.store(new FilterRecord(HASH_NEW_THUMBNAIL, TAG_ONE, null));
+	
+			List<FilterRecord> filters = cut.getByHash(HASH_NEW_THUMBNAIL);
+	
+			assertThat(filters, containsInAnyOrder(new FilterRecord(HASH_NEW_THUMBNAIL, TAG_ONE, null)));
+		}
 }

@@ -92,7 +92,7 @@ public class DuplicateOperationsTest {
 		assertThat(Files.exists(file), is(true));
 
 		verify(persistence).deleteRecord(new ImageRecord(file.toString(), TEST_HASH));
-		verify(filterRepository).storeFilter(new FilterRecord(anyLong(), TAG_DNW));
+		verify(filterRepository).store(new FilterRecord(anyLong(), TAG_DNW));
 	}
 
 	@Test
@@ -174,7 +174,7 @@ public class DuplicateOperationsTest {
 
 		assertFilesDoNotExist(files);
 
-		verify(filterRepository, times(RECORD_NUMBER)).storeFilter(new FilterRecord(anyLong(), TAG_DNW));
+		verify(filterRepository, times(RECORD_NUMBER)).store(new FilterRecord(anyLong(), TAG_DNW));
 		verify(persistence, times(RECORD_NUMBER)).deleteRecord(any(ImageRecord.class));
 	}
 
@@ -184,7 +184,7 @@ public class DuplicateOperationsTest {
 		LinkedList<ImageRecord> records = new LinkedList<>();
 
 		Mockito.doThrow(new RepositoryException("This is a test")).when(filterRepository)
-				.storeFilter(any(FilterRecord.class));
+				.store(any(FilterRecord.class));
 
 		for (Path p : files) {
 			records.add(new ImageRecord(p.toString(), 0));
@@ -194,7 +194,7 @@ public class DuplicateOperationsTest {
 
 		guardFilesExist(files);
 
-		verify(filterRepository, times(RECORD_NUMBER)).storeFilter(new FilterRecord(anyLong(), TAG_DNW));
+		verify(filterRepository, times(RECORD_NUMBER)).store(new FilterRecord(anyLong(), TAG_DNW));
 		verify(persistence, never()).deleteRecord(any(ImageRecord.class));
 	}
 
@@ -206,7 +206,7 @@ public class DuplicateOperationsTest {
 		dupOp.markAs(file, "foo");
 
 		verify(persistence).getRecord(any(Path.class));
-		verify(filterRepository, never()).storeFilter(any(FilterRecord.class));
+		verify(filterRepository, never()).store(any(FilterRecord.class));
 	}
 
 	@Test
@@ -218,7 +218,7 @@ public class DuplicateOperationsTest {
 
 		dupOp.markAs(file, "foo");
 
-		verify(filterRepository).storeFilter(fooFilter);
+		verify(filterRepository).store(fooFilter);
 	}
 
 	@Test
@@ -230,7 +230,7 @@ public class DuplicateOperationsTest {
 
 		dupOp.markAs(file, "foo");
 
-		verify(filterRepository, never()).storeFilter(any(FilterRecord.class));
+		verify(filterRepository, never()).store(any(FilterRecord.class));
 	}
 
 	@Test
@@ -242,7 +242,7 @@ public class DuplicateOperationsTest {
 
 		dupOp.markAs(file, "foo");
 
-		verify(filterRepository).storeFilter(new FilterRecord(42, "foo"));
+		verify(filterRepository).store(new FilterRecord(42, "foo"));
 	}
 
 	@Test
@@ -252,7 +252,7 @@ public class DuplicateOperationsTest {
 		dupOp.markDirectoryAs(tempDirectory, "foo");
 
 		verify(persistence, times(3)).getRecord(any(Path.class));
-		verify(filterRepository, never()).storeFilter(any(FilterRecord.class));
+		verify(filterRepository, never()).store(any(FilterRecord.class));
 	}
 
 	@Test
@@ -263,7 +263,7 @@ public class DuplicateOperationsTest {
 		dupOp.markDirectoryAs(file, "foo");
 
 		verify(persistence, never()).getRecord(any(Path.class));
-		verify(filterRepository, never()).storeFilter(any(FilterRecord.class));
+		verify(filterRepository, never()).store(any(FilterRecord.class));
 	}
 
 	@Test
@@ -273,7 +273,7 @@ public class DuplicateOperationsTest {
 		dupOp.markDirectoryAs(null, "foo");
 
 		verify(persistence, never()).getRecord(any(Path.class));
-		verify(filterRepository, never()).storeFilter(any(FilterRecord.class));
+		verify(filterRepository, never()).store(any(FilterRecord.class));
 	}
 
 	@Test
@@ -283,7 +283,7 @@ public class DuplicateOperationsTest {
 		dupOp.markDirectoryAs(tempDirectory.resolve("foobar"), "foo");
 
 		verify(persistence, never()).getRecord(any(Path.class));
-		verify(filterRepository, never()).storeFilter(any(FilterRecord.class));
+		verify(filterRepository, never()).store(any(FilterRecord.class));
 	}
 
 	@Test
@@ -296,8 +296,8 @@ public class DuplicateOperationsTest {
 
 		dupOp.markAll(records, testTag);
 
-		verify(filterRepository).storeFilter(new FilterRecord(0, testTag));
-		verify(filterRepository).storeFilter(new FilterRecord(1, testTag));
+		verify(filterRepository).store(new FilterRecord(0, testTag));
+		verify(filterRepository).store(new FilterRecord(1, testTag));
 	}
 
 	private LinkedList<Path> createTempTestFiles(int amount) throws IOException {

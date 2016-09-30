@@ -84,11 +84,11 @@ public class FilterSorterTest {
 
 		when(persistenceMock.getAllRecords()).thenReturn(records);
 		when(persistenceMock.filterByPath(Paths.get(PATH_ZERO))).thenReturn(Arrays.asList(new ImageRecord(PATH_ZERO, 0)));
-		when(filterRepository.getFiltersByTag(TAG_LANDSCAPE))
+		when(filterRepository.getByTag(TAG_LANDSCAPE))
 				.thenReturn(Arrays.asList(new FilterRecord(0, TAG_LANDSCAPE)));
 
-		when(filterRepository.getFiltersByTag(TAG_EXCEPTION)).thenThrow(new RepositoryException(EXCEPTION_MESSAGE));
-		when(filterRepository.getAllFilters())
+		when(filterRepository.getByTag(TAG_EXCEPTION)).thenThrow(new RepositoryException(EXCEPTION_MESSAGE));
+		when(filterRepository.getAll())
 				.thenReturn(Arrays.asList(new FilterRecord(0, TAG_LANDSCAPE), new FilterRecord(1, TAG_SUNSET)));
 	}
 

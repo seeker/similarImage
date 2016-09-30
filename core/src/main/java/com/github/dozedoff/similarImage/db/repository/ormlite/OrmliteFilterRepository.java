@@ -69,7 +69,7 @@ public class OrmliteFilterRepository implements FilterRepository {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public List<FilterRecord> getFiltersByHash(long hash) throws RepositoryException {
+	public List<FilterRecord> getByHash(long hash) throws RepositoryException {
 		try {
 			return filterDao.queryForMatching(new FilterRecord(hash, null, null));
 		} catch (SQLException e) {
@@ -81,7 +81,7 @@ public class OrmliteFilterRepository implements FilterRepository {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public List<FilterRecord> getFiltersByTag(String tag) throws RepositoryException {
+	public List<FilterRecord> getByTag(String tag) throws RepositoryException {
 		try {
 			return filterDao.queryForMatchingArgs(new FilterRecord(0, tag, null));
 		} catch (SQLException e) {
@@ -93,7 +93,7 @@ public class OrmliteFilterRepository implements FilterRepository {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public List<FilterRecord> getAllFilters() throws RepositoryException {
+	public List<FilterRecord> getAll() throws RepositoryException {
 		try {
 			return filterDao.queryForAll();
 		} catch (SQLException e) {
@@ -105,7 +105,7 @@ public class OrmliteFilterRepository implements FilterRepository {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void storeFilter(FilterRecord toStore) throws RepositoryException {
+	public void store(FilterRecord toStore) throws RepositoryException {
 		if (toStore.hasThumbnail()) {
 			checkAndCreateThumbnail(toStore);
 		}

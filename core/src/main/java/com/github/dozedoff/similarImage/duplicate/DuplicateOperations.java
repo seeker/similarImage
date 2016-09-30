@@ -123,7 +123,7 @@ public class DuplicateOperations {
 	public void markAll(Collection<ImageRecord> records, String tag) {
 		for (ImageRecord record : records) {
 			try {
-				filterRepository.storeFilter(new FilterRecord(record.getpHash(), tag));
+				filterRepository.store(new FilterRecord(record.getpHash(), tag));
 				logger.info("Adding pHash {} to filter, tag {}, source file {}", record.getpHash(), tag, record.getPath());
 			} catch (RepositoryException e) {
 				logger.warn("Failed to add tag for {}: {}", record.getPath(), e.toString());
@@ -144,7 +144,7 @@ public class DuplicateOperations {
 
 			FilterRecord fr = new FilterRecord(pHash, Tags.DNW.toString());
 			try {
-				filterRepository.storeFilter(fr);
+				filterRepository.store(fr);
 				deleteFile(path);
 			} catch (RepositoryException e) {
 				logger.warn("Failed to add filter entry for {} - {}", path, e.getMessage());
@@ -172,7 +172,7 @@ public class DuplicateOperations {
 			long pHash = ir.getpHash();
 			logger.info("Adding pHash {} to filter, reason {}", pHash, reason);
 
-			filterRepository.storeFilter(new FilterRecord(pHash, reason));
+			filterRepository.store(new FilterRecord(pHash, reason));
 		} catch (RepositoryException | SQLException e) {
 			logger.warn("Add filter operation failed for {} - {}", path, e.getMessage());
 		}

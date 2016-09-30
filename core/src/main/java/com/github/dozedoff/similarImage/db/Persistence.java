@@ -231,7 +231,7 @@ public class Persistence {
 
 		List<FilterRecord> filter;
 		try {
-			filter = filterRepository.getFiltersByHash(pHash);
+			filter = filterRepository.getByHash(pHash);
 			return !filter.isEmpty();
 		} catch (RepositoryException e) {
 			reThrowSQLException(e);

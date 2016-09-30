@@ -37,7 +37,7 @@ public interface FilterRepository {
 	 * @throws RepositoryException
 	 *             if the repository encounters an error processing the request
 	 */
-	List<FilterRecord> getFiltersByHash(long hash) throws RepositoryException;
+	List<FilterRecord> getByHash(long hash) throws RepositoryException;
 
 	/**
 	 * Get a list of {@link FilterRecord} that match the given tag.
@@ -48,7 +48,7 @@ public interface FilterRepository {
 	 * @throws RepositoryException
 	 *             if the repository encounters an error processing the request
 	 */
-	List<FilterRecord> getFiltersByTag(String tag) throws RepositoryException;
+	List<FilterRecord> getByTag(String tag) throws RepositoryException;
 
 	/**
 	 * Get a list of all {@link FilterRecord}
@@ -57,7 +57,7 @@ public interface FilterRepository {
 	 * @throws RepositoryException
 	 *             if the repository encounters an error processing the request
 	 */
-	List<FilterRecord> getAllFilters() throws RepositoryException;
+	List<FilterRecord> getAll() throws RepositoryException;
 
 	/**
 	 * Persist a {@link FilterRecord}.
@@ -67,5 +67,5 @@ public interface FilterRepository {
 	 * @throws RepositoryException
 	 *             if the repository encounters an error processing the request
 	 */
-	void storeFilter(FilterRecord toStore) throws RepositoryException;
+	void store(FilterRecord toStore) throws RepositoryException;
 }
