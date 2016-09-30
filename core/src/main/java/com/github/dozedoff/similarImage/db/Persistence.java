@@ -102,6 +102,7 @@ public class Persistence {
 
 		logger.info("Setting up database tables...");
 		TableUtils.createTableIfNotExists(cs, ImageRecord.class);
+		TableUtils.createTableIfNotExists(cs, Tag.class);
 		TableUtils.createTableIfNotExists(cs, FilterRecord.class);
 		TableUtils.createTableIfNotExists(cs, BadFileRecord.class);
 		TableUtils.createTableIfNotExists(cs, IgnoreRecord.class);

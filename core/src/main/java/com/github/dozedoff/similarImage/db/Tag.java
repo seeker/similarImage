@@ -33,7 +33,7 @@ public class Tag {
 	 */
 	@DatabaseField(generatedId = true)
 	private long userTagId;
-	@DatabaseField(canBeNull = false, unique = true, columnName=NAME_FIELD_NAME)
+	@DatabaseField(canBeNull = false, unique = true, index = true, columnName = NAME_FIELD_NAME)
 	private String tag;
 
 	@DatabaseField(canBeNull = false)
