@@ -20,12 +20,9 @@ package com.github.dozedoff.similarImage.db.repository.ormlite;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertThat;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -35,11 +32,10 @@ import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
-import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 
-public class OrmliteFilterRepositoryTest {
+public class OrmliteFilterRepositoryTest extends OrmliteRepositoryBaseTest {
 	private static final long HASH_ONE = 1L;
 	private static final long HASH_TWO = 2L;
 	private static final long HASH_THREE = 3L;
@@ -57,16 +53,19 @@ public class OrmliteFilterRepositoryTest {
 	private Dao<FilterRecord, Integer> filterDao;
 	private Dao<Thumbnail, Integer> thumbnailDao;
 
-	private ConnectionSource cs;
-
 	private Thumbnail exsitingThumbnail;
 	private Thumbnail newThumbnail;
 
 	private List<FilterRecord> allFilters;
 
+	private ConnectionSource cs;
+
 	@Before
 	public void setUp() throws Exception {
-		setUpDatabase();
+		cs = getConnectionSource();
+
+		TableUtils.createTable(cs, FilterRecord.class);
+		TableUtils.createTable(cs, Thumbnail.class);
 
 		filterDao = DaoManager.createDao(cs, FilterRecord.class);
 		thumbnailDao = DaoManager.createDao(cs, Thumbnail.class);
@@ -78,18 +77,12 @@ public class OrmliteFilterRepositoryTest {
 		createRecords();
 	}
 
-	@After
-	public void tearDown() throws Exception {
-		cs.close();
-	}
-
-	private void setUpDatabase() throws Exception {
-		Path tempDbPath = Files.createTempFile("OrmliteFilterRepository", ".db");
-		String fullDbPath = "jdbc:sqlite:" + tempDbPath.toString();
-		cs = new JdbcConnectionSource(fullDbPath);
-
-		TableUtils.createTable(cs, FilterRecord.class);
-		TableUtils.createTable(cs, Thumbnail.class);
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	protected String getDatabaseName() {
+		return "OrmliteFilterRepository";
 	}
 
 	private void createRecords() throws Exception {
