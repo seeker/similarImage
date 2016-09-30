@@ -118,4 +118,50 @@ public class Tag {
 	public String toString() {
 		return this.tag;
 	}
+
+	/**
+	 * Create hashcode using tag and contextMenu flag.
+	 * 
+	 * @return generated hashcode
+	 */
+	@Override
+	public final int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (contextMenu ? 1231 : 1237);
+		result = prime * result + ((tag == null) ? 0 : tag.hashCode());
+		return result;
+	}
+
+	/**
+	 * Compare class to this one. Only tag and contextMenu flag are used for comparison, the id is ignored.
+	 * 
+	 * @param obj
+	 *            object to compare
+	 * @return true if the object is identical
+	 */
+	@Override
+	public final boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (!(obj instanceof Tag)) {
+			return false;
+		}
+		Tag other = (Tag) obj;
+		if (contextMenu != other.contextMenu) {
+			return false;
+		}
+		if (tag == null) {
+			if (other.tag != null) {
+				return false;
+			}
+		} else if (!tag.equals(other.tag)) {
+			return false;
+		}
+		return true;
+	}
 }
