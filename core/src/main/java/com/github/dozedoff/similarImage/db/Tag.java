@@ -26,12 +26,14 @@ import com.j256.ormlite.field.DatabaseField;
  *
  */
 public class Tag {
+	public static final String NAME_FIELD_NAME = "name";
+	
 	/**
 	 * This field is for DAO internal use only.
 	 */
 	@DatabaseField(generatedId = true)
 	private long userTagId;
-	@DatabaseField(canBeNull = false, unique = true)
+	@DatabaseField(canBeNull = false, unique = true, columnName=NAME_FIELD_NAME)
 	private String tag;
 
 	@DatabaseField(canBeNull = false)
