@@ -17,12 +17,24 @@
  */
 package com.github.dozedoff.similarImage.db;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+
+import org.junit.Before;
 import org.junit.Test;
 
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
 
 public class TagTest {
+	private static final String TEST_TAG = "test";
+
+	private Tag cut;
+
+	@Before
+	public void setUp() {
+		cut = new Tag(TEST_TAG);
+	}
 
 	@Test
 	public void testEquals() throws Exception {
@@ -32,4 +44,13 @@ public class TagTest {
 		ev.verify();
 	}
 
+	@Test
+	public void testTagStringName() throws Exception {
+		assertThat(cut.getTag(), is(TEST_TAG));
+	}
+
+	@Test
+	public void testTagStringContextMenu() throws Exception {
+		assertThat(cut.isContextMenu(), is(false));
+	}
 }
