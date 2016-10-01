@@ -40,6 +40,9 @@ import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 
 public class DuplicateOperations {
 	private static final Logger logger = LoggerFactory.getLogger(DuplicateOperations.class);
+
+	private static final String FILTER_ADD_FAILED_MESSAGE = "Add filter operation failed for {} - {}";
+
 	private final Persistence persistence;
 	private final FilterRepository filterRepository;
 
@@ -168,12 +171,28 @@ public class DuplicateOperations {
 				return;
 			}
 
-			long pHash = ir.getpHash();
-			logger.info("Adding pHash {} to filter, reason {}", pHash, reason);
+			markAs(ir, reason);
+		} catch (SQLException e) {
+			logger.warn(FILTER_ADD_FAILED_MESSAGE, path, e.getMessage());
+		}
+	}
 
-			filterRepository.store(new FilterRecord(pHash, reason));
-		} catch (RepositoryException | SQLException e) {
-			logger.warn("Add filter operation failed for {} - {}", path, e.getMessage());
+	/**
+	 * Add a {@link FilterRecord} for the given {@link ImageRecord} with the specified reason.
+	 * 
+	 * @param image
+	 *            to add a filter for
+	 * @param tag
+	 *            for the filter
+	 */
+	public void markAs(ImageRecord image, String tag) {
+		try {
+			long pHash = image.getpHash();
+			logger.info("Adding pHash {} to filter, reason {}", pHash, tag);
+
+			filterRepository.store(new FilterRecord(pHash, tag));
+		} catch (RepositoryException e) {
+			logger.warn(FILTER_ADD_FAILED_MESSAGE, image.getPath(), e.getMessage());
 		}
 	}
 
