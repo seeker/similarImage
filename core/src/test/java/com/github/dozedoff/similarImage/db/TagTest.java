@@ -23,6 +23,8 @@ import static org.junit.Assert.assertThat;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.github.dozedoff.similarImage.util.StringUtil;
+
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
 
@@ -52,5 +54,17 @@ public class TagTest {
 	@Test
 	public void testTagStringContextMenu() throws Exception {
 		assertThat(cut.isContextMenu(), is(false));
+	}
+
+	@Test
+	public void testIsMatchAll() throws Exception {
+		assertThat(cut.isMatchAll(), is(false));
+	}
+
+	@Test
+	public void testIsMatchAllAsterisk() throws Exception {
+		cut = new Tag(StringUtil.MATCH_ALL_TAGS);
+
+		assertThat(cut.isMatchAll(), is(true));
 	}
 }

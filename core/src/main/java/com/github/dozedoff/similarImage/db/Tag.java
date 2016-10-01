@@ -17,6 +17,7 @@
  */
 package com.github.dozedoff.similarImage.db;
 
+import com.github.dozedoff.similarImage.util.StringUtil;
 import com.j256.ormlite.field.DatabaseField;
 
 /**
@@ -97,6 +98,15 @@ public class Tag {
 	 */
 	public final boolean isContextMenu() {
 		return contextMenu;
+	}
+
+	/**
+	 * Check if this tag is a match all {@link Tag}.
+	 * 
+	 * @return true if this {@link Tag} will match all stored {@link Tag}s.
+	 */
+	public boolean isMatchAll() {
+		return StringUtil.MATCH_ALL_TAGS.equals(tag);
 	}
 
 	/**
