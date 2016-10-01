@@ -46,8 +46,10 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
+import com.github.dozedoff.similarImage.db.repository.TagRepository;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DuplicateOperationsTest {
@@ -56,15 +58,19 @@ public class DuplicateOperationsTest {
 	private static final long TEST_HASH = 42L;
 	private static final int RECORD_NUMBER = 15;
 
-	private static final String TAG_FOO = "foo";
-	private static final String TAG_BAR = "bar";
-	private static final String TAG_DNW = "DNW";
+	private static final Tag TAG_FOO = new Tag("foo");
+	private static final Tag TAG_BAR = new Tag("bar");
+	private static final Tag TAG_DNW = new Tag("DNW");
+	private static final Tag TAG_ALL = new Tag("all");
 
 	@Mock
 	private Persistence persistence;
 
 	@Mock
 	private FilterRepository filterRepository;
+
+	@Mock
+	private TagRepository tagRepository;
 
 	private DuplicateOperations dupOp;
 
@@ -74,7 +80,7 @@ public class DuplicateOperationsTest {
 
 	@Before
 	public void setUp() throws Exception {
-		dupOp = new DuplicateOperations(persistence, filterRepository);
+		dupOp = new DuplicateOperations(persistence, filterRepository, tagRepository);
 
 		tempDirectory = Files.createTempDirectory("DuplicateOperationsTest");
 		
@@ -242,7 +248,7 @@ public class DuplicateOperationsTest {
 
 		dupOp.markAs(file, "foo");
 
-		verify(filterRepository).store(new FilterRecord(42, "foo"));
+		verify(filterRepository).store(new FilterRecord(42, TAG_FOO));
 	}
 
 	@Test
@@ -289,15 +295,13 @@ public class DuplicateOperationsTest {
 	@Test
 	public void testMarkAll() throws Exception {
 		LinkedList<ImageRecord> records = new LinkedList<ImageRecord>();
-		records.add(new ImageRecord(TAG_FOO, 0));
-		records.add(new ImageRecord(TAG_BAR, 1));
+		records.add(new ImageRecord(TAG_FOO.getTag(), 0));
+		records.add(new ImageRecord(TAG_BAR.getTag(), 1));
 
-		String testTag = "test";
+		dupOp.markAll(records, TAG_ALL.getTag());
 
-		dupOp.markAll(records, testTag);
-
-		verify(filterRepository).store(new FilterRecord(0, testTag));
-		verify(filterRepository).store(new FilterRecord(1, testTag));
+		verify(filterRepository).store(new FilterRecord(0, TAG_ALL));
+		verify(filterRepository).store(new FilterRecord(1, TAG_ALL));
 	}
 
 	private LinkedList<Path> createTempTestFiles(int amount) throws IOException {

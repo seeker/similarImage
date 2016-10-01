@@ -37,8 +37,8 @@ import nl.jqno.equalsverifier.Warning;
 public class FilterRecordTest {
 	private static final String GUARD_MSG = "Guard condition failed";
 
-	private static final String TEST_TAG_ONE = "dontPanic";
-	private static final String TEST_TAG_TWO = "towel";
+	private static final Tag TEST_TAG_ONE = new Tag("dontPanic");
+	private static final Tag TEST_TAG_TWO = new Tag("towel");
 	private static final long HASH_ONE = 42L;
 	private static final long HASH_TWO = 7L;
 
@@ -100,7 +100,7 @@ public class FilterRecordTest {
 
 	@Test
 	public void testGetTagsAllTags() throws Exception {
-		FilterRecord.getTags(filterRepository, StringUtil.MATCH_ALL_TAGS);
+		FilterRecord.getTags(filterRepository, new Tag(StringUtil.MATCH_ALL_TAGS));
 
 		verify(filterRepository).getAll();
 	}

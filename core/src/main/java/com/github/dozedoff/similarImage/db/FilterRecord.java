@@ -21,7 +21,6 @@ import java.util.List;
 
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
-import com.github.dozedoff.similarImage.util.StringUtil;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
@@ -31,8 +30,8 @@ public final class FilterRecord {
 	private int id;
 	@DatabaseField(canBeNull = false, index = true, uniqueCombo = true)
 	private long pHash;
-	@DatabaseField(canBeNull = false, index = true, uniqueCombo = true)
-	private String tag;
+	@DatabaseField(canBeNull = false, index = true, uniqueCombo = true, foreign = true, foreignAutoRefresh = true)
+	private Tag tag;
 	@DatabaseField(foreign = true, foreignAutoRefresh = true)
 	private Thumbnail thumbnail;
 
@@ -53,7 +52,7 @@ public final class FilterRecord {
 	 * @param tag
 	 *            for the image
 	 */
-	public FilterRecord(long hash, String tag) {
+	public FilterRecord(long hash, Tag tag) {
 		this.pHash = hash;
 		this.tag = tag;
 		this.thumbnail = null;
@@ -69,7 +68,7 @@ public final class FilterRecord {
 	 * @param thumbnail
 	 *            thumbnail image for the record, can be null
 	 */
-	public FilterRecord(long pHash, String tag, Thumbnail thumbnail) {
+	public FilterRecord(long pHash, Tag tag, Thumbnail thumbnail) {
 		super();
 		this.pHash = pHash;
 		this.tag = tag;
@@ -85,29 +84,21 @@ public final class FilterRecord {
 	}
 
 	/**
-	 * @deprecated Replaced by {@link FilterRecord#getTag()}
-	 * @return The reason for this filter
+	 * Get the {@link Tag} associated with this {@link FilterRecord}.
+	 * 
+	 * @return current {@link Tag}
 	 */
-	@Deprecated
-	public String getReason() {
-		return tag;
-	}
-
-	public String getTag() {
+	public Tag getTag() {
 		return tag;
 	}
 
 	/**
-	 * @deprecated Replaced by {@link FilterRecord#setTag(String)}
-	 * @param reason
-	 *            for this filter
+	 * Set the {@link Tag} for this {@link FilterRecord}.
+	 * 
+	 * @param tag
+	 *            to set
 	 */
-	@Deprecated
-	public void setReason(String reason) {
-		this.tag = reason;
-	}
-
-	public void setTag(String tag) {
+	public void setTag(Tag tag) {
 		this.tag = tag;
 	}
 
@@ -193,8 +184,8 @@ public final class FilterRecord {
 	 * @throws RepositoryException
 	 *             on errors during data access
 	 */
-	public static List<FilterRecord> getTags(FilterRepository repository, String tag) throws RepositoryException {
-		if (StringUtil.MATCH_ALL_TAGS.equals(tag)) {
+	public static List<FilterRecord> getTags(FilterRepository repository, Tag tag) throws RepositoryException {
+		if (tag.isMatchAll()) {
 			return repository.getAll();
 		} else {
 			return repository.getByTag(tag);

@@ -27,6 +27,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.github.dozedoff.similarImage.db.FilterRecord;
+import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.Thumbnail;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
@@ -42,8 +43,8 @@ public class OrmliteFilterRepositoryTest extends OrmliteRepositoryBaseTest {
 	private static final long HASH_NEW_THUMBNAIL = 4L;
 	private static final long HASH_EXISTING_THUMBNAIL = 5L;
 
-	private static final String TAG_ONE = "foo";
-	private static final String TAG_TWO = "bar";
+	private static final Tag TAG_ONE = new Tag("foo");
+	private static final Tag TAG_TWO = new Tag("bar");
 
 	private static final byte[] THUMB_HASH_EXISTING = { 1, 2, 3 };
 	private static final byte[] THUMB_HASH_NEW = { 9, 8, 7 };
@@ -52,6 +53,7 @@ public class OrmliteFilterRepositoryTest extends OrmliteRepositoryBaseTest {
 
 	private Dao<FilterRecord, Integer> filterDao;
 	private Dao<Thumbnail, Integer> thumbnailDao;
+	private Dao<Tag, Long> tagdDao;
 
 	private Thumbnail exsitingThumbnail;
 	private Thumbnail newThumbnail;
@@ -66,9 +68,11 @@ public class OrmliteFilterRepositoryTest extends OrmliteRepositoryBaseTest {
 
 		TableUtils.createTable(cs, FilterRecord.class);
 		TableUtils.createTable(cs, Thumbnail.class);
+		TableUtils.createTable(cs, Tag.class);
 
 		filterDao = DaoManager.createDao(cs, FilterRecord.class);
 		thumbnailDao = DaoManager.createDao(cs, Thumbnail.class);
+		tagdDao = DaoManager.createDao(cs, Tag.class);
 
 		cut = new OrmliteFilterRepository(filterDao, thumbnailDao);
 
@@ -91,13 +95,16 @@ public class OrmliteFilterRepositoryTest extends OrmliteRepositoryBaseTest {
 
 		thumbnailDao.create(exsitingThumbnail);
 
+		tagdDao.create(TAG_ONE);
+		tagdDao.create(TAG_TWO);
+
 		createRecord(HASH_ONE, TAG_ONE, null);
 		createRecord(HASH_TWO, TAG_TWO, null);
 		createRecord(HASH_ONE, TAG_TWO, null);
 		createRecord(HASH_THREE, TAG_TWO, exsitingThumbnail);
 	}
 
-	private void createRecord(long hash, String tag, Thumbnail thumb) throws Exception {
+	private void createRecord(long hash, Tag tag, Thumbnail thumb) throws Exception {
 		FilterRecord filter = new FilterRecord(hash, tag, thumb);
 
 		filterDao.create(filter);
@@ -201,7 +208,7 @@ public class OrmliteFilterRepositoryTest extends OrmliteRepositoryBaseTest {
 	
 			List<FilterRecord> filters = cut.getByHash(HASH_NEW_THUMBNAIL);
 	
-			assertThat(filters, containsInAnyOrder(new FilterRecord(HASH_NEW_THUMBNAIL, TAG_ONE, null)));
+		assertThat(filters, containsInAnyOrder(new FilterRecord(HASH_NEW_THUMBNAIL, TAG_ONE)));
 		}
 
 	@Test

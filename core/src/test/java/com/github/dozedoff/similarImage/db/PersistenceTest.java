@@ -36,14 +36,21 @@ import org.junit.Test;
 
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
+import com.github.dozedoff.similarImage.db.repository.TagRepository;
 import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteFilterRepository;
+import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteTagRepository;
 import com.j256.ormlite.dao.CloseableWrappedIterable;
 
 public class PersistenceTest {
 	private static final String GUARD_MSG = "Guard condition failed";
 
+	private static final Tag TAG_FROGS = new Tag("frogs");
+	private static final Tag TAG_ANIMALS = new Tag("animals");
+	private static final Tag TAG_OTHER = new Tag("other");
+
 	private Persistence persistence;
 	private FilterRepository filterRepository;
+	private TagRepository tagRepository;
 	private ArrayList<ImageRecord> imageRecords;
 
 	@Before
@@ -51,10 +58,12 @@ public class PersistenceTest {
 		persistence = new Persistence(Files.createTempFile("PersistenceTest", ".db"));
 
 		filterRepository = new OrmliteFilterRepository(persistence.filterRecordDao, persistence.thumbnailDao);
+		tagRepository = new OrmliteTagRepository(persistence.tagDao);
 
 		createImageRecords();
 		persistence.batchAddRecord(imageRecords);
 
+		addTags();
 		addFilterRecords();
 		addBadFilesRecords();
 	}
@@ -70,12 +79,18 @@ public class PersistenceTest {
 		imageRecords.add(new ImageRecord("croak", 3));
 	}
 
-	private void addFilterRecords() throws RepositoryException {
-		filterRepository.store(new FilterRecord(3, "frogs"));
-		filterRepository.store(new FilterRecord(2, "animals"));
+	private void addTags() throws RepositoryException {
+		tagRepository.store(TAG_ANIMALS);
+		tagRepository.store(TAG_FROGS);
+		tagRepository.store(TAG_OTHER);
+	}
 
-		filterRepository.store(new FilterRecord(0, "other"));
-		filterRepository.store(new FilterRecord(1, "other"));
+	private void addFilterRecords() throws RepositoryException {
+		filterRepository.store(new FilterRecord(3, TAG_FROGS));
+		filterRepository.store(new FilterRecord(2, TAG_ANIMALS));
+
+		filterRepository.store(new FilterRecord(0, TAG_OTHER));
+		filterRepository.store(new FilterRecord(1, TAG_OTHER));
 	}
 
 	private void addBadFilesRecords() throws SQLException {

@@ -25,8 +25,12 @@ import java.util.HashMap;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
-import com.github.dozedoff.similarImage.db.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.db.Tag;
+import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
@@ -34,7 +38,9 @@ import com.github.dozedoff.similarImage.event.GuiUserTagChangedEvent;
 import com.google.common.eventbus.Subscribe;
 
 public class OperationsMenu {
-	private final DuplicateOperations duplicateOperations;
+	private static final Logger LOGGER = LoggerFactory.getLogger(OperationsMenu.class);
+
+	private DuplicateOperations duplicateOperations;
 	private final UserTagSettingController utsController;
 	private JPopupMenu menu;
 	private final HashMap<Operations, ActionListener> actions = new HashMap<OperationsMenu.Operations, ActionListener>();
@@ -47,7 +53,12 @@ public class OperationsMenu {
 
 	public OperationsMenu(ImageInfo imageInfo, Persistence persistence, UserTagSettingController utsController) {
 		super();
-		this.duplicateOperations = new DuplicateOperations(persistence);
+		try {
+			this.duplicateOperations = new DuplicateOperations(persistence);
+		} catch (RepositoryException e) {
+			LOGGER.error("Failed to setup duplicate operations {}", e.toString());
+		}
+
 		this.imageInfo = imageInfo;
 		this.menu = new JPopupMenu();
 		this.utsController = utsController;
@@ -98,7 +109,7 @@ public class OperationsMenu {
 			menuItem.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent arg0) {
-					duplicateOperations.markAs(imageInfo.getPath(), cut.getTag());
+					duplicateOperations.markAs(imageInfo.getPath(), cut);
 				}
 			});
 

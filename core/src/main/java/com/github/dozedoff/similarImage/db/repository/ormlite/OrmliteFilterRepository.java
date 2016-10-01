@@ -21,6 +21,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import com.github.dozedoff.similarImage.db.FilterRecord;
+import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.Thumbnail;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
@@ -81,7 +82,7 @@ public class OrmliteFilterRepository implements FilterRepository {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public List<FilterRecord> getByTag(String tag) throws RepositoryException {
+	public List<FilterRecord> getByTag(Tag tag) throws RepositoryException {
 		try {
 			return filterDao.queryForMatchingArgs(new FilterRecord(0, tag, null));
 		} catch (SQLException e) {

@@ -28,8 +28,11 @@ import org.slf4j.LoggerFactory;
 import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.db.Tag;
+import com.github.dozedoff.similarImage.db.Thumbnail;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
+import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteFilterRepository;
 import com.github.dozedoff.similarImage.duplicate.RecordSearch;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiGroupEvent;
@@ -39,6 +42,7 @@ import com.google.common.base.Stopwatch;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.eventbus.EventBus;
+import com.j256.ormlite.dao.DaoManager;
 
 /**
  * Match the hashes corresponding the given tag to the records. This allows the user to search for similar images matching a given tag or
@@ -73,6 +77,13 @@ public class FilterSorter extends Thread {
 		this.hammingDistance = hammingDistance;
 		this.reason = tag;
 		this.persistence = persistence;
+		try {
+			this.filterRepository = new OrmliteFilterRepository(
+					DaoManager.createDao(persistence.getCs(), FilterRecord.class),
+					DaoManager.createDao(persistence.getCs(), Thumbnail.class));
+		} catch (SQLException e) {
+			logger.error("Failed to setup repository");
+		}
 
 		dBrecords = Collections.emptyList();
 	}
@@ -153,7 +164,7 @@ public class FilterSorter extends Thread {
 		List<FilterRecord> matchingFilters = Collections.emptyList();
 
 		try {
-			matchingFilters = FilterRecord.getTags(filterRepository, sanitizedTag);
+			matchingFilters = FilterRecord.getTags(filterRepository, new Tag(sanitizedTag));
 			logger.info("Found {} filters for tag {}", matchingFilters.size(), sanitizedTag);
 		} catch (RepositoryException e) {
 			logger.error("Aborted tag search for {}, reason: {}", sanitizedTag, e.getMessage());

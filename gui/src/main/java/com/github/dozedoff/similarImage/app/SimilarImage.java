@@ -24,8 +24,15 @@ import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.dozedoff.similarImage.db.Tag;
+import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.db.Tag;
+import com.github.dozedoff.similarImage.db.Thumbnail;
+import com.github.dozedoff.similarImage.db.repository.FilterRepository;
+import com.github.dozedoff.similarImage.db.repository.RepositoryException;
+import com.github.dozedoff.similarImage.db.repository.TagRepository;
+import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteFilterRepository;
+import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteTagRepository;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.gui.DisplayGroupView;
 import com.github.dozedoff.similarImage.gui.SimilarImageController;
@@ -33,6 +40,7 @@ import com.github.dozedoff.similarImage.gui.SimilarImageView;
 import com.github.dozedoff.similarImage.gui.UserTagSettingController;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.thread.NamedThreadFactory;
+import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 
 public class SimilarImage {
@@ -48,13 +56,13 @@ public class SimilarImage {
 	public static void main(String[] args) {
 		try {
 			new SimilarImage().init();
-		} catch (SQLException e) {
+		} catch (SQLException | RepositoryException e) {
 			logger.error("Startup failed: {}", e.toString());
 			e.printStackTrace();
 		}
 	}
 
-	public void init() throws SQLException {
+	public void init() throws SQLException, RepositoryException {
 		String version = this.getClass().getPackage().getImplementationVersion();
 
 		if (version == null) {
@@ -68,10 +76,19 @@ public class SimilarImage {
 		Settings settings = new Settings(new SettingsValidator());
 		settings.loadPropertiesFromFile(PROPERTIES_FILENAME);
 		persistence = new Persistence();
+		
+		Dao<FilterRecord, Integer> filterDao = DaoManager.createDao(persistence.getCs(), FilterRecord.class);
+		Dao<Tag, Long> tagDao = DaoManager.createDao(persistence.getCs(), Tag.class);
+		Dao<Thumbnail, Integer> thumbnailDao = DaoManager.createDao(persistence.getCs(), Thumbnail.class);
+		
+		FilterRepository filterRepository = new OrmliteFilterRepository(filterDao, thumbnailDao);
+		TagRepository tagRepository = new OrmliteTagRepository(tagDao);
+		
 		statistics = new Statistics();
 		SimilarImageController controller = new SimilarImageController(persistence, new DisplayGroupView(), threadPool,
 				statistics);
-		SimilarImageView gui = new SimilarImageView(controller, new DuplicateOperations(persistence),
+		SimilarImageView gui = new SimilarImageView(controller,
+				new DuplicateOperations(persistence, filterRepository, tagRepository),
 				PRODUCER_QUEUE_SIZE,
 				new UserTagSettingController(DaoManager.createDao(persistence.getCs(), Tag.class)));
 

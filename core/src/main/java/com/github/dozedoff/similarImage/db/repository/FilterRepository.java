@@ -20,6 +20,7 @@ package com.github.dozedoff.similarImage.db.repository;
 import java.util.List;
 
 import com.github.dozedoff.similarImage.db.FilterRecord;
+import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.Thumbnail;
 
 /**
@@ -48,7 +49,7 @@ public interface FilterRepository {
 	 * @throws RepositoryException
 	 *             if the repository encounters an error processing the request
 	 */
-	List<FilterRecord> getByTag(String tag) throws RepositoryException;
+	List<FilterRecord> getByTag(Tag tag) throws RepositoryException;
 
 	/**
 	 * Get a list of all {@link FilterRecord}
