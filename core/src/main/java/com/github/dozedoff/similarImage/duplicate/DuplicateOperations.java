@@ -57,8 +57,7 @@ public class DuplicateOperations {
 	 */
 	@Deprecated
 	public DuplicateOperations(Persistence persistence) {
-		this.persistence = persistence;
-		this.filterRepository = null;
+		this(persistence, null);
 	}
 
 	/**
