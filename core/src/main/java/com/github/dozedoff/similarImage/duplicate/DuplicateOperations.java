@@ -17,10 +17,15 @@
  */
 package com.github.dozedoff.similarImage.duplicate;
 
+import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
@@ -28,6 +33,11 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.imageio.ImageIO;
+
+import org.imgscalr.Scalr;
+import org.imgscalr.Scalr.Method;
+import org.imgscalr.Scalr.Mode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,14 +45,19 @@ import com.github.dozedoff.commonj.file.DirectoryVisitor;
 import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.db.Tag;
+import com.github.dozedoff.similarImage.db.Thumbnail;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
+import com.github.dozedoff.similarImage.util.ImageUtil;
 
 public class DuplicateOperations {
 	private static final Logger logger = LoggerFactory.getLogger(DuplicateOperations.class);
 
 	private static final String FILTER_ADD_FAILED_MESSAGE = "Add filter operation failed for {} - {}";
-
+	private static final int THUMBNAIL_SIZE = 100;
+	private static final String MESSAGE_DIGEST_ALGORITHM = "SHA-256";
+	
 	private final Persistence persistence;
 	private final FilterRepository filterRepository;
 
@@ -184,16 +199,40 @@ public class DuplicateOperations {
 	 *            to add a filter for
 	 * @param tag
 	 *            for the filter
+	 * @throws RepositoryException
+	 *             if there is an error accessing the datasource
 	 */
-	public void markAs(ImageRecord image, String tag) {
-		try {
+	public void markAs(ImageRecord image, Tag tag) throws RepositoryException {
 			long pHash = image.getpHash();
 			logger.info("Adding pHash {} to filter, reason {}", pHash, tag);
 
-			filterRepository.store(new FilterRecord(pHash, tag));
-		} catch (RepositoryException e) {
-			logger.warn(FILTER_ADD_FAILED_MESSAGE, image.getPath(), e.getMessage());
+			Thumbnail thumb = createThumbnail(Paths.get(image.getPath()));
+
+			filterRepository.store(new FilterRecord(pHash, tag, thumb));
+	}
+
+	private Thumbnail createThumbnail(Path path) {
+		Thumbnail thumb = null;
+
+		try {
+			if (Files.size(path) == 0) {
+				logger.warn("Image is empty, skipping thumbnail generation");
+				return thumb;
+			}
+
+			InputStream is = Files.newInputStream(path);
+			MessageDigest md = MessageDigest.getInstance(MESSAGE_DIGEST_ALGORITHM);
+			DigestInputStream dis = new DigestInputStream(is, md);
+			
+			BufferedImage img = ImageIO.read(dis);
+			BufferedImage resized = Scalr.resize(img, Method.QUALITY, Mode.AUTOMATIC, THUMBNAIL_SIZE);
+
+			thumb = new Thumbnail(md.digest(), ImageUtil.imageToBytes(resized));
+		} catch (IOException | NoSuchAlgorithmException e) {
+			logger.warn("Failed to load thumbnail image for {}, {}", path, e.toString());
 		}
+
+		return thumb;
 	}
 
 	public void markDirectoryAs(Path directory, String reason) {
