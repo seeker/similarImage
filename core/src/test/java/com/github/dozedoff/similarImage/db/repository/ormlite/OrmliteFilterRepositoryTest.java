@@ -18,6 +18,8 @@
 package com.github.dozedoff.similarImage.db.repository.ormlite;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
 
 import java.util.LinkedList;
@@ -220,4 +222,13 @@ public class OrmliteFilterRepositoryTest extends OrmliteRepositoryBaseTest {
 	
 			assertThat(filters, containsInAnyOrder(new FilterRecord(HASH_NEW_THUMBNAIL, TAG_ONE, null)));
 		}
+
+	@Test
+	public void testRemove() throws Exception {
+		FilterRecord toRemove = allFilters.get(0);
+
+		cut.remove(toRemove);
+
+		assertThat(cut.getAll(), not(hasItem(toRemove)));
+	}
 }

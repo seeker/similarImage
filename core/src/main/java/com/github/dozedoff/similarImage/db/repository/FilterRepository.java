@@ -69,4 +69,14 @@ public interface FilterRepository {
 	 *             if the repository encounters an error processing the request
 	 */
 	void store(FilterRecord toStore) throws RepositoryException;
+
+	/**
+	 * Remove the {@link FilterRecord} from the datasource
+	 * 
+	 * @param filter
+	 *            to remove
+	 * @throws RepositoryException
+	 *             if the repository encounters an error processing the request
+	 */
+	void remove(FilterRecord filter) throws RepositoryException;
 }

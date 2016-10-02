@@ -139,4 +139,16 @@ public class OrmliteFilterRepository implements FilterRepository {
 			throw new RepositoryException(STORE_FILTER_ERROR_MSG, e);
 		}
 	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void remove(FilterRecord filter) throws RepositoryException {
+		try {
+			filterDao.delete(filter);
+		} catch (SQLException e) {
+			throw new RepositoryException("Failed to remove Filter", e);
+		}
+	}
 }
