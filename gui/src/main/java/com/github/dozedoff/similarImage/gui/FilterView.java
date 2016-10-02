@@ -47,6 +47,9 @@ public class FilterView extends JFrame {
 	private static final long serialVersionUID = 6353120196258447248L;
 	private static final Logger LOGGER = LoggerFactory.getLogger(FilterView.class);
 
+	private static final int VIEW_SIZE = 500;
+	private static final String VIEW_SIZE_CONFIGURATION = "w %d!, h %d!";
+
 	private final FilterRepository filterRepository;
 
 	private List<FilterViewRow> rows = new LinkedList<FilterViewRow>();
@@ -58,7 +61,7 @@ public class FilterView extends JFrame {
 
 		setLayout(new MigLayout());
 		rowView = new JPanel(new MigLayout("wrap 1"));
-		add(new JScrollPane(rowView));
+		add(new JScrollPane(rowView), String.format(VIEW_SIZE_CONFIGURATION, VIEW_SIZE, VIEW_SIZE));
 
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
