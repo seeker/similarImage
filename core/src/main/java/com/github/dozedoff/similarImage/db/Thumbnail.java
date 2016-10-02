@@ -29,6 +29,7 @@ import com.j256.ormlite.table.DatabaseTable;
  */
 @DatabaseTable
 public class Thumbnail {
+	public static final int THUMBNAIL_SIZE = 100;
 	@DatabaseField(generatedId = true)
 	private int id;
 	@DatabaseField(dataType = DataType.BYTE_ARRAY, canBeNull = false, index = true, unique = true)

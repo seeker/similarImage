@@ -60,7 +60,7 @@ public class DuplicateOperations {
 	private static final Logger logger = LoggerFactory.getLogger(DuplicateOperations.class);
 
 	private static final String FILTER_ADD_FAILED_MESSAGE = "Add filter operation failed for {} - {}";
-	private static final int THUMBNAIL_SIZE = 100;
+	private static final int THUMBNAIL_SIZE = Thumbnail.THUMBNAIL_SIZE;
 	private static final String MESSAGE_DIGEST_ALGORITHM = "SHA-256";
 	
 	private final Persistence persistence;

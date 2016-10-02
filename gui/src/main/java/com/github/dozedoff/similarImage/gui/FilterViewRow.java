@@ -70,13 +70,26 @@ public class FilterViewRow extends JComponent {
 	}
 
 	private void createThumbnail() {
+		JLabel thumb = null;
+
 		if (filter.hasThumbnail()) {
 			Thumbnail thumbnail = filter.getThumbnail();
 			
-			add(new JLabel(new ImageIcon(thumbnail.getImageData())));
+			thumb = new JLabel(new ImageIcon(thumbnail.getImageData()));
 		}else {
-			add(new JLabel("No Thumb"));
+			thumb = new JLabel("No Thumb");
 		}
+		
+		add(thumb, thumbnailSize());
+	}
+
+	private String thumbnailSize() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("width ");
+		sb.append(Thumbnail.THUMBNAIL_SIZE);
+		sb.append("!");
+
+		return sb.toString();
 	}
 
 	private void createHashLabel() {
