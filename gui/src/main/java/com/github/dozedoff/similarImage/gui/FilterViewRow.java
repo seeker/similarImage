@@ -26,6 +26,8 @@ import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.Thumbnail;
 
+import net.miginfocom.layout.AC;
+import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 
 /**
@@ -36,6 +38,8 @@ import net.miginfocom.swing.MigLayout;
  */
 public class FilterViewRow extends JComponent {
 	private static final long serialVersionUID = -7521419392503926391L;
+
+	private static final int HASH_COLUMN_WIDTH = 150;
 
 	private final FilterRecord filter;
 	private JCheckBox selected;
@@ -53,11 +57,17 @@ public class FilterViewRow extends JComponent {
 	}
 
 	private void setUpGui() {
-		setLayout(new MigLayout());
+		setLayout(new MigLayout(new LC(),
+				new AC().gap().size(fixedSizeConfiguration(Thumbnail.THUMBNAIL_SIZE)).gap()
+						.size(fixedSizeConfiguration(HASH_COLUMN_WIDTH)).gap()));
 		createSelectionCheckbox();
 		createThumbnail();
 		createHashLabel();
 		createTagLabel(filter.getTag());
+	}
+
+	private String fixedSizeConfiguration(int size) {
+		return String.valueOf(size) + "!";
 	}
 
 	private void createSelectionCheckbox() {
@@ -80,16 +90,7 @@ public class FilterViewRow extends JComponent {
 			thumb = new JLabel("No Thumb");
 		}
 		
-		add(thumb, thumbnailSize());
-	}
-
-	private String thumbnailSize() {
-		StringBuilder sb = new StringBuilder();
-		sb.append("width ");
-		sb.append(Thumbnail.THUMBNAIL_SIZE);
-		sb.append("!");
-
-		return sb.toString();
+		add(thumb);
 	}
 
 	private void createHashLabel() {
