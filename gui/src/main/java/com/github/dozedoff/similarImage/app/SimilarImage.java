@@ -90,7 +90,7 @@ public class SimilarImage {
 		SimilarImageView gui = new SimilarImageView(controller,
 				new DuplicateOperations(persistence, filterRepository, tagRepository),
 				PRODUCER_QUEUE_SIZE,
-				new UserTagSettingController(DaoManager.createDao(persistence.getCs(), Tag.class)));
+				new UserTagSettingController(DaoManager.createDao(persistence.getCs(), Tag.class)), filterRepository);
 
 		controller.setGui(gui);
 	}

@@ -50,8 +50,9 @@ import javax.swing.event.ListSelectionListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.ImageRecord;
+import com.github.dozedoff.similarImage.db.Tag;
+import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiUserTagChangedEvent;
@@ -84,10 +85,23 @@ public class SimilarImageView implements StatisticsChangedListener {
 	private final UserTagSettingController utsController;
 	final DuplicateOperations duplicateOperations;
 
+	private final FilterRepository filterRepository;
+
+
+	/**
+	 * @deprecated Use constructor with repositories
+	 */
+	@Deprecated
+	public SimilarImageView(SimilarImageController controller, DuplicateOperations duplicateOperations,
+			int maxBufferSize, UserTagSettingController utsController) {
+		this(controller, duplicateOperations, maxBufferSize, utsController, null);
+	}
+
 	public SimilarImageView(SimilarImageController controller, DuplicateOperations duplicateOperations, int maxBufferSize,
-			UserTagSettingController utsController) {
+			UserTagSettingController utsController, FilterRepository filterRepository) {
 		this.controller = controller;
 		this.utsController = utsController;
+		this.filterRepository = filterRepository;
 
 		view = new JFrame();
 
@@ -234,6 +248,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 		JMenuItem directoryTag;
 		JMenuItem pruneRecords;
 		JMenuItem userTags;
+		JMenuItem filters;
 
 		directoryTag = new JMenuItem("Tag directory");
 		directoryTag.setToolTipText("Tag all images in a directory and sub-directories");
@@ -305,6 +320,14 @@ public class SimilarImageView implements StatisticsChangedListener {
 			}
 		});
 
+		filters = new JMenuItem("Filters");
+		filters.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				new FilterView(filterRepository);
+			}
+		});
+
 		JMenu file = new JMenu("File");
 		file.add(directoryTag);
 		file.add(pruneRecords);
@@ -314,6 +337,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 
 		JMenu settings = new JMenu("Settings");
 		settings.add(userTags);
+		settings.add(filters);
 
 		JMenuBar menuBar = new JMenuBar();
 		menuBar.add(file);
