@@ -29,7 +29,6 @@ import java.util.Set;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
-import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -131,19 +130,9 @@ public class SimilarImageView implements StatisticsChangedListener {
 		}
 	}
 
-	private JComponent buildActiveTagsList(JTextField tagField) {
-		JList<String> activeTags = new JList<String>(duplicateOperations.getFilterTags().toArray(new String[0]));
-		activeTags.addListSelectionListener(new ListSelectionListener() {
-			@Override
-			public void valueChanged(ListSelectionEvent e) {
-				String selectedValue = activeTags.getSelectedValue();
-				if (selectedValue != null) {
-					tagField.setText(selectedValue);
-				}
-			}
-		});
-
-		return new JScrollPane(activeTags);
+	private JList<Tag> buildActiveTagsList() {
+		JList<Tag> activeTags = new JList<Tag>(duplicateOperations.getFilterTags().toArray(new Tag[0]));
+		return activeTags;
 	}
 
 	private void setupComponents() {
@@ -186,16 +175,15 @@ public class SimilarImageView implements StatisticsChangedListener {
 		sortFilter.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				JTextField tag = new JTextField(DEFAULT_TEXTFIELD_WIDTH);
-				tag.setToolTipText("Limit search to Tag. Empty tag or * will select ALL tags");
+				JList<Tag> activeTags = buildActiveTagsList();
 
-				Object[] message = { "Tag: ", tag, "Active Tags:", buildActiveTagsList(tag) };
+				Object[] message = { "Active Tags:", new JScrollPane(activeTags) };
 				JOptionPane pane = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
 				JDialog getTopicDialog = pane.createDialog(null, "Select Tag to use in search");
 				getTopicDialog.setVisible(true);
 
 				if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION) {
-					String r = tag.getText();
+					Tag r = activeTags.getSelectedValue();
 					controller.sortFilter(hammingDistance.getValue(), r, path.getText());
 				}
 			}
@@ -261,9 +249,9 @@ public class SimilarImageView implements StatisticsChangedListener {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				JTextField directoryField = new JTextField(DEFAULT_TEXTFIELD_WIDTH);
-				JTextField tagField = new JTextField(DEFAULT_TEXTFIELD_WIDTH);
 
-				Object[] message = { "Directory: ", directoryField, "Tag:", tagField, "Active Tags:", buildActiveTagsList(tagField) };
+				JList<Tag> activeTags = buildActiveTagsList();
+				Object[] message = { "Directory: ", directoryField, "Active Tags:", activeTags };
 
 				JOptionPane pane = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
 				JDialog getTopicDialog = pane.createDialog(null, "Tag all images in directory");
@@ -271,8 +259,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 
 				if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION) {
 					Path selectedPath = Paths.get(directoryField.getText());
-					String tag = tagField.getText();
-					duplicateOperations.markDirectoryAndChildrenAs(selectedPath, tag);
+					duplicateOperations.markDirectoryAndChildrenAs(selectedPath, activeTags.getSelectedValue());
 				}
 			}
 		});
@@ -365,16 +352,16 @@ public class SimilarImageView implements StatisticsChangedListener {
 	}
 
 	private void tagAll(long group) {
-		JTextField tagField = new JTextField(DEFAULT_TEXTFIELD_WIDTH);
+		JList<Tag> activeTags = buildActiveTagsList();
 
-		Object[] message = { "Tag:", tagField, "Active Tags:", buildActiveTagsList(tagField) };
+		Object[] message = { "Active Tags:", new JScrollPane(activeTags) };
 
 		JOptionPane pane = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
 		JDialog getTopicDialog = pane.createDialog(null, "Tag all images");
 		getTopicDialog.setVisible(true);
 
 		if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION) {
-			duplicateOperations.markAll(controller.getGroup(group), tagField.getText());
+			duplicateOperations.markAll(controller.getGroup(group), activeTags.getSelectedValue());
 		}
 	}
 

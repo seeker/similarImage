@@ -156,12 +156,34 @@ public class DuplicateOperations {
 	 *            to add filter records for
 	 * @param tag
 	 *            tag to use for filter records
+	 * @deprecated Use {@link DuplicateOperations#markAll(Collection, Tag)} instead.
 	 */
+	@Deprecated
 	public void markAll(Collection<ImageRecord> records, String tag) {
 		for (ImageRecord record : records) {
 			try {
 				markAs(record, getTag(tag));
 				logger.info("Adding pHash {} to filter, tag {}, source file {}", record.getpHash(), tag, record.getPath());
+			} catch (RepositoryException e) {
+				logger.warn("Failed to add tag for {}: {}", record.getPath(), e.toString());
+			}
+		}
+	}
+
+	/**
+	 * Add filter records with the given tag for all records.
+	 * 
+	 * @param records
+	 *            to add filter records for
+	 * @param tag
+	 *            tag to use for filter records
+	 */
+	public void markAll(Collection<ImageRecord> records, Tag tag) {
+		for (ImageRecord record : records) {
+			try {
+				markAs(record, tag);
+				logger.info("Adding pHash {} to filter, tag {}, source file {}", record.getpHash(), tag,
+						record.getPath());
 			} catch (RepositoryException e) {
 				logger.warn("Failed to add tag for {}: {}", record.getPath(), e.toString());
 			}
@@ -447,7 +469,12 @@ public class DuplicateOperations {
 	 * 
 	 * @return list of tags
 	 */
-	public List<String> getFilterTags() {
-		return persistence.getFilterTags();
+	public List<Tag> getFilterTags() {
+		try {
+			return tagRepository.getAll();
+		} catch (RepositoryException e) {
+			logger.error("Failed to load tags: {}", e.toString());
+			return Collections.emptyList();
+		}
 	}
 }

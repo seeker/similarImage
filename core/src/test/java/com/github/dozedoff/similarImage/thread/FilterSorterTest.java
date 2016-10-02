@@ -22,6 +22,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -41,6 +42,7 @@ import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
+import com.github.dozedoff.similarImage.db.repository.TagRepository;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiGroupEvent;
 import com.github.dozedoff.similarImage.util.StringUtil;
@@ -67,6 +69,9 @@ public class FilterSorterTest {
 	
 	@Mock
 	private FilterRepository filterRepository;
+
+	@Mock
+	private TagRepository tagRepository;
 
 	private List<ImageRecord> records;
 	private Multimap<Long, ImageRecord> result;
@@ -112,6 +117,14 @@ public class FilterSorterTest {
 		records.add(new ImageRecord("foobar", HASH_THREE));
 	}
 
+	private FilterSorter createSorter(int hammingdistance, Tag tag, Path scope) {
+		return new FilterSorter(hammingdistance, tag, persistenceMock, filterRepository, tagRepository, scope);
+	}
+
+	private FilterSorter createSorter(int hammingdistance, Tag tag) {
+		return new FilterSorter(hammingdistance, tag, persistenceMock, filterRepository, tagRepository);
+	}
+
 	private void runCutAndWaitForFinish() throws InterruptedException {
 		cut.start();
 		cut.join();
@@ -119,7 +132,7 @@ public class FilterSorterTest {
 
 	@Test
 	public void testFilterForSingleTag() throws Exception {
-		cut = new FilterSorter(SEARCH_DISTANCE, TAG_LANDSCAPE.getTag(), persistenceMock, filterRepository);
+		cut = createSorter(SEARCH_DISTANCE, TAG_LANDSCAPE);
 		runCutAndWaitForFinish();
 
 		assertThat(result.get(0L), containsInAnyOrder(records.get(0)));
@@ -127,7 +140,7 @@ public class FilterSorterTest {
 
 	@Test
 	public void testFilterForMatchAllTag() throws Exception {
-		cut = new FilterSorter(SEARCH_DISTANCE, StringUtil.MATCH_ALL_TAGS, persistenceMock, filterRepository);
+		cut = createSorter(SEARCH_DISTANCE, new Tag(StringUtil.MATCH_ALL_TAGS));
 		runCutAndWaitForFinish();
 
 		assertThat(result.get(0L), containsInAnyOrder(records.get(0)));
@@ -136,7 +149,7 @@ public class FilterSorterTest {
 
 	@Test
 	public void testFilterLoadException() throws Exception {
-		cut = new FilterSorter(SEARCH_DISTANCE, TAG_EXCEPTION.getTag(), persistenceMock, filterRepository);
+		cut = createSorter(SEARCH_DISTANCE, TAG_EXCEPTION);
 		runCutAndWaitForFinish();
 
 		assertThat(result, is(emptyMultiMap));
@@ -146,7 +159,7 @@ public class FilterSorterTest {
 	public void testRecordLoadException() throws Exception {
 		when(persistenceMock.getAllRecords()).thenThrow(new SQLException(EXCEPTION_MESSAGE));
 
-		cut = new FilterSorter(SEARCH_DISTANCE, TAG_SUNSET.getTag(), persistenceMock, filterRepository);
+		cut = createSorter(SEARCH_DISTANCE, TAG_SUNSET);
 		runCutAndWaitForFinish();
 
 		assertThat(result, is(emptyMultiMap));
@@ -154,8 +167,7 @@ public class FilterSorterTest {
 
 	@Test
 	public void testFilterByPathNoMatch() throws Exception {
-		cut = new FilterSorter(SEARCH_DISTANCE, TAG_LANDSCAPE.getTag(), persistenceMock, filterRepository,
-				Paths.get("bar"));
+		cut = createSorter(SEARCH_DISTANCE, TAG_LANDSCAPE, Paths.get("bar"));
 		runCutAndWaitForFinish();
 
 		assertThat(result, is(emptyMultiMap));
@@ -163,8 +175,7 @@ public class FilterSorterTest {
 
 	@Test
 	public void testFilterByPath() throws Exception {
-		cut = new FilterSorter(SEARCH_DISTANCE, TAG_LANDSCAPE.getTag(), persistenceMock, filterRepository,
-				Paths.get(PATH_ZERO));
+		cut = createSorter(SEARCH_DISTANCE, TAG_LANDSCAPE, Paths.get(PATH_ZERO));
 		runCutAndWaitForFinish();
 
 		assertThat(result.get(0L), containsInAnyOrder(records.get(0)));
