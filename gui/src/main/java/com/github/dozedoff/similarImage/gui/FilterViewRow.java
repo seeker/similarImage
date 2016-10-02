@@ -56,8 +56,8 @@ public class FilterViewRow extends JComponent {
 		setLayout(new MigLayout());
 		createSelectionCheckbox();
 		createThumbnail();
-		createTagLabel(filter.getTag());
 		createHashLabel();
+		createTagLabel(filter.getTag());
 	}
 
 	private void createSelectionCheckbox() {
