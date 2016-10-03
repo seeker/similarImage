@@ -279,7 +279,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 				dialog.setVisible(true);
 
 				if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION) {
-					duplicateOperations.deleteAll(toPrune);
+					duplicateOperations.remove(toPrune);
 				} else {
 					LOGGER.info("User aborted prune operation for {}", directory);
 				}

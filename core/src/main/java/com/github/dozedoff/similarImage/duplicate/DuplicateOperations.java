@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import javax.imageio.ImageIO;
 
@@ -54,6 +55,7 @@ import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteFilterRepos
 import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteTagRepository;
 import com.github.dozedoff.similarImage.util.ImageUtil;
 import com.j256.ormlite.dao.DaoManager;
+import com.j256.ormlite.misc.TransactionManager;
 import com.j256.ormlite.support.ConnectionSource;
 
 public class DuplicateOperations {
@@ -120,6 +122,26 @@ public class DuplicateOperations {
 		for (ImageRecord ir : records) {
 			Path path = Paths.get(ir.getPath());
 			deleteFile(path);
+		}
+	}
+
+	/**
+	 * Removed the images from the database.
+	 * 
+	 * @param records
+	 *            to remove
+	 */
+	public void remove(Collection<ImageRecord> records) {
+		try {
+			TransactionManager.callInTransaction(persistence.getCs(), new Callable<Void>() {
+				@Override
+				public Void call() throws Exception {
+					persistence.deleteRecord(records);
+					return null;
+				}
+			});
+		} catch (SQLException e) {
+			logger.error("Failed to prune records: {}", e.toString());
 		}
 	}
 
