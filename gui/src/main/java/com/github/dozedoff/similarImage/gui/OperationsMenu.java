@@ -17,6 +17,9 @@
  */
 package com.github.dozedoff.similarImage.gui;
 
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.nio.file.Path;
@@ -46,7 +49,7 @@ public class OperationsMenu {
 	private final HashMap<Operations, ActionListener> actions = new HashMap<OperationsMenu.Operations, ActionListener>();
 
 	private enum Operations {
-		Delete, MarkAndDeleteDNW, MarkBlocked, Ignore
+		Delete, MarkAndDeleteDNW, MarkBlocked, Ignore, CopyDirectoryPath
 	};
 
 	private final ImageInfo imageInfo;
@@ -97,6 +100,16 @@ public class OperationsMenu {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				duplicateOperations.ignore(imageInfo.getpHash());
+			}
+		});
+
+		actions.put(Operations.CopyDirectoryPath, new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Path directory = imageInfo.getPath().getParent();
+
+				Clipboard clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard();
+				clpbrd.setContents(new StringSelection(directory.toString()), null);
 			}
 		});
 
