@@ -44,6 +44,7 @@ import com.github.dozedoff.similarImage.io.Statistics;
  */
 public class ImageHashJob implements Runnable {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ImageHashJob.class);
+	private static final String EXCEPTION_STACKTRACE = "Trace for {} {}";
 
 	private final Persistence persistence;
 	private final Path image;
@@ -89,21 +90,24 @@ public class ImageHashJob implements Runnable {
 				hashAttribute.writeHash(image, hash);
 			}
 		} catch (IIOException e) {
-			LOGGER.warn("Failed to process image(IIO) - {}", e.getMessage());
+			LOGGER.warn("Failed to process image {} (IIO Error): {}", image, e.toString());
+			LOGGER.debug(EXCEPTION_STACKTRACE, image, e);
+
 			try {
 				persistence.addBadFile(new BadFileRecord(image));
 			} catch (SQLException e1) {
-				LOGGER.warn("Failed to add bad file record for {} - {}", image, e.getMessage());
+				LOGGER.warn("Failed to add bad file record for {} - {}", image, e.toString());
 			}
 			statistics.incrementFailedFiles();
 		} catch (IOException e) {
-			LOGGER.warn("Failed to load file - {}", e.getMessage());
+			LOGGER.warn("Failed to load file {}: {}", image, e.toString());
 			statistics.incrementFailedFiles();
 		} catch (SQLException e) {
-			LOGGER.warn("Failed to query database - {}", e.getMessage());
+			LOGGER.warn("Failed to query database for {}: {}", image, e.toString());
 			statistics.incrementFailedFiles();
 		} catch (ArrayIndexOutOfBoundsException e) {
-			LOGGER.error("Failed to process image: {}", e.toString());
+			LOGGER.error("Failed to process image {}: {}", image, e.toString());
+			LOGGER.debug(EXCEPTION_STACKTRACE, image, e);
 		}
 	}
 
