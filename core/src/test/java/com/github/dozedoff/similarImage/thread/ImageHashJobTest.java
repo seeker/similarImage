@@ -36,7 +36,6 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
-import com.github.dozedoff.similarImage.db.BadFileRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.io.HashAttribute;
@@ -83,7 +82,7 @@ public class ImageHashJobTest {
 		Mockito.doThrow(IIOException.class).when(persistence).addRecord(any(ImageRecord.class));
 		imageLoadJob.run();
 
-		verify(persistence).addBadFile(any(BadFileRecord.class));
+		verify(statistics).incrementFailedFiles();
 	}
 
 	@Test

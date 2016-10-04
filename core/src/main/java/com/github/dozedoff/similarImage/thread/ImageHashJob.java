@@ -30,7 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
-import com.github.dozedoff.similarImage.db.BadFileRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.io.HashAttribute;
@@ -92,12 +91,6 @@ public class ImageHashJob implements Runnable {
 		} catch (IIOException e) {
 			LOGGER.warn("Failed to process image {} (IIO Error): {}", image, e.toString());
 			LOGGER.debug(EXCEPTION_STACKTRACE, image, e);
-
-			try {
-				persistence.addBadFile(new BadFileRecord(image));
-			} catch (SQLException e1) {
-				LOGGER.warn("Failed to add bad file record for {} - {}", image, e.toString());
-			}
 			statistics.incrementFailedFiles();
 		} catch (IOException e) {
 			LOGGER.warn("Failed to load file {}: {}", image, e.toString());
@@ -108,6 +101,7 @@ public class ImageHashJob implements Runnable {
 		} catch (ArrayIndexOutOfBoundsException e) {
 			LOGGER.error("Failed to process image {}: {}", image, e.toString());
 			LOGGER.debug(EXCEPTION_STACKTRACE, image, e);
+			statistics.incrementFailedFiles();
 		}
 	}
 
