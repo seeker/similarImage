@@ -35,6 +35,9 @@ import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.io.Statistics;
 
+import at.dhyan.open_imaging.GifDecoder;
+import at.dhyan.open_imaging.GifDecoder.GifImage;
+
 /**
  * Load an image and calculate the hash, then store the result in the database and as an extended attribute.
  * 
@@ -107,10 +110,26 @@ public class ImageHashJob implements Runnable {
 
 	private long processFile(Path next) throws SQLException, IOException {
 		statistics.incrementProcessedFiles();
+
+		Path filename = next.getFileName();
 		try (InputStream bis = new BufferedInputStream(Files.newInputStream(next))) {
-			long hash = hasher.getLongHash(bis);
-			persistence.addRecord(new ImageRecord(next.toString(), hash));
-			return hash;
+			if (filename != null && filename.toString().toLowerCase().endsWith(".gif")) {
+				GifImage gi = GifDecoder.read(bis);
+
+				long hash = hasher.getLongHash(gi.getFrame(0));
+				persistence.addRecord(new ImageRecord(next.toString(), hash));
+				return hash;
+			} else {
+
+				return doHash(next, bis);
+			}
 		}
 	}
+
+	private long doHash(Path next, InputStream is) throws IOException, SQLException {
+		long hash = hasher.getLongHash(is);
+		persistence.addRecord(new ImageRecord(next.toString(), hash));
+		return hash;
+	}
+
 }

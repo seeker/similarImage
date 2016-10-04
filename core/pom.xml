@@ -77,5 +77,10 @@
 			<artifactId>imageio-jpeg</artifactId>
 			<version>3.2.1</version>
 		</dependency>
+		<dependency>
+			<groupId>com.github.dozedoff</groupId>
+			<artifactId>Open-Imaging</artifactId>
+			<version>ad64c47f1a</version>
+		</dependency>
 	</dependencies>
 </project>
