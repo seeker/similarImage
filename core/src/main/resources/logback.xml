@@ -10,6 +10,7 @@
 	
 	<appender name="ASYNC_STDOUT" class="ch.qos.logback.classic.AsyncAppender">
 		<appender-ref ref="STDOUT" />
+		<includeCallerData>true</includeCallerData>
 	</appender>
 	
 	<root level="INFO">
