@@ -28,6 +28,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -279,6 +280,15 @@ public class SimilarImageController {
 
 	public void stopWorkers() {
 		logger.info("Clearing all queues...");
+	}
+
+	/**
+	 * Get the approximate number of queued tasks.
+	 * 
+	 * @return number of queued tasks
+	 */
+	public int getNumberOfQueuedTasks() {
+		return ((ThreadPoolExecutor) threadPool).getQueue().size();
 	}
 
 	@Subscribe

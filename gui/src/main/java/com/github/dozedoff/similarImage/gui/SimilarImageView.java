@@ -26,6 +26,8 @@ import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -68,14 +70,14 @@ public class SimilarImageView implements StatisticsChangedListener {
 	private JFrame view;
 
 	private static final int DEFAULT_TEXTFIELD_WIDTH = 20;
-
+	private static final String QUEUE_LABEL = "Queue size: ";
 	private final SimilarImageController controller;
 
 	private JTextField path;
 	private JButton find, stop, sortSimilar, sortFilter;
 	private JLabel status, hammingValue;
 	private JProgressBar progress;
-	private JProgressBar bufferLevel;
+	private JLabel queueSize;
 	private JList<Long> groups;
 	private DefaultListModel<Long> groupListModel;
 	private JScrollPane groupScrollPane;
@@ -113,8 +115,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 		this.progress = new JProgressBar(0, 0);
 		this.progress.setStringPainted(true);
 
-		this.bufferLevel = new JProgressBar(0, maxBufferSize);
-		this.bufferLevel.setStringPainted(true);
+		this.queueSize = new JLabel(QUEUE_LABEL + 0);
 
 		setupComponents();
 		setupMenu();
@@ -122,6 +123,8 @@ public class SimilarImageView implements StatisticsChangedListener {
 		view.setVisible(true);
 
 		GuiEventBus.getInstance().register(this);
+
+		updateProgress();
 	}
 
 	public void setStatus(String statusMsg) {
@@ -220,7 +223,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 		view.add(status);
 		view.add(progress);
 		view.add(sortSimilar, "wrap");
-		view.add(bufferLevel);
+		view.add(queueSize);
 		view.add(sortFilter, "wrap");
 		view.add(groupScrollPane, "growy");
 		view.add(hammingDistance, "growx");
@@ -380,6 +383,20 @@ public class SimilarImageView implements StatisticsChangedListener {
 	@Subscribe
 	private void updateMenuOnUserTagChange(GuiUserTagChangedEvent event) {
 		groups.setComponentPopupMenu(new OperationsMenu(utsController));
+	}
+
+	private void updateProgress() {
+		Timer timer = new Timer("Progress updater", true);
+
+		int intervall = 1000;
+
+		timer.schedule(new TimerTask() {
+
+			@Override
+			public void run() {
+				queueSize.setText(QUEUE_LABEL + controller.getNumberOfQueuedTasks());
+			}
+		}, intervall, intervall);
 	}
 
 	/**
