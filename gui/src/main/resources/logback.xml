@@ -1,3 +1,4 @@
+<!-- gui module logback configuration -->
 <configuration>
 
 	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
