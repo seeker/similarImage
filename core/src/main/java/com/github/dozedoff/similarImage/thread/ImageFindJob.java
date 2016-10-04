@@ -19,15 +19,16 @@ package com.github.dozedoff.similarImage.thread;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Iterator;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Scan the given directory and all sub-directories for image files and check
- * them against the database. Found files that have not been hashed will be
- * added as {@link ImageHashJob}.
+ * Scan the given directory and all sub-directories and pass the found directories and files to the {@link ImageFindJobVisitor}.
  * 
  * @author Nicholas Wright
  *
@@ -37,6 +38,14 @@ public class ImageFindJob implements Runnable {
 	private final String searchPath;
 	private final ImageFindJobVisitor visitor;
 
+	/**
+	 * Create a new {@link ImageFindJob} with the given visitor and starting path.
+	 * 
+	 * @param searchPath
+	 *            Path to start search
+	 * @param visitor
+	 *            for handling directories and files
+	 */
 	public ImageFindJob(String searchPath, ImageFindJobVisitor visitor) {
 		this.searchPath = searchPath;
 		this.visitor = visitor;
@@ -46,8 +55,19 @@ public class ImageFindJob implements Runnable {
 	public void run() {
 		logger.info("Scanning {} for images...", searchPath);
 
-		try {
-			Files.walkFileTree(Paths.get(searchPath), visitor);
+		try (Stream<Path> stream = Files.walk(Paths.get(searchPath));) {
+
+			Iterator<Path> iter = stream.iterator();
+
+			while (iter.hasNext()) {
+				visitor.visitFile(iter.next(), null);
+
+				if (Thread.currentThread().isInterrupted()) {
+					logger.info("Image find job interrupted");
+					break;
+				}
+			}
+
 		} catch (IOException e) {
 			logger.error("Failed to walk file tree", e);
 		}

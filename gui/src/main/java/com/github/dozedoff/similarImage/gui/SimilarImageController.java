@@ -80,6 +80,7 @@ public class SimilarImageController {
 	private SimilarImageView gui;
 	private final ExecutorService threadPool;
 	private final Statistics statistics;
+	private final LinkedList<Thread> tasks = new LinkedList<>();
 
 	/**
 	 * Performs actions initiated by the user
@@ -96,13 +97,10 @@ public class SimilarImageController {
 	 */
 	public SimilarImageController(Persistence persistence, DisplayGroupView displayGroup, ExecutorService threadPool,
 			Statistics statistics) {
-		this(persistence,
-				null, null,
-				displayGroup, threadPool, statistics);
+		this(persistence, null, null, displayGroup, threadPool, statistics);
 
 		try {
-			this.filterRepository = new OrmliteFilterRepository(
-					DaoManager.createDao(persistence.getCs(), FilterRecord.class),
+			this.filterRepository = new OrmliteFilterRepository(DaoManager.createDao(persistence.getCs(), FilterRecord.class),
 					DaoManager.createDao(persistence.getCs(), Thumbnail.class));
 
 			this.tagRepository = new OrmliteTagRepository(DaoManager.createDao(persistence.getCs(), Tag.class));
@@ -128,8 +126,7 @@ public class SimilarImageController {
 	 * @param statistics
 	 *            tracking stats
 	 */
-	public SimilarImageController(Persistence persistence, FilterRepository filterRepository,
-			TagRepository tagRepository,
+	public SimilarImageController(Persistence persistence, FilterRepository filterRepository, TagRepository tagRepository,
 			DisplayGroupView displayGroup, ExecutorService threadPool, Statistics statistics) {
 		this.persistence = persistence;
 		this.filterRepository = filterRepository;
@@ -237,6 +234,11 @@ public class SimilarImageController {
 		}
 	}
 
+	private void startTask(Thread thread) {
+		thread.start();
+		tasks.add(thread);
+	}
+
 	public void indexImages(String path) {
 		HashAttribute hashAttribute = new HashAttribute(HashNames.DEFAULT_DCT_HASH_2);
 
@@ -258,13 +260,13 @@ public class SimilarImageController {
 		// TODO use a priority queue to let FindJobs run first
 		Thread t = new Thread(new ImageFindJob(path, visitor));
 		t.setName("Image Find Job");
-		t.start();
+		startTask(t);
 	}
 
 	public void sortDuplicates(int hammingDistance, String path) {
 		setGUIStatus(GUI_MSG_SORTING);
 		Thread t = new ImageSorter(hammingDistance, path, persistence);
-		t.start();
+		startTask(t);
 	}
 
 	public void sortFilter(int hammingDistance, Tag tag, String path) {
@@ -272,14 +274,25 @@ public class SimilarImageController {
 		if (path.isEmpty()) {
 			t = new FilterSorter(hammingDistance, tag, persistence, filterRepository, tagRepository);
 		} else {
-			t = new FilterSorter(hammingDistance, tag, persistence, filterRepository, tagRepository,
-					Paths.get(path));
+			t = new FilterSorter(hammingDistance, tag, persistence, filterRepository, tagRepository, Paths.get(path));
 		}
-		t.start();
+		startTask(t);
 	}
 
+	/**
+	 * Stop all running Jobs.
+	 */
 	public void stopWorkers() {
-		logger.info("Clearing all queues...");
+		logger.info("Stopping running jobs...");
+
+		for (Thread t : tasks) {
+			t.interrupt();
+		}
+
+		tasks.clear();
+
+		logger.info("Clearing queue...");
+		((ThreadPoolExecutor) threadPool).getQueue().clear();
 	}
 
 	/**
