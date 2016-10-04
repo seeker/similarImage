@@ -18,8 +18,12 @@
 package com.github.dozedoff.similarImage.app;
 
 import java.sql.SQLException;
+import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,5 +97,15 @@ public class SimilarImage {
 				new UserTagSettingController(DaoManager.createDao(persistence.getCs(), Tag.class)), filterRepository);
 
 		controller.setGui(gui);
+
+		logImageReaders();
+	}
+
+	private void logImageReaders() {
+		Iterator<ImageReader> readers = ImageIO.getImageReadersByFormatName("JPEG");
+		logger.debug("Loaded JPEG readers:");
+		while (readers.hasNext()) {
+			logger.debug("reader: " + readers.next());
+		}
 	}
 }
