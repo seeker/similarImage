@@ -50,7 +50,7 @@ public class ImageHashJob implements Runnable {
 	private final ImagePHash hasher;
 	private final Statistics statistics;
 	private HashAttribute hashAttribute;
-	
+
 	/**
 	 * Create a class that will hash an image an store the result.
 	 * 
@@ -102,6 +102,8 @@ public class ImageHashJob implements Runnable {
 		} catch (SQLException e) {
 			LOGGER.warn("Failed to query database - {}", e.getMessage());
 			statistics.incrementFailedFiles();
+		} catch (ArrayIndexOutOfBoundsException e) {
+			LOGGER.error("Failed to process image: {}", e.toString());
 		}
 	}
 
