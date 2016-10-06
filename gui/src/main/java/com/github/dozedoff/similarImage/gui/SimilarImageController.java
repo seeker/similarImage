@@ -34,9 +34,16 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.filefilter.SimpleImageFilter;
 import com.github.dozedoff.commonj.hash.ImagePHash;
-import com.github.dozedoff.similarImage.db.CustomUserTag;
+import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.db.Tag;
+import com.github.dozedoff.similarImage.db.Thumbnail;
+import com.github.dozedoff.similarImage.db.repository.FilterRepository;
+import com.github.dozedoff.similarImage.db.repository.RepositoryException;
+import com.github.dozedoff.similarImage.db.repository.TagRepository;
+import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteFilterRepository;
+import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteTagRepository;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiGroupEvent;
@@ -65,6 +72,8 @@ public class SimilarImageController {
 	private final int THUMBNAIL_DIMENSION = 500;
 
 	private final Persistence persistence;
+	private FilterRepository filterRepository;
+	private TagRepository tagRepository;
 	private Multimap<Long, ImageRecord> results;
 	private DisplayGroupView displayGroup;
 	private SimilarImageView gui;
@@ -86,8 +95,44 @@ public class SimilarImageController {
 	 */
 	public SimilarImageController(Persistence persistence, DisplayGroupView displayGroup, ExecutorService threadPool,
 			Statistics statistics) {
-		this.persistence = persistence;
+		this(persistence,
+				null, null,
+				displayGroup, threadPool, statistics);
 
+		try {
+			this.filterRepository = new OrmliteFilterRepository(
+					DaoManager.createDao(persistence.getCs(), FilterRecord.class),
+					DaoManager.createDao(persistence.getCs(), Thumbnail.class));
+
+			this.tagRepository = new OrmliteTagRepository(DaoManager.createDao(persistence.getCs(), Tag.class));
+		} catch (SQLException | RepositoryException e) {
+			logger.error("Failed to setup repository");
+		}
+	}
+
+	/**
+	 * Performs actions initiated by the user
+	 * 
+	 * @param persistence
+	 *            legacy DAO god class
+	 * @param filterRepository
+	 *            filter datasource access
+	 * @param tagRepository
+	 *            tag datasource access
+	 * @param displayGroup
+	 *            view for displaying images for groups
+	 * 
+	 * @param threadPool
+	 *            for performing tasks
+	 * @param statistics
+	 *            tracking stats
+	 */
+	public SimilarImageController(Persistence persistence, FilterRepository filterRepository,
+			TagRepository tagRepository,
+			DisplayGroupView displayGroup, ExecutorService threadPool, Statistics statistics) {
+		this.persistence = persistence;
+		this.filterRepository = filterRepository;
+		this.tagRepository = tagRepository;
 		results = MultimapBuilder.hashKeys().hashSetValues().build();
 		this.displayGroup = displayGroup;
 		this.threadPool = threadPool;
@@ -159,7 +204,7 @@ public class SimilarImageController {
 				OperationsMenu opMenu;
 				try {
 					opMenu = new OperationsMenu(info, persistence,
-							new UserTagSettingController(DaoManager.createDao(persistence.getCs(), CustomUserTag.class)));
+							new UserTagSettingController(DaoManager.createDao(persistence.getCs(), Tag.class)));
 					DuplicateEntryController entry = new DuplicateEntryController(info, imageDim);
 					new DuplicateEntryView(entry, opMenu);
 					images.add(entry);
@@ -221,12 +266,13 @@ public class SimilarImageController {
 		t.start();
 	}
 
-	public void sortFilter(int hammingDistance, String reason, String path) {
+	public void sortFilter(int hammingDistance, Tag tag, String path) {
 		Thread t;
 		if (path.isEmpty()) {
-			t = new FilterSorter(hammingDistance, reason, persistence);
+			t = new FilterSorter(hammingDistance, tag, persistence, filterRepository, tagRepository);
 		} else {
-			t = new FilterSorter(hammingDistance, reason, persistence, Paths.get(path));
+			t = new FilterSorter(hammingDistance, tag, persistence, filterRepository, tagRepository,
+					Paths.get(path));
 		}
 		t.start();
 	}

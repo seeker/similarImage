@@ -28,11 +28,14 @@ import org.slf4j.LoggerFactory;
 import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.db.Tag;
+import com.github.dozedoff.similarImage.db.repository.FilterRepository;
+import com.github.dozedoff.similarImage.db.repository.RepositoryException;
+import com.github.dozedoff.similarImage.db.repository.TagRepository;
 import com.github.dozedoff.similarImage.duplicate.RecordSearch;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiGroupEvent;
 import com.github.dozedoff.similarImage.event.GuiStatusEvent;
-import com.github.dozedoff.similarImage.util.StringUtil;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
@@ -48,9 +51,11 @@ public class FilterSorter extends Thread {
 	private final Logger logger = LoggerFactory.getLogger(FilterSorter.class);
 
 	private int hammingDistance;
-	private String reason;
+	private Tag tag;
 	private List<ImageRecord> dBrecords;
 	private Persistence persistence;
+	private final FilterRepository filterRepository;
+	private final TagRepository tagRepository;
 	private Path scope;
 
 	/**
@@ -61,47 +66,56 @@ public class FilterSorter extends Thread {
 	 * @param tag
 	 *            to search for
 	 * @param persistence
-	 *            instance for database access
+	 *            legacy DAO god class
+	 * @param filterRepository
+	 *            filter datasource access
+	 * @param tagRepository
+	 *            tag datasource access
 	 */
-	public FilterSorter(int hammingDistance, String tag, Persistence persistence) {
-		this.hammingDistance = hammingDistance;
-		this.reason = tag;
-		this.persistence = persistence;
-
-		dBrecords = Collections.emptyList();
+	public FilterSorter(int hammingDistance, Tag tag, Persistence persistence, FilterRepository filterRepository,
+			TagRepository tagRepository) {
+		this(hammingDistance, tag, persistence, filterRepository, tagRepository, null);
 	}
 
 	/**
-	 * Create a class that will search for matches of the given tag within the hamming distance, only records starting with the given path
-	 * are considered.
+	 * Create a class that will search for matches of the given tag within the hamming distance, only records starting
+	 * with the given path are considered.
 	 * 
 	 * @param hammingDistance
 	 *            maximum distance to consider for a match
 	 * @param tag
 	 *            to search for
 	 * @param persistence
-	 *            instance for database access
+	 *            legacy DAO god class
+	 * @param filterRepository
+	 *            filter datasource access
+	 * @param tagRepository
+	 *            tag datasource access
 	 * @param scope
 	 *            limit results to this path
 	 */
-	public FilterSorter(int hammingDistance, String tag, Persistence persistence, Path scope) {
+	public FilterSorter(int hammingDistance, Tag tag, Persistence persistence, FilterRepository filterRepository,
+			TagRepository tagRepository,
+			Path scope) {
 		this.hammingDistance = hammingDistance;
-		this.reason = tag;
+		this.tag = tag;
 		this.persistence = persistence;
+		this.filterRepository = filterRepository;
+		this.tagRepository = tagRepository;
 		this.scope = scope;
 
 		dBrecords = Collections.emptyList();
 	}
 
-	private Multimap<Long, ImageRecord> getFilterMatches(RecordSearch recordSearch, String sanitizedTag) {
+	private Multimap<Long, ImageRecord> getFilterMatches(RecordSearch recordSearch, Tag tag) {
 		Multimap<Long, ImageRecord> uniqueGroups = MultimapBuilder.hashKeys().hashSetValues().build();
 		List<FilterRecord> matchingFilters = Collections.emptyList();
 
 		try {
-			matchingFilters = persistence.getAllFilters(sanitizedTag);
-			logger.info("Found {} filters for tag {}", matchingFilters.size(), sanitizedTag);
-		} catch (SQLException e) {
-			logger.error("Aborted tag search for {}, reason: {}", sanitizedTag, e.getMessage());
+			matchingFilters = FilterRecord.getTags(filterRepository, tag);
+			logger.info("Found {} filters for tag {}", matchingFilters.size(), tag.getTag());
+		} catch (RepositoryException e) {
+			logger.error("Aborted tag search for {}, reason: {}", tag.getTag(), e.getMessage());
 		}
 
 		for (FilterRecord filter : matchingFilters) {
@@ -121,7 +135,6 @@ public class FilterSorter extends Thread {
 		Stopwatch sw = Stopwatch.createStarted();
 
 		RecordSearch rs = new RecordSearch();
-		String sanitizedTag = StringUtil.sanitizeTag(reason);
 		Multimap<Long, ImageRecord> groups = MultimapBuilder.hashKeys().hashSetValues().build();
 
 		try {
@@ -132,10 +145,10 @@ public class FilterSorter extends Thread {
 			}
 
 			rs.build(dBrecords);
-			groups = getFilterMatches(rs, sanitizedTag);
+			groups = getFilterMatches(rs, tag);
 
 			guiEvents.post(new GuiStatusEvent("" + groups.size() + " Groups"));
-			logger.info("Found {} groups for tag {} in {}", groups.size(), sanitizedTag, sw.toString());
+			logger.info("Found {} groups for tag {} in {}", groups.size(), tag.getTag(), sw.toString());
 		} catch (SQLException e) {
 			guiEvents.post(new GuiStatusEvent("Database error"));
 			logger.warn("Failed to load from database - {}", e.getMessage());

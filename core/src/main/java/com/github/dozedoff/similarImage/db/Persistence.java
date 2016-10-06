@@ -20,6 +20,7 @@ package com.github.dozedoff.similarImage.db;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -27,7 +28,11 @@ import java.util.concurrent.Callable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.dozedoff.similarImage.util.StringUtil;
+import com.github.dozedoff.similarImage.db.repository.FilterRepository;
+import com.github.dozedoff.similarImage.db.repository.RepositoryException;
+import com.github.dozedoff.similarImage.db.repository.TagRepository;
+import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteFilterRepository;
+import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteTagRepository;
 import com.j256.ormlite.dao.CloseableWrappedIterable;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
@@ -46,9 +51,14 @@ public class Persistence {
 	private final static String dbPrefix = "jdbc:sqlite:";
 
 	Dao<ImageRecord, String> imageRecordDao;
-	Dao<FilterRecord, Long> filterRecordDao;
+	Dao<FilterRecord, Integer> filterRecordDao;
 	Dao<BadFileRecord, String> badFileRecordDao;
 	Dao<IgnoreRecord, Long> ignoreRecordDao;
+	Dao<Thumbnail, Integer> thumbnailDao;
+	Dao<Tag, Long> tagDao;
+
+	private FilterRepository filterRepository;
+	private TagRepository tagRepository;
 
 	private final ConnectionSource cs;
 
@@ -71,8 +81,10 @@ public class Persistence {
 			setupDatabase(cs);
 			setupDAO(cs);
 			createPreparedStatements();
+			filterRepository = new OrmliteFilterRepository(filterRecordDao, thumbnailDao);
+			tagRepository = new OrmliteTagRepository(tagDao);
 			logger.info("Loaded database");
-		} catch (SQLException e) {
+		} catch (SQLException | RepositoryException e) {
 			logger.error("Failed to setup database {}", dbPath, e);
 			throw new RuntimeException("Failed to setup database" + dbPath);
 		}
@@ -96,10 +108,11 @@ public class Persistence {
 
 		logger.info("Setting up database tables...");
 		TableUtils.createTableIfNotExists(cs, ImageRecord.class);
+		TableUtils.createTableIfNotExists(cs, Tag.class);
 		TableUtils.createTableIfNotExists(cs, FilterRecord.class);
 		TableUtils.createTableIfNotExists(cs, BadFileRecord.class);
 		TableUtils.createTableIfNotExists(cs, IgnoreRecord.class);
-		TableUtils.createTableIfNotExists(cs, CustomUserTag.class);
+		TableUtils.createTableIfNotExists(cs, Tag.class);
 		TableUtils.createTableIfNotExists(cs, Thumbnail.class);
 	}
 
@@ -109,6 +122,8 @@ public class Persistence {
 		filterRecordDao = DaoManager.createDao(cs, FilterRecord.class);
 		badFileRecordDao = DaoManager.createDao(cs, BadFileRecord.class);
 		ignoreRecordDao = DaoManager.createDao(cs, IgnoreRecord.class);
+		thumbnailDao = DaoManager.createDao(cs, Thumbnail.class);
+		tagDao = DaoManager.createDao(cs, Tag.class);
 
 		imageRecordDao.setObjectCache(new LruObjectCache(5000));
 		filterRecordDao.setObjectCache(new LruObjectCache(1000));
@@ -201,16 +216,8 @@ public class Persistence {
 		return imageRecordDao.queryForAll();
 	}
 
-	/**
-	 * Updates an existing {@link FilterRecord} or creates a new one if does not exist.
-	 * 
-	 * @param filter
-	 *            to update or create
-	 * @throws SQLException
-	 *             if there is an issue accessing the database
-	 */
-	public void addFilter(FilterRecord filter) throws SQLException {
-		filterRecordDao.createOrUpdate(filter);
+	private void reThrowSQLException(RepositoryException e) throws SQLException {
+		throw new SQLException(e.getCause());
 	}
 
 	public void addBadFile(BadFileRecord badFile) throws SQLException {
@@ -229,51 +236,14 @@ public class Persistence {
 	 */
 	@Deprecated
 	public boolean filterExists(long pHash) throws SQLException {
-		List<FilterRecord> filter = filterRecordDao.queryForMatchingArgs(new FilterRecord(pHash, null, null));
 
-		return !filter.isEmpty();
-	}
-
-	/**
-	 * Get the filter for the given hash.
-	 * 
-	 * @param pHash
-	 *            to query
-	 * @return {@link FilterRecord} if one is found else null
-	 * @throws SQLException
-	 *             in case of a database error
-	 * @deprecated This will no longer work if a hash can have multiple tags
-	 */
-	@Deprecated
-	public FilterRecord getFilter(long pHash) throws SQLException {
-		List<FilterRecord> matchingFilters = filterRecordDao.queryForMatchingArgs(new FilterRecord(pHash, null, null));
-
-		if (matchingFilters.isEmpty()) {
-			return null;
-		} else {
-			return matchingFilters.get(0);
-		}
-	}
-
-	public List<FilterRecord> getAllFilters() throws SQLException {
-		return filterRecordDao.queryForAll();
-	}
-
-	/**
-	 * Get all {@link FilterRecord} for the given tag. If * is used as the reason, then <b>ALL</b> tags are returned.
-	 * 
-	 * @param reason
-	 *            the tag to search for
-	 * @return a list of all filters matching the tag
-	 * @throws SQLException
-	 *             if a database error occurred
-	 */
-	public List<FilterRecord> getAllFilters(String reason) throws SQLException {
-		if (StringUtil.MATCH_ALL_TAGS.equals(reason)) {
-			return getAllFilters();
-		} else {
-			FilterRecord query = new FilterRecord(0, reason);
-			return filterRecordDao.queryForMatching(query);
+		List<FilterRecord> filter;
+		try {
+			filter = filterRepository.getByHash(pHash);
+			return !filter.isEmpty();
+		} catch (RepositoryException e) {
+			reThrowSQLException(e);
+			return true;
 		}
 	}
 
@@ -281,24 +251,26 @@ public class Persistence {
 	 * Returns a distinct list of all tags currently in use.
 	 * 
 	 * @return list of tags
+	 * @deprecated Use {@link TagRepository#getAll()} instead.
 	 */
+	@Deprecated
 	public List<String> getFilterTags() {
 		List<String> reasons = new LinkedList<String>();
 
-		CloseableWrappedIterable<FilterRecord> iterator = filterRecordDao.getWrappedIterable();
+		List<Tag> tags = Collections.emptyList();
 
-		for (FilterRecord fr : iterator) {
-			String reason = fr.getReason();
+		try {
+			tags = tagRepository.getAll();
+		} catch (RepositoryException e) {
+			logger.error("Failed to load distinct tags: {}", e.toString());
+		}
+
+		for (Tag tag : tags) {
+			String reason = tag.getTag();
 
 			if (!reasons.contains(reason)) {
 				reasons.add(reason);
 			}
-		}
-
-		try {
-			iterator.close();
-		} catch (SQLException e) {
-			logger.warn("Failed to close iterator", e);
 		}
 
 		return reasons;

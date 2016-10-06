@@ -29,7 +29,6 @@ import java.util.Set;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
-import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -50,8 +49,9 @@ import javax.swing.event.ListSelectionListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.dozedoff.similarImage.db.CustomUserTag;
 import com.github.dozedoff.similarImage.db.ImageRecord;
+import com.github.dozedoff.similarImage.db.Tag;
+import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiUserTagChangedEvent;
@@ -84,10 +84,23 @@ public class SimilarImageView implements StatisticsChangedListener {
 	private final UserTagSettingController utsController;
 	final DuplicateOperations duplicateOperations;
 
+	private final FilterRepository filterRepository;
+
+
+	/**
+	 * @deprecated Use constructor with repositories
+	 */
+	@Deprecated
+	public SimilarImageView(SimilarImageController controller, DuplicateOperations duplicateOperations,
+			int maxBufferSize, UserTagSettingController utsController) {
+		this(controller, duplicateOperations, maxBufferSize, utsController, null);
+	}
+
 	public SimilarImageView(SimilarImageController controller, DuplicateOperations duplicateOperations, int maxBufferSize,
-			UserTagSettingController utsController) {
+			UserTagSettingController utsController, FilterRepository filterRepository) {
 		this.controller = controller;
 		this.utsController = utsController;
+		this.filterRepository = filterRepository;
 
 		view = new JFrame();
 
@@ -117,19 +130,9 @@ public class SimilarImageView implements StatisticsChangedListener {
 		}
 	}
 
-	private JComponent buildActiveTagsList(JTextField tagField) {
-		JList<String> activeTags = new JList<String>(duplicateOperations.getFilterTags().toArray(new String[0]));
-		activeTags.addListSelectionListener(new ListSelectionListener() {
-			@Override
-			public void valueChanged(ListSelectionEvent e) {
-				String selectedValue = activeTags.getSelectedValue();
-				if (selectedValue != null) {
-					tagField.setText(selectedValue);
-				}
-			}
-		});
-
-		return new JScrollPane(activeTags);
+	private JList<Tag> buildActiveTagsList() {
+		JList<Tag> activeTags = new JList<Tag>(duplicateOperations.getFilterTags().toArray(new Tag[0]));
+		return activeTags;
 	}
 
 	private void setupComponents() {
@@ -172,16 +175,15 @@ public class SimilarImageView implements StatisticsChangedListener {
 		sortFilter.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				JTextField tag = new JTextField(DEFAULT_TEXTFIELD_WIDTH);
-				tag.setToolTipText("Limit search to Tag. Empty tag or * will select ALL tags");
+				JList<Tag> activeTags = buildActiveTagsList();
 
-				Object[] message = { "Tag: ", tag, "Active Tags:", buildActiveTagsList(tag) };
+				Object[] message = { "Active Tags:", new JScrollPane(activeTags) };
 				JOptionPane pane = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
 				JDialog getTopicDialog = pane.createDialog(null, "Select Tag to use in search");
 				getTopicDialog.setVisible(true);
 
 				if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION) {
-					String r = tag.getText();
+					Tag r = activeTags.getSelectedValue();
 					controller.sortFilter(hammingDistance.getValue(), r, path.getText());
 				}
 			}
@@ -234,6 +236,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 		JMenuItem directoryTag;
 		JMenuItem pruneRecords;
 		JMenuItem userTags;
+		JMenuItem filters;
 
 		directoryTag = new JMenuItem("Tag directory");
 		directoryTag.setToolTipText("Tag all images in a directory and sub-directories");
@@ -246,9 +249,9 @@ public class SimilarImageView implements StatisticsChangedListener {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				JTextField directoryField = new JTextField(DEFAULT_TEXTFIELD_WIDTH);
-				JTextField tagField = new JTextField(DEFAULT_TEXTFIELD_WIDTH);
 
-				Object[] message = { "Directory: ", directoryField, "Tag:", tagField, "Active Tags:", buildActiveTagsList(tagField) };
+				JList<Tag> activeTags = buildActiveTagsList();
+				Object[] message = { "Directory: ", directoryField, "Active Tags:", activeTags };
 
 				JOptionPane pane = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
 				JDialog getTopicDialog = pane.createDialog(null, "Tag all images in directory");
@@ -256,8 +259,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 
 				if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION) {
 					Path selectedPath = Paths.get(directoryField.getText());
-					String tag = tagField.getText();
-					duplicateOperations.markDirectoryAndChildrenAs(selectedPath, tag);
+					duplicateOperations.markDirectoryAndChildrenAs(selectedPath, activeTags.getSelectedValue());
 				}
 			}
 		});
@@ -305,6 +307,14 @@ public class SimilarImageView implements StatisticsChangedListener {
 			}
 		});
 
+		filters = new JMenuItem("Filters");
+		filters.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				new FilterView(filterRepository);
+			}
+		});
+
 		JMenu file = new JMenu("File");
 		file.add(directoryTag);
 		file.add(pruneRecords);
@@ -314,6 +324,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 
 		JMenu settings = new JMenu("Settings");
 		settings.add(userTags);
+		settings.add(filters);
 
 		JMenuBar menuBar = new JMenuBar();
 		menuBar.add(file);
@@ -341,16 +352,16 @@ public class SimilarImageView implements StatisticsChangedListener {
 	}
 
 	private void tagAll(long group) {
-		JTextField tagField = new JTextField(DEFAULT_TEXTFIELD_WIDTH);
+		JList<Tag> activeTags = buildActiveTagsList();
 
-		Object[] message = { "Tag:", tagField, "Active Tags:", buildActiveTagsList(tagField) };
+		Object[] message = { "Active Tags:", new JScrollPane(activeTags) };
 
 		JOptionPane pane = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
 		JDialog getTopicDialog = pane.createDialog(null, "Tag all images");
 		getTopicDialog.setVisible(true);
 
 		if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION) {
-			duplicateOperations.markAll(controller.getGroup(group), tagField.getText());
+			duplicateOperations.markAll(controller.getGroup(group), activeTags.getSelectedValue());
 		}
 	}
 
@@ -411,7 +422,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 		 *            {@link UserTagSettingController} to use
 		 */
 		private void addUserTags(UserTagSettingController tagController) {
-			for (CustomUserTag tag : tagController.getAllUserTags()) {
+			for (Tag tag : tagController.getAllUserTags()) {
 				JMenuItem menu = new JMenuItem("Tag " + tag.toString());
 				menu.addActionListener(new ActionListener() {
 					@Override

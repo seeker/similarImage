@@ -27,7 +27,7 @@ import javax.swing.JList;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 
-import com.github.dozedoff.similarImage.db.CustomUserTag;
+import com.github.dozedoff.similarImage.db.Tag;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -59,13 +59,13 @@ public class UserTagSettingView {
 		JButton removeTag = new JButton("Remove");
 
 
-		DefaultListModel<CustomUserTag> tagModel = new DefaultListModel<CustomUserTag>();
+		DefaultListModel<Tag> tagModel = new DefaultListModel<Tag>();
 
-		for (CustomUserTag tag : controller.getAllUserTags()) {
+		for (Tag tag : controller.getAllUserTags()) {
 			tagModel.addElement(tag);
 		}
 
-		JList<CustomUserTag> tags = new JList<CustomUserTag>(tagModel);
+		JList<Tag> tags = new JList<Tag>(tagModel);
 
 		addTag.addActionListener(new ActionListener() {
 			@Override
@@ -77,7 +77,7 @@ public class UserTagSettingView {
 		removeTag.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				CustomUserTag selectedTag = tags.getSelectedValue();
+				Tag selectedTag = tags.getSelectedValue();
 
 				if (selectedTag != null) {
 					controller.removeTag(selectedTag);

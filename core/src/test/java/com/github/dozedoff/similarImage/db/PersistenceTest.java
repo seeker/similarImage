@@ -34,21 +34,36 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.github.dozedoff.similarImage.db.repository.FilterRepository;
+import com.github.dozedoff.similarImage.db.repository.RepositoryException;
+import com.github.dozedoff.similarImage.db.repository.TagRepository;
+import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteFilterRepository;
+import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteTagRepository;
 import com.j256.ormlite.dao.CloseableWrappedIterable;
 
 public class PersistenceTest {
 	private static final String GUARD_MSG = "Guard condition failed";
 
+	private static final Tag TAG_FROGS = new Tag("frogs");
+	private static final Tag TAG_ANIMALS = new Tag("animals");
+	private static final Tag TAG_OTHER = new Tag("other");
+
 	private Persistence persistence;
+	private FilterRepository filterRepository;
+	private TagRepository tagRepository;
 	private ArrayList<ImageRecord> imageRecords;
 
 	@Before
 	public void setUp() throws Exception {
 		persistence = new Persistence(Files.createTempFile("PersistenceTest", ".db"));
 
+		filterRepository = new OrmliteFilterRepository(persistence.filterRecordDao, persistence.thumbnailDao);
+		tagRepository = new OrmliteTagRepository(persistence.tagDao);
+
 		createImageRecords();
 		persistence.batchAddRecord(imageRecords);
 
+		addTags();
 		addFilterRecords();
 		addBadFilesRecords();
 	}
@@ -64,12 +79,18 @@ public class PersistenceTest {
 		imageRecords.add(new ImageRecord("croak", 3));
 	}
 
-	private void addFilterRecords() throws SQLException {
-		persistence.addFilter(new FilterRecord(3, "frogs"));
-		persistence.addFilter(new FilterRecord(2, "animals"));
+	private void addTags() throws RepositoryException {
+		tagRepository.store(TAG_ANIMALS);
+		tagRepository.store(TAG_FROGS);
+		tagRepository.store(TAG_OTHER);
+	}
 
-		persistence.addFilter(new FilterRecord(0, "other"));
-		persistence.addFilter(new FilterRecord(1, "other"));
+	private void addFilterRecords() throws RepositoryException {
+		filterRepository.store(new FilterRecord(3, TAG_FROGS));
+		filterRepository.store(new FilterRecord(2, TAG_ANIMALS));
+
+		filterRepository.store(new FilterRecord(0, TAG_OTHER));
+		filterRepository.store(new FilterRecord(1, TAG_OTHER));
 	}
 
 	private void addBadFilesRecords() throws SQLException {
@@ -193,15 +214,6 @@ public class PersistenceTest {
 	}
 
 	@Test
-	public void testAddFilter() throws Exception {
-		assertThat(GUARD_MSG, persistence.filterExists(55), is(false));
-
-		persistence.addFilter(new FilterRecord(55, "another", null));
-
-		assertThat(persistence.filterExists(55), is(true));
-	}
-
-	@Test
 	public void testAddBadFile() throws Exception {
 		assertThat(GUARD_MSG, persistence.isBadFile(Paths.get("drEvil")), is(false));
 
@@ -218,54 +230,6 @@ public class PersistenceTest {
 	@Test
 	public void testFilterExistsNonExistingFilter() throws Exception {
 		assertThat(persistence.filterExists(42), is(false));
-	}
-
-	@Test
-	public void testGetFilterExists() throws Exception {
-		assertThat(persistence.getFilter(3), is(new FilterRecord(3, "frogs", null)));
-	}
-
-	@Test
-	public void testGetFilterNonExistant() throws Exception {
-		assertThat(persistence.getFilter(42), nullValue());
-	}
-
-	@Test
-	public void testGetAllFiltersVerifyEntries() throws Exception {
-		List<FilterRecord> filters = persistence.getAllFilters();
-
-		assertThat(
-				filters,
-				hasItems(new FilterRecord(3, "frogs"), new FilterRecord(2, "animals"), new FilterRecord(0, "other"), new FilterRecord(1,
-						"other")));
-	}
-
-	@Test
-	public void testGetAllFiltersVerifySize() throws Exception {
-		List<FilterRecord> filters = persistence.getAllFilters();
-
-		assertThat(filters, hasSize(4));
-	}
-
-	@Test
-	public void testGetAllFiltersStringVerifyEntries() throws Exception {
-		List<FilterRecord> filters = persistence.getAllFilters("other");
-
-		assertThat(filters, hasItems(new FilterRecord(0, "other"), new FilterRecord(1, "other")));
-	}
-
-	@Test
-	public void testGetAllFiltersStringVerifySize() throws Exception {
-		List<FilterRecord> filters = persistence.getAllFilters("other");
-
-		assertThat(filters, hasSize(2));
-	}
-
-	@Test
-	public void testGetAllFiltersStringVerifyAllGroup() throws Exception {
-		List<FilterRecord> filters = persistence.getAllFilters("*");
-
-		assertThat(filters, hasSize(4));
 	}
 
 	@Test

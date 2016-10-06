@@ -17,6 +17,10 @@
  */
 package com.github.dozedoff.similarImage.db;
 
+import java.util.List;
+
+import com.github.dozedoff.similarImage.db.repository.FilterRepository;
+import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
@@ -24,11 +28,11 @@ import com.j256.ormlite.table.DatabaseTable;
 public final class FilterRecord {
 	@DatabaseField(generatedId = true)
 	private int id;
-	@DatabaseField(canBeNull = false, index = true)
+	@DatabaseField(canBeNull = false, index = true, uniqueCombo = true)
 	private long pHash;
-	@DatabaseField(canBeNull = false, index = true)
-	private String tag;
-	@DatabaseField(foreign = true)
+	@DatabaseField(canBeNull = false, index = true, uniqueCombo = true, foreign = true, foreignAutoRefresh = true)
+	private Tag tag;
+	@DatabaseField(foreign = true, foreignAutoRefresh = true)
 	private Thumbnail thumbnail;
 
 	/**
@@ -41,19 +45,21 @@ public final class FilterRecord {
 	}
 
 	/**
+	 * Create a new {@link FilterRecord} without a {@link Thumbnail}.
 	 * 
-	 * @param pHash
-	 * @param reason
-	 * @deprecated Use constructor {@link FilterRecord#FilterRecord(long, String, Thumbnail)} instead.
+	 * @param hash
+	 *            the similarity hash for the image
+	 * @param tag
+	 *            for the image
 	 */
-	@Deprecated
-	public FilterRecord(long pHash, String reason) {
-		this.pHash = pHash;
-		this.tag = reason;
+	public FilterRecord(long hash, Tag tag) {
+		this.pHash = hash;
+		this.tag = tag;
+		this.thumbnail = null;
 	}
 
 	/**
-	 * Create a new record with the given values
+	 * Create a new {@link FilterRecord} with a {@link Thumbnail}.
 	 * 
 	 * @param pHash
 	 *            the similarity hash for the image
@@ -62,7 +68,7 @@ public final class FilterRecord {
 	 * @param thumbnail
 	 *            thumbnail image for the record, can be null
 	 */
-	public FilterRecord(long pHash, String tag, Thumbnail thumbnail) {
+	public FilterRecord(long pHash, Tag tag, Thumbnail thumbnail) {
 		super();
 		this.pHash = pHash;
 		this.tag = tag;
@@ -78,34 +84,39 @@ public final class FilterRecord {
 	}
 
 	/**
-	 * @deprecated Replaced by {@link FilterRecord#getTag()}
-	 * @return The reason for this filter
+	 * Get the {@link Tag} associated with this {@link FilterRecord}.
+	 * 
+	 * @return current {@link Tag}
 	 */
-	@Deprecated
-	public String getReason() {
-		return tag;
-	}
-
-	public String getTag() {
+	public Tag getTag() {
 		return tag;
 	}
 
 	/**
-	 * @deprecated Replaced by {@link FilterRecord#setTag(String)}
-	 * @param reason
-	 *            for this filter
+	 * Set the {@link Tag} for this {@link FilterRecord}.
+	 * 
+	 * @param tag
+	 *            to set
 	 */
-	@Deprecated
-	public void setReason(String reason) {
-		this.tag = reason;
-	}
-
-	public void setTag(String tag) {
+	public void setTag(Tag tag) {
 		this.tag = tag;
 	}
 
 	public Thumbnail getThumbnail() {
 		return thumbnail;
+	}
+
+	public final void setThumbnail(Thumbnail thumbnail) {
+		this.thumbnail = thumbnail;
+	}
+
+	/**
+	 * Checks if a thumbnail is set for this {@link FilterRecord}.
+	 * 
+	 * @return true if a thumbnail is set
+	 */
+	public boolean hasThumbnail() {
+		return thumbnail != null;
 	}
 
 	/**
@@ -160,5 +171,24 @@ public final class FilterRecord {
 			return false;
 		}
 		return true;
+	}
+
+	/**
+	 * Checks for special tags and loads the correct tags. If the tag is * all tags will be loaded.
+	 * 
+	 * @param repository
+	 *            to use for query
+	 * @param tag
+	 *            to load
+	 * @return list of matching tags
+	 * @throws RepositoryException
+	 *             on errors during data access
+	 */
+	public static List<FilterRecord> getTags(FilterRepository repository, Tag tag) throws RepositoryException {
+		if (tag.isMatchAll()) {
+			return repository.getAll();
+		} else {
+			return repository.getByTag(tag);
+		}
 	}
 }
