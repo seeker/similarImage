@@ -29,9 +29,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
+import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
 import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteFilterRepository;
+import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteImageRepository;
 import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteTagRepository;
 import com.j256.ormlite.dao.CloseableWrappedIterable;
 import com.j256.ormlite.dao.Dao;
@@ -59,6 +61,7 @@ public class Persistence {
 
 	private FilterRepository filterRepository;
 	private TagRepository tagRepository;
+	private ImageRepository imageRepository;
 
 	private final ConnectionSource cs;
 
@@ -83,6 +86,8 @@ public class Persistence {
 			createPreparedStatements();
 			filterRepository = new OrmliteFilterRepository(filterRecordDao, thumbnailDao);
 			tagRepository = new OrmliteTagRepository(tagDao);
+			imageRepository = new OrmliteImageRepository(imageRecordDao);
+
 			logger.info("Loaded database");
 		} catch (SQLException | RepositoryException e) {
 			logger.error("Failed to setup database {}", dbPath, e);
@@ -131,8 +136,16 @@ public class Persistence {
 		ignoreRecordDao.setObjectCache(new LruObjectCache(1000));
 	}
 
+	/**
+	 * @deprecated Use {@link ImageRepository} instead.
+	 */
+	@Deprecated
 	public void addRecord(ImageRecord record) throws SQLException {
-		imageRecordDao.createIfNotExists(record);
+		try {
+			imageRepository.store(record);
+		} catch (RepositoryException e) {
+			reThrowSQLException(e);
+		}
 	}
 
 	public void batchAddRecord(final List<ImageRecord> record) throws Exception {
@@ -147,13 +160,28 @@ public class Persistence {
 		});
 	}
 
+	/**
+	 * @deprecated Use {@link ImageRepository} instead.
+	 */
+	@Deprecated
 	public ImageRecord getRecord(Path path) throws SQLException {
-		return imageRecordDao.queryForId(path.toString());
+		try {
+			return imageRepository.getByPath(path);
+		} catch (RepositoryException e) {
+			throw new SQLException(e.getCause());
+		}
 	}
 
+	/**
+	 * @deprecated Use {@link ImageRepository} instead.
+	 */
+	@Deprecated
 	public List<ImageRecord> getRecords(long pHash) throws SQLException {
-		ImageRecord searchRecord = new ImageRecord(null, pHash);
-		return imageRecordDao.queryForMatching(searchRecord);
+		try {
+			return imageRepository.getByHash(pHash);
+		} catch (RepositoryException e) {
+			throw new SQLException(e.getCause());
+		}
 	}
 
 	/**
@@ -163,9 +191,15 @@ public class Persistence {
 	 *            to remove
 	 * @throws SQLException
 	 *             if an error occurs during database operations
+	 * @deprecated Use {@link ImageRepository} instead.
 	 */
+	@Deprecated
 	public void deleteRecord(ImageRecord record) throws SQLException {
-		imageRecordDao.delete(record);
+		try {
+			imageRepository.remove(record);
+		} catch (RepositoryException e) {
+			throw new SQLException(e.getCause());
+		}
 	}
 
 	/**
@@ -175,14 +209,15 @@ public class Persistence {
 	 *            to remove
 	 * @throws SQLException
 	 *             if an error occurs during database operations
+	 * @deprecated Use {@link ImageRepository} instead.
+	 * 
 	 */
+	@Deprecated
 	public void deleteRecord(Collection<ImageRecord> records) {
-		for (ImageRecord rec : records) {
-			try {
-				deleteRecord(rec);
-			} catch (SQLException e) {
-				logger.warn("Failed to delete record for {}: {}", rec.getPath(), e.toString());
-			}
+		try {
+			imageRepository.remove(records);
+		} catch (RepositoryException e) {
+			logger.error("Failed to delete images: {}", e.getCause().toString());
 		}
 	}
 
@@ -212,8 +247,16 @@ public class Persistence {
 		return imageRecordDao.getWrappedIterable();
 	}
 
+	/**
+	 * @deprecated Use {@link ImageRepository} instead.
+	 */
+	@Deprecated
 	public List<ImageRecord> getAllRecords() throws SQLException {
-		return imageRecordDao.queryForAll();
+		try {
+			return imageRepository.getAll();
+		} catch (RepositoryException e) {
+			throw new SQLException(e.getCause());
+		}
 	}
 
 	private void reThrowSQLException(RepositoryException e) throws SQLException {
@@ -284,9 +327,16 @@ public class Persistence {
 		return getFilterTags();
 	}
 
+	/**
+	 * @deprecated Use {@link ImageRepository} instead.
+	 */
+	@Deprecated
 	public List<ImageRecord> filterByPath(Path directory) throws SQLException {
-		filterPrepQuery.setArgumentHolderValue(0, directory.toString() + "%");
-		return imageRecordDao.query(filterPrepQuery);
+		try {
+			return imageRepository.startsWithPath(directory);
+		} catch (RepositoryException e) {
+			throw new SQLException(e.getCause());
+		}
 	}
 
 	public long distinctHashes() throws SQLException {
