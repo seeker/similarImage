@@ -22,7 +22,9 @@ import com.j256.ormlite.table.DatabaseTable;
 
 @DatabaseTable
 public final class ImageRecord implements Comparable<ImageRecord> {
-	@DatabaseField(id = true, canBeNull = false)
+	public static final String PATH_COLUMN_NAME = "path";
+
+	@DatabaseField(id = true, canBeNull = false, columnName = PATH_COLUMN_NAME)
 	String path;
 	@DatabaseField(canBeNull = false)
 	long pHash;
