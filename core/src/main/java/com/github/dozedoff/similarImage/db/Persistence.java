@@ -69,14 +69,26 @@ public class Persistence {
 
 	SelectArg pathArg = new SelectArg();
 
+	/**
+	 * @deprecated Use repositories instead.
+	 */
+	@Deprecated
 	public Persistence() {
 		this(defaultDbPath);
 	}
 
+	/**
+	 * @deprecated Use repositories instead.
+	 */
+	@Deprecated
 	public Persistence(Path dbPath) {
 		this(dbPath.toString());
 	}
 
+	/**
+	 * @deprecated Use repositories instead.
+	 */
+	@Deprecated
 	public Persistence(String dbPath) {
 		try {
 			String fullDbPath = dbPrefix + dbPath;
@@ -148,6 +160,10 @@ public class Persistence {
 		}
 	}
 
+	/**
+	 * @deprecated no replacement.
+	 */
+	@Deprecated
 	public void batchAddRecord(final List<ImageRecord> record) throws Exception {
 		imageRecordDao.callBatchTasks(new Callable<Void>() {
 			@Override
@@ -221,6 +237,10 @@ public class Persistence {
 		}
 	}
 
+	/**
+	 * @deprecated no replacement.
+	 */
+	@Deprecated
 	public boolean isPathRecorded(Path path) throws SQLException {
 		String id = path.toString();
 		ImageRecord record = imageRecordDao.queryForId(id);
@@ -232,6 +252,10 @@ public class Persistence {
 		}
 	}
 
+	/**
+	 * @deprecated no replacement.
+	 */
+	@Deprecated
 	public boolean isBadFile(Path path) throws SQLException {
 		String id = path.toString();
 		BadFileRecord record = badFileRecordDao.queryForId(id);
@@ -243,6 +267,10 @@ public class Persistence {
 		}
 	}
 
+	/**
+	 * @deprecated no replacement.
+	 */
+	@Deprecated
 	public CloseableWrappedIterable<ImageRecord> getImageRecordIterator() {
 		return imageRecordDao.getWrappedIterable();
 	}
@@ -263,6 +291,10 @@ public class Persistence {
 		throw new SQLException(e.getCause());
 	}
 
+	/**
+	 * @deprecated no replacement.
+	 */
+	@Deprecated
 	public void addBadFile(BadFileRecord badFile) throws SQLException {
 		badFileRecordDao.createOrUpdate(badFile);
 	}
@@ -339,14 +371,26 @@ public class Persistence {
 		}
 	}
 
+	/**
+	 * @deprecated no replacement.
+	 */
+	@Deprecated
 	public long distinctHashes() throws SQLException {
 		return imageRecordDao.queryRawValue("SELECT COUNT(DISTINCT `pHash`) FROM `imagerecord`");
 	}
 
+	/**
+	 * @deprecated no replacement.
+	 */
+	@Deprecated
 	public void addIgnore(long pHash) throws SQLException {
 		ignoreRecordDao.createOrUpdate(new IgnoreRecord(pHash));
 	}
 
+	/**
+	 * @deprecated no replacement.
+	 */
+	@Deprecated
 	public boolean isIgnored(long pHash) throws SQLException {
 		IgnoreRecord ir = ignoreRecordDao.queryForId(pHash);
 
@@ -361,7 +405,9 @@ public class Persistence {
 	 * Get the {@link ConnectionSource} for the database.
 	 * 
 	 * @return current {@link ConnectionSource}
+	 * @deprecated Use repository instead
 	 */
+	@Deprecated
 	public final ConnectionSource getCs() {
 		return cs;
 	}
