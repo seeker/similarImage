@@ -39,13 +39,10 @@ import com.j256.ormlite.dao.CloseableWrappedIterable;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.dao.LruObjectCache;
-import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.SelectArg;
 import com.j256.ormlite.support.ConnectionSource;
-import com.j256.ormlite.support.DatabaseConnection;
-import com.j256.ormlite.table.TableUtils;
 
 public class Persistence {
 	private static final Logger logger = LoggerFactory.getLogger(Persistence.class);
@@ -91,9 +88,8 @@ public class Persistence {
 	@Deprecated
 	public Persistence(String dbPath) {
 		try {
-			String fullDbPath = dbPrefix + dbPath;
-			cs = new JdbcConnectionSource(fullDbPath);
-			setupDatabase(cs);
+			SQLiteDatabase db = new SQLiteDatabase(dbPath);
+			cs = db.getCs();
 			setupDAO(cs);
 			createPreparedStatements();
 			filterRepository = new OrmliteFilterRepository(filterRecordDao, thumbnailDao);
@@ -111,26 +107,6 @@ public class Persistence {
 		QueryBuilder<ImageRecord, String> qb;
 		qb = imageRecordDao.queryBuilder();
 		filterPrepQuery = qb.where().like("path", pathArg).prepare();
-	}
-
-	private void setupDatabase(ConnectionSource cs) throws SQLException {
-		logger.info("Setting database config...");
-		DatabaseConnection dbConn = cs.getReadWriteConnection();
-		dbConn.executeStatement("PRAGMA page_size = 4096;", DatabaseConnection.DEFAULT_RESULT_FLAGS);
-		dbConn.executeStatement("PRAGMA cache_size=10000;", DatabaseConnection.DEFAULT_RESULT_FLAGS);
-		dbConn.executeStatement("PRAGMA locking_mode=EXCLUSIVE;", DatabaseConnection.DEFAULT_RESULT_FLAGS);
-		dbConn.executeStatement("PRAGMA synchronous=NORMAL;", DatabaseConnection.DEFAULT_RESULT_FLAGS);
-		dbConn.executeStatement("PRAGMA temp_store = MEMORY;", DatabaseConnection.DEFAULT_RESULT_FLAGS);
-		dbConn.executeStatement("PRAGMA journal_mode=MEMORY;", DatabaseConnection.DEFAULT_RESULT_FLAGS);
-
-		logger.info("Setting up database tables...");
-		TableUtils.createTableIfNotExists(cs, ImageRecord.class);
-		TableUtils.createTableIfNotExists(cs, Tag.class);
-		TableUtils.createTableIfNotExists(cs, FilterRecord.class);
-		TableUtils.createTableIfNotExists(cs, BadFileRecord.class);
-		TableUtils.createTableIfNotExists(cs, IgnoreRecord.class);
-		TableUtils.createTableIfNotExists(cs, Tag.class);
-		TableUtils.createTableIfNotExists(cs, Thumbnail.class);
 	}
 
 	private void setupDAO(ConnectionSource cs) throws SQLException {
