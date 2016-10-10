@@ -88,7 +88,7 @@ public class Persistence {
 	@Deprecated
 	public Persistence(String dbPath) {
 		try {
-			SQLiteDatabase db = new SQLiteDatabase(dbPath);
+			Database db = new SQLiteDatabase(dbPath);
 			cs = db.getCs();
 			setupDAO(cs);
 			createPreparedStatements();

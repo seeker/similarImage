@@ -33,7 +33,7 @@ import com.j256.ormlite.table.TableUtils;
  * 
  * @author Nicholas Wright
  */
-public class SQLiteDatabase {
+public class SQLiteDatabase implements Database {
 	private static final Logger LOGGER = LoggerFactory.getLogger(SQLiteDatabase.class);
 	private final static String DEFAULT_DB_PATH = "similarImage.db";
 	private final static String DB_PREFIX = "jdbc:sqlite:";
@@ -101,6 +101,7 @@ public class SQLiteDatabase {
 	 * 
 	 * @return {@link ConnectionSource} for the database
 	 */
+	@Override
 	public ConnectionSource getCs() {
 		return connectionSource;
 	}
