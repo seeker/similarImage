@@ -96,7 +96,7 @@ public class OrmliteImageRepository implements ImageRepository {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public List<ImageRecord> startsWithPath(Path directory) throws RepositoryException {
+	public synchronized List<ImageRecord> startsWithPath(Path directory) throws RepositoryException {
 		argStartsWithPath.setValue(directory.toString() + "%");
 
 		try {

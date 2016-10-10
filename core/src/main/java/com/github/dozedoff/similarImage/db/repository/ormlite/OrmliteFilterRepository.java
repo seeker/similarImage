@@ -125,9 +125,12 @@ public class OrmliteFilterRepository implements FilterRepository {
 
 		try {
 			if (thumbnailDao.refresh(thumbnail) == 0) {
-				thumbnailHashQueryArg.setValue(thumbnail.getUniqueHash());
+				Thumbnail existingThumbnail = null;
 
-				Thumbnail existingThumbnail = thumbnailDao.queryForFirst(thumbnailHashQuery);
+				synchronized (thumbnailHashQueryArg) {
+					thumbnailHashQueryArg.setValue(thumbnail.getUniqueHash());
+					existingThumbnail = thumbnailDao.queryForFirst(thumbnailHashQuery);
+				}
 
 				if (existingThumbnail == null) {
 					thumbnailDao.create(thumbnail);
