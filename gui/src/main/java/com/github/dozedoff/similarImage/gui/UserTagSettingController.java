@@ -17,7 +17,6 @@
  */
 package com.github.dozedoff.similarImage.gui;
 
-import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -25,9 +24,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.similarImage.db.Tag;
+import com.github.dozedoff.similarImage.db.repository.RepositoryException;
+import com.github.dozedoff.similarImage.db.repository.TagRepository;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiUserTagChangedEvent;
-import com.j256.ormlite.dao.Dao;
 
 /**
  * Performs actions triggered by the GUI.
@@ -37,16 +37,17 @@ import com.j256.ormlite.dao.Dao;
  */
 public class UserTagSettingController {
 	private static final Logger LOGGER = LoggerFactory.getLogger(UserTagSettingController.class);
-	private final Dao<Tag, Long> dao;
+
+	private final TagRepository tagRepository;
 
 	/**
 	 * Create a controller using the given DAO.
 	 * 
-	 * @param dao
-	 *            to use
+	 * @param tagRepository
+	 *            Access to the datasource
 	 */
-	public UserTagSettingController(Dao<Tag, Long> dao) {
-		this.dao = dao;
+	public UserTagSettingController(TagRepository tagRepository) {
+		this.tagRepository = tagRepository;
 	}
 
 	/**
@@ -56,8 +57,8 @@ public class UserTagSettingController {
 	 */
 	public Collection<Tag> getAllUserTags() {
 		try {
-			return dao.queryForAll();
-		} catch (SQLException e) {
+			return tagRepository.getAll();
+		} catch (RepositoryException e) {
 			LOGGER.error("Failed to get user tags: {}", e.toString());
 			return Collections.emptyList();
 		}
@@ -75,9 +76,9 @@ public class UserTagSettingController {
 	 */
 	public void removeTag(Tag tag) {
 		try {
-			dao.delete(tag);
+			tagRepository.remove(tag);
 			triggerUserTagsChangedEvent();
-		} catch (SQLException e) {
+		} catch (RepositoryException e) {
 			LOGGER.error("Failed to delete user tag {}: {}", tag, e.toString());
 		}
 	}
@@ -93,9 +94,9 @@ public class UserTagSettingController {
 		Tag dbTag = new Tag(tag);
 
 		try {
-			dao.create(dbTag);
+			tagRepository.store(dbTag);
 			triggerUserTagsChangedEvent();
-		} catch (SQLException e) {
+		} catch (RepositoryException e) {
 			LOGGER.error("Failed to persist tag {}: {}", tag, e.toString());
 		}
 
