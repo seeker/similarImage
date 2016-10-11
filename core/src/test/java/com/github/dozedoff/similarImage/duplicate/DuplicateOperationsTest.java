@@ -30,7 +30,6 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -45,9 +44,9 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
-import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
+import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
 
@@ -64,13 +63,13 @@ public class DuplicateOperationsTest {
 	private static final Tag TAG_ALL = new Tag("all");
 
 	@Mock
-	private Persistence persistence;
-
-	@Mock
 	private FilterRepository filterRepository;
 
 	@Mock
 	private TagRepository tagRepository;
+
+	@Mock
+	private ImageRepository imageRepository;
 
 	private DuplicateOperations dupOp;
 
@@ -80,7 +79,7 @@ public class DuplicateOperationsTest {
 
 	@Before
 	public void setUp() throws Exception {
-		dupOp = new DuplicateOperations(persistence, filterRepository, tagRepository);
+		dupOp = new DuplicateOperations(filterRepository, tagRepository, imageRepository);
 
 		tempDirectory = Files.createTempDirectory("DuplicateOperationsTest");
 		
@@ -97,7 +96,7 @@ public class DuplicateOperationsTest {
 
 		assertThat(Files.exists(file), is(true));
 
-		verify(persistence).deleteRecord(new ImageRecord(file.toString(), TEST_HASH));
+		verify(imageRepository).remove(new ImageRecord(file.toString(), TEST_HASH));
 		verify(filterRepository).store(new FilterRecord(anyLong(), TAG_DNW));
 	}
 
@@ -113,7 +112,7 @@ public class DuplicateOperationsTest {
 		dupOp.deleteAll(records);
 
 		assertFilesDoNotExist(files);
-		verify(persistence, times(10)).deleteRecord(any(ImageRecord.class));
+		verify(imageRepository, times(10)).remove(any(ImageRecord.class));
 	}
 
 	@Test
@@ -126,14 +125,14 @@ public class DuplicateOperationsTest {
 		dupOp.deleteFile(file);
 
 		assertThat(Files.exists(file), is(false));
-		verify(persistence).deleteRecord(new ImageRecord(file.toString(), 0));
+		verify(imageRepository).remove(new ImageRecord(file.toString(), 0));
 	}
 
 	@Test
 	public void testDeleteFileNull() throws Exception {
 		dupOp.deleteFile(null);
 
-		verify(persistence, never()).deleteRecord(any(ImageRecord.class));
+		verify(imageRepository, never()).remove(any(ImageRecord.class));
 	}
 
 	@Test
@@ -141,7 +140,7 @@ public class DuplicateOperationsTest {
 		createTempTestFiles(1);
 		dupOp.deleteFile(tempDirectory);
 
-		verify(persistence, never()).deleteRecord(any(ImageRecord.class));
+		verify(imageRepository, never()).remove(any(ImageRecord.class));
 	}
 
 	@Test
@@ -149,7 +148,7 @@ public class DuplicateOperationsTest {
 		createTempTestFiles(1);
 		dupOp.deleteFile(tempDirectory.resolve("foobar"));
 
-		verify(persistence).deleteRecord(any(ImageRecord.class));
+		verify(imageRepository).remove(any(ImageRecord.class));
 	}
 
 	@Test
@@ -157,14 +156,14 @@ public class DuplicateOperationsTest {
 		List<Path> files = createTempTestFiles(1);
 		Path file = files.get(0);
 
-		Mockito.doThrow(new SQLException("This is a test")).when(persistence).deleteRecord(new ImageRecord(file.toString(), 0));
+		Mockito.doThrow(new RepositoryException("This is a test")).when(imageRepository).remove(new ImageRecord(file.toString(), 0));
 
 		assertThat(GUARD_MSG, Files.exists(file), is(true));
 
 		dupOp.deleteFile(file);
 
 		assertThat(Files.exists(file), is(true));
-		verify(persistence).deleteRecord(new ImageRecord(file.toString(), 0));
+		verify(imageRepository).remove(new ImageRecord(file.toString(), 0));
 	}
 
 	@Test
@@ -181,7 +180,7 @@ public class DuplicateOperationsTest {
 		assertFilesDoNotExist(files);
 
 		verify(filterRepository, times(RECORD_NUMBER)).store(new FilterRecord(anyLong(), TAG_DNW));
-		verify(persistence, times(RECORD_NUMBER)).deleteRecord(any(ImageRecord.class));
+		verify(imageRepository, times(RECORD_NUMBER)).remove(any(ImageRecord.class));
 	}
 
 	@Test
@@ -201,7 +200,7 @@ public class DuplicateOperationsTest {
 		guardFilesExist(files);
 
 		verify(filterRepository, times(RECORD_NUMBER)).store(new FilterRecord(anyLong(), TAG_DNW));
-		verify(persistence, never()).deleteRecord(any(ImageRecord.class));
+		verify(imageRepository, never()).remove(any(ImageRecord.class));
 	}
 
 	@Test
@@ -211,7 +210,7 @@ public class DuplicateOperationsTest {
 
 		dupOp.markAs(file, "foo");
 
-		verify(persistence).getRecord(any(Path.class));
+		verify(imageRepository).getByPath(any(Path.class));
 		verify(filterRepository, never()).store(any(FilterRecord.class));
 	}
 
@@ -220,7 +219,7 @@ public class DuplicateOperationsTest {
 		List<Path> files = createTempTestFiles(1);
 		Path file = files.get(0);
 
-		when(persistence.getRecord(file)).thenReturn(new ImageRecord(file.toString(), TEST_HASH));
+		when(imageRepository.getByPath(file)).thenReturn(new ImageRecord(file.toString(), TEST_HASH));
 
 		dupOp.markAs(file, "foo");
 
@@ -232,7 +231,7 @@ public class DuplicateOperationsTest {
 		List<Path> files = createTempTestFiles(1);
 		Path file = files.get(0);
 
-		when(persistence.getRecord(file)).thenThrow(new SQLException("This is a test"));
+		when(imageRepository.getByPath(file)).thenThrow(new RepositoryException("This is a test"));
 
 		dupOp.markAs(file, "foo");
 
@@ -244,7 +243,7 @@ public class DuplicateOperationsTest {
 		List<Path> files = createTempTestFiles(1);
 		Path file = files.get(0);
 
-		when(persistence.getRecord(file)).thenReturn(new ImageRecord(file.toString(), 42));
+		when(imageRepository.getByPath(file)).thenReturn(new ImageRecord(file.toString(), 42));
 
 		dupOp.markAs(file, "foo");
 
@@ -257,7 +256,7 @@ public class DuplicateOperationsTest {
 
 		dupOp.markDirectoryAs(tempDirectory, "foo");
 
-		verify(persistence, times(3)).getRecord(any(Path.class));
+		verify(imageRepository, times(3)).getByPath(any(Path.class));
 		verify(filterRepository, never()).store(any(FilterRecord.class));
 	}
 
@@ -268,7 +267,7 @@ public class DuplicateOperationsTest {
 
 		dupOp.markDirectoryAs(file, "foo");
 
-		verify(persistence, never()).getRecord(any(Path.class));
+		verify(imageRepository, never()).getByPath(any(Path.class));
 		verify(filterRepository, never()).store(any(FilterRecord.class));
 	}
 
@@ -278,7 +277,7 @@ public class DuplicateOperationsTest {
 
 		dupOp.markDirectoryAs(null, "foo");
 
-		verify(persistence, never()).getRecord(any(Path.class));
+		verify(imageRepository, never()).getByPath(any(Path.class));
 		verify(filterRepository, never()).store(any(FilterRecord.class));
 	}
 
@@ -288,7 +287,7 @@ public class DuplicateOperationsTest {
 
 		dupOp.markDirectoryAs(tempDirectory.resolve("foobar"), "foo");
 
-		verify(persistence, never()).getRecord(any(Path.class));
+		verify(imageRepository, never()).getByPath(any(Path.class));
 		verify(filterRepository, never()).store(any(FilterRecord.class));
 	}
 
@@ -333,7 +332,8 @@ public class DuplicateOperationsTest {
 	public void testFindMissingFiles() throws Exception {
 		Path testFile = Files.createTempFile(tempDirectory, "findmissingfilestest", null);
 		ImageRecord missingRecord = new ImageRecord(testFile.getParent().resolve("foo").toString(), 0);
-		when(persistence.filterByPath(tempDirectory)).thenReturn(Arrays.asList(new ImageRecord(testFile.toString(), 0), missingRecord));
+		when(imageRepository.startsWithPath(tempDirectory))
+				.thenReturn(Arrays.asList(new ImageRecord(testFile.toString(), 0), missingRecord));
 
 		List<ImageRecord> missing = dupOp.findMissingFiles(tempDirectory);
 
