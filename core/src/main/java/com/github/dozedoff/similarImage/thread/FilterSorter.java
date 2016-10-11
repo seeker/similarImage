@@ -30,8 +30,10 @@ import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
+import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
+import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteImageRepository;
 import com.github.dozedoff.similarImage.duplicate.RecordSearch;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiGroupEvent;
@@ -40,6 +42,7 @@ import com.google.common.base.Stopwatch;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.eventbus.EventBus;
+import com.j256.ormlite.dao.DaoManager;
 
 /**
  * Match the hashes corresponding the given tag to the records. This allows the user to search for similar images matching a given tag or
@@ -53,9 +56,9 @@ public class FilterSorter extends Thread {
 	private int hammingDistance;
 	private Tag tag;
 	private List<ImageRecord> dBrecords;
-	private Persistence persistence;
 	private final FilterRepository filterRepository;
 	private final TagRepository tagRepository;
+	private final ImageRepository imageRepository;
 	private Path scope;
 
 	/**
@@ -93,18 +96,74 @@ public class FilterSorter extends Thread {
 	 *            tag datasource access
 	 * @param scope
 	 *            limit results to this path
+	 * 
+	 * @deprecated Use repositories instead of {@link Persistence}.
 	 */
+	@Deprecated
 	public FilterSorter(int hammingDistance, Tag tag, Persistence persistence, FilterRepository filterRepository,
-			TagRepository tagRepository,
-			Path scope) {
+			TagRepository tagRepository, Path scope) {
 		this.hammingDistance = hammingDistance;
 		this.tag = tag;
-		this.persistence = persistence;
 		this.filterRepository = filterRepository;
 		this.tagRepository = tagRepository;
 		this.scope = scope;
 
 		dBrecords = Collections.emptyList();
+
+		try {
+			imageRepository = new OrmliteImageRepository(DaoManager.createDao(persistence.getCs(), ImageRecord.class));
+		} catch (SQLException | RepositoryException e) {
+			throw new RuntimeException("Failed to create repository", e);
+		}
+	}
+
+	/**
+	 * Create a class that will search for matches of the given tag within the hamming distance, only records starting
+	 * with the given path are considered.
+	 * 
+	 * @param hammingDistance
+	 *            maximum distance to consider for a match
+	 * @param tag
+	 *            to search for
+	 * @param filterRepository
+	 *            filter datasource access
+	 * @param tagRepository
+	 *            tag datasource access
+	 * @param imageRepository
+	 *            image datasource access
+	 * @param scope
+	 *            limit results to this path
+	 */
+	public FilterSorter(int hammingDistance, Tag tag, FilterRepository filterRepository, TagRepository tagRepository,
+			ImageRepository imageRepository, Path scope) {
+		this.hammingDistance = hammingDistance;
+		this.tag = tag;
+		this.filterRepository = filterRepository;
+		this.tagRepository = tagRepository;
+		this.imageRepository = imageRepository;
+		this.scope = scope;
+
+		dBrecords = Collections.emptyList();
+	}
+
+	/**
+	 * Create a class that will search for matches of the given tag within the hamming distance, all records are
+	 * considered.
+	 * 
+	 * @param hammingDistance
+	 *            maximum distance to consider for a match
+	 * @param tag
+	 *            to search for
+	 * @param filterRepository
+	 *            filter datasource access
+	 * @param tagRepository
+	 *            tag datasource access
+	 * @param imageRepository
+	 *            image datasource access
+	 */
+	public FilterSorter(int hammingDistance, Tag tag, FilterRepository filterRepository, TagRepository tagRepository,
+			ImageRepository imageRepository) {
+		this(hammingDistance, tag, filterRepository, tagRepository, imageRepository, null);
 	}
 
 	private Multimap<Long, ImageRecord> getFilterMatches(RecordSearch recordSearch, Tag tag) {
@@ -139,9 +198,9 @@ public class FilterSorter extends Thread {
 
 		try {
 			if (scope == null) {
-				dBrecords = persistence.getAllRecords();
+				dBrecords = imageRepository.getAll();
 			} else {
-				dBrecords = persistence.filterByPath(scope);
+				dBrecords = imageRepository.startsWithPath(scope);
 			}
 
 			rs.build(dBrecords);
@@ -149,7 +208,7 @@ public class FilterSorter extends Thread {
 
 			guiEvents.post(new GuiStatusEvent("" + groups.size() + " Groups"));
 			logger.info("Found {} groups for tag {} in {}", groups.size(), tag.getTag(), sw.toString());
-		} catch (SQLException e) {
+		} catch (RepositoryException e) {
 			guiEvents.post(new GuiStatusEvent("Database error"));
 			logger.warn("Failed to load from database - {}", e.getMessage());
 		}
