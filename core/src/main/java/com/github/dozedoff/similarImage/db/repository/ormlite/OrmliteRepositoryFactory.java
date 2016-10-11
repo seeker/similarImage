@@ -91,11 +91,7 @@ public class OrmliteRepositoryFactory {
 	 *             if there was an error with the DAO or database
 	 */
 	public OrmliteFilterRepository buildFilterRepository() throws RepositoryException {
-		try {
 			return new OrmliteFilterRepository(filterRecordDao, thumbnailDao);
-		} catch (SQLException e) {
-			throw new RepositoryException("Failed to create filter repository", e);
-		}
 	}
 
 	/**

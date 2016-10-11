@@ -53,17 +53,21 @@ public class OrmliteFilterRepository implements FilterRepository {
 	 *            dao for the filter table
 	 * @param thumbnailDao
 	 *            dao for the thumbnail table
-	 * @throws SQLException
+	 * @throws RepositoryException
 	 *             if the prepared query setup fails
 	 */
 	public OrmliteFilterRepository(Dao<FilterRecord, Integer> filterDao, Dao<Thumbnail, Integer> thumbnailDao)
-			throws SQLException {
+			throws RepositoryException {
 		this.filterDao = filterDao;
 		this.thumbnailDao = thumbnailDao;
 		
 		thumbnailHashQueryArg = new SelectArg();
-		thumbnailHashQuery = thumbnailDao.queryBuilder().where().eq(THUMB_HASH_COLUMN_NAME, thumbnailHashQueryArg)
-				.prepare();
+		try {
+			thumbnailHashQuery = thumbnailDao.queryBuilder().where().eq(THUMB_HASH_COLUMN_NAME, thumbnailHashQueryArg)
+					.prepare();
+		} catch (SQLException e) {
+			throw new RepositoryException("Failed to setup prepared query", e);
+		}
 	}
 
 	/**
