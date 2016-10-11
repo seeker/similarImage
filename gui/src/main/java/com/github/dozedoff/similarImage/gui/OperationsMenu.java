@@ -54,20 +54,19 @@ public class OperationsMenu {
 
 	private final ImageInfo imageInfo;
 
-	public OperationsMenu(ImageInfo imageInfo, Persistence persistence, UserTagSettingController utsController) {
-		super();
-		try {
-			this.duplicateOperations = new DuplicateOperations(persistence);
-		} catch (RepositoryException e) {
-			LOGGER.error("Failed to setup duplicate operations {}", e.toString());
-		}
-
+	public OperationsMenu(ImageInfo imageInfo, DuplicateOperations dupOps, UserTagSettingController utsController) {
+		this.duplicateOperations = dupOps;
 		this.imageInfo = imageInfo;
 		this.menu = new JPopupMenu();
 		this.utsController = utsController;
 
 		setupPopupMenu();
 		GuiEventBus.getInstance().register(this);
+	}
+
+	@Deprecated
+	public OperationsMenu(ImageInfo imageInfo, Persistence persistence, UserTagSettingController utsController) throws RepositoryException {
+		this(imageInfo, new DuplicateOperations(persistence), utsController);
 	}
 
 	private void setupPopupMenu() {

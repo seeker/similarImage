@@ -206,7 +206,7 @@ public class SimilarImageController {
 					DuplicateEntryController entry = new DuplicateEntryController(info, imageDim);
 					new DuplicateEntryView(entry, opMenu);
 					images.add(entry);
-				} catch (SQLException e) {
+				} catch (SQLException | RepositoryException e) {
 					logger.warn("Failed to create Operations menu for {}: {}", info.getPath(), e.toString());
 				}
 
