@@ -37,14 +37,14 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.db.ImageRecord;
-import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.io.Statistics;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ImageHashJobTest {
 	@Mock
-	private Persistence persistence;
+	private ImageRepository imageRepository;
 
 	@Mock
 	private ImagePHash phw;
@@ -67,19 +67,19 @@ public class ImageHashJobTest {
 	@Before
 	public void setUp() throws Exception {
 		MockitoAnnotations.initMocks(this);
-		imageLoadJob = new ImageHashJob(testImage, phw, persistence, statistics);
+		imageLoadJob = new ImageHashJob(testImage, phw, imageRepository, statistics);
 	}
 
 	@Test
 	public void testRunAddFile() throws Exception {
 		imageLoadJob.run();
 
-		verify(persistence).addRecord(new ImageRecord(testImage.toString(), 0));
+		verify(imageRepository).store(new ImageRecord(testImage.toString(), 0));
 	}
 
 	@Test
 	public void testRunIIOException() throws Exception {
-		Mockito.doThrow(IIOException.class).when(persistence).addRecord(any(ImageRecord.class));
+		Mockito.doThrow(IIOException.class).when(imageRepository).store(any(ImageRecord.class));
 		imageLoadJob.run();
 
 		verify(statistics).incrementFailedFiles();
@@ -95,7 +95,7 @@ public class ImageHashJobTest {
 
 	@Test
 	public void testDoNotWriteExtendedAttributes() throws Exception {
-		Mockito.doThrow(IIOException.class).when(persistence).addRecord(any(ImageRecord.class));
+		Mockito.doThrow(IIOException.class).when(imageRepository).store(any(ImageRecord.class));
 		imageLoadJob.setHashAttribute(hashAttributeMock);
 		imageLoadJob.run();
 
