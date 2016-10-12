@@ -24,7 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
-import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.thread.ImageHashJob;
@@ -38,7 +38,7 @@ import com.github.dozedoff.similarImage.thread.ImageHashJob;
 public class HashingHandler implements HashHandler {
 	private static final Logger LOGGER = LoggerFactory.getLogger(HashingHandler.class);
 
-	private final Persistence persistence;
+	private final ImageRepository imageRepository;
 	private final ImagePHash hasher;
 	private final Statistics statistics;
 	private final HashAttribute hashAttribute;
@@ -52,20 +52,20 @@ public class HashingHandler implements HashHandler {
 	 * 
 	 * @param hasher
 	 *            class that does the hash computation
-	 * @param persistence
-	 *            database access to store the result
+	 * @param imageRepository
+	 *            access to the image datasource
 	 * @param statistics
 	 *            tracking file stats
 	 * @param hashAttribute
 	 *            used to store hashes as extended attributes
 	 */
-	public HashingHandler(ExecutorService threadPool, ImagePHash hasher, Persistence persistence,
+	public HashingHandler(ExecutorService threadPool, ImagePHash hasher, ImageRepository imageRepository,
 			Statistics statistics, HashAttribute hashAttribute) {
-		this.persistence = persistence;
 		this.hasher = hasher;
 		this.statistics = statistics;
 		this.hashAttribute = hashAttribute;
 		this.threadPool = threadPool;
+		this.imageRepository = imageRepository;
 	}
 
 	/**
@@ -79,7 +79,7 @@ public class HashingHandler implements HashHandler {
 	public boolean handle(Path file) {
 		LOGGER.trace("Handling {} with {}", file, HashingHandler.class.getSimpleName());
 
-		ImageHashJob job = new ImageHashJob(file, hasher, persistence, statistics);
+		ImageHashJob job = new ImageHashJob(file, hasher, imageRepository, statistics);
 		job.setHashAttribute(hashAttribute);
 		threadPool.execute(job);
 		return true;

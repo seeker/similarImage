@@ -19,7 +19,6 @@ package com.github.dozedoff.similarImage.handler;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.sql.SQLException;
 
 import javax.management.InvalidAttributeValueException;
 
@@ -27,7 +26,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
-import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.db.repository.ImageRepository;
+import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 
 /**
@@ -40,19 +40,19 @@ public class ExtendedAttributeHandler implements HashHandler {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ExtendedAttributeHandler.class);
 
 	private HashAttribute hashAttribute;
-	private Persistence persistence;
+	private final ImageRepository imageRepository;
 
 	/**
 	 * Sets up the handler to read extended attributes and access the database.
 	 * 
 	 * @param hashAttribute
 	 *            to read the extended attributes
-	 * @param persistence
-	 *            to access the database
+	 * @param imageRepository
+	 *            access to the image datasource
 	 */
-	public ExtendedAttributeHandler(HashAttribute hashAttribute, Persistence persistence) {
+	public ExtendedAttributeHandler(HashAttribute hashAttribute, ImageRepository imageRepository) {
 		this.hashAttribute = hashAttribute;
-		this.persistence = persistence;
+		this.imageRepository = imageRepository;
 	}
 
 	/**
@@ -68,13 +68,13 @@ public class ExtendedAttributeHandler implements HashHandler {
 		if (hashAttribute.areAttributesValid(file)) {
 			LOGGER.trace("{} has valid extended attributes", file);
 			try {
-				persistence.addRecord(new ImageRecord(file.toString(), hashAttribute.readHash(file)));
+				imageRepository.store(new ImageRecord(file.toString(), hashAttribute.readHash(file)));
 				// Successfully
 				LOGGER.trace("Successfully read and stored the hash for {}", file);
 				return true;
 			} catch (InvalidAttributeValueException | IOException e) {
 				LOGGER.error("Failed to read extended attribute from {} ({})", file, e.toString());
-			} catch (SQLException e) {
+			} catch (RepositoryException e) {
 				LOGGER.error("Failed to access database for {} ({})", file, e.toString());
 			}
 		}

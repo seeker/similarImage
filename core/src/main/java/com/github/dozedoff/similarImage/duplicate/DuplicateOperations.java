@@ -26,13 +26,11 @@ import java.nio.file.Paths;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.Callable;
 
 import javax.imageio.ImageIO;
 
@@ -45,18 +43,13 @@ import org.slf4j.LoggerFactory;
 import com.github.dozedoff.commonj.file.DirectoryVisitor;
 import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
-import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.Thumbnail;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
+import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
-import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteFilterRepository;
-import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteTagRepository;
 import com.github.dozedoff.similarImage.util.ImageUtil;
-import com.j256.ormlite.dao.DaoManager;
-import com.j256.ormlite.misc.TransactionManager;
-import com.j256.ormlite.support.ConnectionSource;
 
 public class DuplicateOperations {
 	private static final Logger logger = LoggerFactory.getLogger(DuplicateOperations.class);
@@ -65,52 +58,29 @@ public class DuplicateOperations {
 	private static final int THUMBNAIL_SIZE = Thumbnail.THUMBNAIL_SIZE;
 	private static final String MESSAGE_DIGEST_ALGORITHM = "SHA-256";
 	
-	private final Persistence persistence;
 	private final FilterRepository filterRepository;
 	private final TagRepository tagRepository;
+	private final ImageRepository imageRepository;
 
 	public enum Tags {
 		DNW, BLOCK
 	}
 
 	/**
-	 * Create with the legacy god class. Odd are things will break spectacularly.
-	 * 
-	 * @param persistence
-	 *            legacy DAO god class
-	 * @throws RepositoryException
-	 *             if the repository setup fails
-	 * @deprecated Use {@link DuplicateOperations#DuplicateOperations(Persistence, FilterRepository)}, or things will
-	 *             break.
-	 */
-	@Deprecated
-	public DuplicateOperations(Persistence persistence) throws RepositoryException {
-		this.persistence = persistence;
-
-		ConnectionSource cs = persistence.getCs();
-
-		try {
-			this.filterRepository = new OrmliteFilterRepository(DaoManager.createDao(cs, FilterRecord.class),
-					DaoManager.createDao(cs, Thumbnail.class));
-			this.tagRepository = new OrmliteTagRepository(DaoManager.createDao(cs, Tag.class));
-		} catch (SQLException | RepositoryException e) {
-			throw new RepositoryException("Failed to setup repositories", e);
-		}
-	}
-
-	/**
 	 * Create with the given classes to access the data.
 	 * 
-	 * @param persistence
-	 *            legacy DAO god class
 	 * @param filterRepository
 	 *            Data access for {@link FilterRecord}
+	 * @param tagRepository
+	 *            Data access for {@link Tag}
+	 * @param imageRepository
+	 *            Data access for {@link ImageRecord}
+	 * 
 	 */
-	public DuplicateOperations(Persistence persistence, FilterRepository filterRepository,
-			TagRepository tagRepository) {
-		this.persistence = persistence;
+	public DuplicateOperations(FilterRepository filterRepository, TagRepository tagRepository, ImageRepository imageRepository) {
 		this.filterRepository = filterRepository;
 		this.tagRepository = tagRepository;
+		this.imageRepository = imageRepository;
 	}
 
 	public void moveToDnw(Path path) {
@@ -133,15 +103,9 @@ public class DuplicateOperations {
 	 */
 	public void remove(Collection<ImageRecord> records) {
 		try {
-			TransactionManager.callInTransaction(persistence.getCs(), new Callable<Void>() {
-				@Override
-				public Void call() throws Exception {
-					persistence.deleteRecord(records);
-					return null;
-				}
-			});
-		} catch (SQLException e) {
-			logger.error("Failed to prune records: {}", e.toString());
+			imageRepository.remove(records);
+		} catch (RepositoryException e) {
+			logger.error("Failed to remove images: {}", e.toString());
 		}
 	}
 
@@ -162,11 +126,11 @@ public class DuplicateOperations {
 
 			ImageRecord ir = new ImageRecord(path.toString(), 0);
 
-			persistence.deleteRecord(ir);
+			imageRepository.remove(ir);
 			Files.delete(path);
 		} catch (IOException e) {
 			logger.warn("Failed to delete {} - {}", path, e.getMessage());
-		} catch (SQLException e) {
+		} catch (RepositoryException e) {
 			logger.warn("Failed to remove {} from database - {}", path, e.getMessage());
 		}
 	}
@@ -243,7 +207,7 @@ public class DuplicateOperations {
 	@Deprecated
 	public void markAs(Path path, String reason) {
 		try {
-			ImageRecord ir = persistence.getRecord(path);
+			ImageRecord ir = imageRepository.getByPath(path);
 
 			if (ir == null) {
 				logger.warn("No record found for {}", path);
@@ -253,7 +217,7 @@ public class DuplicateOperations {
 			Tag tag = getTag(reason);
 
 			markAs(ir, tag);
-		} catch (RepositoryException | SQLException e) {
+		} catch (RepositoryException e) {
 			logger.warn(FILTER_ADD_FAILED_MESSAGE, path, e.getMessage());
 		}
 	}
@@ -268,7 +232,7 @@ public class DuplicateOperations {
 	 */
 	public void markAs(Path path, Tag tag) {
 		try {
-			ImageRecord ir = persistence.getRecord(path);
+			ImageRecord ir = imageRepository.getByPath(path);
 
 			if (ir == null) {
 				logger.warn("No record found for {}", path);
@@ -276,7 +240,7 @@ public class DuplicateOperations {
 			}
 
 			markAs(ir, tag);
-		} catch (RepositoryException | SQLException e) {
+		} catch (RepositoryException e) {
 			logger.warn(FILTER_ADD_FAILED_MESSAGE, path, e.getMessage());
 		}
 	}
@@ -458,8 +422,8 @@ public class DuplicateOperations {
 		List<ImageRecord> records = Collections.emptyList();
 
 		try {
-			records = persistence.filterByPath(directory);
-		} catch (SQLException e) {
+			records = imageRepository.startsWithPath(directory);
+		} catch (RepositoryException e) {
 			logger.error("Failed to get records from database: {}", e.toString());
 		}
 
@@ -479,11 +443,7 @@ public class DuplicateOperations {
 	}
 
 	public void ignore(long pHash) {
-		try {
-			persistence.addIgnore(pHash);
-		} catch (SQLException e) {
-			logger.warn("Failed to ignore pHash {} - {}", pHash, e.getMessage());
-		}
+			throw new RuntimeException("Not implemented");
 	}
 
 	/**

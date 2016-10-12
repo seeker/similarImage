@@ -24,7 +24,6 @@ import static org.mockito.Mockito.when;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -38,9 +37,9 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
-import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
+import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
@@ -65,7 +64,7 @@ public class FilterSorterTest {
 	private static final String EXCEPTION_MESSAGE = "Testig...";
 
 	@Mock
-	private Persistence persistenceMock;
+	private ImageRepository imageRepository;
 	
 	@Mock
 	private FilterRepository filterRepository;
@@ -88,8 +87,9 @@ public class FilterSorterTest {
 
 		createRecords();
 
-		when(persistenceMock.getAllRecords()).thenReturn(records);
-		when(persistenceMock.filterByPath(Paths.get(PATH_ZERO))).thenReturn(Arrays.asList(new ImageRecord(PATH_ZERO, 0)));
+		when(imageRepository.getAll()).thenReturn(records);
+		when(imageRepository.startsWithPath(Paths.get(PATH_ZERO)))
+				.thenReturn(Arrays.asList(new ImageRecord(PATH_ZERO, 0)));
 		when(filterRepository.getByTag(TAG_LANDSCAPE))
 				.thenReturn(Arrays.asList(new FilterRecord(0, TAG_LANDSCAPE)));
 
@@ -118,11 +118,11 @@ public class FilterSorterTest {
 	}
 
 	private FilterSorter createSorter(int hammingdistance, Tag tag, Path scope) {
-		return new FilterSorter(hammingdistance, tag, persistenceMock, filterRepository, tagRepository, scope);
+		return new FilterSorter(hammingdistance, tag, filterRepository, tagRepository, imageRepository, scope);
 	}
 
 	private FilterSorter createSorter(int hammingdistance, Tag tag) {
-		return new FilterSorter(hammingdistance, tag, persistenceMock, filterRepository, tagRepository);
+		return new FilterSorter(hammingdistance, tag, filterRepository, tagRepository, imageRepository);
 	}
 
 	private void runCutAndWaitForFinish() throws InterruptedException {
@@ -157,7 +157,7 @@ public class FilterSorterTest {
 
 	@Test
 	public void testRecordLoadException() throws Exception {
-		when(persistenceMock.getAllRecords()).thenThrow(new SQLException(EXCEPTION_MESSAGE));
+		when(imageRepository.getAll()).thenThrow(new RepositoryException(EXCEPTION_MESSAGE));
 
 		cut = createSorter(SEARCH_DISTANCE, TAG_SUNSET);
 		runCutAndWaitForFinish();

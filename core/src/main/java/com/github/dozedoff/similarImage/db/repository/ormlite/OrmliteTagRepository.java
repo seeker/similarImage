@@ -58,7 +58,7 @@ public class OrmliteTagRepository implements TagRepository {
 		}
 	}
 
-	private void prepareStatements() throws SQLException {
+	private synchronized void prepareStatements() throws SQLException {
 		nameArg = new SelectArg();
 		nameQuery = tagDao.queryBuilder().where().eq(Tag.NAME_FIELD_NAME, nameArg).prepare();
 	}
@@ -67,7 +67,7 @@ public class OrmliteTagRepository implements TagRepository {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Tag getByName(String name) throws RepositoryException {
+	public synchronized Tag getByName(String name) throws RepositoryException {
 		try {
 			nameArg.setValue(name);
 			return tagDao.queryForFirst(nameQuery);

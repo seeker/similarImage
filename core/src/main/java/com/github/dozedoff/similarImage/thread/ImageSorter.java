@@ -18,7 +18,6 @@
 package com.github.dozedoff.similarImage.thread;
 
 import java.nio.file.Paths;
-import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -27,7 +26,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
-import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.db.repository.ImageRepository;
+import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.duplicate.DuplicateUtil;
 import com.github.dozedoff.similarImage.duplicate.RecordSearch;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
@@ -43,13 +43,24 @@ public class ImageSorter extends Thread {
 
 	private int hammingDistance;
 	private String path;
-	private Persistence persistence;
+	private final ImageRepository imageRepository;
 
-	public ImageSorter(int hammingDistance, String path, Persistence persistence) {
+	/**
+	 * Create a instance that will sort all images within the given hamming distance. Only images starting with the
+	 * given path will be considered.
+	 * 
+	 * @param hammingDistance
+	 *            maximum distance to match a hash
+	 * @param path
+	 *            only consider images starting with this path
+	 * @param imageRepository
+	 *            access to the image datasource
+	 */
+	public ImageSorter(int hammingDistance, String path, ImageRepository imageRepository) {
 		super();
 		this.hammingDistance = hammingDistance;
 		this.path = path;
-		this.persistence = persistence;
+		this.imageRepository = imageRepository;
 	}
 
 	@Override
@@ -66,12 +77,12 @@ public class ImageSorter extends Thread {
 		try {
 			if (NULL.equals(path) || path.isEmpty()) {
 				logger.info("Loading all records");
-				dBrecords = persistence.getAllRecords();
+				dBrecords = imageRepository.getAll();
 			} else {
 				logger.info("Loading records for path {}", path);
-				dBrecords = persistence.filterByPath(Paths.get(path));
+				dBrecords = imageRepository.startsWithPath(Paths.get(path));
 			}
-		} catch (SQLException e) {
+		} catch (RepositoryException e) {
 			logger.warn("Failed to load records - {}", e.getMessage());
 		}
 

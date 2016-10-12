@@ -30,7 +30,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
-import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiGroupEvent;
 import com.github.dozedoff.similarImage.io.Statistics;
@@ -45,7 +45,7 @@ public class SimilarImageControllerTest {
 	private DisplayGroupView displayGroup;
 
 	@Mock
-	private Persistence persistence;
+	private ImageRepository imageRepository;
 
 	@Mock
 	private Statistics statistics;

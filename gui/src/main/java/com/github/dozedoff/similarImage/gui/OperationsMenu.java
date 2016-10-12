@@ -31,9 +31,7 @@ import javax.swing.JPopupMenu;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.db.Tag;
-import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
@@ -54,14 +52,8 @@ public class OperationsMenu {
 
 	private final ImageInfo imageInfo;
 
-	public OperationsMenu(ImageInfo imageInfo, Persistence persistence, UserTagSettingController utsController) {
-		super();
-		try {
-			this.duplicateOperations = new DuplicateOperations(persistence);
-		} catch (RepositoryException e) {
-			LOGGER.error("Failed to setup duplicate operations {}", e.toString());
-		}
-
+	public OperationsMenu(ImageInfo imageInfo, DuplicateOperations dupOps, UserTagSettingController utsController) {
+		this.duplicateOperations = dupOps;
 		this.imageInfo = imageInfo;
 		this.menu = new JPopupMenu();
 		this.utsController = utsController;

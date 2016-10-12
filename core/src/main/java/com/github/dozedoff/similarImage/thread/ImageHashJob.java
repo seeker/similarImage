@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.SQLException;
 
 import javax.imageio.IIOException;
 
@@ -31,7 +30,8 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.db.ImageRecord;
-import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.db.repository.ImageRepository;
+import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.io.Statistics;
 
@@ -48,7 +48,7 @@ public class ImageHashJob implements Runnable {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ImageHashJob.class);
 	private static final String EXCEPTION_STACKTRACE = "Trace for {} {}";
 
-	private final Persistence persistence;
+	private final ImageRepository imageRepository;
 	private final Path image;
 	private final ImagePHash hasher;
 	private final Statistics statistics;
@@ -61,16 +61,16 @@ public class ImageHashJob implements Runnable {
 	 *            to hash
 	 * @param hasher
 	 *            class that does the hash computation
-	 * @param persistence
-	 *            database access to store the result
+	 * @param imageRepository
+	 *            access to the image datasource
 	 * @param statistics
 	 *            tracking file stats
 	 */
-	public ImageHashJob(Path image, ImagePHash hasher, Persistence persistence, Statistics statistics) {
+	public ImageHashJob(Path image, ImagePHash hasher, ImageRepository imageRepository, Statistics statistics) {
 		this.image = image;
-		this.persistence = persistence;
 		this.hasher = hasher;
 		this.statistics = statistics;
+		this.imageRepository = imageRepository;
 	}
 
 	/**
@@ -98,8 +98,8 @@ public class ImageHashJob implements Runnable {
 		} catch (IOException e) {
 			LOGGER.warn("Failed to load file {}: {}", image, e.toString());
 			statistics.incrementFailedFiles();
-		} catch (SQLException e) {
-			LOGGER.warn("Failed to query database for {}: {}", image, e.toString());
+		} catch (RepositoryException e) {
+			LOGGER.warn("Failed to query repository for {}: {}", image, e.toString());
 			statistics.incrementFailedFiles();
 		} catch (ArrayIndexOutOfBoundsException e) {
 			LOGGER.error("Failed to process image {}: {}", image, e.toString());
@@ -108,7 +108,7 @@ public class ImageHashJob implements Runnable {
 		}
 	}
 
-	private long processFile(Path next) throws SQLException, IOException {
+	private long processFile(Path next) throws RepositoryException, IOException {
 		statistics.incrementProcessedFiles();
 
 		Path filename = next.getFileName();
@@ -117,7 +117,7 @@ public class ImageHashJob implements Runnable {
 				GifImage gi = GifDecoder.read(bis);
 
 				long hash = hasher.getLongHash(gi.getFrame(0));
-				persistence.addRecord(new ImageRecord(next.toString(), hash));
+				imageRepository.store(new ImageRecord(next.toString(), hash));
 				return hash;
 			} else {
 
@@ -126,9 +126,9 @@ public class ImageHashJob implements Runnable {
 		}
 	}
 
-	private long doHash(Path next, InputStream is) throws IOException, SQLException {
+	private long doHash(Path next, InputStream is) throws IOException, RepositoryException {
 		long hash = hasher.getLongHash(is);
-		persistence.addRecord(new ImageRecord(next.toString(), hash));
+		imageRepository.store(new ImageRecord(next.toString(), hash));
 		return hash;
 	}
 

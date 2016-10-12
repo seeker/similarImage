@@ -28,15 +28,14 @@ import javax.imageio.ImageReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.dozedoff.similarImage.db.FilterRecord;
-import com.github.dozedoff.similarImage.db.Persistence;
-import com.github.dozedoff.similarImage.db.Tag;
-import com.github.dozedoff.similarImage.db.Thumbnail;
+import com.github.dozedoff.similarImage.db.Database;
+import com.github.dozedoff.similarImage.db.SQLiteDatabase;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
+import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
-import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteFilterRepository;
-import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteTagRepository;
+import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteRepositoryFactory;
+import com.github.dozedoff.similarImage.db.repository.ormlite.RepositoryFactory;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.gui.DisplayGroupView;
 import com.github.dozedoff.similarImage.gui.SimilarImageController;
@@ -44,8 +43,6 @@ import com.github.dozedoff.similarImage.gui.SimilarImageView;
 import com.github.dozedoff.similarImage.gui.UserTagSettingController;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.thread.NamedThreadFactory;
-import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.dao.DaoManager;
 
 public class SimilarImage {
 	private final static Logger logger = LoggerFactory.getLogger(SimilarImage.class);
@@ -53,7 +50,6 @@ public class SimilarImage {
 	private final String PROPERTIES_FILENAME = "similarImage.properties";
 	private final int PRODUCER_QUEUE_SIZE = 400;
 
-	private Persistence persistence;
 	private ExecutorService threadPool;
 	private Statistics statistics;
 
@@ -79,22 +75,21 @@ public class SimilarImage {
 		threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new NamedThreadFactory(SimilarImage.class.getSimpleName()));
 		Settings settings = new Settings(new SettingsValidator());
 		settings.loadPropertiesFromFile(PROPERTIES_FILENAME);
-		persistence = new Persistence();
 		
-		Dao<FilterRecord, Integer> filterDao = DaoManager.createDao(persistence.getCs(), FilterRecord.class);
-		Dao<Tag, Long> tagDao = DaoManager.createDao(persistence.getCs(), Tag.class);
-		Dao<Thumbnail, Integer> thumbnailDao = DaoManager.createDao(persistence.getCs(), Thumbnail.class);
+		Database database = new SQLiteDatabase();
+		RepositoryFactory repositoryFactory = new OrmliteRepositoryFactory(database);
 		
-		FilterRepository filterRepository = new OrmliteFilterRepository(filterDao, thumbnailDao);
-		TagRepository tagRepository = new OrmliteTagRepository(tagDao);
+		FilterRepository filterRepository = repositoryFactory.buildFilterRepository();
+		TagRepository tagRepository = repositoryFactory.buildTagRepository();
+		ImageRepository imageRepository = repositoryFactory.buildImageRepository();
 		
 		statistics = new Statistics();
-		SimilarImageController controller = new SimilarImageController(persistence, new DisplayGroupView(), threadPool,
-				statistics);
-		SimilarImageView gui = new SimilarImageView(controller,
-				new DuplicateOperations(persistence, filterRepository, tagRepository),
-				PRODUCER_QUEUE_SIZE,
-				new UserTagSettingController(DaoManager.createDao(persistence.getCs(), Tag.class)), filterRepository);
+		DisplayGroupView dgv = new DisplayGroupView();
+		SimilarImageController controller = new SimilarImageController(filterRepository, tagRepository, imageRepository,
+				dgv, threadPool, statistics);
+		DuplicateOperations dupOp = new DuplicateOperations(filterRepository, tagRepository, imageRepository);
+		UserTagSettingController utsc = new UserTagSettingController(tagRepository);
+		SimilarImageView gui = new SimilarImageView(controller, dupOp, PRODUCER_QUEUE_SIZE, utsc, filterRepository);
 
 		controller.setGui(gui);
 
