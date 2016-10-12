@@ -34,7 +34,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
-import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.thread.ImageHashJob;
@@ -48,7 +48,7 @@ public class HashingHandlerTest {
 	private ImagePHash hasher;
 
 	@Mock
-	private Persistence persistence;
+	private ImageRepository imageRepository;
 
 	@Mock
 	private Statistics statistics;
