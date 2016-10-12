@@ -28,18 +28,13 @@ import javax.imageio.ImageReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.dozedoff.similarImage.db.FilterRecord;
-import com.github.dozedoff.similarImage.db.ImageRecord;
-import com.github.dozedoff.similarImage.db.Persistence;
-import com.github.dozedoff.similarImage.db.Tag;
-import com.github.dozedoff.similarImage.db.Thumbnail;
+import com.github.dozedoff.similarImage.db.Database;
+import com.github.dozedoff.similarImage.db.SQLiteDatabase;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
-import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteFilterRepository;
-import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteImageRepository;
-import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteTagRepository;
+import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteRepositoryFactory;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.gui.DisplayGroupView;
 import com.github.dozedoff.similarImage.gui.SimilarImageController;
@@ -47,8 +42,6 @@ import com.github.dozedoff.similarImage.gui.SimilarImageView;
 import com.github.dozedoff.similarImage.gui.UserTagSettingController;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.thread.NamedThreadFactory;
-import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.dao.DaoManager;
 
 public class SimilarImage {
 	private final static Logger logger = LoggerFactory.getLogger(SimilarImage.class);
@@ -81,16 +74,13 @@ public class SimilarImage {
 		threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new NamedThreadFactory(SimilarImage.class.getSimpleName()));
 		Settings settings = new Settings(new SettingsValidator());
 		settings.loadPropertiesFromFile(PROPERTIES_FILENAME);
-		Persistence persistence = new Persistence();
 		
-		Dao<FilterRecord, Integer> filterDao = DaoManager.createDao(persistence.getCs(), FilterRecord.class);
-		Dao<Tag, Long> tagDao = DaoManager.createDao(persistence.getCs(), Tag.class);
-		Dao<Thumbnail, Integer> thumbnailDao = DaoManager.createDao(persistence.getCs(), Thumbnail.class);
-		Dao<ImageRecord, String> imageDao = DaoManager.createDao(persistence.getCs(), ImageRecord.class);
+		Database database = new SQLiteDatabase();
+		OrmliteRepositoryFactory repositoryFactory = new OrmliteRepositoryFactory(database);
 		
-		FilterRepository filterRepository = new OrmliteFilterRepository(filterDao, thumbnailDao);
-		TagRepository tagRepository = new OrmliteTagRepository(tagDao);
-		ImageRepository imageRepository = new OrmliteImageRepository(imageDao);
+		FilterRepository filterRepository = repositoryFactory.buildFilterRepository();
+		TagRepository tagRepository = repositoryFactory.buildTagRepository();
+		ImageRepository imageRepository = repositoryFactory.buildImageRepository();
 		
 		statistics = new Statistics();
 		DisplayGroupView dgv = new DisplayGroupView();
