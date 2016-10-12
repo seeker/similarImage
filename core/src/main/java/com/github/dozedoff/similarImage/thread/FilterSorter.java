@@ -57,7 +57,7 @@ public class FilterSorter extends Thread {
 	private Tag tag;
 	private List<ImageRecord> dBrecords;
 	private final FilterRepository filterRepository;
-	private final TagRepository tagRepository;
+	private final TagRepository tagRepository; // TODO remove unused repository
 	private final ImageRepository imageRepository;
 	private Path scope;
 
@@ -74,7 +74,10 @@ public class FilterSorter extends Thread {
 	 *            filter datasource access
 	 * @param tagRepository
 	 *            tag datasource access
+	 * @deprecated Use {@link FilterSorter#FilterSorter(int, Tag, FilterRepository, TagRepository, ImageRepository)}
+	 *             instead.
 	 */
+	@Deprecated
 	public FilterSorter(int hammingDistance, Tag tag, Persistence persistence, FilterRepository filterRepository,
 			TagRepository tagRepository) {
 		this(hammingDistance, tag, persistence, filterRepository, tagRepository, null);
