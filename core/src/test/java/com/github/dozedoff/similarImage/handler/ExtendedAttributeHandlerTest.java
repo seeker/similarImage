@@ -25,7 +25,6 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.SQLException;
 
 import javax.management.InvalidAttributeValueException;
 
@@ -38,7 +37,8 @@ import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
-import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.db.repository.ImageRepository;
+import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -47,7 +47,7 @@ public class ExtendedAttributeHandlerTest {
 	private HashAttribute hashAttribute;
 
 	@Mock
-	private Persistence persistence;
+	private ImageRepository imageRepository;
 
 	@InjectMocks
 	private ExtendedAttributeHandler cut;
@@ -75,7 +75,7 @@ public class ExtendedAttributeHandlerTest {
 
 	@Test
 	public void testHandleDbError() throws Exception {
-		Mockito.doThrow(SQLException.class).when(persistence).addRecord(any(ImageRecord.class));
+		Mockito.doThrow(RepositoryException.class).when(imageRepository).store(any(ImageRecord.class));
 
 		assertThat(cut.handle(testFile), is(false));
 	}
