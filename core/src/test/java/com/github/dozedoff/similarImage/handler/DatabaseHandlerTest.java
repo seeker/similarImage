@@ -23,7 +23,6 @@ import static org.mockito.Mockito.when;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.SQLException;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -32,13 +31,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.db.ImageRecord;
+import com.github.dozedoff.similarImage.db.repository.ImageRepository;
+import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.io.Statistics;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DatabaseHandlerTest {
 	@Mock
-	private Persistence persistence;
+	private ImageRepository imageRepository;
 
 	@Mock
 	private Statistics statistics;
@@ -48,21 +49,17 @@ public class DatabaseHandlerTest {
 
 	private Path testFile;
 
+	private ImageRecord existingImage;
+
 	@Before
 	public void setUp() throws Exception {
 		testFile = Paths.get("foo");
+		existingImage = new ImageRecord(testFile.toString(), 0);
 	}
 
 	@Test
 	public void testHandleFileFoundGood() throws Exception {
-		when(persistence.isPathRecorded(testFile)).thenReturn(true);
-
-		assertThat(cut.handle(testFile), is(true));
-	}
-
-	@Test
-	public void testHandleFileFoundBad() throws Exception {
-		when(persistence.isBadFile(testFile)).thenReturn(true);
+		when(imageRepository.getByPath(testFile)).thenReturn(existingImage);
 
 		assertThat(cut.handle(testFile), is(true));
 	}
@@ -74,7 +71,7 @@ public class DatabaseHandlerTest {
 
 	@Test
 	public void testHandleDatabaseError() throws Exception {
-		when(persistence.isBadFile(testFile)).thenThrow(new SQLException());
+		when(imageRepository.getByPath(testFile)).thenThrow(new RepositoryException("test"));
 
 		assertThat(cut.handle(testFile), is(false));
 	}

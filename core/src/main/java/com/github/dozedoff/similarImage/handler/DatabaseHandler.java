@@ -23,8 +23,13 @@ import java.sql.SQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.db.repository.ImageRepository;
+import com.github.dozedoff.similarImage.db.repository.RepositoryException;
+import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteImageRepository;
 import com.github.dozedoff.similarImage.io.Statistics;
+import com.j256.ormlite.dao.DaoManager;
 
 /**
  * Handler that queries the database for hashes.
@@ -35,7 +40,7 @@ import com.github.dozedoff.similarImage.io.Statistics;
 public class DatabaseHandler implements HashHandler {
 	private static final Logger LOGGER = LoggerFactory.getLogger(HashingHandler.class);
 
-	private Persistence persistence;
+	private final ImageRepository imageRepository;
 	private Statistics statistics;
 
 	/**
@@ -45,10 +50,31 @@ public class DatabaseHandler implements HashHandler {
 	 *            used to access the database
 	 * @param statistics
 	 *            for stats tracking
+	 * @deprecated Use {@link DatabaseHandler#DatabaseHandler(ImageRepository, Statistics)} instead.
 	 */
+	@Deprecated
 	public DatabaseHandler(Persistence persistence, Statistics statistics) {
-		this.persistence = persistence;
 		this.statistics = statistics;
+
+		try {
+			this.imageRepository = new OrmliteImageRepository(
+					DaoManager.createDao(persistence.getCs(), ImageRecord.class));
+		} catch (RepositoryException | SQLException e) {
+			throw new RuntimeException("Failed to create repository");
+		}
+	}
+
+	/**
+	 * Setup the handler so it can query the database.
+	 * 
+	 * @param imageRepository
+	 *            used to access the image datasource
+	 * @param statistics
+	 *            for stats tracking
+	 */
+	public DatabaseHandler(ImageRepository imageRepository, Statistics statistics) {
+		this.statistics = statistics;
+		this.imageRepository = imageRepository;
 	}
 
 	/**
@@ -68,14 +94,14 @@ public class DatabaseHandler implements HashHandler {
 				statistics.incrementProcessedFiles();
 				return true;
 			}
-		} catch (SQLException e) {
+		} catch (RepositoryException e) {
 			LOGGER.error("Failed to check the database for {} ({})", file, e.toString());
 		}
 
 		return false;
 	}
 
-	private boolean isInDatabase(Path path) throws SQLException {
-		return persistence.isBadFile(path) || persistence.isPathRecorded(path);
+	private boolean isInDatabase(Path path) throws RepositoryException {
+		return imageRepository.getByPath(path) != null;
 	}
 }
