@@ -29,7 +29,10 @@ import com.github.dozedoff.similarImage.db.IgnoreRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.Thumbnail;
+import com.github.dozedoff.similarImage.db.repository.FilterRepository;
+import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
+import com.github.dozedoff.similarImage.db.repository.TagRepository;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.dao.LruObjectCache;
@@ -40,7 +43,7 @@ import com.j256.ormlite.support.ConnectionSource;
  * 
  * @author Nicholas Wright
  */
-public class OrmliteRepositoryFactory {
+public class OrmliteRepositoryFactory implements RepositoryFactory {
 	private static final Logger LOGGER = LoggerFactory.getLogger(OrmliteRepositoryFactory.class);
 	
 	private static final int LARGE_CACHE_SIZE = 5000;
@@ -90,7 +93,8 @@ public class OrmliteRepositoryFactory {
 	 * @throws RepositoryException
 	 *             if there was an error with the DAO or database
 	 */
-	public OrmliteFilterRepository buildFilterRepository() throws RepositoryException {
+	@Override
+	public FilterRepository buildFilterRepository() throws RepositoryException {
 			return new OrmliteFilterRepository(filterRecordDao, thumbnailDao);
 	}
 
@@ -101,7 +105,8 @@ public class OrmliteRepositoryFactory {
 	 * @throws RepositoryException
 	 *             if there was an error with the DAO or database
 	 */
-	public OrmliteImageRepository buildImageRepository() throws RepositoryException {
+	@Override
+	public ImageRepository buildImageRepository() throws RepositoryException {
 		return new OrmliteImageRepository(imageRecordDao);
 	}
 
@@ -112,7 +117,8 @@ public class OrmliteRepositoryFactory {
 	 * @throws RepositoryException
 	 *             if there was an error with the DAO or database
 	 */
-	public OrmliteTagRepository buildTagRepository() throws RepositoryException {
+	@Override
+	public TagRepository buildTagRepository() throws RepositoryException {
 		return new OrmliteTagRepository(tagDao);
 	}
 }

@@ -35,6 +35,7 @@ import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
 import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteRepositoryFactory;
+import com.github.dozedoff.similarImage.db.repository.ormlite.RepositoryFactory;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.gui.DisplayGroupView;
 import com.github.dozedoff.similarImage.gui.SimilarImageController;
@@ -76,7 +77,7 @@ public class SimilarImage {
 		settings.loadPropertiesFromFile(PROPERTIES_FILENAME);
 		
 		Database database = new SQLiteDatabase();
-		OrmliteRepositoryFactory repositoryFactory = new OrmliteRepositoryFactory(database);
+		RepositoryFactory repositoryFactory = new OrmliteRepositoryFactory(database);
 		
 		FilterRepository filterRepository = repositoryFactory.buildFilterRepository();
 		TagRepository tagRepository = repositoryFactory.buildTagRepository();
