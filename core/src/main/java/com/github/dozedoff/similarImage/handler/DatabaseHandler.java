@@ -18,18 +18,13 @@
 package com.github.dozedoff.similarImage.handler;
 
 import java.nio.file.Path;
-import java.sql.SQLException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.dozedoff.similarImage.db.ImageRecord;
-import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
-import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteImageRepository;
 import com.github.dozedoff.similarImage.io.Statistics;
-import com.j256.ormlite.dao.DaoManager;
 
 /**
  * Handler that queries the database for hashes.
@@ -42,27 +37,6 @@ public class DatabaseHandler implements HashHandler {
 
 	private final ImageRepository imageRepository;
 	private Statistics statistics;
-
-	/**
-	 * Setup the handler so it can query the database.
-	 * 
-	 * @param persistence
-	 *            used to access the database
-	 * @param statistics
-	 *            for stats tracking
-	 * @deprecated Use {@link DatabaseHandler#DatabaseHandler(ImageRepository, Statistics)} instead.
-	 */
-	@Deprecated
-	public DatabaseHandler(Persistence persistence, Statistics statistics) {
-		this.statistics = statistics;
-
-		try {
-			this.imageRepository = new OrmliteImageRepository(
-					DaoManager.createDao(persistence.getCs(), ImageRecord.class));
-		} catch (RepositoryException | SQLException e) {
-			throw new RuntimeException("Failed to create repository");
-		}
-	}
 
 	/**
 	 * Setup the handler so it can query the database.

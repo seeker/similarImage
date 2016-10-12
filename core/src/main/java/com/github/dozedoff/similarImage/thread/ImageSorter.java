@@ -18,7 +18,6 @@
 package com.github.dozedoff.similarImage.thread;
 
 import java.nio.file.Paths;
-import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -27,10 +26,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
-import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
-import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteImageRepository;
 import com.github.dozedoff.similarImage.duplicate.DuplicateUtil;
 import com.github.dozedoff.similarImage.duplicate.RecordSearch;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
@@ -38,7 +35,6 @@ import com.github.dozedoff.similarImage.event.GuiGroupEvent;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
-import com.j256.ormlite.dao.DaoManager;
 
 public class ImageSorter extends Thread {
 	private static final Logger logger = LoggerFactory.getLogger(ImageSorter.class);
@@ -48,19 +44,6 @@ public class ImageSorter extends Thread {
 	private int hammingDistance;
 	private String path;
 	private final ImageRepository imageRepository;
-
-	@Deprecated
-	public ImageSorter(int hammingDistance, String path, Persistence persistence) {
-		super();
-		this.hammingDistance = hammingDistance;
-		this.path = path;
-		
-		try {
-			this.imageRepository = new OrmliteImageRepository(DaoManager.createDao(persistence.getCs(), ImageRecord.class));
-		} catch (RepositoryException | SQLException e) {
-			throw new RuntimeException("Filaed to create Repository");
-		}
-	}
 
 	/**
 	 * Create a instance that will sort all images within the given hamming distance. Only images starting with the

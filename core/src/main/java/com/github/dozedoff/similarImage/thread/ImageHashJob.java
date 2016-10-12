@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.SQLException;
 
 import javax.imageio.IIOException;
 
@@ -31,13 +30,10 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.db.ImageRecord;
-import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
-import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteImageRepository;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.io.Statistics;
-import com.j256.ormlite.dao.DaoManager;
 
 import at.dhyan.open_imaging.GifDecoder;
 import at.dhyan.open_imaging.GifDecoder.GifImage;
@@ -57,33 +53,6 @@ public class ImageHashJob implements Runnable {
 	private final ImagePHash hasher;
 	private final Statistics statistics;
 	private HashAttribute hashAttribute;
-
-	/**
-	 * Create a class that will hash an image an store the result.
-	 * 
-	 * @param image
-	 *            to hash
-	 * @param hasher
-	 *            class that does the hash computation
-	 * @param persistence
-	 *            database access to store the result
-	 * @param statistics
-	 *            tracking file stats
-	 * @deprecated Use {@link ImageHashJob#ImageHashJob(Path, ImagePHash, ImageRepository, Statistics)} instead.
-	 */
-	@Deprecated
-	public ImageHashJob(Path image, ImagePHash hasher, Persistence persistence, Statistics statistics) {
-		this.image = image;
-		this.hasher = hasher;
-		this.statistics = statistics;
-
-		try {
-			this.imageRepository = new OrmliteImageRepository(
-					DaoManager.createDao(persistence.getCs(), ImageRecord.class));
-		} catch (RepositoryException | SQLException e) {
-			throw new RuntimeException("Failed to create repository");
-		}
-	}
 
 	/**
 	 * Create a class that will hash an image an store the result.

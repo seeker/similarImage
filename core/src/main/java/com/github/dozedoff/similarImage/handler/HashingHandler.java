@@ -18,22 +18,16 @@
 package com.github.dozedoff.similarImage.handler;
 
 import java.nio.file.Path;
-import java.sql.SQLException;
 import java.util.concurrent.ExecutorService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
-import com.github.dozedoff.similarImage.db.ImageRecord;
-import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
-import com.github.dozedoff.similarImage.db.repository.RepositoryException;
-import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteImageRepository;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.thread.ImageHashJob;
-import com.j256.ormlite.dao.DaoManager;
 
 /**
  * Creates hashing jobs for files using the given hasher.
@@ -49,40 +43,6 @@ public class HashingHandler implements HashHandler {
 	private final Statistics statistics;
 	private final HashAttribute hashAttribute;
 	private final ExecutorService threadPool;
-
-	/**
-	 * Setup the handler so it can hash files and update the database.
-	 * 
-	 * @param threadPool
-	 *            used to execute hashing jobs
-	 * 
-	 * @param hasher
-	 *            class that does the hash computation
-	 * @param persistence
-	 *            database access to store the result
-	 * @param statistics
-	 *            tracking file stats
-	 * @param hashAttribute
-	 *            used to store hashes as extended attributes
-	 * @deprecated Use
-	 *             {@link HashingHandler#HashingHandler(ExecutorService, ImagePHash, ImageRepository, Statistics, HashAttribute)}
-	 *             instead.
-	 */
-	@Deprecated
-	public HashingHandler(ExecutorService threadPool, ImagePHash hasher, Persistence persistence,
-			Statistics statistics, HashAttribute hashAttribute) {
-		this.hasher = hasher;
-		this.statistics = statistics;
-		this.hashAttribute = hashAttribute;
-		this.threadPool = threadPool;
-
-		try {
-			this.imageRepository = new OrmliteImageRepository(
-					DaoManager.createDao(persistence.getCs(), ImageRecord.class));
-		} catch (RepositoryException | SQLException e) {
-			throw new RuntimeException("Failed to create repository");
-		}
-	}
 
 	/**
 	 * Setup the handler so it can hash files and update the database.

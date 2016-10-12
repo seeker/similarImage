@@ -19,7 +19,6 @@ package com.github.dozedoff.similarImage.handler;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.sql.SQLException;
 
 import javax.management.InvalidAttributeValueException;
 
@@ -27,12 +26,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
-import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
-import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteImageRepository;
 import com.github.dozedoff.similarImage.io.HashAttribute;
-import com.j256.ormlite.dao.DaoManager;
 
 /**
  * This handler reads the hash from the extended attributes of a file and stores them in the database.
@@ -45,27 +41,6 @@ public class ExtendedAttributeHandler implements HashHandler {
 
 	private HashAttribute hashAttribute;
 	private final ImageRepository imageRepository;
-
-	/**
-	 * Sets up the handler to read extended attributes and access the database.
-	 * 
-	 * @param hashAttribute
-	 *            to read the extended attributes
-	 * @param persistence
-	 *            to access the database
-	 * @deprecated Use {@link ExtendedAttributeHandler#ExtendedAttributeHandler(HashAttribute, ImageRepository)}
-	 *             instead.
-	 */
-	@Deprecated
-	public ExtendedAttributeHandler(HashAttribute hashAttribute, Persistence persistence) {
-		this.hashAttribute = hashAttribute;
-		try {
-			this.imageRepository = new OrmliteImageRepository(
-					DaoManager.createDao(persistence.getCs(), ImageRecord.class));
-		} catch (RepositoryException | SQLException e) {
-			throw new RuntimeException("Failed to create repository");
-		}
-	}
 
 	/**
 	 * Sets up the handler to read extended attributes and access the database.
