@@ -31,9 +31,7 @@ import javax.swing.JPopupMenu;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.db.Tag;
-import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
@@ -62,11 +60,6 @@ public class OperationsMenu {
 
 		setupPopupMenu();
 		GuiEventBus.getInstance().register(this);
-	}
-
-	@Deprecated
-	public OperationsMenu(ImageInfo imageInfo, Persistence persistence, UserTagSettingController utsController) throws RepositoryException {
-		this(imageInfo, new DuplicateOperations(persistence), utsController);
 	}
 
 	private void setupPopupMenu() {

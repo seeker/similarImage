@@ -26,7 +26,6 @@ import java.nio.file.Paths;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -44,19 +43,13 @@ import org.slf4j.LoggerFactory;
 import com.github.dozedoff.commonj.file.DirectoryVisitor;
 import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
-import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.Thumbnail;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
-import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteFilterRepository;
-import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteImageRepository;
-import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteTagRepository;
 import com.github.dozedoff.similarImage.util.ImageUtil;
-import com.j256.ormlite.dao.DaoManager;
-import com.j256.ormlite.support.ConnectionSource;
 
 public class DuplicateOperations {
 	private static final Logger logger = LoggerFactory.getLogger(DuplicateOperations.class);
@@ -65,62 +58,12 @@ public class DuplicateOperations {
 	private static final int THUMBNAIL_SIZE = Thumbnail.THUMBNAIL_SIZE;
 	private static final String MESSAGE_DIGEST_ALGORITHM = "SHA-256";
 	
-	@Deprecated
-	private final Persistence persistence;
 	private final FilterRepository filterRepository;
 	private final TagRepository tagRepository;
 	private final ImageRepository imageRepository;
 
 	public enum Tags {
 		DNW, BLOCK
-	}
-
-	/**
-	 * Create with the legacy god class. Odd are things will break spectacularly.
-	 * 
-	 * @param persistence
-	 *            legacy DAO god class
-	 * @throws RepositoryException
-	 *             if the repository setup fails
-	 * @deprecated Use {@link DuplicateOperations#DuplicateOperations(Persistence, FilterRepository)}, or things will
-	 *             break.
-	 */
-	@Deprecated
-	public DuplicateOperations(Persistence persistence) throws RepositoryException {
-		this.persistence = persistence;
-
-		ConnectionSource cs = persistence.getCs();
-
-		try {
-			this.filterRepository = new OrmliteFilterRepository(DaoManager.createDao(cs, FilterRecord.class),
-					DaoManager.createDao(cs, Thumbnail.class));
-			this.tagRepository = new OrmliteTagRepository(DaoManager.createDao(cs, Tag.class));
-			this.imageRepository = new OrmliteImageRepository(DaoManager.createDao(cs, ImageRecord.class));
-		} catch (SQLException | RepositoryException e) {
-			throw new RepositoryException("Failed to setup repositories", e);
-		}
-	}
-
-	/**
-	 * Create with the given classes to access the data.
-	 * 
-	 * @param persistence
-	 *            legacy DAO god class
-	 * @param filterRepository
-	 *            Data access for {@link FilterRecord}
-	 * 
-	 * @param tagRepository
-	 *            Data access for {@link TagRepository}
-	 * @deprecated use
-	 *             {@link DuplicateOperations#DuplicateOperations(FilterRepository, TagRepository, ImageRepository)}
-	 */
-	@Deprecated
-	public DuplicateOperations(Persistence persistence, FilterRepository filterRepository, TagRepository tagRepository) {
-		this.persistence = persistence;
-
-		this.filterRepository = filterRepository;
-		this.tagRepository = tagRepository;
-		this.imageRepository = null;
 	}
 
 	/**
@@ -135,7 +78,6 @@ public class DuplicateOperations {
 	 * 
 	 */
 	public DuplicateOperations(FilterRepository filterRepository, TagRepository tagRepository, ImageRepository imageRepository) {
-		this.persistence = null;
 		this.filterRepository = filterRepository;
 		this.tagRepository = tagRepository;
 		this.imageRepository = imageRepository;

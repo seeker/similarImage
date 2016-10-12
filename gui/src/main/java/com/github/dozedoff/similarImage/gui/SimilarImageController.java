@@ -21,7 +21,6 @@ import java.awt.Dimension;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -35,16 +34,12 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.filefilter.SimpleImageFilter;
 import com.github.dozedoff.commonj.hash.ImagePHash;
-import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
-import com.github.dozedoff.similarImage.db.Persistence;
 import com.github.dozedoff.similarImage.db.Tag;
-import com.github.dozedoff.similarImage.db.Thumbnail;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
-import com.github.dozedoff.similarImage.db.repository.RepositoryException;
+import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
-import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteFilterRepository;
-import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteTagRepository;
+import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiGroupEvent;
@@ -63,7 +58,6 @@ import com.github.dozedoff.similarImage.thread.ImageSorter;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.eventbus.Subscribe;
-import com.j256.ormlite.dao.DaoManager;
 
 public class SimilarImageController {
 	private final Logger logger = LoggerFactory.getLogger(SimilarImageController.class);
@@ -72,9 +66,9 @@ public class SimilarImageController {
 
 	private final int THUMBNAIL_DIMENSION = 500;
 
-	private final Persistence persistence;
 	private FilterRepository filterRepository;
 	private TagRepository tagRepository;
+	private ImageRepository imageRepository;
 	private Multimap<Long, ImageRecord> results;
 	private DisplayGroupView displayGroup;
 	private SimilarImageView gui;
@@ -85,50 +79,22 @@ public class SimilarImageController {
 	/**
 	 * Performs actions initiated by the user
 	 * 
-	 * @param persistence
-	 *            database access
-	 * @param displayGroup
-	 *            view for displaying images for groups
-	 * 
-	 * @param threadPool
-	 *            for performing tasks
-	 * @param statistics
-	 *            tracking stats
-	 */
-	public SimilarImageController(Persistence persistence, DisplayGroupView displayGroup, ExecutorService threadPool,
-			Statistics statistics) {
-		this(persistence, null, null, displayGroup, threadPool, statistics);
-
-		try {
-			this.filterRepository = new OrmliteFilterRepository(DaoManager.createDao(persistence.getCs(), FilterRecord.class),
-					DaoManager.createDao(persistence.getCs(), Thumbnail.class));
-
-			this.tagRepository = new OrmliteTagRepository(DaoManager.createDao(persistence.getCs(), Tag.class));
-		} catch (SQLException | RepositoryException e) {
-			logger.error("Failed to setup repository");
-		}
-	}
-
-	/**
-	 * Performs actions initiated by the user
-	 * 
-	 * @param persistence
-	 *            legacy DAO god class
 	 * @param filterRepository
 	 *            filter datasource access
 	 * @param tagRepository
 	 *            tag datasource access
+	 * @param imageRepository
+	 *            image datasource access
 	 * @param displayGroup
 	 *            view for displaying images for groups
-	 * 
 	 * @param threadPool
 	 *            for performing tasks
 	 * @param statistics
 	 *            tracking stats
 	 */
-	public SimilarImageController(Persistence persistence, FilterRepository filterRepository, TagRepository tagRepository,
+	public SimilarImageController(FilterRepository filterRepository, TagRepository tagRepository, ImageRepository imageRepository,
 			DisplayGroupView displayGroup, ExecutorService threadPool, Statistics statistics) {
-		this.persistence = persistence;
+		this.imageRepository = imageRepository;
 		this.filterRepository = filterRepository;
 		this.tagRepository = tagRepository;
 		results = MultimapBuilder.hashKeys().hashSetValues().build();
@@ -194,21 +160,20 @@ public class SimilarImageController {
 
 		logger.info("Loading {} thumbnails for group {}", grouplist.size(), group);
 
+		DuplicateOperations dupOps = new DuplicateOperations(filterRepository, tagRepository, imageRepository);
+
 		for (ImageRecord rec : grouplist) {
 			Path path = Paths.get(rec.getPath());
 
 			if (Files.exists(path)) {
 				ImageInfo info = new ImageInfo(path, rec.getpHash());
 				OperationsMenu opMenu;
-				try {
-					opMenu = new OperationsMenu(info, persistence,
-							new UserTagSettingController(DaoManager.createDao(persistence.getCs(), Tag.class)));
-					DuplicateEntryController entry = new DuplicateEntryController(info, imageDim);
-					new DuplicateEntryView(entry, opMenu);
-					images.add(entry);
-				} catch (SQLException | RepositoryException e) {
-					logger.warn("Failed to create Operations menu for {}: {}", info.getPath(), e.toString());
-				}
+				UserTagSettingController utsc = new UserTagSettingController(tagRepository);
+
+				opMenu = new OperationsMenu(info, dupOps, utsc);
+				DuplicateEntryController entry = new DuplicateEntryController(info, imageDim);
+				new DuplicateEntryView(entry, opMenu);
+				images.add(entry);
 
 			} else {
 				logger.warn("Image {} not found, skipping...", path);
@@ -244,15 +209,15 @@ public class SimilarImageController {
 
 		List<HashHandler> handlers = new ArrayList<HashHandler>();
 
-		handlers.add(new DatabaseHandler(persistence, statistics));
+		handlers.add(new DatabaseHandler(imageRepository, statistics));
 
 		if (ExtendedAttribute.supportsExtendedAttributes(Paths.get(path))) {
-			handlers.add(new ExtendedAttributeHandler(hashAttribute, persistence));
-			handlers.add(new HashingHandler(threadPool, new ImagePHash(), persistence, statistics, hashAttribute));
+			handlers.add(new ExtendedAttributeHandler(hashAttribute, imageRepository));
+			handlers.add(new HashingHandler(threadPool, new ImagePHash(), imageRepository, statistics, hashAttribute));
 			logger.info("Extended attributes are supported for {}", path);
 		} else {
 			logger.info("Extended attributes are NOT supported for {}, disabling...", path);
-			handlers.add(new HashingHandler(threadPool, new ImagePHash(), persistence, statistics, null));
+			handlers.add(new HashingHandler(threadPool, new ImagePHash(), imageRepository, statistics, null));
 		}
 
 		ImageFindJobVisitor visitor = new ImageFindJobVisitor(new SimpleImageFilter(), handlers, statistics);
@@ -265,16 +230,17 @@ public class SimilarImageController {
 
 	public void sortDuplicates(int hammingDistance, String path) {
 		setGUIStatus(GUI_MSG_SORTING);
-		Thread t = new ImageSorter(hammingDistance, path, persistence);
+		Thread t = new ImageSorter(hammingDistance, path, imageRepository);
 		startTask(t);
 	}
 
 	public void sortFilter(int hammingDistance, Tag tag, String path) {
 		Thread t;
 		if (path.isEmpty()) {
-			t = new FilterSorter(hammingDistance, tag, persistence, filterRepository, tagRepository);
+			t = new FilterSorter(hammingDistance, tag, filterRepository, tagRepository, imageRepository);
 		} else {
-			t = new FilterSorter(hammingDistance, tag, persistence, filterRepository, tagRepository, Paths.get(path));
+			t = new FilterSorter(hammingDistance, tag, filterRepository, tagRepository, imageRepository,
+					Paths.get(path));
 		}
 		startTask(t);
 	}
