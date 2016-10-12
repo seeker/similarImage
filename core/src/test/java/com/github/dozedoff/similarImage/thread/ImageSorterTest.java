@@ -24,7 +24,6 @@ import static org.mockito.Mockito.when;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,7 +35,8 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
-import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.db.repository.ImageRepository;
+import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiGroupEvent;
 import com.github.dozedoff.similarImage.io.Statistics;
@@ -56,7 +56,7 @@ public class ImageSorterTest {
 	private static final String TEST_EXCEPTION_MESSAGE = "Testing...";
 
 	@Mock
-	private Persistence persistence;
+	private ImageRepository imageRepository;
 
 	@Mock
 	private Statistics statistics;
@@ -80,11 +80,11 @@ public class ImageSorterTest {
 		path = Files.createTempFile(ImageSorterTest.class.getSimpleName(), ".dat");
 
 		List<ImageRecord> records = buildRecords();
-		when(persistence.getAllRecords()).thenReturn(records);
-		when(persistence.filterByPath(path)).thenReturn(Arrays.asList(recordOneOne, recordTwoOne, recordTwoTwo));
+		when(imageRepository.getAll()).thenReturn(records);
+		when(imageRepository.startsWithPath(path)).thenReturn(Arrays.asList(recordOneOne, recordTwoOne, recordTwoTwo));
 		
 		result = MultimapBuilder.hashKeys().hashSetValues().build();
-		imageSorter = new ImageSorter(DISTANCE, "", persistence);
+		imageSorter = new ImageSorter(DISTANCE, "", imageRepository);
 	}
 
 	/**
@@ -138,7 +138,7 @@ public class ImageSorterTest {
 
 	@Test
 	public void testDistanceOneGroupOne() throws Exception {
-		imageSorter = new ImageSorter(1, "", persistence);
+		imageSorter = new ImageSorter(1, "", imageRepository);
 
 		runCutAndWaitForFinish();
 
@@ -147,7 +147,7 @@ public class ImageSorterTest {
 
 	@Test
 	public void testDistanceOneGroupTwo() throws Exception {
-		imageSorter = new ImageSorter(1, "", persistence);
+		imageSorter = new ImageSorter(1, "", imageRepository);
 
 		runCutAndWaitForFinish();
 
@@ -156,7 +156,7 @@ public class ImageSorterTest {
 
 	@Test
 	public void testDistanceOneGroupThree() throws Exception {
-		imageSorter = new ImageSorter(1, "", persistence);
+		imageSorter = new ImageSorter(1, "", imageRepository);
 
 		runCutAndWaitForFinish();
 
@@ -166,7 +166,7 @@ public class ImageSorterTest {
 
 	@Test
 	public void testDistanceOneGroupSix() throws Exception {
-		imageSorter = new ImageSorter(1, "", persistence);
+		imageSorter = new ImageSorter(1, "", imageRepository);
 
 		runCutAndWaitForFinish();
 
@@ -175,7 +175,7 @@ public class ImageSorterTest {
 
 	@Test
 	public void testNullPath() throws Exception {
-		imageSorter = new ImageSorter(DISTANCE, null, persistence);
+		imageSorter = new ImageSorter(DISTANCE, null, imageRepository);
 
 		runCutAndWaitForFinish();
 
@@ -184,7 +184,7 @@ public class ImageSorterTest {
 
 	@Test
 	public void testTestPath() throws Exception {
-		imageSorter = new ImageSorter(1, TEST_PATH, persistence);
+		imageSorter = new ImageSorter(1, TEST_PATH, imageRepository);
 
 		runCutAndWaitForFinish();
 
@@ -193,8 +193,8 @@ public class ImageSorterTest {
 
 	@Test
 	public void testSqlException() throws Exception {
-		when(persistence.getAllRecords()).thenThrow(new SQLException(TEST_EXCEPTION_MESSAGE));
-		imageSorter = new ImageSorter(1, "", persistence);
+		when(imageRepository.getAll()).thenThrow(new RepositoryException(TEST_EXCEPTION_MESSAGE));
+		imageSorter = new ImageSorter(1, "", imageRepository);
 		
 		runCutAndWaitForFinish();
 

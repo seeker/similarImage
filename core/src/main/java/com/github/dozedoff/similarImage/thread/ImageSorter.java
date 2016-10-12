@@ -28,6 +28,9 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Persistence;
+import com.github.dozedoff.similarImage.db.repository.ImageRepository;
+import com.github.dozedoff.similarImage.db.repository.RepositoryException;
+import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteImageRepository;
 import com.github.dozedoff.similarImage.duplicate.DuplicateUtil;
 import com.github.dozedoff.similarImage.duplicate.RecordSearch;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
@@ -35,6 +38,7 @@ import com.github.dozedoff.similarImage.event.GuiGroupEvent;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
+import com.j256.ormlite.dao.DaoManager;
 
 public class ImageSorter extends Thread {
 	private static final Logger logger = LoggerFactory.getLogger(ImageSorter.class);
@@ -43,13 +47,37 @@ public class ImageSorter extends Thread {
 
 	private int hammingDistance;
 	private String path;
-	private Persistence persistence;
+	private final ImageRepository imageRepository;
 
+	@Deprecated
 	public ImageSorter(int hammingDistance, String path, Persistence persistence) {
 		super();
 		this.hammingDistance = hammingDistance;
 		this.path = path;
-		this.persistence = persistence;
+		
+		try {
+			this.imageRepository = new OrmliteImageRepository(DaoManager.createDao(persistence.getCs(), ImageRecord.class));
+		} catch (RepositoryException | SQLException e) {
+			throw new RuntimeException("Filaed to create Repository");
+		}
+	}
+
+	/**
+	 * Create a instance that will sort all images within the given hamming distance. Only images starting with the
+	 * given path will be considered.
+	 * 
+	 * @param hammingDistance
+	 *            maximum distance to match a hash
+	 * @param path
+	 *            only consider images starting with this path
+	 * @param imageRepository
+	 *            access to the image datasource
+	 */
+	public ImageSorter(int hammingDistance, String path, ImageRepository imageRepository) {
+		super();
+		this.hammingDistance = hammingDistance;
+		this.path = path;
+		this.imageRepository = imageRepository;
 	}
 
 	@Override
@@ -66,12 +94,12 @@ public class ImageSorter extends Thread {
 		try {
 			if (NULL.equals(path) || path.isEmpty()) {
 				logger.info("Loading all records");
-				dBrecords = persistence.getAllRecords();
+				dBrecords = imageRepository.getAll();
 			} else {
 				logger.info("Loading records for path {}", path);
-				dBrecords = persistence.filterByPath(Paths.get(path));
+				dBrecords = imageRepository.startsWithPath(Paths.get(path));
 			}
-		} catch (SQLException e) {
+		} catch (RepositoryException e) {
 			logger.warn("Failed to load records - {}", e.getMessage());
 		}
 
