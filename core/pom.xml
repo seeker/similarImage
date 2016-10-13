@@ -82,5 +82,15 @@
 			<artifactId>Open-Imaging</artifactId>
 			<version>ad64c47f1a</version>
 		</dependency>
+		<dependency>
+			<groupId>org.apache.activemq</groupId>
+			<artifactId>artemis-server</artifactId>
+			<version>1.4.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.activemq</groupId>
+			<artifactId>artemis-core-client</artifactId>
+			<version>1.4.0</version>
+		</dependency>
 	</dependencies>
 </project>
