@@ -18,15 +18,24 @@
 package com.github.dozedoff.similarImage.gui;
 
 import java.awt.Dimension;
+import java.awt.Image;
+import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
+import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 
+import org.imgscalr.Scalr;
+import org.imgscalr.Scalr.Method;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.dozedoff.commonj.image.SubsamplingImageLoader;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 
 public class DuplicateEntryController implements View {
@@ -52,11 +61,25 @@ public class DuplicateEntryController implements View {
 
 	private void loadThumbnail() {
 		try {
-			JLabel image = SubsamplingImageLoader.loadAsLabel(this.imageInfo.getPath(), thumbDimension);
+			BufferedImage bi = loadImage(getImagePath());
+			BufferedImage resized = Scalr.resize(bi, Method.QUALITY, 500);
+			JLabel image = imageAsLabel(resized);
 			view.setImage(image);
 		} catch (Exception e) {
 			logger.warn("Could not load image thumbnail for {} - {}", imageInfo.getPath(), e.getMessage());
 		}
+	}
+
+	private BufferedImage loadImage(Path path) throws IOException {
+		try (InputStream is = new BufferedInputStream(Files.newInputStream(getImagePath()))) {
+			BufferedImage bi = ImageIO.read(is);
+
+			return bi;
+		}
+	}
+
+	private JLabel imageAsLabel(Image image) {
+		return new JLabel(new ImageIcon(image), JLabel.CENTER);
 	}
 
 	public Path getImagePath() {
@@ -71,7 +94,8 @@ public class DuplicateEntryController implements View {
 		JLabel largeImage = new JLabel("No Image");
 
 		try {
-			largeImage = SubsamplingImageLoader.loadAsLabel(getImagePath(), new Dimension(4000, 4000));
+			BufferedImage bi = loadImage(getImagePath());
+			largeImage = imageAsLabel(bi);
 		} catch (Exception e) {
 			logger.warn("Unable to load full image {} - {}", getImagePath(), e.getMessage());
 		}
