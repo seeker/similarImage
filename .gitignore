@@ -11,3 +11,6 @@
 
 # Maven generated files
 target/
+
+# Artemis data storage
+data/
