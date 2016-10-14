@@ -41,7 +41,7 @@ public class ArtemisHashProducer implements HashHandler {
 
 	public static final String MESSAGE_TASK_PROPERTY = "task";
 	public static final String MESSAGE_HASH_VALUE = "hash";
-	public static final String ADDRESS_HASH_QUEUE = "hashQ";
+
 
 	private final ClientProducer producer;
 	private final ClientSession session;
@@ -51,12 +51,15 @@ public class ArtemisHashProducer implements HashHandler {
 	 * 
 	 * @param session
 	 *            used to transfer hash requests
+	 * 
+	 * @param address
+	 *            where hash requests will be sent
 	 * @throws ActiveMQException
 	 *             if the producer setup failed
 	 */
-	public ArtemisHashProducer(ClientSession session) throws ActiveMQException {
+	public ArtemisHashProducer(ClientSession session, String address) throws ActiveMQException {
 		this.session = session;
-		this.producer = session.createProducer(ADDRESS_HASH_QUEUE);
+		this.producer = session.createProducer(address);
 	}
 
 	/**
