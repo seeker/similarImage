@@ -17,8 +17,8 @@
  */
 package com.github.dozedoff.similarImage.handler;
 
-import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 
 import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
@@ -28,19 +28,19 @@ import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.messaging.ArtemisSession;
 
-public class HandlerCollectionFactory {
+public class HandlerListFactory {
 	private final ImageRepository imageRepository;
 	private final Statistics statistics;
 	private final ClientSession session;
 
-	public HandlerCollectionFactory(ImageRepository imageRepository, Statistics statistics, ClientSession session) {
+	public HandlerListFactory(ImageRepository imageRepository, Statistics statistics, ClientSession session) {
 		this.imageRepository = imageRepository;
 		this.statistics = statistics;
 		this.session = session;
 	}
 
-	public Collection<HashHandler> withExtendedAttributeSupport(HashAttribute hashAttribute) throws ActiveMQException {
-		Collection<HashHandler> handlers = new LinkedList<HashHandler>();
+	public List<HashHandler> withExtendedAttributeSupport(HashAttribute hashAttribute) throws ActiveMQException {
+		List<HashHandler> handlers = new LinkedList<HashHandler>();
 
 		handlers.add(new DatabaseHandler(imageRepository, statistics));
 		handlers.add(new ExtendedAttributeHandler(hashAttribute, imageRepository));
@@ -49,8 +49,8 @@ public class HandlerCollectionFactory {
 		return handlers;
 	}
 
-	public Collection<HashHandler> noExtendedAttributeSupport(HashAttribute hashAttribute) throws ActiveMQException {
-		Collection<HashHandler> handlers = new LinkedList<HashHandler>();
+	public List<HashHandler> noExtendedAttributeSupport(HashAttribute hashAttribute) throws ActiveMQException {
+		List<HashHandler> handlers = new LinkedList<HashHandler>();
 
 		handlers.add(new DatabaseHandler(imageRepository, statistics));
 		handlers.add(new ArtemisHashProducer(session, ArtemisSession.ADDRESS_HASH_QUEUE));
