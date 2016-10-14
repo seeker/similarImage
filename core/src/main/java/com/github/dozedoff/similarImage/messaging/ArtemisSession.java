@@ -17,18 +17,21 @@
  */
 package com.github.dozedoff.similarImage.messaging;
 
+import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
 import org.apache.activemq.artemis.api.core.client.ClientSessionFactory;
 import org.apache.activemq.artemis.api.core.client.ServerLocator;
 
 public class ArtemisSession {
-	private final ClientSession session;
+	private final ClientSessionFactory factory;
 
 	public static final String ADDRESS_HASH_QUEUE = "hashQ";
 	public static final String ADDRESS_RESULT_QUEUE = "resultQ";
 
+	private boolean queuesCreated;
+
 	/**
-	 * Create and configure a Artemis session
+	 * Create a session factory
 	 * 
 	 * @param serverLocator
 	 *            for finding the servers to connect to
@@ -36,20 +39,31 @@ public class ArtemisSession {
 	 *             if the setup fails
 	 */
 	public ArtemisSession(ServerLocator serverLocator) throws Exception {
-		ClientSessionFactory factory = serverLocator.createSessionFactory();
-		session = factory.createSession();
-		session.start();
+		factory = serverLocator.createSessionFactory();
+	}
 
-		session.createQueue(ADDRESS_HASH_QUEUE, ADDRESS_HASH_QUEUE, false);
-		session.createQueue(ADDRESS_RESULT_QUEUE, ADDRESS_RESULT_QUEUE, false);
+	private ClientSession createAndConfigureSession() throws ActiveMQException {
+
+		ClientSession session = factory.createSession();
+
+		if (!queuesCreated) {
+			session.createQueue(ADDRESS_HASH_QUEUE, ADDRESS_HASH_QUEUE, false);
+			session.createQueue(ADDRESS_RESULT_QUEUE, ADDRESS_RESULT_QUEUE, false);
+			queuesCreated = true;
+		}
+
+		session.start();
+		return session;
 	}
 
 	/**
-	 * Get the configured session
+	 * Get a new configured session instance
 	 * 
 	 * @return artemis session
+	 * @throws ActiveMQException
+	 *             if the session setup fails
 	 */
-	public ClientSession getSession() {
-		return session;
+	public ClientSession getSession() throws ActiveMQException {
+			return createAndConfigureSession();
 	}
 }

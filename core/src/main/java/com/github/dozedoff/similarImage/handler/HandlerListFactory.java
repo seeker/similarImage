@@ -21,7 +21,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.activemq.artemis.api.core.ActiveMQException;
-import org.apache.activemq.artemis.api.core.client.ClientSession;
 
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.io.HashAttribute;
@@ -31,12 +30,12 @@ import com.github.dozedoff.similarImage.messaging.ArtemisSession;
 public class HandlerListFactory {
 	private final ImageRepository imageRepository;
 	private final Statistics statistics;
-	private final ClientSession session;
+	private final ArtemisSession session;
 
-	public HandlerListFactory(ImageRepository imageRepository, Statistics statistics, ClientSession session) {
+	public HandlerListFactory(ImageRepository imageRepository, Statistics statistics, ArtemisSession as) {
 		this.imageRepository = imageRepository;
 		this.statistics = statistics;
-		this.session = session;
+		this.session = as;
 	}
 
 	public List<HashHandler> withExtendedAttributeSupport(HashAttribute hashAttribute) throws ActiveMQException {
@@ -44,7 +43,7 @@ public class HandlerListFactory {
 
 		handlers.add(new DatabaseHandler(imageRepository, statistics));
 		handlers.add(new ExtendedAttributeHandler(hashAttribute, imageRepository));
-		handlers.add(new ArtemisHashProducer(session, ArtemisSession.ADDRESS_HASH_QUEUE));
+		handlers.add(new ArtemisHashProducer(session.getSession(), ArtemisSession.ADDRESS_HASH_QUEUE));
 
 		return handlers;
 	}
@@ -53,7 +52,7 @@ public class HandlerListFactory {
 		List<HashHandler> handlers = new LinkedList<HashHandler>();
 
 		handlers.add(new DatabaseHandler(imageRepository, statistics));
-		handlers.add(new ArtemisHashProducer(session, ArtemisSession.ADDRESS_HASH_QUEUE));
+		handlers.add(new ArtemisHashProducer(session.getSession(), ArtemisSession.ADDRESS_HASH_QUEUE));
 
 		return handlers;
 	}

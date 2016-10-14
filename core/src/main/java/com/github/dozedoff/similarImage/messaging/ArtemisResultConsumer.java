@@ -46,14 +46,18 @@ public class ArtemisResultConsumer extends Thread {
 	public void run() {
 		while (!isInterrupted()) {
 			try {
-			ClientMessage msg = consumer.receive(RECEIVE_TIMEOUT_MILLI);
+				ClientMessage msg = consumer.receive(RECEIVE_TIMEOUT_MILLI);
 
-			if (msg == null) {
-				continue;
-			}
+				if (msg == null) {
+					LOGGER.trace("Message wait timed out");
+					continue;
+				}
 
-			imageRepository.store(new ImageRecord(msg.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY),
-					msg.getLongProperty(ArtemisHashProducer.MESSAGE_HASH_PROPERTY)));
+				String path = msg.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY);
+				long hash = msg.getLongProperty(ArtemisHashProducer.MESSAGE_HASH_PROPERTY);
+
+				LOGGER.debug("Creating record for {} with hash {}", path, hash);
+				imageRepository.store(new ImageRecord(path, hash));
 			} catch (RepositoryException | ActiveMQException e) {
 				LOGGER.error("Failed to store result message: {}", e.toString());
 			}

@@ -92,10 +92,12 @@ public class SimilarImage {
 				.createServerLocatorWithoutHA(new TransportConfiguration(InVMConnectorFactory.class.getName()));
 		ArtemisSession as = new ArtemisSession(locator);
 
-		ArtemisHashConsumer ahc = new ArtemisHashConsumer(as.getSession(), new ImagePHash(),
-				ArtemisSession.ADDRESS_HASH_QUEUE, ArtemisSession.ADDRESS_RESULT_QUEUE);
-		ahc.setDaemon(true);
-		ahc.start();
+		for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
+			ArtemisHashConsumer ahc = new ArtemisHashConsumer(as.getSession(), new ImagePHash(),
+					ArtemisSession.ADDRESS_HASH_QUEUE, ArtemisSession.ADDRESS_RESULT_QUEUE);
+			ahc.setDaemon(true);
+			ahc.start();
+		}
 
 		Database database = new SQLiteDatabase();
 		RepositoryFactory repositoryFactory = new OrmliteRepositoryFactory(database);
@@ -112,7 +114,7 @@ public class SimilarImage {
 		SorterFactory sf = new SorterFactory(imageRepository, filterRepository, tagRepository);
 
 		statistics = new Statistics();
-		HandlerListFactory hlf = new HandlerListFactory(imageRepository, statistics, as.getSession());
+		HandlerListFactory hlf = new HandlerListFactory(imageRepository, statistics, as);
 		UserTagSettingController utsc = new UserTagSettingController(tagRepository);
 
 		DisplayGroupView dgv = new DisplayGroupView();

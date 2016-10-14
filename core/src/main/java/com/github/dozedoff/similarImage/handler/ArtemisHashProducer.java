@@ -81,6 +81,7 @@ public class ArtemisHashProducer implements HashHandler {
 			msg.putStringProperty(MESSAGE_PATH_PROPERTY, file.toString());
 
 			producer.send(msg);
+			LOGGER.debug("Sent hash request message for {}", file);
 			return true;
 		} catch (IOException e) {
 			LOGGER.error("Failed to open file {}: {}", file, e.toString());
