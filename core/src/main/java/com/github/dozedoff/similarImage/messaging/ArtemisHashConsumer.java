@@ -84,13 +84,13 @@ public class ArtemisHashConsumer extends Thread {
 				ClientMessage message = consumer.receive(RECEIVE_TIMEOUT_MILLI);
 
 				if (message == null) {
-					// receive timeout reached
+					LOGGER.trace("Message wait timed out");
 					continue;
 				}
 
 				Path path = Paths.get(message.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY));
 
-				ByteBuffer buffer = ByteBuffer.allocateDirect(message.getBodySize());
+				ByteBuffer buffer = ByteBuffer.allocate(message.getBodySize());
 				message.getBodyBuffer().readBytes(buffer);
 
 				long hash = processFile(path, new ByteArrayInputStream(buffer.array()));
@@ -99,6 +99,7 @@ public class ArtemisHashConsumer extends Thread {
 				response.putLongProperty(ArtemisHashProducer.MESSAGE_HASH_PROPERTY, hash);
 
 				producer.send(response);
+				LOGGER.debug("Sent hash response message for {}", path);
 			} catch (ActiveMQException e) {
 				LOGGER.error("Failed to process message: {}", e.toString());
 			} catch (IOException e) {
