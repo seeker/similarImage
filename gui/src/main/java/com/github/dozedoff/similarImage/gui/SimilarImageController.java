@@ -21,40 +21,31 @@ import java.awt.Dimension;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
 
+import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.filefilter.SimpleImageFilter;
-import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Tag;
-import com.github.dozedoff.similarImage.db.repository.FilterRepository;
-import com.github.dozedoff.similarImage.db.repository.ImageRepository;
-import com.github.dozedoff.similarImage.db.repository.TagRepository;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiGroupEvent;
-import com.github.dozedoff.similarImage.handler.DatabaseHandler;
-import com.github.dozedoff.similarImage.handler.ExtendedAttributeHandler;
+import com.github.dozedoff.similarImage.handler.HandlerListFactory;
 import com.github.dozedoff.similarImage.handler.HashHandler;
 import com.github.dozedoff.similarImage.handler.HashNames;
-import com.github.dozedoff.similarImage.handler.HashingHandler;
 import com.github.dozedoff.similarImage.io.ExtendedAttribute;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.io.Statistics;
-import com.github.dozedoff.similarImage.thread.FilterSorter;
 import com.github.dozedoff.similarImage.thread.ImageFindJob;
 import com.github.dozedoff.similarImage.thread.ImageFindJobVisitor;
-import com.github.dozedoff.similarImage.thread.ImageSorter;
+import com.github.dozedoff.similarImage.thread.SorterFactory;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.eventbus.Subscribe;
@@ -66,41 +57,36 @@ public class SimilarImageController {
 
 	private final int THUMBNAIL_DIMENSION = 500;
 
-	private FilterRepository filterRepository;
-	private TagRepository tagRepository;
-	private ImageRepository imageRepository;
 	private Multimap<Long, ImageRecord> results;
 	private DisplayGroupView displayGroup;
 	private SimilarImageView gui;
-	private final ExecutorService threadPool;
 	private final Statistics statistics;
 	private final LinkedList<Thread> tasks = new LinkedList<>();
+
+	private final DuplicateOperations dupOps;
+	private final SorterFactory sorterFactory;
+	private final HandlerListFactory handlerCollectionFactory;
+	private final UserTagSettingController utsc;
 
 	/**
 	 * Performs actions initiated by the user
 	 * 
-	 * @param filterRepository
-	 *            filter datasource access
-	 * @param tagRepository
-	 *            tag datasource access
-	 * @param imageRepository
-	 *            image datasource access
 	 * @param displayGroup
 	 *            view for displaying images for groups
-	 * @param threadPool
-	 *            for performing tasks
 	 * @param statistics
 	 *            tracking stats
 	 */
-	public SimilarImageController(FilterRepository filterRepository, TagRepository tagRepository, ImageRepository imageRepository,
-			DisplayGroupView displayGroup, ExecutorService threadPool, Statistics statistics) {
-		this.imageRepository = imageRepository;
-		this.filterRepository = filterRepository;
-		this.tagRepository = tagRepository;
+	public SimilarImageController(SorterFactory sorterFactory, HandlerListFactory handlerCollectionFactory,
+			DuplicateOperations dupOps, DisplayGroupView displayGroup, Statistics statistics,
+			UserTagSettingController utsc) {
+
 		results = MultimapBuilder.hashKeys().hashSetValues().build();
 		this.displayGroup = displayGroup;
-		this.threadPool = threadPool;
 		this.statistics = statistics;
+		this.sorterFactory = sorterFactory;
+		this.handlerCollectionFactory = handlerCollectionFactory;
+		this.dupOps = dupOps;
+		this.utsc = utsc;
 		GuiEventBus.getInstance().register(this);
 	}
 
@@ -160,7 +146,6 @@ public class SimilarImageController {
 
 		logger.info("Loading {} thumbnails for group {}", grouplist.size(), group);
 
-		DuplicateOperations dupOps = new DuplicateOperations(filterRepository, tagRepository, imageRepository);
 
 		for (ImageRecord rec : grouplist) {
 			Path path = Paths.get(rec.getPath());
@@ -168,7 +153,7 @@ public class SimilarImageController {
 			if (Files.exists(path)) {
 				ImageInfo info = new ImageInfo(path, rec.getpHash());
 				OperationsMenu opMenu;
-				UserTagSettingController utsc = new UserTagSettingController(tagRepository);
+
 
 				opMenu = new OperationsMenu(info, dupOps, utsc);
 				DuplicateEntryController entry = new DuplicateEntryController(info, imageDim);
@@ -207,41 +192,43 @@ public class SimilarImageController {
 	public void indexImages(String path) {
 		HashAttribute hashAttribute = new HashAttribute(HashNames.DEFAULT_DCT_HASH_2);
 
-		List<HashHandler> handlers = new ArrayList<HashHandler>();
+		List<HashHandler> handlers;
 
-		handlers.add(new DatabaseHandler(imageRepository, statistics));
+		try {
+			if (ExtendedAttribute.supportsExtendedAttributes(Paths.get(path))) {
+				handlers = handlerCollectionFactory.withExtendedAttributeSupport(hashAttribute);
+				logger.info("Extended attributes are supported for {}", path);
+			} else {
+				logger.info("Extended attributes are NOT supported for {}, disabling...", path);
+				handlers = handlerCollectionFactory.withExtendedAttributeSupport(hashAttribute);
+			}
 
-		if (ExtendedAttribute.supportsExtendedAttributes(Paths.get(path))) {
-			handlers.add(new ExtendedAttributeHandler(hashAttribute, imageRepository));
-			handlers.add(new HashingHandler(threadPool, new ImagePHash(), imageRepository, statistics, hashAttribute));
-			logger.info("Extended attributes are supported for {}", path);
-		} else {
-			logger.info("Extended attributes are NOT supported for {}, disabling...", path);
-			handlers.add(new HashingHandler(threadPool, new ImagePHash(), imageRepository, statistics, null));
+			ImageFindJobVisitor visitor = new ImageFindJobVisitor(new SimpleImageFilter(), handlers, statistics);
+
+			// TODO use a priority queue to let FindJobs run first
+			Thread t = new Thread(new ImageFindJob(path, visitor));
+			t.setName("Image Find Job");
+			startTask(t);
+
+		} catch (ActiveMQException e) {
+			logger.error("Failed to setup broker connection: {}", e.toString());
 		}
-
-		ImageFindJobVisitor visitor = new ImageFindJobVisitor(new SimpleImageFilter(), handlers, statistics);
-
-		// TODO use a priority queue to let FindJobs run first
-		Thread t = new Thread(new ImageFindJob(path, visitor));
-		t.setName("Image Find Job");
-		startTask(t);
 	}
 
 	public void sortDuplicates(int hammingDistance, String path) {
 		setGUIStatus(GUI_MSG_SORTING);
-		Thread t = new ImageSorter(hammingDistance, path, imageRepository);
+		Thread t = sorterFactory.newImageSorter(hammingDistance, path);
 		startTask(t);
 	}
 
 	public void sortFilter(int hammingDistance, Tag tag, String path) {
 		Thread t;
 		if (path.isEmpty()) {
-			t = new FilterSorter(hammingDistance, tag, filterRepository, tagRepository, imageRepository);
+			t = sorterFactory.newFilterSorterAllImages(hammingDistance, tag);
 		} else {
-			t = new FilterSorter(hammingDistance, tag, filterRepository, tagRepository, imageRepository,
-					Paths.get(path));
+			t = sorterFactory.newFilterSorterRestrictByPath(hammingDistance, tag, Paths.get(path));
 		}
+
 		startTask(t);
 	}
 
@@ -258,7 +245,7 @@ public class SimilarImageController {
 		tasks.clear();
 
 		logger.info("Clearing queue...");
-		((ThreadPoolExecutor) threadPool).getQueue().clear();
+		// TODO clear message queues
 	}
 
 	/**
@@ -267,7 +254,8 @@ public class SimilarImageController {
 	 * @return number of queued tasks
 	 */
 	public int getNumberOfQueuedTasks() {
-		return ((ThreadPoolExecutor) threadPool).getQueue().size();
+		// TODO remove me
+		return 0;
 	}
 
 	@Subscribe

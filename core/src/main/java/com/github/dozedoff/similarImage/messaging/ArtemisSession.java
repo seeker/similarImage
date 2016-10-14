@@ -40,8 +40,8 @@ public class ArtemisSession {
 		session = factory.createSession();
 		session.start();
 
-		session.createQueue(ADDRESS_HASH_QUEUE, "hash", false);
-		session.createQueue(ADDRESS_RESULT_QUEUE, "result", false);
+		session.createQueue(ADDRESS_HASH_QUEUE, ADDRESS_HASH_QUEUE, false);
+		session.createQueue(ADDRESS_RESULT_QUEUE, ADDRESS_RESULT_QUEUE, false);
 	}
 
 	/**

@@ -17,7 +17,6 @@
  */
 package com.github.dozedoff.similarImage.app;
 
-import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -25,14 +24,18 @@ import java.util.concurrent.Executors;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 
+import org.apache.activemq.artemis.api.core.TransportConfiguration;
+import org.apache.activemq.artemis.api.core.client.ActiveMQClient;
+import org.apache.activemq.artemis.api.core.client.ServerLocator;
+import org.apache.activemq.artemis.core.remoting.impl.invm.InVMConnectorFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.db.Database;
 import com.github.dozedoff.similarImage.db.SQLiteDatabase;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
-import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
 import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteRepositoryFactory;
 import com.github.dozedoff.similarImage.db.repository.ormlite.RepositoryFactory;
@@ -41,8 +44,14 @@ import com.github.dozedoff.similarImage.gui.DisplayGroupView;
 import com.github.dozedoff.similarImage.gui.SimilarImageController;
 import com.github.dozedoff.similarImage.gui.SimilarImageView;
 import com.github.dozedoff.similarImage.gui.UserTagSettingController;
+import com.github.dozedoff.similarImage.handler.HandlerListFactory;
 import com.github.dozedoff.similarImage.io.Statistics;
+import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
+import com.github.dozedoff.similarImage.messaging.ArtemisHashConsumer;
+import com.github.dozedoff.similarImage.messaging.ArtemisResultConsumer;
+import com.github.dozedoff.similarImage.messaging.ArtemisSession;
 import com.github.dozedoff.similarImage.thread.NamedThreadFactory;
+import com.github.dozedoff.similarImage.thread.SorterFactory;
 
 public class SimilarImage {
 	private final static Logger logger = LoggerFactory.getLogger(SimilarImage.class);
@@ -56,13 +65,13 @@ public class SimilarImage {
 	public static void main(String[] args) {
 		try {
 			new SimilarImage().init();
-		} catch (SQLException | RepositoryException e) {
+		} catch (Exception e) {
 			logger.error("Startup failed: {}", e.toString());
 			e.printStackTrace();
 		}
 	}
 
-	public void init() throws SQLException, RepositoryException {
+	public void init() throws Exception {
 		String version = this.getClass().getPackage().getImplementationVersion();
 
 		if (version == null) {
@@ -75,21 +84,40 @@ public class SimilarImage {
 		threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new NamedThreadFactory(SimilarImage.class.getSimpleName()));
 		Settings settings = new Settings(new SettingsValidator());
 		settings.loadPropertiesFromFile(PROPERTIES_FILENAME);
-		
+
+		ArtemisEmbeddedServer aes = new ArtemisEmbeddedServer();
+		aes.start();
+
+		ServerLocator locator = ActiveMQClient
+				.createServerLocatorWithoutHA(new TransportConfiguration(InVMConnectorFactory.class.getName()));
+		ArtemisSession as = new ArtemisSession(locator);
+
+		ArtemisHashConsumer ahc = new ArtemisHashConsumer(as.getSession(), new ImagePHash(),
+				ArtemisSession.ADDRESS_HASH_QUEUE, ArtemisSession.ADDRESS_RESULT_QUEUE);
+		ahc.setDaemon(true);
+		ahc.start();
+
 		Database database = new SQLiteDatabase();
 		RepositoryFactory repositoryFactory = new OrmliteRepositoryFactory(database);
-		
+
+		ImageRepository imageRepository = repositoryFactory.buildImageRepository();
 		FilterRepository filterRepository = repositoryFactory.buildFilterRepository();
 		TagRepository tagRepository = repositoryFactory.buildTagRepository();
-		ImageRepository imageRepository = repositoryFactory.buildImageRepository();
-		
+
+		ArtemisResultConsumer arc = new ArtemisResultConsumer(as.getSession(), imageRepository);
+		arc.setDaemon(true);
+		arc.start();
+
+		DuplicateOperations dupOps = new DuplicateOperations(filterRepository, tagRepository, imageRepository);
+		SorterFactory sf = new SorterFactory(imageRepository, filterRepository, tagRepository);
+
 		statistics = new Statistics();
-		DisplayGroupView dgv = new DisplayGroupView();
-		SimilarImageController controller = new SimilarImageController(filterRepository, tagRepository, imageRepository,
-				dgv, threadPool, statistics);
-		DuplicateOperations dupOp = new DuplicateOperations(filterRepository, tagRepository, imageRepository);
+		HandlerListFactory hlf = new HandlerListFactory(imageRepository, statistics, as.getSession());
 		UserTagSettingController utsc = new UserTagSettingController(tagRepository);
-		SimilarImageView gui = new SimilarImageView(controller, dupOp, PRODUCER_QUEUE_SIZE, utsc, filterRepository);
+
+		DisplayGroupView dgv = new DisplayGroupView();
+		SimilarImageController controller = new SimilarImageController(sf, hlf, dupOps, dgv, statistics, utsc);
+		SimilarImageView gui = new SimilarImageView(controller, dupOps, PRODUCER_QUEUE_SIZE, utsc, filterRepository);
 
 		controller.setGui(gui);
 
