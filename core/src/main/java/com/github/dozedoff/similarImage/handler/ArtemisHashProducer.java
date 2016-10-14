@@ -40,6 +40,8 @@ public class ArtemisHashProducer implements HashHandler {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ArtemisHashProducer.class);
 
 	public static final String MESSAGE_TASK_PROPERTY = "task";
+	public static final String MESSAGE_PATH_PROPERTY = "path";
+	public static final String MESSAGE_HASH_PROPERTY = "hashResult";
 	public static final String MESSAGE_HASH_VALUE = "hash";
 
 
@@ -73,8 +75,10 @@ public class ArtemisHashProducer implements HashHandler {
 	public boolean handle(Path file) {
 		try (InputStream bis = new BufferedInputStream(Files.newInputStream(file))) {
 			ClientMessage msg = session.createMessage(false);
+
 			msg.setBodyInputStream(bis);
 			msg.putStringProperty(MESSAGE_TASK_PROPERTY, MESSAGE_HASH_VALUE);
+			msg.putStringProperty(MESSAGE_PATH_PROPERTY, file.toString());
 
 			producer.send(msg);
 			return true;
