@@ -25,8 +25,16 @@ import org.apache.activemq.artemis.api.core.client.ServerLocator;
 public class ArtemisSession {
 	private final ClientSessionFactory factory;
 
-	public static final String ADDRESS_HASH_QUEUE = "hashQ";
-	public static final String ADDRESS_RESULT_QUEUE = "resultQ";
+	/**
+	 * @deprecated Use {@link ArtemisQueueAddress}
+	 */
+	@Deprecated
+	public static final String ADDRESS_HASH_QUEUE = ArtemisQueueAddress.hash.toString();
+	/**
+	 * @deprecated Use {@link ArtemisQueueAddress}
+	 */
+	@Deprecated
+	public static final String ADDRESS_RESULT_QUEUE = ArtemisQueueAddress.result.toString();
 
 	private boolean queuesCreated;
 
@@ -47,8 +55,8 @@ public class ArtemisSession {
 		ClientSession session = factory.createSession();
 
 		if (!queuesCreated) {
-			session.createQueue(ADDRESS_HASH_QUEUE, ADDRESS_HASH_QUEUE, false);
-			session.createQueue(ADDRESS_RESULT_QUEUE, ADDRESS_RESULT_QUEUE, false);
+			session.createQueue(ArtemisQueueAddress.hash.toString(), ArtemisQueueAddress.hash.toString(), false);
+			session.createQueue(ArtemisQueueAddress.result.toString(), ArtemisQueueAddress.result.toString(), false);
 			queuesCreated = true;
 		}
 
