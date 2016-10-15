@@ -73,15 +73,25 @@ public class ExtendedAttribute {
 	 */
 	public static boolean supportsExtendedAttributes(Path path) {
 		try {
+			return Files.getFileStore(path).supportsFileAttributeView(UserDefinedFileAttributeView.class);
+		} catch (IOException e) {
+			LOGGER.warn("Failed to check extended attributes via FileStore ({}) for {}, falling back to write test...",
+					e.toString(), path);
+			return checkSupportWithWrite(path);
+		}
+	}
+
+	private static boolean checkSupportWithWrite(Path path) {
+		try {
 			setExtendedAttribute(path, XATTR_TEST_NAME, Charset.defaultCharset().encode("xattr support test"));
 			return true;
 		} catch (IOException e) {
-			LOGGER.error("Failed to write test attribute ({})", e.toString());
+			LOGGER.debug("Failed to write test attribute ({})", e.toString());
 		} finally {
 			try {
 				deleteExtendedAttribute(path, XATTR_TEST_NAME);
 			} catch (IOException e) {
-				LOGGER.error("Failed to delete test attribute ({})", e.toString());
+				LOGGER.debug("Failed to delete test attribute ({})", e.toString());
 			}
 		}
 
