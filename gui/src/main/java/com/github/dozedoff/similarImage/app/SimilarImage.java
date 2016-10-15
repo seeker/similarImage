@@ -20,6 +20,7 @@ package com.github.dozedoff.similarImage.app;
 import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
@@ -45,6 +46,11 @@ import com.github.dozedoff.similarImage.gui.SimilarImageController;
 import com.github.dozedoff.similarImage.gui.SimilarImageView;
 import com.github.dozedoff.similarImage.gui.UserTagSettingController;
 import com.github.dozedoff.similarImage.handler.HandlerListFactory;
+import com.github.dozedoff.similarImage.handler.HashNames;
+import com.github.dozedoff.similarImage.io.ExtendedAttribute;
+import com.github.dozedoff.similarImage.io.ExtendedAttributeDirectoryCache;
+import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
+import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
 import com.github.dozedoff.similarImage.messaging.ArtemisHashConsumer;
@@ -109,7 +115,11 @@ public class SimilarImage {
 		FilterRepository filterRepository = repositoryFactory.buildFilterRepository();
 		TagRepository tagRepository = repositoryFactory.buildTagRepository();
 
-		ArtemisResultConsumer arc = new ArtemisResultConsumer(as.getSession(), imageRepository);
+		ExtendedAttributeQuery eaQuery = new ExtendedAttributeDirectoryCache(new ExtendedAttribute(), 1,
+				TimeUnit.MINUTES);
+
+		ArtemisResultConsumer arc = new ArtemisResultConsumer(as.getSession(), imageRepository, eaQuery,
+				new HashAttribute(HashNames.DEFAULT_DCT_HASH_2));
 		arc.setDaemon(true);
 		arc.start();
 
@@ -117,7 +127,7 @@ public class SimilarImage {
 		SorterFactory sf = new SorterFactory(imageRepository, filterRepository, tagRepository);
 
 		statistics = new Statistics();
-		HandlerListFactory hlf = new HandlerListFactory(imageRepository, statistics, as);
+		HandlerListFactory hlf = new HandlerListFactory(imageRepository, statistics, as, eaQuery);
 		UserTagSettingController utsc = new UserTagSettingController(tagRepository);
 
 		DisplayGroupView dgv = new DisplayGroupView();

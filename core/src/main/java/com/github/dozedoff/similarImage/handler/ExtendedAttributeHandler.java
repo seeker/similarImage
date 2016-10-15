@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
+import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 
 /**
@@ -41,6 +42,7 @@ public class ExtendedAttributeHandler implements HashHandler {
 
 	private HashAttribute hashAttribute;
 	private final ImageRepository imageRepository;
+	private final ExtendedAttributeQuery eaQuery;
 
 	/**
 	 * Sets up the handler to read extended attributes and access the database.
@@ -49,10 +51,14 @@ public class ExtendedAttributeHandler implements HashHandler {
 	 *            to read the extended attributes
 	 * @param imageRepository
 	 *            access to the image datasource
+	 * @param eaQuery
+	 *            used to query if extended attributes are supported
 	 */
-	public ExtendedAttributeHandler(HashAttribute hashAttribute, ImageRepository imageRepository) {
+	public ExtendedAttributeHandler(HashAttribute hashAttribute, ImageRepository imageRepository,
+			ExtendedAttributeQuery eaQuery) {
 		this.hashAttribute = hashAttribute;
 		this.imageRepository = imageRepository;
+		this.eaQuery = eaQuery;
 	}
 
 	/**
@@ -65,11 +71,11 @@ public class ExtendedAttributeHandler implements HashHandler {
 	@Override
 	public boolean handle(Path file) {
 		LOGGER.trace("Handling {} with {}", file, ExtendedAttributeHandler.class.getSimpleName());
-		if (hashAttribute.areAttributesValid(file)) {
+
+		if (eaQuery.isEaSupported(file) && hashAttribute.areAttributesValid(file)) {
 			LOGGER.trace("{} has valid extended attributes", file);
 			try {
 				imageRepository.store(new ImageRecord(file.toString(), hashAttribute.readHash(file)));
-				// Successfully
 				LOGGER.trace("Successfully read and stored the hash for {}", file);
 				return true;
 			} catch (InvalidAttributeValueException | IOException e) {

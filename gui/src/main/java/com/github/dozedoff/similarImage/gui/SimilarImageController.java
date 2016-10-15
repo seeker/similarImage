@@ -40,7 +40,6 @@ import com.github.dozedoff.similarImage.event.GuiGroupEvent;
 import com.github.dozedoff.similarImage.handler.HandlerListFactory;
 import com.github.dozedoff.similarImage.handler.HashHandler;
 import com.github.dozedoff.similarImage.handler.HashNames;
-import com.github.dozedoff.similarImage.io.ExtendedAttribute;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.thread.ImageFindJob;
@@ -195,13 +194,7 @@ public class SimilarImageController {
 		List<HashHandler> handlers;
 
 		try {
-			if (ExtendedAttribute.supportsExtendedAttributes(Paths.get(path))) {
-				handlers = handlerCollectionFactory.withExtendedAttributeSupport(hashAttribute);
-				logger.info("Extended attributes are supported for {}", path);
-			} else {
-				logger.info("Extended attributes are NOT supported for {}, disabling...", path);
-				handlers = handlerCollectionFactory.withExtendedAttributeSupport(hashAttribute);
-			}
+			handlers = handlerCollectionFactory.withExtendedAttributeSupport(hashAttribute);
 
 			ImageFindJobVisitor visitor = new ImageFindJobVisitor(new SimpleImageFilter(), handlers, statistics);
 

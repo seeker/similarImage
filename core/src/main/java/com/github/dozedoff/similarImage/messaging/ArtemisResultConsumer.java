@@ -17,6 +17,8 @@
  */
 package com.github.dozedoff.similarImage.messaging;
 
+import java.nio.file.Paths;
+
 import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.client.ClientConsumer;
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
@@ -28,6 +30,8 @@ import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
+import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
+import com.github.dozedoff.similarImage.io.HashAttribute;
 
 public class ArtemisResultConsumer extends Thread {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ArtemisResultConsumer.class);
@@ -36,10 +40,17 @@ public class ArtemisResultConsumer extends Thread {
 
 	private final ImageRepository imageRepository;
 	private final ClientConsumer consumer;
+	private final ExtendedAttributeQuery eaQuery;
+	private final HashAttribute hashAttribute;
 
-	public ArtemisResultConsumer(ClientSession session, ImageRepository imageRepository) throws ActiveMQException {
+	// TODO rewrite like handler
+	public ArtemisResultConsumer(ClientSession session, ImageRepository imageRepository, ExtendedAttributeQuery eaQuery,
+			HashAttribute hashAttribute)
+			throws ActiveMQException {
 		this.imageRepository = imageRepository;
 		this.consumer = session.createConsumer(ArtemisSession.ADDRESS_RESULT_QUEUE);
+		this.eaQuery = eaQuery;
+		this.hashAttribute = hashAttribute;
 	}
 
 	@Override
@@ -58,6 +69,11 @@ public class ArtemisResultConsumer extends Thread {
 
 				LOGGER.debug("Creating record for {} with hash {}", path, hash);
 				imageRepository.store(new ImageRecord(path, hash));
+
+				if (eaQuery.isEaSupported(Paths.get(path))) {
+					hashAttribute.writeHash(Paths.get(path), hash);
+				}
+
 			} catch (RepositoryException | ActiveMQException e) {
 				LOGGER.error("Failed to store result message: {}", e.toString());
 			}

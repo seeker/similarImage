@@ -23,6 +23,7 @@ import java.util.List;
 import org.apache.activemq.artemis.api.core.ActiveMQException;
 
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
+import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.messaging.ArtemisSession;
@@ -31,23 +32,27 @@ public class HandlerListFactory {
 	private final ImageRepository imageRepository;
 	private final Statistics statistics;
 	private final ArtemisSession session;
+	private final ExtendedAttributeQuery eaQuery;
 
-	public HandlerListFactory(ImageRepository imageRepository, Statistics statistics, ArtemisSession as) {
+	public HandlerListFactory(ImageRepository imageRepository, Statistics statistics, ArtemisSession as,
+			ExtendedAttributeQuery eaQuery) {
 		this.imageRepository = imageRepository;
 		this.statistics = statistics;
 		this.session = as;
+		this.eaQuery = eaQuery;
 	}
 
 	public List<HashHandler> withExtendedAttributeSupport(HashAttribute hashAttribute) throws ActiveMQException {
 		List<HashHandler> handlers = new LinkedList<HashHandler>();
 
 		handlers.add(new DatabaseHandler(imageRepository, statistics));
-		handlers.add(new ExtendedAttributeHandler(hashAttribute, imageRepository));
+		handlers.add(new ExtendedAttributeHandler(hashAttribute, imageRepository, eaQuery));
 		handlers.add(new ArtemisHashProducer(session.getSession(), ArtemisSession.ADDRESS_HASH_QUEUE));
 
 		return handlers;
 	}
 
+	@Deprecated
 	public List<HashHandler> noExtendedAttributeSupport(HashAttribute hashAttribute) throws ActiveMQException {
 		List<HashHandler> handlers = new LinkedList<HashHandler>();
 
