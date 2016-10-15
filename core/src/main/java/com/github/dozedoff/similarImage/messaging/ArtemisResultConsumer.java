@@ -23,6 +23,7 @@ import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.client.ClientConsumer;
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
+import org.apache.activemq.artemis.api.core.client.MessageHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,8 +33,9 @@ import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.HashAttribute;
+import com.github.dozedoff.similarImage.util.MessagingUtil;
 
-public class ArtemisResultConsumer extends Thread {
+public class ArtemisResultConsumer {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ArtemisResultConsumer.class);
 
 	private static final long RECEIVE_TIMEOUT_MILLI = 500;
@@ -42,28 +44,36 @@ public class ArtemisResultConsumer extends Thread {
 	private final ClientConsumer consumer;
 	private final ExtendedAttributeQuery eaQuery;
 	private final HashAttribute hashAttribute;
+	private final ClientSession session;
 
 	// TODO rewrite like handler
 	public ArtemisResultConsumer(ClientSession session, ImageRepository imageRepository, ExtendedAttributeQuery eaQuery,
 			HashAttribute hashAttribute)
 			throws ActiveMQException {
 		this.imageRepository = imageRepository;
-		this.consumer = session.createConsumer(ArtemisSession.ADDRESS_RESULT_QUEUE);
+		this.session = session;
+		this.consumer = session.createConsumer(ArtemisQueueAddress.result.toString());
 		this.eaQuery = eaQuery;
 		this.hashAttribute = hashAttribute;
+		this.consumer.setMessageHandler(new ResultMessageHandler());
 	}
 
-	@Override
-	public void run() {
-		while (!isInterrupted()) {
+	/**
+	 * Stops this consumer
+	 */
+	public void stop() {
+		LOGGER.info("Stopping {}...", this.getClass().getSimpleName());
+		MessagingUtil.silentClose(consumer);
+		MessagingUtil.silentClose(session);
+	}
+
+	class ResultMessageHandler implements MessageHandler {
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public void onMessage(ClientMessage msg) {
 			try {
-				ClientMessage msg = consumer.receive(RECEIVE_TIMEOUT_MILLI);
-
-				if (msg == null) {
-					LOGGER.trace("Message wait timed out");
-					continue;
-				}
-
 				String path = msg.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY);
 				long hash = msg.getLongProperty(ArtemisHashProducer.MESSAGE_HASH_PROPERTY);
 
@@ -74,7 +84,7 @@ public class ArtemisResultConsumer extends Thread {
 					hashAttribute.writeHash(Paths.get(path), hash);
 				}
 
-			} catch (RepositoryException | ActiveMQException e) {
+			} catch (RepositoryException e) {
 				LOGGER.error("Failed to store result message: {}", e.toString());
 			}
 		}

@@ -29,11 +29,13 @@ import org.apache.activemq.artemis.api.core.client.ClientConsumer;
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.apache.activemq.artemis.api.core.client.ClientProducer;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
+import org.apache.activemq.artemis.api.core.client.MessageHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
+import com.github.dozedoff.similarImage.util.MessagingUtil;
 
 import at.dhyan.open_imaging.GifDecoder;
 import at.dhyan.open_imaging.GifDecoder.GifImage;
@@ -44,7 +46,7 @@ import at.dhyan.open_imaging.GifDecoder.GifImage;
  * @author Nicholas Wright
  *
  */
-public class ArtemisHashConsumer extends Thread {
+public class ArtemisHashConsumer {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ArtemisHashConsumer.class);
 
 	private static final long RECEIVE_TIMEOUT_MILLI = 500;
@@ -75,29 +77,36 @@ public class ArtemisHashConsumer extends Thread {
 		this.session = session;
 		this.consumer = session.createConsumer(requestAddress);
 		this.producer = session.createProducer(resultAddress);
+		this.consumer.setMessageHandler(new HashMessageHandler());
 	}
 
-	@Override
-	public void run() {
-		while(!isInterrupted()) {
+	/**
+	 * Stops this consumer
+	 */
+	public void stop() {
+		LOGGER.info("Stopping {}...", this.getClass().getSimpleName());
+		MessagingUtil.silentClose(consumer);
+		MessagingUtil.silentClose(producer);
+		MessagingUtil.silentClose(session);
+	}
+
+	class HashMessageHandler implements MessageHandler {
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public void onMessage(ClientMessage message) {
 			try {
-				ClientMessage message = consumer.receive(RECEIVE_TIMEOUT_MILLI);
-
-				if (message == null) {
-					LOGGER.trace("Message wait timed out");
-					continue;
-				}
-
 				Path path = Paths.get(message.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY));
-
+			
 				ByteBuffer buffer = ByteBuffer.allocate(message.getBodySize());
 				message.getBodyBuffer().readBytes(buffer);
-
+			
 				long hash = processFile(path, new ByteArrayInputStream(buffer.array()));
 				ClientMessage response = session.createMessage(false);
 				response.putStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY, path.toString());
 				response.putLongProperty(ArtemisHashProducer.MESSAGE_HASH_PROPERTY, hash);
-
+			
 				producer.send(response);
 				LOGGER.debug("Sent hash response message for {}", path);
 			} catch (ActiveMQException e) {
@@ -106,24 +115,23 @@ public class ArtemisHashConsumer extends Thread {
 				LOGGER.error("Failed to process image: {}", e.toString());
 			}
 		}
-	}
 
-	private long processFile(Path next, InputStream is) throws IOException {
+		private long processFile(Path next, InputStream is) throws IOException {
 
-		Path filename = next.getFileName();
-		if (filename != null && filename.toString().toLowerCase().endsWith(".gif")) {
-			GifImage gi = GifDecoder.read(is);
+			Path filename = next.getFileName();
+			if (filename != null && filename.toString().toLowerCase().endsWith(".gif")) {
+				GifImage gi = GifDecoder.read(is);
 
-			long hash = hasher.getLongHash(gi.getFrame(0));
-			return hash;
-		} else {
-
-			return doHash(next, is);
+				long hash = hasher.getLongHash(gi.getFrame(0));
+				return hash;
+			} else {
+				return doHash(next, is);
+			}
 		}
-	}
 
-	private long doHash(Path next, InputStream is) throws IOException {
-		long hash = hasher.getLongHash(is);
-		return hash;
+		private long doHash(Path next, InputStream is) throws IOException {
+			long hash = hasher.getLongHash(is);
+			return hash;
+		}
 	}
 }

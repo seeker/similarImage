@@ -54,6 +54,7 @@ import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
 import com.github.dozedoff.similarImage.messaging.ArtemisHashConsumer;
+import com.github.dozedoff.similarImage.messaging.ArtemisQueueAddress;
 import com.github.dozedoff.similarImage.messaging.ArtemisResultConsumer;
 import com.github.dozedoff.similarImage.messaging.ArtemisSession;
 import com.github.dozedoff.similarImage.thread.NamedThreadFactory;
@@ -103,9 +104,7 @@ public class SimilarImage {
 
 		for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
 			ArtemisHashConsumer ahc = new ArtemisHashConsumer(as.getSession(), new ImagePHash(),
-					ArtemisSession.ADDRESS_HASH_QUEUE, ArtemisSession.ADDRESS_RESULT_QUEUE);
-			ahc.setDaemon(true);
-			ahc.start();
+					ArtemisQueueAddress.hash.toString(), ArtemisQueueAddress.result.toString());
 		}
 
 		Database database = new SQLiteDatabase();
@@ -120,8 +119,6 @@ public class SimilarImage {
 
 		ArtemisResultConsumer arc = new ArtemisResultConsumer(as.getSession(), imageRepository, eaQuery,
 				new HashAttribute(HashNames.DEFAULT_DCT_HASH_2));
-		arc.setDaemon(true);
-		arc.start();
 
 		DuplicateOperations dupOps = new DuplicateOperations(filterRepository, tagRepository, imageRepository);
 		SorterFactory sf = new SorterFactory(imageRepository, filterRepository, tagRepository);
