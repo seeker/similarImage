@@ -39,12 +39,16 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
+import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ExtendedAttributeHandlerTest {
 	@Mock
 	private HashAttribute hashAttribute;
+
+	@Mock
+	private ExtendedAttributeQuery eaQuery;
 
 	@Mock
 	private ImageRepository imageRepository;
@@ -59,6 +63,7 @@ public class ExtendedAttributeHandlerTest {
 		testFile = Paths.get("foo");
 
 		when(hashAttribute.areAttributesValid(testFile)).thenReturn(true);
+		when(eaQuery.isEaSupported(any(Path.class))).thenReturn(true);
 	}
 
 	@Test
