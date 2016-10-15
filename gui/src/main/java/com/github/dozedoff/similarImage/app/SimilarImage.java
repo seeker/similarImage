@@ -54,6 +54,7 @@ import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
 import com.github.dozedoff.similarImage.messaging.ArtemisHashConsumer;
+import com.github.dozedoff.similarImage.messaging.ArtemisQueue;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueueAddress;
 import com.github.dozedoff.similarImage.messaging.ArtemisResultConsumer;
 import com.github.dozedoff.similarImage.messaging.ArtemisSession;
@@ -101,6 +102,8 @@ public class SimilarImage {
 				.setCacheLargeMessagesClient(false).setMinLargeMessageSize(LARGE_MESSAGE_SIZE_THRESHOLD)
 				.setBlockOnNonDurableSend(false).setPreAcknowledge(true);
 		ArtemisSession as = new ArtemisSession(locator);
+		ArtemisQueue aq = new ArtemisQueue(as.getSession());
+		aq.createAll();
 
 		for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
 			ArtemisHashConsumer ahc = new ArtemisHashConsumer(as.getSession(), new ImagePHash(),

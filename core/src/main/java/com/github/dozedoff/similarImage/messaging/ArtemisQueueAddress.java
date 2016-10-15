@@ -17,6 +17,10 @@
  */
 package com.github.dozedoff.similarImage.messaging;
 
+/**
+ * @deprecated Use {@link ArtemisQueue.QueueAddress} instead
+ */
+@Deprecated
 public enum ArtemisQueueAddress {
 	hash, result;
 }

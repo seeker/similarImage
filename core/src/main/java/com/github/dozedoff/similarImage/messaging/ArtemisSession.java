@@ -36,8 +36,6 @@ public class ArtemisSession {
 	@Deprecated
 	public static final String ADDRESS_RESULT_QUEUE = ArtemisQueueAddress.result.toString();
 
-	private boolean queuesCreated;
-
 	/**
 	 * Create a session factory
 	 * 
@@ -53,13 +51,6 @@ public class ArtemisSession {
 	private ClientSession createAndConfigureSession() throws ActiveMQException {
 
 		ClientSession session = factory.createSession();
-
-		if (!queuesCreated) {
-			session.createQueue(ArtemisQueueAddress.hash.toString(), ArtemisQueueAddress.hash.toString(), false);
-			session.createQueue(ArtemisQueueAddress.result.toString(), ArtemisQueueAddress.result.toString(), false);
-			queuesCreated = true;
-		}
-
 		session.start();
 		return session;
 	}
