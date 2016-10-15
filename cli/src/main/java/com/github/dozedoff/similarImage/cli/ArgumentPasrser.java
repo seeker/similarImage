@@ -23,6 +23,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.activemq.artemis.api.core.TransportConfiguration;
@@ -34,7 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.messaging.ArtemisHashConsumer;
-import com.github.dozedoff.similarImage.messaging.ArtemisQueueAddress;
+import com.github.dozedoff.similarImage.messaging.ArtemisQueue;
 import com.github.dozedoff.similarImage.messaging.ArtemisSession;
 
 import net.sourceforge.argparse4j.ArgumentParsers;
@@ -143,12 +145,36 @@ public class ArgumentPasrser {
 				.setBlockOnNonDurableSend(false).setPreAcknowledge(true);
 
 		try {
+			List<ArtemisHashConsumer> workers = new LinkedList<ArtemisHashConsumer>();
+
 			ArtemisSession session = new ArtemisSession(locator);
-			new ArtemisHashConsumer(session.getSession(), new ImagePHash(), ArtemisQueueAddress.hash.toString(),
-					ArtemisQueueAddress.result.toString());
+
+			for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
+				LOGGER.info("Starting worker {} ...", i);
+				ArtemisHashConsumer consumer = new ArtemisHashConsumer(session.getSession(), new ImagePHash(),
+					ArtemisQueue.QueueAddress.hash.toString(),
+					ArtemisQueue.QueueAddress.result.toString());
+
+				workers.add(consumer);
+			}
+
+			try {
+				// FIXME ugly, but it works...
+				while (true) {
+					Thread.sleep(1000);
+				}
+			} catch (InterruptedException e) {
+				LOGGER.debug("Interrupted!");
+			}
+
+			LOGGER.info("Shutting down...");
+
+			for (ArtemisHashConsumer worker : workers) {
+				worker.stop();
+			}
+
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			LOGGER.error("Failed to start node: {}", e.toString());
 		}
 	}
 }
