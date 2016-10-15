@@ -34,15 +34,11 @@ import org.slf4j.LoggerFactory;
  * @author Nicholas Wright
  *
  */
-public class ExtendedAttribute {
+public class ExtendedAttribute implements ExtendedAttributeQuery {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ExtendedAttribute.class);
 
 	public static final String SIMILARIMAGE_NAMESPACE = "user.similarimage";
 	private static final String XATTR_TEST_NAME = SIMILARIMAGE_NAMESPACE + "test";
-
-
-	private ExtendedAttribute(){
-	}
 
 	/**
 	 * Create a name for an extended attribute with {@link ExtendedAttribute#SIMILARIMAGE_NAMESPACE} as the prefix. The
@@ -201,5 +197,13 @@ public class ExtendedAttribute {
 	 */
 	public static boolean isExtendedAttributeSet(Path path, String name) throws IOException {
 		return createUserDefinedFileAttributeView(path).list().contains(name);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public boolean isEaSupported(Path path) {
+		return supportsExtendedAttributes(path);
 	}
 }
