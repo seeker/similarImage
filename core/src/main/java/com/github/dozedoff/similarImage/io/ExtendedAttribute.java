@@ -34,15 +34,11 @@ import org.slf4j.LoggerFactory;
  * @author Nicholas Wright
  *
  */
-public class ExtendedAttribute {
+public class ExtendedAttribute implements ExtendedAttributeQuery {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ExtendedAttribute.class);
 
 	public static final String SIMILARIMAGE_NAMESPACE = "user.similarimage";
 	private static final String XATTR_TEST_NAME = SIMILARIMAGE_NAMESPACE + "test";
-
-
-	private ExtendedAttribute(){
-	}
 
 	/**
 	 * Create a name for an extended attribute with {@link ExtendedAttribute#SIMILARIMAGE_NAMESPACE} as the prefix. The
@@ -73,15 +69,25 @@ public class ExtendedAttribute {
 	 */
 	public static boolean supportsExtendedAttributes(Path path) {
 		try {
+			return Files.getFileStore(path).supportsFileAttributeView(UserDefinedFileAttributeView.class);
+		} catch (IOException e) {
+			LOGGER.warn("Failed to check extended attributes via FileStore ({}) for {}, falling back to write test...",
+					e.toString(), path);
+			return checkSupportWithWrite(path);
+		}
+	}
+
+	private static boolean checkSupportWithWrite(Path path) {
+		try {
 			setExtendedAttribute(path, XATTR_TEST_NAME, Charset.defaultCharset().encode("xattr support test"));
 			return true;
 		} catch (IOException e) {
-			LOGGER.error("Failed to write test attribute ({})", e.toString());
+			LOGGER.debug("Failed to write test attribute ({})", e.toString());
 		} finally {
 			try {
 				deleteExtendedAttribute(path, XATTR_TEST_NAME);
 			} catch (IOException e) {
-				LOGGER.error("Failed to delete test attribute ({})", e.toString());
+				LOGGER.debug("Failed to delete test attribute ({})", e.toString());
 			}
 		}
 
@@ -191,5 +197,13 @@ public class ExtendedAttribute {
 	 */
 	public static boolean isExtendedAttributeSet(Path path, String name) throws IOException {
 		return createUserDefinedFileAttributeView(path).list().contains(name);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public boolean isEaSupported(Path path) {
+		return supportsExtendedAttributes(path);
 	}
 }
