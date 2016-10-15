@@ -58,6 +58,7 @@ public class SimilarImage {
 
 	private final String PROPERTIES_FILENAME = "similarImage.properties";
 	private final int PRODUCER_QUEUE_SIZE = 400;
+	private static final int LARGE_MESSAGE_SIZE_THRESHOLD = 1024 * 1024;
 
 	private ExecutorService threadPool;
 	private Statistics statistics;
@@ -89,7 +90,9 @@ public class SimilarImage {
 		aes.start();
 
 		ServerLocator locator = ActiveMQClient
-				.createServerLocatorWithoutHA(new TransportConfiguration(InVMConnectorFactory.class.getName()));
+				.createServerLocatorWithoutHA(new TransportConfiguration(InVMConnectorFactory.class.getName()))
+				.setCacheLargeMessagesClient(false).setMinLargeMessageSize(LARGE_MESSAGE_SIZE_THRESHOLD)
+				.setBlockOnNonDurableSend(false).setPreAcknowledge(true);
 		ArtemisSession as = new ArtemisSession(locator);
 
 		for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
