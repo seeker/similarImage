@@ -31,6 +31,8 @@ import org.apache.activemq.artemis.core.remoting.impl.invm.InVMAcceptorFactory;
 import org.apache.activemq.artemis.core.remoting.impl.netty.NettyAcceptorFactory;
 import org.apache.activemq.artemis.core.remoting.impl.netty.TransportConstants;
 import org.apache.activemq.artemis.core.server.embedded.EmbeddedActiveMQ;
+import org.apache.activemq.artemis.core.settings.impl.AddressFullMessagePolicy;
+import org.apache.activemq.artemis.core.settings.impl.AddressSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +46,8 @@ import org.slf4j.LoggerFactory;
 public class ArtemisEmbeddedServer {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ArtemisEmbeddedServer.class);
 	private final EmbeddedActiveMQ server;
+	
+	private static final int MAX_SIZE = 1024 * 1024;
 
 	/**
 	 * Create a new embedded artemis server that listens to network and in VM connections.
@@ -51,7 +55,7 @@ public class ArtemisEmbeddedServer {
 	 * @throws UnknownHostException
 	 */
 	public ArtemisEmbeddedServer() throws UnknownHostException {
-		Configuration config = new ConfigurationImpl();
+
 		Set<TransportConfiguration> transports = new HashSet<TransportConfiguration>();
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put(TransportConstants.HOST_PROP_NAME, Inet4Address.getLocalHost().getHostAddress());
@@ -63,6 +67,13 @@ public class ArtemisEmbeddedServer {
 		LOGGER.info("Listening on {}:{}", params.get(TransportConstants.HOST_PROP_NAME),
 				params.get(TransportConstants.PORT_PROP_NAME));
 
+		AddressSettings as = new AddressSettings();
+		as.setMaxSizeBytes(MAX_SIZE);
+		as.setAddressFullMessagePolicy(AddressFullMessagePolicy.BLOCK);
+
+		Configuration config = new ConfigurationImpl();
+		config.addAddressesSetting(ArtemisQueue.QueueAddress.hash.toString(), as);
+		config.addAddressesSetting("core.queue." + ArtemisQueue.QueueAddress.hash.toString(), as);
 		config.setAcceptorConfigurations(transports);
 		config.setSecurityEnabled(false);
 
