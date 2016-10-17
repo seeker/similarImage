@@ -142,7 +142,7 @@ public class ArgumentPasrser {
 		ServerLocator locator = ActiveMQClient
 				.createServerLocatorWithoutHA(new TransportConfiguration(NettyConnectorFactory.class.getName(), params))
 				.setCacheLargeMessagesClient(false).setMinLargeMessageSize(LARGE_MESSAGE_SIZE_THRESHOLD)
-				.setBlockOnNonDurableSend(false).setPreAcknowledge(true);
+				.setBlockOnNonDurableSend(false).setPreAcknowledge(true).setReconnectAttempts(-1);
 
 		try {
 			List<ArtemisHashConsumer> workers = new LinkedList<ArtemisHashConsumer>();
