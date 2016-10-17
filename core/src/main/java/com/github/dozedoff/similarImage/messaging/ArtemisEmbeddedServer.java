@@ -17,7 +17,11 @@
  */
 package com.github.dozedoff.similarImage.messaging;
 
+import java.net.Inet4Address;
+import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.activemq.artemis.api.core.TransportConfiguration;
@@ -25,7 +29,10 @@ import org.apache.activemq.artemis.core.config.Configuration;
 import org.apache.activemq.artemis.core.config.impl.ConfigurationImpl;
 import org.apache.activemq.artemis.core.remoting.impl.invm.InVMAcceptorFactory;
 import org.apache.activemq.artemis.core.remoting.impl.netty.NettyAcceptorFactory;
+import org.apache.activemq.artemis.core.remoting.impl.netty.TransportConstants;
 import org.apache.activemq.artemis.core.server.embedded.EmbeddedActiveMQ;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Setup an embedded Artemis server.
@@ -35,17 +42,26 @@ import org.apache.activemq.artemis.core.server.embedded.EmbeddedActiveMQ;
  */
 
 public class ArtemisEmbeddedServer {
+	private static final Logger LOGGER = LoggerFactory.getLogger(ArtemisEmbeddedServer.class);
 	private final EmbeddedActiveMQ server;
 
 	/**
 	 * Create a new embedded artemis server that listens to network and in VM connections.
+	 * 
+	 * @throws UnknownHostException
 	 */
-	public ArtemisEmbeddedServer() {
+	public ArtemisEmbeddedServer() throws UnknownHostException {
 		Configuration config = new ConfigurationImpl();
 		Set<TransportConfiguration> transports = new HashSet<TransportConfiguration>();
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put(TransportConstants.HOST_PROP_NAME, Inet4Address.getLocalHost().getHostAddress());
+		params.put(TransportConstants.PORT_PROP_NAME, TransportConstants.DEFAULT_PORT);
 
-		transports.add(new TransportConfiguration(NettyAcceptorFactory.class.getName()));
+		transports.add(new TransportConfiguration(NettyAcceptorFactory.class.getName(), params));
 		transports.add(new TransportConfiguration(InVMAcceptorFactory.class.getName()));
+
+		LOGGER.info("Listening on {}:{}", params.get(TransportConstants.HOST_PROP_NAME),
+				params.get(TransportConstants.PORT_PROP_NAME));
 
 		config.setAcceptorConfigurations(transports);
 		config.setSecurityEnabled(false);
