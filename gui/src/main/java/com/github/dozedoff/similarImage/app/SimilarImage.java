@@ -18,6 +18,8 @@
 package com.github.dozedoff.similarImage.app;
 
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -70,6 +72,8 @@ public class SimilarImage {
 
 	private ExecutorService threadPool;
 	private Statistics statistics;
+	ArtemisResultConsumer arc;
+	List<ArtemisHashConsumer> ahcs = new LinkedList<>();
 
 	public static void main(String[] args) {
 		try {
@@ -90,7 +94,8 @@ public class SimilarImage {
 		logger.info("SimilarImage version " + version);
 		logger.info("System has {} processors", Runtime.getRuntime().availableProcessors());
 
-		threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new NamedThreadFactory(SimilarImage.class.getSimpleName()));
+		threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(),
+				new NamedThreadFactory(SimilarImage.class.getSimpleName()));
 		Settings settings = new Settings(new SettingsValidator());
 		settings.loadPropertiesFromFile(PROPERTIES_FILENAME);
 
@@ -99,15 +104,15 @@ public class SimilarImage {
 
 		ServerLocator locator = ActiveMQClient
 				.createServerLocatorWithoutHA(new TransportConfiguration(InVMConnectorFactory.class.getName()))
-				.setCacheLargeMessagesClient(false).setMinLargeMessageSize(LARGE_MESSAGE_SIZE_THRESHOLD)
-				.setBlockOnNonDurableSend(false).setPreAcknowledge(true);
+				.setCacheLargeMessagesClient(false).setMinLargeMessageSize(LARGE_MESSAGE_SIZE_THRESHOLD).setBlockOnNonDurableSend(false)
+				.setPreAcknowledge(true);
 		ArtemisSession as = new ArtemisSession(locator);
 		ArtemisQueue aq = new ArtemisQueue(as.getSession());
 		aq.createAll();
 
 		for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
-			ArtemisHashConsumer ahc = new ArtemisHashConsumer(as.getSession(), new ImagePHash(),
-					ArtemisQueueAddress.hash.toString(), ArtemisQueueAddress.result.toString());
+			ahcs.add(new ArtemisHashConsumer(as.getSession(), new ImagePHash(), ArtemisQueueAddress.hash.toString(),
+					ArtemisQueueAddress.result.toString()));
 		}
 
 		Database database = new SQLiteDatabase();
@@ -117,11 +122,9 @@ public class SimilarImage {
 		FilterRepository filterRepository = repositoryFactory.buildFilterRepository();
 		TagRepository tagRepository = repositoryFactory.buildTagRepository();
 
-		ExtendedAttributeQuery eaQuery = new ExtendedAttributeDirectoryCache(new ExtendedAttribute(), 1,
-				TimeUnit.MINUTES);
+		ExtendedAttributeQuery eaQuery = new ExtendedAttributeDirectoryCache(new ExtendedAttribute(), 1, TimeUnit.MINUTES);
 
-		ArtemisResultConsumer arc = new ArtemisResultConsumer(as.getSession(), imageRepository, eaQuery,
-				new HashAttribute(HashNames.DEFAULT_DCT_HASH_2));
+		arc = new ArtemisResultConsumer(as.getSession(), imageRepository, eaQuery, new HashAttribute(HashNames.DEFAULT_DCT_HASH_2));
 
 		DuplicateOperations dupOps = new DuplicateOperations(filterRepository, tagRepository, imageRepository);
 		SorterFactory sf = new SorterFactory(imageRepository, filterRepository, tagRepository);
