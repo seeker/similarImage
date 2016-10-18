@@ -32,7 +32,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
-import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 
@@ -51,18 +50,17 @@ public class ArtemisResultConsumerTest extends MessagingBaseTest {
 	private ImageRepository imageRepository;
 
 	private ArtemisResultConsumer cut;
+	private MockMessageBuilder messageBuilder;
 
 	@Before
 	public void setUp() throws Exception {
-		when(message.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY)).thenReturn(TEST_PATH);
-		when(message.getLongProperty(ArtemisHashProducer.MESSAGE_HASH_PROPERTY)).thenReturn(TEST_HASH);
-		
 		cut = new ArtemisResultConsumer(session, imageRepository, eaQuery, hashAttribute);
+		messageBuilder = new MockMessageBuilder();
 	}
 
 	@Test
 	public void testStoreHash() throws Exception {
-		when(message.containsProperty(ArtemisHashProducer.MESSAGE_HASH_PROPERTY)).thenReturn(true);
+		message = messageBuilder.configureHashResultMessage().build();
 
 		cut.onMessage(message);
 
@@ -71,7 +69,7 @@ public class ArtemisResultConsumerTest extends MessagingBaseTest {
 
 	@Test
 	public void testStoreExtendedAttribute() throws Exception {
-		when(message.containsProperty(ArtemisHashProducer.MESSAGE_HASH_PROPERTY)).thenReturn(true);
+		message = messageBuilder.configureHashResultMessage().build();
 		when(eaQuery.isEaSupported(any(Path.class))).thenReturn(true);
 
 		cut.onMessage(message);
@@ -81,8 +79,7 @@ public class ArtemisResultConsumerTest extends MessagingBaseTest {
 
 	@Test
 	public void testCorruptImageMessage() throws Exception {
-		when(message.getStringProperty(ArtemisHashProducer.MESSAGE_TASK_PROPERTY))
-				.thenReturn(ArtemisHashProducer.MESSAGE_TASK_VALUE_CORRUPT);
+		message = messageBuilder.configureCorruptImageMessage().build();
 		when(eaQuery.isEaSupported(any(Path.class))).thenReturn(true);
 
 		cut.onMessage(message);
