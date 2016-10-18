@@ -51,7 +51,7 @@ public class ArtemisHashConsumerTest extends MessagingBaseTest {
 	@Before
 	public void setUp() throws Exception {
 		when(hasher.getLongHash(any(InputStream.class))).thenReturn(TEST_HASH);
-		when(message.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY)).thenReturn(TEST_PATH);
+		message = new MockMessageBuilder().configureHashRequestMessage().build();
 		
 		cut = new ArtemisHashConsumer(session, hasher, TEST_ADDRESS_REQUEST, TEST_ADDRESS_RESULT);
 	}
@@ -60,30 +60,31 @@ public class ArtemisHashConsumerTest extends MessagingBaseTest {
 	public void testMessageSent() throws Exception {
 		cut.onMessage(message);
 
-		verify(producer).send(message);
+		verify(producer).send(sessionMessage);
 	}
 
 	@Test
 	public void testMessagePathProperty() throws Exception {
 		cut.onMessage(message);
 
-		verify(message).putStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY, TEST_PATH);
+		verify(sessionMessage).putStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY, TEST_PATH);
 	}
 
 	@Test
 	public void testMessageHashProperty() throws Exception {
 		cut.onMessage(message);
 
-		verify(message).putLongProperty(ArtemisHashProducer.MESSAGE_HASH_PROPERTY, TEST_HASH);
+		verify(sessionMessage).putLongProperty(ArtemisHashProducer.MESSAGE_HASH_PROPERTY, TEST_HASH);
 	}
 
 	@Test
 	public void testMessageCorruptImageTask() throws Exception {
+		message = new MockMessageBuilder().configureCorruptImageMessage().build();
 		when(hasher.getLongHash(any(InputStream.class))).thenThrow(new IIOException(""));
 
 		cut.onMessage(message);
 
-		verify(message).putStringProperty(ArtemisHashProducer.MESSAGE_TASK_PROPERTY, ArtemisHashProducer.MESSAGE_TASK_VALUE_CORRUPT);
+		verify(sessionMessage).putStringProperty(ArtemisHashProducer.MESSAGE_TASK_PROPERTY, ArtemisHashProducer.MESSAGE_TASK_VALUE_CORRUPT);
 	}
 
 	@Test
@@ -92,15 +93,16 @@ public class ArtemisHashConsumerTest extends MessagingBaseTest {
 
 		cut.onMessage(message);
 
-		verify(message, never()).putLongProperty(eq(ArtemisHashProducer.MESSAGE_HASH_PROPERTY), any(Long.class));
+		verify(sessionMessage, never()).putLongProperty(eq(ArtemisHashProducer.MESSAGE_HASH_PROPERTY), any(Long.class));
 	}
 
 	@Test
 	public void testMessageCorruptImageSent() throws Exception {
+		message = new MockMessageBuilder().configureCorruptImageMessage().build();
 		when(hasher.getLongHash(any(InputStream.class))).thenThrow(new IIOException(""));
 
 		cut.onMessage(message);
 
-		verify(producer).send(message);
+		verify(producer).send(sessionMessage);
 	}
 }
