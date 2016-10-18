@@ -17,6 +17,7 @@
  */
 package com.github.dozedoff.similarImage.messaging;
 
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.apache.activemq.artemis.api.core.ActiveMQBuffer;
@@ -35,7 +36,7 @@ public class MockMessageBuilder {
 	 * Prepare a mock message builder
 	 */
 	public MockMessageBuilder() {
-		message = Mockito.mock(ClientMessage.class);
+		message = mock(ClientMessage.class);
 	}
 
 	/**
@@ -104,6 +105,7 @@ public class MockMessageBuilder {
 	public MockMessageBuilder configureHashResultMessage() {
 		addProperty(ArtemisHashProducer.MESSAGE_HASH_PROPERTY, DEFAULT_HASH);
 		addProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY, DEFAULT_PATH);
+		addBodyBuffer(mock(ActiveMQBuffer.class));
 		return this;
 	}
 
@@ -115,6 +117,7 @@ public class MockMessageBuilder {
 	public MockMessageBuilder configureCorruptImageMessage() {
 		addProperty(ArtemisHashProducer.MESSAGE_TASK_PROPERTY, ArtemisHashProducer.MESSAGE_TASK_VALUE_CORRUPT);
 		addProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY, DEFAULT_PATH);
+		addBodyBuffer(mock(ActiveMQBuffer.class));
 		return this;
 	}
 
@@ -126,6 +129,7 @@ public class MockMessageBuilder {
 	public MockMessageBuilder configureHashRequestMessage() {
 		addBodyBuffer(Mockito.mock(ActiveMQBuffer.class));
 		addProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY, DEFAULT_PATH);
+		addBodyBuffer(mock(ActiveMQBuffer.class));
 		return this;
 	}
 
