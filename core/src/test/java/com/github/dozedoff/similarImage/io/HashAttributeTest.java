@@ -149,4 +149,28 @@ public class HashAttributeTest {
 	public void testGetTimestampFQN() throws Exception {
 		assertThat(cut.getTimestampFQN(), is(ExtendedAttribute.createName("timestamp", TEST_HASH_NAME)));
 	}
+
+	@Test
+	public void testMarkCorrupted() throws Exception {
+		cut.markCorrupted(tempFile);
+
+		assertThat(ExtendedAttribute.isExtendedAttributeSet(tempFile, cut.getCorruptNameFQN()), is(true));
+	}
+
+	@Test
+	public void testGetCorruptNameFQN() throws Exception {
+		assertThat(cut.getCorruptNameFQN(), is(ExtendedAttribute.createName("corrupt")));
+	}
+
+	@Test
+	public void testIsCorruptedSet() throws Exception {
+		ExtendedAttribute.setExtendedAttribute(tempFile, cut.getCorruptNameFQN(), "");
+
+		assertThat(cut.isCorrupted(tempFile), is(true));
+	}
+
+	@Test
+	public void testIsCorruptedNotSet() throws Exception {
+		assertThat(cut.isCorrupted(tempFile), is(false));
+	}
 }
