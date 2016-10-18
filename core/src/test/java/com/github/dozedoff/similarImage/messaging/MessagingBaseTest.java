@@ -39,8 +39,16 @@ public abstract class MessagingBaseTest {
 	protected ClientProducer producer;
 	@Mock
 	protected ClientConsumer consumer;
+	/**
+	 * Message that arrived at the consumer
+	 */
 	@Mock
 	protected ClientMessage message;
+	/**
+	 * Message created by the session
+	 */
+	@Mock
+	protected ClientMessage sessionMessage;
 	@Mock
 	protected ActiveMQBuffer bodyBuffer;
 
@@ -48,7 +56,7 @@ public abstract class MessagingBaseTest {
 	public void messagingSetup() throws ActiveMQException {
 		when(session.createConsumer(any(String.class))).thenReturn(consumer);
 		when(session.createProducer(any(String.class))).thenReturn(producer);
-		when(session.createMessage(any(Boolean.class))).thenReturn(message);
+		when(session.createMessage(any(Boolean.class))).thenReturn(sessionMessage);
 		when(message.getBodyBuffer()).thenReturn(bodyBuffer);
 	}
 }
