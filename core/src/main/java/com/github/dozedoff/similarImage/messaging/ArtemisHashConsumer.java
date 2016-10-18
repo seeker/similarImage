@@ -24,6 +24,8 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import javax.imageio.IIOException;
+
 import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.client.ClientConsumer;
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
@@ -46,10 +48,8 @@ import at.dhyan.open_imaging.GifDecoder.GifImage;
  * @author Nicholas Wright
  *
  */
-public class ArtemisHashConsumer {
+public class ArtemisHashConsumer implements MessageHandler {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ArtemisHashConsumer.class);
-
-	private static final long RECEIVE_TIMEOUT_MILLI = 500;
 
 	private final ClientConsumer consumer;
 	private final ClientProducer producer;
@@ -77,7 +77,7 @@ public class ArtemisHashConsumer {
 		this.session = session;
 		this.consumer = session.createConsumer(requestAddress);
 		this.producer = session.createProducer(resultAddress);
-		this.consumer.setMessageHandler(new HashMessageHandler());
+		this.consumer.setMessageHandler(this);
 	}
 
 	/**
@@ -90,15 +90,14 @@ public class ArtemisHashConsumer {
 		MessagingUtil.silentClose(session);
 	}
 
-	class HashMessageHandler implements MessageHandler {
 		/**
 		 * {@inheritDoc}
 		 */
 		@Override
 		public void onMessage(ClientMessage message) {
+			Path path = Paths.get(message.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY));
+
 			try {
-				Path path = Paths.get(message.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY));
-			
 				ByteBuffer buffer = ByteBuffer.allocate(message.getBodySize());
 				message.getBodyBuffer().readBytes(buffer);
 			
@@ -111,14 +110,27 @@ public class ArtemisHashConsumer {
 				LOGGER.debug("Sent hash response message for {}", path);
 			} catch (ActiveMQException e) {
 				LOGGER.error("Failed to process message: {}", e.toString());
+			} catch (IIOException ie) {
+				try {
+					sendImageErrorResponse(path);
+				} catch (ActiveMQException e) {
+					LOGGER.error("Failed to send corrupt image message: {}", e.toString());
+				}
 			} catch (IOException e) {
 				LOGGER.error("Failed to process image: {}", e.toString());
 			}
 		}
 
-		private long processFile(Path next, InputStream is) throws IOException {
+		private void sendImageErrorResponse(Path path) throws ActiveMQException {
+			ClientMessage response = session.createMessage(false);
+			response.putStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY, path.toString());
+			response.putStringProperty(ArtemisHashProducer.MESSAGE_TASK_PROPERTY, ArtemisHashProducer.MESSAGE_TASK_VALUE_CORRUPT);
+			producer.send(response);
+		}
 
+		private long processFile(Path next, InputStream is) throws IOException {
 			Path filename = next.getFileName();
+
 			if (filename != null && filename.toString().toLowerCase().endsWith(".gif")) {
 				GifImage gi = GifDecoder.read(is);
 
@@ -133,5 +145,4 @@ public class ArtemisHashConsumer {
 			long hash = hasher.getLongHash(is);
 			return hash;
 		}
-	}
 }

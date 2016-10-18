@@ -17,6 +17,8 @@
  */
 package com.github.dozedoff.similarImage.messaging;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.apache.activemq.artemis.api.core.ActiveMQException;
@@ -31,20 +33,20 @@ import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
+import com.github.dozedoff.similarImage.io.ExtendedAttribute;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.util.MessagingUtil;
 
-public class ArtemisResultConsumer {
+public class ArtemisResultConsumer implements MessageHandler {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ArtemisResultConsumer.class);
-
-	private static final long RECEIVE_TIMEOUT_MILLI = 500;
 
 	private final ImageRepository imageRepository;
 	private final ClientConsumer consumer;
 	private final ExtendedAttributeQuery eaQuery;
 	private final HashAttribute hashAttribute;
 	private final ClientSession session;
+	public static final String CORRUPT_EA_NAMESPACE = ExtendedAttribute.createName("corrupt");
 
 	// TODO rewrite like handler
 	public ArtemisResultConsumer(ClientSession session, ImageRepository imageRepository, ExtendedAttributeQuery eaQuery,
@@ -55,7 +57,7 @@ public class ArtemisResultConsumer {
 		this.consumer = session.createConsumer(ArtemisQueueAddress.result.toString());
 		this.eaQuery = eaQuery;
 		this.hashAttribute = hashAttribute;
-		this.consumer.setMessageHandler(new ResultMessageHandler());
+		this.consumer.setMessageHandler(this);
 	}
 
 	/**
@@ -67,26 +69,44 @@ public class ArtemisResultConsumer {
 		MessagingUtil.silentClose(session);
 	}
 
-	class ResultMessageHandler implements MessageHandler {
 		/**
 		 * {@inheritDoc}
 		 */
 		@Override
 		public void onMessage(ClientMessage msg) {
 			try {
-				String path = msg.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY);
+				Path path = Paths.get(msg.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY));
 				long hash = msg.getLongProperty(ArtemisHashProducer.MESSAGE_HASH_PROPERTY);
 
-				LOGGER.debug("Creating record for {} with hash {}", path, hash);
-				imageRepository.store(new ImageRecord(path, hash));
-
-				if (eaQuery.isEaSupported(Paths.get(path))) {
-					hashAttribute.writeHash(Paths.get(path), hash);
+				if (msg.containsProperty(ArtemisHashProducer.MESSAGE_HASH_PROPERTY)) {
+					storeHash(path,hash);
+				} else if (ArtemisHashProducer.MESSAGE_TASK_VALUE_CORRUPT
+						.equals(msg.getStringProperty(ArtemisHashProducer.MESSAGE_TASK_PROPERTY))) {
+					markAsCorrupt(path);
+				} else {
+					LOGGER.error("Unhandled message: {}", msg);
 				}
-
 			} catch (RepositoryException e) {
-				LOGGER.error("Failed to store result message: {}", e.toString());
+				LOGGER.warn("Failed to store result message: {}", e.toString());
 			}
 		}
-	}
+
+		private void markAsCorrupt(Path path) {
+			if (eaQuery.isEaSupported(path)) {
+				try {
+					hashAttribute.markCorrupted(path);
+				} catch (IOException e) {
+					LOGGER.warn("Failed to mark {} as corrupt: {}", path, e.toString());
+				}
+			}
+		}
+
+		private void storeHash(Path path, long hash) throws RepositoryException {
+			LOGGER.debug("Creating record for {} with hash {}", path, hash);
+			imageRepository.store(new ImageRecord(path.toString(), hash));
+
+			if (eaQuery.isEaSupported(path)) {
+				hashAttribute.writeHash(path, hash);
+			}
+		}
 }

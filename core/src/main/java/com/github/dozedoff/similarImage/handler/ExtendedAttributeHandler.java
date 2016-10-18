@@ -28,8 +28,10 @@ import org.slf4j.LoggerFactory;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
+import com.github.dozedoff.similarImage.io.ExtendedAttribute;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.HashAttribute;
+import com.github.dozedoff.similarImage.messaging.ArtemisResultConsumer;
 
 /**
  * This handler reads the hash from the extended attributes of a file and stores them in the database.
@@ -75,6 +77,10 @@ public class ExtendedAttributeHandler implements HashHandler {
 		if (eaQuery.isEaSupported(file) && hashAttribute.areAttributesValid(file)) {
 			LOGGER.trace("{} has valid extended attributes", file);
 			try {
+				if (ExtendedAttribute.isExtendedAttributeSet(file, ArtemisResultConsumer.CORRUPT_EA_NAMESPACE)) {
+					return true;
+				}
+
 				imageRepository.store(new ImageRecord(file.toString(), hashAttribute.readHash(file)));
 				LOGGER.trace("Successfully read and stored the hash for {}", file);
 				return true;

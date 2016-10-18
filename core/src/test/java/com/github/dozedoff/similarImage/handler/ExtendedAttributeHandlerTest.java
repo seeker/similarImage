@@ -20,11 +20,12 @@ package com.github.dozedoff.similarImage.handler;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import javax.management.InvalidAttributeValueException;
 
@@ -39,8 +40,11 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
+import com.github.dozedoff.similarImage.io.ExtendedAttribute;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.HashAttribute;
+import com.github.dozedoff.similarImage.messaging.ArtemisResultConsumer;
+import com.github.dozedoff.similarImage.util.TestUtil;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ExtendedAttributeHandlerTest {
@@ -60,7 +64,7 @@ public class ExtendedAttributeHandlerTest {
 
 	@Before
 	public void setUp() throws Exception {
-		testFile = Paths.get("foo");
+		testFile = TestUtil.getTempFileWithExtendedAttributeSupport(ExtendedAttributeHandlerTest.class.getSimpleName());
 
 		when(hashAttribute.areAttributesValid(testFile)).thenReturn(true);
 		when(eaQuery.isEaSupported(any(Path.class))).thenReturn(true);
@@ -97,5 +101,23 @@ public class ExtendedAttributeHandlerTest {
 		when(hashAttribute.readHash(testFile)).thenThrow(new InvalidAttributeValueException());
 
 		assertThat(cut.handle(testFile), is(false));
+	}
+
+	@Test
+	public void testHandleCorruptFileIsHandled() throws Exception {
+		when(eaQuery.isEaSupported(testFile)).thenReturn(true);
+		when(hashAttribute.areAttributesValid(testFile)).thenReturn(true);
+		ExtendedAttribute.setExtendedAttribute(testFile, ArtemisResultConsumer.CORRUPT_EA_NAMESPACE, "");
+
+		assertThat(cut.handle(testFile), is(true));
+	}
+
+	@Test
+	public void testHandleCorruptFileNotStored() throws Exception {
+		when(eaQuery.isEaSupported(testFile)).thenReturn(true);
+		when(hashAttribute.areAttributesValid(testFile)).thenReturn(true);
+		ExtendedAttribute.setExtendedAttribute(testFile, ArtemisResultConsumer.CORRUPT_EA_NAMESPACE, "");
+
+		verify(imageRepository, never()).store(any(ImageRecord.class));
 	}
 }

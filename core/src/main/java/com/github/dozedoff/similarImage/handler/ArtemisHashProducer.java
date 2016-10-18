@@ -39,10 +39,12 @@ import org.slf4j.LoggerFactory;
 public class ArtemisHashProducer implements HashHandler {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ArtemisHashProducer.class);
 
+	// TODO move this or use enums?
 	public static final String MESSAGE_TASK_PROPERTY = "task";
 	public static final String MESSAGE_PATH_PROPERTY = "path";
 	public static final String MESSAGE_HASH_PROPERTY = "hashResult";
-	public static final String MESSAGE_HASH_VALUE = "hash";
+	public static final String MESSAGE_TASK_VALUE_HASH = "hash";
+	public static final String MESSAGE_TASK_VALUE_CORRUPT = "corr";
 
 
 	private final ClientProducer producer;
@@ -77,7 +79,7 @@ public class ArtemisHashProducer implements HashHandler {
 			ClientMessage msg = session.createMessage(false);
 
 			msg.setBodyInputStream(bis);
-			msg.putStringProperty(MESSAGE_TASK_PROPERTY, MESSAGE_HASH_VALUE);
+			msg.putStringProperty(MESSAGE_TASK_PROPERTY, MESSAGE_TASK_VALUE_HASH);
 			msg.putStringProperty(MESSAGE_PATH_PROPERTY, file.toString());
 
 			producer.send(msg);
