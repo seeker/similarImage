@@ -81,6 +81,7 @@ public class ArtemisResultConsumerTest extends MessagingBaseTest {
 	public void testCorruptImageMessage() throws Exception {
 		message = messageBuilder.configureCorruptImageMessage().build();
 		when(eaQuery.isEaSupported(any(Path.class))).thenReturn(true);
+		when(message.getLongProperty(any(String.class))).thenThrow(new NumberFormatException());
 
 		cut.onMessage(message);
 

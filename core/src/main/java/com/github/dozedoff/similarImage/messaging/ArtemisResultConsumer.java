@@ -76,9 +76,10 @@ public class ArtemisResultConsumer implements MessageHandler {
 		public void onMessage(ClientMessage msg) {
 			try {
 				Path path = Paths.get(msg.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY));
-				long hash = msg.getLongProperty(ArtemisHashProducer.MESSAGE_HASH_PROPERTY);
+
 
 				if (msg.containsProperty(ArtemisHashProducer.MESSAGE_HASH_PROPERTY)) {
+					long hash = msg.getLongProperty(ArtemisHashProducer.MESSAGE_HASH_PROPERTY);
 					storeHash(path,hash);
 				} else if (ArtemisHashProducer.MESSAGE_TASK_VALUE_CORRUPT
 						.equals(msg.getStringProperty(ArtemisHashProducer.MESSAGE_TASK_PROPERTY))) {
