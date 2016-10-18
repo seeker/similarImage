@@ -32,7 +32,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class MessagingBaseTest {
+public abstract class MessagingBaseTest {
 	@Mock
 	protected ClientSession session;
 	@Mock
