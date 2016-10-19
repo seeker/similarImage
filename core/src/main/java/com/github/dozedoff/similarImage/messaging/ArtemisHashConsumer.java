@@ -115,16 +115,28 @@ public class ArtemisHashConsumer implements MessageHandler {
 			}catch (InvalidPathException e) {
 				LOGGER.error("File path was invalid: {}", e.toString());
 			} catch (IIOException | ArrayIndexOutOfBoundsException ie) {
-				LOGGER.warn("Unable to read image {}, marking as corrupt", path);
-				try {
-					sendImageErrorResponse(path);
-				} catch (ActiveMQException e) {
-					LOGGER.error("Failed to send corrupt image message: {}", e.toString());
-				}
+				markImageCorrupt(path);
 			} catch (IOException e) {
+			if (isImageError(e.getMessage())) {
+				markImageCorrupt(path);
+			} else {
 				LOGGER.error("Failed to process image: {}", e.toString());
 			}
+			}
 		}
+
+	private boolean isImageError(String message) {
+		return message.startsWith("Unknown block") || message.startsWith("Invalid GIF header");
+	}
+
+	private void markImageCorrupt(Path path) {
+		LOGGER.warn("Unable to read image {}, marking as corrupt", path);
+		try {
+			sendImageErrorResponse(path);
+		} catch (ActiveMQException e) {
+			LOGGER.error("Failed to send corrupt image message: {}", e.toString());
+		}
+	}
 
 		private void sendImageErrorResponse(Path path) throws ActiveMQException {
 			ClientMessage response = session.createMessage(false);
