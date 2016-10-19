@@ -24,9 +24,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.InputStream;
+import java.nio.file.InvalidPathException;
 
 import javax.imageio.IIOException;
 
+import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -104,5 +106,15 @@ public class ArtemisHashConsumerTest extends MessagingBaseTest {
 		cut.onMessage(message);
 
 		verify(producer).send(sessionMessage);
+	}
+
+	@Test
+	public void testInvalidPath() throws Exception {
+		message = new MockMessageBuilder().configureCorruptImageMessage().build();
+		when(message.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY)).thenThrow(new InvalidPathException("", ""));
+
+		cut.onMessage(message);
+
+		verify(producer, never()).send(any(ClientMessage.class));
 	}
 }

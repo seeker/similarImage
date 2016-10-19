@@ -21,6 +21,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -95,9 +96,10 @@ public class ArtemisHashConsumer implements MessageHandler {
 		 */
 		@Override
 		public void onMessage(ClientMessage message) {
-			Path path = Paths.get(message.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY));
-
+			
+			Path path =null;
 			try {
+				path= Paths.get(message.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY));
 				ByteBuffer buffer = ByteBuffer.allocate(message.getBodySize());
 				message.getBodyBuffer().readBytes(buffer);
 			
@@ -110,6 +112,8 @@ public class ArtemisHashConsumer implements MessageHandler {
 				LOGGER.debug("Sent hash response message for {}", path);
 			} catch (ActiveMQException e) {
 				LOGGER.error("Failed to process message: {}", e.toString());
+			}catch (InvalidPathException e) {
+				LOGGER.error("File path was invalid: {}", e.toString());
 			} catch (IIOException ie) {
 				try {
 					sendImageErrorResponse(path);
