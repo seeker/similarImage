@@ -115,6 +115,7 @@ public class ArtemisHashConsumer implements MessageHandler {
 			}catch (InvalidPathException e) {
 				LOGGER.error("File path was invalid: {}", e.toString());
 			} catch (IIOException | ArrayIndexOutOfBoundsException ie) {
+				LOGGER.warn("Unable to read image {}, marking as corrupt", path);
 				try {
 					sendImageErrorResponse(path);
 				} catch (ActiveMQException e) {
