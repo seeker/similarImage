@@ -25,6 +25,24 @@
 	</modules>
 
 	<build>
+	   <pluginManagement>
+	      <plugins>
+	        <plugin>
+	          <groupId>org.apache.maven.plugins</groupId>
+	          <artifactId>maven-failsafe-plugin</artifactId>
+	          <version>2.19.1</version>
+	          <executions>
+	            <execution>
+	              <id>integration-test</id>
+	              <goals>
+	                <goal>integration-test</goal>
+	                <goal>verify</goal>
+	              </goals>
+	            </execution>
+	          </executions>
+	        </plugin>
+	      </plugins>
+	    </pluginManagement>
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
