@@ -24,11 +24,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.InputStream;
-import java.nio.file.InvalidPathException;
 
 import javax.imageio.IIOException;
 
-import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,7 +37,7 @@ import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ArtemisHashConsumerTest extends MessagingBaseTest {
+public class ArtemisHashRequestConsumerTest extends MessagingBaseTest {
 	private static final String TEST_ADDRESS_REQUEST = "test_request";
 	private static final String TEST_ADDRESS_RESULT = "test_result";
 	private static final String TEST_PATH = "foo";
@@ -48,14 +46,14 @@ public class ArtemisHashConsumerTest extends MessagingBaseTest {
 	@Mock
 	private ImagePHash hasher;
 
-	private ArtemisHashConsumer cut;
+	private ArtemisHashRequestConsumer cut;
 
 	@Before
 	public void setUp() throws Exception {
 		when(hasher.getLongHash(any(InputStream.class))).thenReturn(TEST_HASH);
 		message = new MockMessageBuilder().configureHashRequestMessage().build();
 		
-		cut = new ArtemisHashConsumer(session, hasher, TEST_ADDRESS_REQUEST, TEST_ADDRESS_RESULT);
+		cut = new ArtemisHashRequestConsumer(session, hasher, TEST_ADDRESS_REQUEST, TEST_ADDRESS_RESULT);
 	}
 
 	@Test
@@ -106,15 +104,5 @@ public class ArtemisHashConsumerTest extends MessagingBaseTest {
 		cut.onMessage(message);
 
 		verify(producer).send(sessionMessage);
-	}
-
-	@Test
-	public void testInvalidPath() throws Exception {
-		message = new MockMessageBuilder().configureCorruptImageMessage().build();
-		when(message.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY)).thenThrow(new InvalidPathException("", ""));
-
-		cut.onMessage(message);
-
-		verify(producer, never()).send(any(ClientMessage.class));
 	}
 }

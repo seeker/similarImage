@@ -21,7 +21,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -44,13 +43,13 @@ import at.dhyan.open_imaging.GifDecoder;
 import at.dhyan.open_imaging.GifDecoder.GifImage;
 
 /**
- * Consumes hash request messages and produces result messages.
+ * Consumes resize messages, hashes them and produces result messages.
  * 
  * @author Nicholas Wright
  *
  */
-public class ArtemisHashConsumer implements MessageHandler {
-	private static final Logger LOGGER = LoggerFactory.getLogger(ArtemisHashConsumer.class);
+public class ArtemisHashRequestConsumer implements MessageHandler {
+	private static final Logger LOGGER = LoggerFactory.getLogger(ArtemisHashRequestConsumer.class);
 
 	private final ClientConsumer consumer;
 	private final ClientProducer producer;
@@ -59,7 +58,7 @@ public class ArtemisHashConsumer implements MessageHandler {
 
 
 	/**
-	 * Create a hash consumer that listens to the given address.
+	 * Create a hash consumer that listens and responds on the given addresses.
 	 * 
 	 * @param session
 	 *            of the client
@@ -72,7 +71,7 @@ public class ArtemisHashConsumer implements MessageHandler {
 	 * @throws ActiveMQException
 	 *             if there is an error with the queue
 	 */
-	public ArtemisHashConsumer(ClientSession session, ImagePHash hasher, String requestAddress, String resultAddress)
+	public ArtemisHashRequestConsumer(ClientSession session, ImagePHash hasher, String requestAddress, String resultAddress)
 			throws ActiveMQException {
 		this.hasher = hasher;
 		this.session = session;
@@ -112,8 +111,6 @@ public class ArtemisHashConsumer implements MessageHandler {
 				LOGGER.debug("Sent hash response message for {}", path);
 			} catch (ActiveMQException e) {
 				LOGGER.error("Failed to process message: {}", e.toString());
-			}catch (InvalidPathException e) {
-				LOGGER.error("File path was invalid: {}", e.toString());
 			} catch (IIOException | ArrayIndexOutOfBoundsException ie) {
 				markImageCorrupt(path);
 			} catch (IOException e) {

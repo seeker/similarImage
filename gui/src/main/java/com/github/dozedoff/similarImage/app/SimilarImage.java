@@ -49,15 +49,17 @@ import com.github.dozedoff.similarImage.gui.SimilarImageView;
 import com.github.dozedoff.similarImage.gui.UserTagSettingController;
 import com.github.dozedoff.similarImage.handler.HandlerListFactory;
 import com.github.dozedoff.similarImage.handler.HashNames;
+import com.github.dozedoff.similarImage.image.ImageResizer;
 import com.github.dozedoff.similarImage.io.ExtendedAttribute;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeDirectoryCache;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
-import com.github.dozedoff.similarImage.messaging.ArtemisHashConsumer;
+import com.github.dozedoff.similarImage.messaging.ArtemisHashRequestConsumer;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue;
-import com.github.dozedoff.similarImage.messaging.ArtemisQueueAddress;
+import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
+import com.github.dozedoff.similarImage.messaging.ArtemisResizeRequestConsumer;
 import com.github.dozedoff.similarImage.messaging.ArtemisResultConsumer;
 import com.github.dozedoff.similarImage.messaging.ArtemisSession;
 import com.github.dozedoff.similarImage.thread.NamedThreadFactory;
@@ -69,11 +71,13 @@ public class SimilarImage {
 	private final String PROPERTIES_FILENAME = "similarImage.properties";
 	private final int PRODUCER_QUEUE_SIZE = 400;
 	private static final int LARGE_MESSAGE_SIZE_THRESHOLD = 1024 * 1024;
+	private static final int RESIZE_SIZE = 32;
 
 	private ExecutorService threadPool;
 	private Statistics statistics;
 	ArtemisResultConsumer arc;
-	List<ArtemisHashConsumer> ahcs = new LinkedList<>();
+	List<ArtemisHashRequestConsumer> ahrcs = new LinkedList<>();
+	List<ArtemisResizeRequestConsumer> arrcs = new LinkedList<>();
 
 	public static void main(String[] args) {
 		try {
@@ -111,8 +115,10 @@ public class SimilarImage {
 		aq.createAll();
 
 		for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
-			ahcs.add(new ArtemisHashConsumer(as.getSession(), new ImagePHash(), ArtemisQueueAddress.hash.toString(),
-					ArtemisQueueAddress.result.toString()));
+			ahrcs.add(new ArtemisHashRequestConsumer(as.getSession(), new ImagePHash(), QueueAddress.HASH_REQUEST.toString(),
+					QueueAddress.RESULT.toString()));
+			arrcs.add(new ArtemisResizeRequestConsumer(as.getSession(), new ImageResizer(RESIZE_SIZE),
+					QueueAddress.RESIZE_REQUEST.toString(), QueueAddress.HASH_REQUEST.toString()));
 		}
 
 		Database database = new SQLiteDatabase();

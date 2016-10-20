@@ -26,7 +26,7 @@ public class ArtemisQueue {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ArtemisQueue.class);
 
 	public enum QueueAddress {
-		hash, result
+		HASH_REQUEST, RESULT, RESIZE_REQUEST
 	}
 	
 	private final ClientSession session;
@@ -45,8 +45,9 @@ public class ArtemisQueue {
 	 * Creates all queues. Does not check if they already exist.
 	 */
 	public void createAll() {
-		queueHelper(QueueAddress.result, true);
-		queueHelper(QueueAddress.hash, false);
+		queueHelper(QueueAddress.RESULT, true);
+		queueHelper(QueueAddress.RESIZE_REQUEST, true);
+		queueHelper(QueueAddress.HASH_REQUEST, false);
 	}
 	
 	private void queueHelper(QueueAddress address, boolean durable) {

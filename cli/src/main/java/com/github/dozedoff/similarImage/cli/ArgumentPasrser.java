@@ -35,7 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
-import com.github.dozedoff.similarImage.messaging.ArtemisHashConsumer;
+import com.github.dozedoff.similarImage.messaging.ArtemisHashRequestConsumer;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue;
 import com.github.dozedoff.similarImage.messaging.ArtemisSession;
 
@@ -145,15 +145,15 @@ public class ArgumentPasrser {
 				.setBlockOnNonDurableSend(false).setPreAcknowledge(true).setReconnectAttempts(-1);
 
 		try {
-			List<ArtemisHashConsumer> workers = new LinkedList<ArtemisHashConsumer>();
+			List<ArtemisHashRequestConsumer> workers = new LinkedList<ArtemisHashRequestConsumer>();
 
 			ArtemisSession session = new ArtemisSession(locator);
 
 			for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
 				LOGGER.info("Starting worker {} ...", i);
-				ArtemisHashConsumer consumer = new ArtemisHashConsumer(session.getSession(), new ImagePHash(),
-					ArtemisQueue.QueueAddress.hash.toString(),
-					ArtemisQueue.QueueAddress.result.toString());
+				ArtemisHashRequestConsumer consumer = new ArtemisHashRequestConsumer(session.getSession(), new ImagePHash(),
+					ArtemisQueue.QueueAddress.HASH_REQUEST.toString(),
+					ArtemisQueue.QueueAddress.RESULT.toString());
 
 				workers.add(consumer);
 			}
@@ -169,7 +169,7 @@ public class ArgumentPasrser {
 
 			LOGGER.info("Shutting down...");
 
-			for (ArtemisHashConsumer worker : workers) {
+			for (ArtemisHashRequestConsumer worker : workers) {
 				worker.stop();
 			}
 

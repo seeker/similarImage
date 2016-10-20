@@ -71,8 +71,9 @@ public class ArtemisEmbeddedServer {
 		as.setMaxSizeBytes(MAX_SIZE);
 		as.setAddressFullMessagePolicy(AddressFullMessagePolicy.BLOCK);
 
+
 		Configuration config = new ConfigurationImpl();
-		config.addAddressesSetting(ArtemisQueue.QueueAddress.hash.toString(), as);
+		config.addAddressesSetting(ArtemisQueue.QueueAddress.HASH_REQUEST.toString(), as);
 		config.setAcceptorConfigurations(transports);
 		config.setSecurityEnabled(false);
 
