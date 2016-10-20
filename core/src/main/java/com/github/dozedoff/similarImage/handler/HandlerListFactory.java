@@ -26,6 +26,7 @@ import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.io.Statistics;
+import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.messaging.ArtemisSession;
 
 public class HandlerListFactory {
@@ -47,7 +48,7 @@ public class HandlerListFactory {
 
 		handlers.add(new DatabaseHandler(imageRepository, statistics));
 		handlers.add(new ExtendedAttributeHandler(hashAttribute, imageRepository, eaQuery));
-		handlers.add(new ArtemisHashProducer(session.getSession(), ArtemisSession.ADDRESS_HASH_QUEUE));
+		handlers.add(new ArtemisHashProducer(session.getSession(), QueueAddress.HASH_REQUEST.toString()));
 
 		return handlers;
 	}
@@ -57,7 +58,7 @@ public class HandlerListFactory {
 		List<HashHandler> handlers = new LinkedList<HashHandler>();
 
 		handlers.add(new DatabaseHandler(imageRepository, statistics));
-		handlers.add(new ArtemisHashProducer(session.getSession(), ArtemisSession.ADDRESS_HASH_QUEUE));
+		handlers.add(new ArtemisHashProducer(session.getSession(), QueueAddress.HASH_REQUEST.toString()));
 
 		return handlers;
 	}

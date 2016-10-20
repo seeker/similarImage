@@ -24,18 +24,6 @@ import org.apache.activemq.artemis.api.core.client.ServerLocator;
 
 public class ArtemisSession {
 	private final ClientSessionFactory factory;
-
-	/**
-	 * @deprecated Use {@link ArtemisQueueAddress}
-	 */
-	@Deprecated
-	public static final String ADDRESS_HASH_QUEUE = ArtemisQueueAddress.hash.toString();
-	/**
-	 * @deprecated Use {@link ArtemisQueueAddress}
-	 */
-	@Deprecated
-	public static final String ADDRESS_RESULT_QUEUE = ArtemisQueueAddress.result.toString();
-
 	/**
 	 * Create a session factory
 	 * 
