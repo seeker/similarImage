@@ -73,7 +73,6 @@ public class ArtemisEmbeddedServer {
 
 		Configuration config = new ConfigurationImpl();
 		config.addAddressesSetting(ArtemisQueue.QueueAddress.hash.toString(), as);
-		config.addAddressesSetting("core.queue." + ArtemisQueue.QueueAddress.hash.toString(), as);
 		config.setAcceptorConfigurations(transports);
 		config.setSecurityEnabled(false);
 
