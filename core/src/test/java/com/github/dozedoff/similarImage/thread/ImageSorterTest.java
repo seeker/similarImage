@@ -37,11 +37,11 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
-import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiGroupEvent;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
+import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -73,9 +73,12 @@ public class ImageSorterTest {
 	private ImageRecord recordThreeThree;
 	private ImageRecord recordSixSix;
 
+	private EventBus eventBus;
+
 	@Before
 	public void setUp() throws Exception {
-		GuiEventBus.getInstance().register(this);
+		eventBus = new EventBus();
+		eventBus.register(this);
 
 		path = Files.createTempFile(ImageSorterTest.class.getSimpleName(), ".dat");
 
@@ -84,7 +87,7 @@ public class ImageSorterTest {
 		when(imageRepository.startsWithPath(path)).thenReturn(Arrays.asList(recordOneOne, recordTwoOne, recordTwoTwo));
 		
 		result = MultimapBuilder.hashKeys().hashSetValues().build();
-		imageSorter = new ImageSorter(DISTANCE, "", imageRepository);
+		imageSorter = new ImageSorter(DISTANCE, "", imageRepository, eventBus);
 	}
 
 	/**
@@ -120,6 +123,14 @@ public class ImageSorterTest {
 		imageSorter.join();
 	}
 
+	private ImageSorter createCUT(String path) {
+		return new ImageSorter(1, path, imageRepository, eventBus);
+	}
+
+	private ImageSorter createCUT() {
+		return createCUT("");
+	}
+
 	@Test
 	public void testDistanceZeroRecords() throws Exception {
 		runCutAndWaitForFinish();
@@ -138,7 +149,7 @@ public class ImageSorterTest {
 
 	@Test
 	public void testDistanceOneGroupOne() throws Exception {
-		imageSorter = new ImageSorter(1, "", imageRepository);
+		imageSorter = createCUT();
 
 		runCutAndWaitForFinish();
 
@@ -147,7 +158,7 @@ public class ImageSorterTest {
 
 	@Test
 	public void testDistanceOneGroupTwo() throws Exception {
-		imageSorter = new ImageSorter(1, "", imageRepository);
+		imageSorter = createCUT();
 
 		runCutAndWaitForFinish();
 
@@ -156,7 +167,7 @@ public class ImageSorterTest {
 
 	@Test
 	public void testDistanceOneGroupThree() throws Exception {
-		imageSorter = new ImageSorter(1, "", imageRepository);
+		imageSorter = createCUT();
 
 		runCutAndWaitForFinish();
 
@@ -166,7 +177,7 @@ public class ImageSorterTest {
 
 	@Test
 	public void testDistanceOneGroupSix() throws Exception {
-		imageSorter = new ImageSorter(1, "", imageRepository);
+		imageSorter = createCUT();
 
 		runCutAndWaitForFinish();
 
@@ -175,16 +186,16 @@ public class ImageSorterTest {
 
 	@Test
 	public void testNullPath() throws Exception {
-		imageSorter = new ImageSorter(DISTANCE, null, imageRepository);
+		imageSorter = createCUT(null);
 
 		runCutAndWaitForFinish();
 
-		assertThat(result.get(HASH_ONE), containsInAnyOrder(recordOneOne, recordTwoOne));
+		assertThat(result.get(HASH_ONE), containsInAnyOrder(recordOneOne, recordTwoOne, recordThreeThree));
 	}
 
 	@Test
 	public void testTestPath() throws Exception {
-		imageSorter = new ImageSorter(1, TEST_PATH, imageRepository);
+		imageSorter = createCUT(TEST_PATH);
 
 		runCutAndWaitForFinish();
 
@@ -194,7 +205,7 @@ public class ImageSorterTest {
 	@Test
 	public void testSqlException() throws Exception {
 		when(imageRepository.getAll()).thenThrow(new RepositoryException(TEST_EXCEPTION_MESSAGE));
-		imageSorter = new ImageSorter(1, "", imageRepository);
+		imageSorter = createCUT();
 		
 		runCutAndWaitForFinish();
 

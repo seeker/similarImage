@@ -35,6 +35,7 @@ import com.github.dozedoff.similarImage.event.GuiGroupEvent;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
+import com.google.common.eventbus.EventBus;
 
 public class ImageSorter extends Thread {
 	private static final Logger logger = LoggerFactory.getLogger(ImageSorter.class);
@@ -44,10 +45,11 @@ public class ImageSorter extends Thread {
 	private int hammingDistance;
 	private String path;
 	private final ImageRepository imageRepository;
+	private final EventBus guiEventBus;
 
 	/**
-	 * Create a instance that will sort all images within the given hamming distance. Only images starting with the
-	 * given path will be considered.
+	 * Create a instance that will sort all images within the given hamming distance. Only images starting with the given path will be
+	 * considered.
 	 * 
 	 * @param hammingDistance
 	 *            maximum distance to match a hash
@@ -55,12 +57,32 @@ public class ImageSorter extends Thread {
 	 *            only consider images starting with this path
 	 * @param imageRepository
 	 *            access to the image datasource
+	 * @deprecated the {@link EventBus} should be explicitly set
 	 */
+	@Deprecated
 	public ImageSorter(int hammingDistance, String path, ImageRepository imageRepository) {
+		this(hammingDistance, path, imageRepository, GuiEventBus.getInstance());
+	}
+
+	/**
+	 * Create a instance that will sort all images within the given hamming distance. Only images starting with the given path will be
+	 * considered.
+	 * 
+	 * @param hammingDistance
+	 *            maximum distance to match a hash
+	 * @param path
+	 *            only consider images starting with this path
+	 * @param imageRepository
+	 *            access to the image datasource
+	 * @param guiEventBus
+	 *            {@link EventBus} for gui update events
+	 */
+	public ImageSorter(int hammingDistance, String path, ImageRepository imageRepository, EventBus guiEventBus) {
 		super();
 		this.hammingDistance = hammingDistance;
 		this.path = path;
 		this.imageRepository = imageRepository;
+		this.guiEventBus = guiEventBus;
 	}
 
 	@Override
@@ -95,7 +117,7 @@ public class ImageSorter extends Thread {
 		DuplicateUtil.removeDuplicateSets(results);
 
 		logger.info("Found {} similar images out of {} in {}", results.keySet().size(), dBrecords.size(), sw);
-		GuiEventBus.getInstance().post(new GuiGroupEvent(results));
+		this.guiEventBus.post(new GuiGroupEvent(results));
 	}
 
 	private Multimap<Long, ImageRecord> findAllHashesInRange(RecordSearch rs, Collection<ImageRecord> records) {
