@@ -36,8 +36,15 @@ import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
 import com.github.dozedoff.similarImage.io.ExtendedAttribute;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.HashAttribute;
+import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.util.MessagingUtil;
 
+/**
+ * Consumes result messages and updates the {@link ImageRepository} and extended attributes.
+ * 
+ * @author Nicholas Wright
+ *
+ */
 public class ArtemisResultConsumer implements MessageHandler {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ArtemisResultConsumer.class);
 
@@ -54,7 +61,8 @@ public class ArtemisResultConsumer implements MessageHandler {
 			throws ActiveMQException {
 		this.imageRepository = imageRepository;
 		this.session = session;
-		this.consumer = session.createConsumer(ArtemisQueueAddress.result.toString());
+		// TODO move address into constructor
+		this.consumer = session.createConsumer(QueueAddress.RESULT.toString());
 		this.eaQuery = eaQuery;
 		this.hashAttribute = hashAttribute;
 		this.consumer.setMessageHandler(this);
