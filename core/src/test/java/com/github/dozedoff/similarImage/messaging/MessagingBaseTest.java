@@ -52,10 +52,14 @@ public abstract class MessagingBaseTest {
 	@Mock
 	protected ActiveMQBuffer bodyBuffer;
 
+	@Mock
+	protected ActiveMQBuffer sessionBodyBuffer;
+
 	@Before
 	public void messagingSetup() throws ActiveMQException {
 		when(session.createConsumer(any(String.class))).thenReturn(consumer);
 		when(session.createProducer(any(String.class))).thenReturn(producer);
+		when(sessionMessage.getBodyBuffer()).thenReturn(sessionBodyBuffer);
 		when(session.createMessage(any(Boolean.class))).thenReturn(sessionMessage);
 		when(message.getBodyBuffer()).thenReturn(bodyBuffer);
 	}
