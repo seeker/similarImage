@@ -45,18 +45,17 @@ public class ArtemisQueue {
 	 * Creates all queues. Does not check if they already exist.
 	 */
 	public void createAll() {
-		for (QueueAddress queue : QueueAddress.values()) {
-			queueHelper(queue);
-		}
+		queueHelper(QueueAddress.result, true);
+		queueHelper(QueueAddress.hash, false);
 	}
 	
-	private void queueHelper(QueueAddress address) {
+	private void queueHelper(QueueAddress address, boolean durable) {
 		String addr = address.toString();
 		
-		LOGGER.info("Creating queue for address {} ...", addr);
+		LOGGER.info("Creating queue for address {}, durable: {} ...", addr, durable);
 
 		try {
-			this.session.createQueue(addr, addr, false);
+			this.session.createQueue(addr, addr, durable);
 		} catch (ActiveMQException e) {
 			LOGGER.error("Failed to create queue {}: {}", addr, e.toString());
 		}

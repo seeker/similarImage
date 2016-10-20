@@ -104,7 +104,7 @@ public class ArtemisHashConsumer implements MessageHandler {
 				message.getBodyBuffer().readBytes(buffer);
 			
 				long hash = processFile(path, new ByteArrayInputStream(buffer.array()));
-				ClientMessage response = session.createMessage(false);
+				ClientMessage response = session.createMessage(true);
 				response.putStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY, path.toString());
 				response.putLongProperty(ArtemisHashProducer.MESSAGE_HASH_PROPERTY, hash);
 			
@@ -139,7 +139,7 @@ public class ArtemisHashConsumer implements MessageHandler {
 	}
 
 		private void sendImageErrorResponse(Path path) throws ActiveMQException {
-			ClientMessage response = session.createMessage(false);
+			ClientMessage response = session.createMessage(true);
 			response.putStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY, path.toString());
 			response.putStringProperty(ArtemisHashProducer.MESSAGE_TASK_PROPERTY, ArtemisHashProducer.MESSAGE_TASK_VALUE_CORRUPT);
 			producer.send(response);
