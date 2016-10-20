@@ -19,7 +19,10 @@ package com.github.dozedoff.similarImage.messaging;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import javax.imageio.IIOException;
 
@@ -34,6 +37,10 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
 import com.github.dozedoff.similarImage.image.ImageResizer;
+import com.github.dozedoff.similarImage.util.ImageUtil;
+
+import at.dhyan.open_imaging.GifDecoder;
+import at.dhyan.open_imaging.GifDecoder.GifImage;
 
 /**
  * Consumes resize request messages with full-sized images and produces hash request messages with a resized image for hashing.
@@ -86,7 +93,16 @@ public class ArtemisResizeRequestConsumer implements MessageHandler {
 			ByteBuffer buffer = ByteBuffer.allocate(message.getBodySize());
 			message.getBodyBuffer().readBytes(buffer);
 
-			byte[] resizedImageData = resizer.resize(new ByteArrayInputStream(buffer.array()));
+			Path filename = Paths.get(path).getFileName();
+			InputStream is = new ByteArrayInputStream(buffer.array());
+			
+			if (filename != null && filename.toString().toLowerCase().endsWith(".gif")) {
+				GifImage gi = GifDecoder.read(is);
+				is = new ByteArrayInputStream(ImageUtil.imageToBytes(gi.getFrame(0)));
+			}
+			
+			byte[] resizedImageData = resizer.resize(is);
+
 			ClientMessage response = session.createMessage(true);
 			response.getBodyBuffer().writeBytes(resizedImageData);
 			response.putStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY, path);

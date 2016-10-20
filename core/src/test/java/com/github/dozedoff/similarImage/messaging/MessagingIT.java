@@ -113,7 +113,7 @@ public class MessagingIT {
 		imageRepository = repositoryFactory.buildImageRepository();
 
 		ExtendedAttributeQuery eaQuery = new ExtendedAttributeDirectoryCache(new ExtendedAttribute(), 1, TimeUnit.MINUTES);
-		ahp = new ArtemisHashProducer(as.getSession(), QueueAddress.HASH_REQUEST.toString());
+		ahp = new ArtemisHashProducer(as.getSession(), QueueAddress.RESIZE_REQUEST.toString());
 
 		arc = new ArtemisResultConsumer(as.getSession(), imageRepository, eaQuery, new HashAttribute(HashNames.DEFAULT_DCT_HASH_2));
 	}

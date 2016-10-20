@@ -18,11 +18,10 @@
 package com.github.dozedoff.similarImage.messaging;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.awt.image.BufferedImage;
 import java.io.InputStream;
 
 import javax.imageio.IIOException;
@@ -36,6 +35,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
 
+@SuppressWarnings("deprecation")
 @RunWith(MockitoJUnitRunner.class)
 public class ArtemisHashRequestConsumerTest extends MessagingBaseTest {
 	private static final String TEST_ADDRESS_REQUEST = "test_request";
@@ -50,7 +50,7 @@ public class ArtemisHashRequestConsumerTest extends MessagingBaseTest {
 
 	@Before
 	public void setUp() throws Exception {
-		when(hasher.getLongHash(any(InputStream.class))).thenReturn(TEST_HASH);
+		when(hasher.getLongHashScaledImage(any(BufferedImage.class))).thenReturn(TEST_HASH);
 		message = new MockMessageBuilder().configureHashRequestMessage().build();
 		
 		cut = new ArtemisHashRequestConsumer(session, hasher, TEST_ADDRESS_REQUEST, TEST_ADDRESS_RESULT);
@@ -75,25 +75,6 @@ public class ArtemisHashRequestConsumerTest extends MessagingBaseTest {
 		cut.onMessage(message);
 
 		verify(sessionMessage).putLongProperty(ArtemisHashProducer.MESSAGE_HASH_PROPERTY, TEST_HASH);
-	}
-
-	@Test
-	public void testMessageCorruptImageTask() throws Exception {
-		message = new MockMessageBuilder().configureCorruptImageMessage().build();
-		when(hasher.getLongHash(any(InputStream.class))).thenThrow(new IIOException(""));
-
-		cut.onMessage(message);
-
-		verify(sessionMessage).putStringProperty(ArtemisHashProducer.MESSAGE_TASK_PROPERTY, ArtemisHashProducer.MESSAGE_TASK_VALUE_CORRUPT);
-	}
-
-	@Test
-	public void testNoHashSetOnCorruptImageMessage() throws Exception {
-		when(hasher.getLongHash(any(InputStream.class))).thenThrow(new IIOException(""));
-
-		cut.onMessage(message);
-
-		verify(sessionMessage, never()).putLongProperty(eq(ArtemisHashProducer.MESSAGE_HASH_PROPERTY), any(Long.class));
 	}
 
 	@Test

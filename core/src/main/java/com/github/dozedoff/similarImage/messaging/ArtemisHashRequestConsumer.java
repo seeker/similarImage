@@ -17,14 +17,10 @@
  */
 package com.github.dozedoff.similarImage.messaging;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
-import javax.imageio.IIOException;
 
 import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.client.ClientConsumer;
@@ -37,10 +33,8 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
+import com.github.dozedoff.similarImage.util.ImageUtil;
 import com.github.dozedoff.similarImage.util.MessagingUtil;
-
-import at.dhyan.open_imaging.GifDecoder;
-import at.dhyan.open_imaging.GifDecoder.GifImage;
 
 /**
  * Consumes resize messages, hashes them and produces result messages.
@@ -102,7 +96,7 @@ public class ArtemisHashRequestConsumer implements MessageHandler {
 				ByteBuffer buffer = ByteBuffer.allocate(message.getBodySize());
 				message.getBodyBuffer().readBytes(buffer);
 			
-				long hash = processFile(path, new ByteArrayInputStream(buffer.array()));
+			long hash = doHash(path, ImageUtil.bytesToImage(buffer.array()));
 				ClientMessage response = session.createMessage(true);
 				response.putStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY, path.toString());
 				response.putLongProperty(ArtemisHashProducer.MESSAGE_HASH_PROPERTY, hash);
@@ -111,52 +105,13 @@ public class ArtemisHashRequestConsumer implements MessageHandler {
 				LOGGER.debug("Sent hash response message for {}", path);
 			} catch (ActiveMQException e) {
 				LOGGER.error("Failed to process message: {}", e.toString());
-			} catch (IIOException | ArrayIndexOutOfBoundsException ie) {
-				markImageCorrupt(path);
-			} catch (IOException e) {
-			if (isImageError(e.getMessage())) {
-				markImageCorrupt(path);
-			} else {
+		} catch (Exception e) {
 				LOGGER.error("Failed to process image: {}", e.toString());
 			}
-			}
 		}
 
-	private boolean isImageError(String message) {
-		return message.startsWith("Unknown block") || message.startsWith("Invalid GIF header");
+	private long doHash(Path next, BufferedImage image) throws Exception {
+		long hash = hasher.getLongHashScaledImage(image);
+		return hash;
 	}
-
-	private void markImageCorrupt(Path path) {
-		LOGGER.warn("Unable to read image {}, marking as corrupt", path);
-		try {
-			sendImageErrorResponse(path);
-		} catch (ActiveMQException e) {
-			LOGGER.error("Failed to send corrupt image message: {}", e.toString());
-		}
-	}
-
-		private void sendImageErrorResponse(Path path) throws ActiveMQException {
-			ClientMessage response = session.createMessage(true);
-			response.putStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY, path.toString());
-			response.putStringProperty(ArtemisHashProducer.MESSAGE_TASK_PROPERTY, ArtemisHashProducer.MESSAGE_TASK_VALUE_CORRUPT);
-			producer.send(response);
-		}
-
-		private long processFile(Path next, InputStream is) throws IOException {
-			Path filename = next.getFileName();
-
-			if (filename != null && filename.toString().toLowerCase().endsWith(".gif")) {
-				GifImage gi = GifDecoder.read(is);
-
-				long hash = hasher.getLongHash(gi.getFrame(0));
-				return hash;
-			} else {
-				return doHash(next, is);
-			}
-		}
-
-		private long doHash(Path next, InputStream is) throws IOException {
-			long hash = hasher.getLongHash(is);
-			return hash;
-		}
 }

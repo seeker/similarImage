@@ -48,7 +48,7 @@ public class HandlerListFactory {
 
 		handlers.add(new DatabaseHandler(imageRepository, statistics));
 		handlers.add(new ExtendedAttributeHandler(hashAttribute, imageRepository, eaQuery));
-		handlers.add(new ArtemisHashProducer(session.getSession(), QueueAddress.HASH_REQUEST.toString()));
+		handlers.add(new ArtemisHashProducer(session.getSession(), QueueAddress.RESIZE_REQUEST.toString()));
 
 		return handlers;
 	}
