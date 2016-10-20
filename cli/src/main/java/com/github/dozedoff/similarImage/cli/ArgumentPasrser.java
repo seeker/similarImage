@@ -133,7 +133,7 @@ public class ArgumentPasrser {
 	}
 
 	private void nodeCommand(Namespace parsedArgs) {
-		LOGGER.info("I am a node! port: {}, ip: {}", parsedArgs.getInt("port"), parsedArgs.getString("ip"));
+		LOGGER.info("Connecting to {}:{}", parsedArgs.getString("ip"), parsedArgs.getInt("port"));
 
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("host", parsedArgs.getString("ip"));
