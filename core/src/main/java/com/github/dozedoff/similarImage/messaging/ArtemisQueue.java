@@ -46,8 +46,8 @@ public class ArtemisQueue {
 	 */
 	public void createAll() {
 		queueHelper(QueueAddress.RESULT, true);
-		queueHelper(QueueAddress.RESIZE_REQUEST, true);
-		queueHelper(QueueAddress.HASH_REQUEST, false);
+		queueHelper(QueueAddress.RESIZE_REQUEST, false);
+		queueHelper(QueueAddress.HASH_REQUEST, true);
 	}
 	
 	private void queueHelper(QueueAddress address, boolean durable) {
