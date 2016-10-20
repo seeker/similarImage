@@ -26,7 +26,18 @@ public class ArtemisQueue {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ArtemisQueue.class);
 
 	public enum QueueAddress {
-		HASH_REQUEST, RESULT, RESIZE_REQUEST
+		/**
+		 * Resized images are sent here for hashing
+		 */
+		HASH_REQUEST,
+		/**
+		 * Hashing results or corrupt files are reported here
+		 */
+		RESULT,
+		/**
+		 * Full sized images are sent here for resizing
+		 */
+		RESIZE_REQUEST
 	}
 	
 	private final ClientSession session;
