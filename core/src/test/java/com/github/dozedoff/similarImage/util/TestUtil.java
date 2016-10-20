@@ -19,8 +19,11 @@ package com.github.dozedoff.similarImage.util;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import com.github.dozedoff.similarImage.io.ExtendedAttribute;
 
@@ -43,5 +46,31 @@ public class TestUtil {
 		}
 
 		return xattrTempDir;
+	}
+
+	/**
+	 * Delete all files, directories are not removed.
+	 * 
+	 * @param directory
+	 *            containing files to delete
+	 * @throws IOException
+	 *             if there is an error during filesystem access
+	 */
+	public static void deleteAllFiles(Path directory) throws IOException {
+		Files.walk(directory).filter(new Predicate<Path>() {
+			@Override
+			public boolean test(Path t) {
+				return Files.isRegularFile(t, LinkOption.NOFOLLOW_LINKS);
+			}
+		}).forEach(new Consumer<Path>() {
+			@Override
+			public void accept(Path t) {
+				try {
+					Files.deleteIfExists(t);
+				} catch (IOException e) {
+					// we don't care
+				}
+			}
+		});
 	}
 }

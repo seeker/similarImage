@@ -3,13 +3,9 @@ package com.github.dozedoff.similarImage.learning;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.HashSet;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 import org.apache.activemq.artemis.api.core.Message;
 import org.apache.activemq.artemis.api.core.TransportConfiguration;
@@ -29,6 +25,8 @@ import org.apache.activemq.artemis.core.server.embedded.EmbeddedActiveMQ;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import com.github.dozedoff.similarImage.util.TestUtil;
 
 public class ArtemisLearning {
 	private static EmbeddedActiveMQ server;
@@ -79,21 +77,7 @@ public class ArtemisLearning {
 	@AfterClass
 	public static void tearDown() throws Exception {
 		server.stop();
-		Files.walk(dataDirectory).filter(new Predicate<Path>() {
-			@Override
-			public boolean test(Path t) {
-				return Files.isRegularFile(t, LinkOption.NOFOLLOW_LINKS);
-			}
-		}).forEach(new Consumer<Path>() {
-			@Override
-			public void accept(Path t) {
-				try {
-					Files.deleteIfExists(t);
-				} catch (IOException e) {
-					// we don't care
-				}
-			}
-		});
+		TestUtil.deleteAllFiles(dataDirectory);
 	}
 
 	@Test
