@@ -3,7 +3,13 @@ package com.github.dozedoff.similarImage.learning;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import org.apache.activemq.artemis.api.core.Message;
 import org.apache.activemq.artemis.api.core.TransportConfiguration;
@@ -35,6 +41,8 @@ public class ArtemisLearning {
 	private static final String QUEUE_NAME = ADDRESS;
 	private static final String TEST_MESSAGE = "message";
 
+	private static Path dataDirectory;
+
 	@BeforeClass
 	public static void setUp() throws Exception {
 		// From https://activemq.apache.org/artemis/docs/1.0.0/embedding-activemq.html
@@ -45,12 +53,13 @@ public class ArtemisLearning {
 		transports.add(new TransportConfiguration(NettyAcceptorFactory.class.getName()));
 		transports.add(new TransportConfiguration(InVMAcceptorFactory.class.getName()));
 
+		dataDirectory = Files.createTempDirectory("Artemis learning");
 		config.setAcceptorConfigurations(transports);
 		config.setSecurityEnabled(false);
+		config.setBrokerInstance(dataDirectory.toFile());
 
 		server = new EmbeddedActiveMQ();
 		server.setConfiguration(config);
-
 		server.start();
 
 		ServerLocator locator = ActiveMQClient
@@ -70,6 +79,21 @@ public class ArtemisLearning {
 	@AfterClass
 	public static void tearDown() throws Exception {
 		server.stop();
+		Files.walk(dataDirectory).filter(new Predicate<Path>() {
+			@Override
+			public boolean test(Path t) {
+				return Files.isRegularFile(t, LinkOption.NOFOLLOW_LINKS);
+			}
+		}).forEach(new Consumer<Path>() {
+			@Override
+			public void accept(Path t) {
+				try {
+					Files.deleteIfExists(t);
+				} catch (IOException e) {
+					// we don't care
+				}
+			}
+		});
 	}
 
 	@Test
