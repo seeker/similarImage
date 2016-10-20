@@ -94,6 +94,7 @@ public class SQLiteDatabase implements Database {
 		TableUtils.createTableIfNotExists(cs, IgnoreRecord.class);
 		TableUtils.createTableIfNotExists(cs, Tag.class);
 		TableUtils.createTableIfNotExists(cs, Thumbnail.class);
+		TableUtils.createTableIfNotExists(cs, PendingHashImage.class);
 	}
 
 	/**
