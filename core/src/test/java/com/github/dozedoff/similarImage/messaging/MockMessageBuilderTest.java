@@ -141,4 +141,17 @@ public class MockMessageBuilderTest {
 		assertThat(message.getBodyBuffer(), is(notNullValue()));
 	}
 
+	@Test
+	public void testConfigureResizeMessagePathProperty() {
+		ClientMessage message = cut.configureResizeMessage().build();
+
+		assertThat(message.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY), is(STRING_VALUE_ONE));
+	}
+
+	@Test
+	public void testConfigureResizeMessageImageData() {
+		ClientMessage message = cut.configureResizeMessage().build();
+
+		assertThat(message.getBodyBuffer(), is(notNullValue()));
+	}
 }

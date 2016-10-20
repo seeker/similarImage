@@ -133,6 +133,17 @@ public class MockMessageBuilder {
 		return this;
 	}
 
+	/**
+	 * Configure a message that is sent to resize a image for hashing
+	 * 
+	 * @return {@link MockMessageBuilder} for further configuration
+	 */
+	public MockMessageBuilder configureResizeMessage() {
+		addBodyBuffer(Mockito.mock(ActiveMQBuffer.class));
+		addProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY, DEFAULT_PATH);
+		return this;
+	}
+
 	private void setContainsProperty(String property) {
 		when(message.containsProperty(property)).thenReturn(true);
 	}
