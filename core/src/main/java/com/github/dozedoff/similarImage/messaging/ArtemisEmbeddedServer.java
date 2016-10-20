@@ -19,6 +19,8 @@ package com.github.dozedoff.similarImage.messaging;
 
 import java.net.Inet4Address;
 import java.net.UnknownHostException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -47,14 +49,32 @@ public class ArtemisEmbeddedServer {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ArtemisEmbeddedServer.class);
 	private final EmbeddedActiveMQ server;
 	
+
 	private static final int MAX_SIZE = 1024 * 1024;
 
 	/**
-	 * Create a new embedded artemis server that listens to network and in VM connections.
+	 * Create a new embedded artemis server that listens to network and in VM connections. he data directory will be created in the current
+	 * working directory.
 	 * 
 	 * @throws UnknownHostException
+	 *             if the local address cannot be resolved
 	 */
 	public ArtemisEmbeddedServer() throws UnknownHostException {
+		this(Paths.get(""));
+	}
+
+
+	/**
+	 * Create a new embedded artemis server that listens to network and in VM connections. The data directory will be created in the given
+	 * path.
+	 * 
+	 * @param workingDirectory
+	 *            base directory where the data directory will be created
+	 * 
+	 * @throws UnknownHostException
+	 *             if the local address cannot be resolved
+	 */
+	public ArtemisEmbeddedServer(Path workingDirectory) throws UnknownHostException {
 
 		Set<TransportConfiguration> transports = new HashSet<TransportConfiguration>();
 		Map<String, Object> params = new HashMap<String, Object>();
@@ -76,6 +96,7 @@ public class ArtemisEmbeddedServer {
 		config.addAddressesSetting(ArtemisQueue.QueueAddress.HASH_REQUEST.toString(), as);
 		config.setAcceptorConfigurations(transports);
 		config.setSecurityEnabled(false);
+		config.setBrokerInstance(workingDirectory.toFile());
 
 		server = new EmbeddedActiveMQ();
 		server.setConfiguration(config);
