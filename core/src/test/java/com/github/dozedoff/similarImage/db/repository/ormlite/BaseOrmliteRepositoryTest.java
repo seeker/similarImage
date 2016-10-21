@@ -39,6 +39,7 @@ public abstract class BaseOrmliteRepositoryTest {
 
 	@After
 	public void databaseTearDown() throws IOException {
+		db.close();
 		Files.deleteIfExists(path);
 	}
 }

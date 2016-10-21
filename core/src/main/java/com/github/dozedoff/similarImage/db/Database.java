@@ -28,4 +28,9 @@ public interface Database {
 	 */
 	ConnectionSource getCs();
 
+	/**
+	 * Close the database connection and clean up resources.
+	 */
+	void close();
+
 }

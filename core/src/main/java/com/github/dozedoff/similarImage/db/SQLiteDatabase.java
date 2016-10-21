@@ -106,4 +106,12 @@ public class SQLiteDatabase implements Database {
 	public ConnectionSource getCs() {
 		return connectionSource;
 	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void close() {
+		connectionSource.closeQuietly();
+	}
 }
