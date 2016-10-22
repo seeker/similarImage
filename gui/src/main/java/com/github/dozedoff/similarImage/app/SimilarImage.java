@@ -36,10 +36,13 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.db.Database;
+import com.github.dozedoff.similarImage.db.PendingHashImage;
 import com.github.dozedoff.similarImage.db.SQLiteDatabase;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
+import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
+import com.github.dozedoff.similarImage.db.repository.ormlite.OrmlitePendingHashImage;
 import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteRepositoryFactory;
 import com.github.dozedoff.similarImage.db.repository.ormlite.RepositoryFactory;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
@@ -64,6 +67,7 @@ import com.github.dozedoff.similarImage.messaging.ArtemisResultConsumer;
 import com.github.dozedoff.similarImage.messaging.ArtemisSession;
 import com.github.dozedoff.similarImage.thread.NamedThreadFactory;
 import com.github.dozedoff.similarImage.thread.SorterFactory;
+import com.j256.ormlite.dao.DaoManager;
 
 public class SimilarImage {
 	private final static Logger logger = LoggerFactory.getLogger(SimilarImage.class);
@@ -106,22 +110,29 @@ public class SimilarImage {
 		ArtemisEmbeddedServer aes = new ArtemisEmbeddedServer();
 		aes.start();
 
+
 		ServerLocator locator = ActiveMQClient
 				.createServerLocatorWithoutHA(new TransportConfiguration(InVMConnectorFactory.class.getName()))
-				.setCacheLargeMessagesClient(false).setMinLargeMessageSize(LARGE_MESSAGE_SIZE_THRESHOLD).setBlockOnNonDurableSend(false)
-				.setPreAcknowledge(true);
+				.setCacheLargeMessagesClient(false).setMinLargeMessageSize(LARGE_MESSAGE_SIZE_THRESHOLD)
+				.setBlockOnNonDurableSend(false);
+				
 		ArtemisSession as = new ArtemisSession(locator);
 		ArtemisQueue aq = new ArtemisQueue(as.getSession());
 		aq.createAll();
+
+		Database database = new SQLiteDatabase();
+
+		PendingHashImageRepository pendingRepo = new OrmlitePendingHashImage(
+				DaoManager.createDao(database.getCs(), PendingHashImage.class));
 
 		for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
 			ahrcs.add(new ArtemisHashRequestConsumer(as.getSession(), new ImagePHash(), QueueAddress.HASH_REQUEST.toString(),
 					QueueAddress.RESULT.toString()));
 			arrcs.add(new ArtemisResizeRequestConsumer(as.getSession(), new ImageResizer(RESIZE_SIZE),
-					QueueAddress.RESIZE_REQUEST.toString(), QueueAddress.HASH_REQUEST.toString()));
+					QueueAddress.RESIZE_REQUEST.toString(), QueueAddress.HASH_REQUEST.toString(), pendingRepo));
 		}
 
-		Database database = new SQLiteDatabase();
+
 		RepositoryFactory repositoryFactory = new OrmliteRepositoryFactory(database);
 
 		ImageRepository imageRepository = repositoryFactory.buildImageRepository();
@@ -130,7 +141,8 @@ public class SimilarImage {
 
 		ExtendedAttributeQuery eaQuery = new ExtendedAttributeDirectoryCache(new ExtendedAttribute(), 1, TimeUnit.MINUTES);
 
-		arc = new ArtemisResultConsumer(as.getSession(), imageRepository, eaQuery, new HashAttribute(HashNames.DEFAULT_DCT_HASH_2));
+		arc = new ArtemisResultConsumer(as.getSession(), imageRepository, eaQuery,
+				new HashAttribute(HashNames.DEFAULT_DCT_HASH_2), pendingRepo, QueueAddress.RESULT.toString());
 
 		DuplicateOperations dupOps = new DuplicateOperations(filterRepository, tagRepository, imageRepository);
 		SorterFactory sf = new SorterFactory(imageRepository, filterRepository, tagRepository);

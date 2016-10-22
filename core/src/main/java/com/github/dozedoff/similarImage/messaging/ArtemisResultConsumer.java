@@ -30,13 +30,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
+import com.github.dozedoff.similarImage.db.PendingHashImage;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
+import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
 import com.github.dozedoff.similarImage.io.ExtendedAttribute;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.HashAttribute;
-import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.util.MessagingUtil;
 
 /**
@@ -53,18 +54,23 @@ public class ArtemisResultConsumer implements MessageHandler {
 	private final ExtendedAttributeQuery eaQuery;
 	private final HashAttribute hashAttribute;
 	private final ClientSession session;
+	private final PendingHashImageRepository pendingRepository;
+	private final MessageFactory messageFactory;
 	public static final String CORRUPT_EA_NAMESPACE = ExtendedAttribute.createName("corrupt");
 
 	// TODO rewrite like handler
 	public ArtemisResultConsumer(ClientSession session, ImageRepository imageRepository, ExtendedAttributeQuery eaQuery,
-			HashAttribute hashAttribute)
+			HashAttribute hashAttribute, PendingHashImageRepository pendingRepository, String resultAddress)
 			throws ActiveMQException {
 		this.imageRepository = imageRepository;
 		this.session = session;
 		// TODO move address into constructor
-		this.consumer = session.createConsumer(QueueAddress.RESULT.toString());
+		this.consumer = session.createConsumer(resultAddress);
 		this.eaQuery = eaQuery;
 		this.hashAttribute = hashAttribute;
+		this.pendingRepository = pendingRepository;
+		this.messageFactory = new MessageFactory(session);
+
 		this.consumer.setMessageHandler(this);
 	}
 
@@ -77,28 +83,33 @@ public class ArtemisResultConsumer implements MessageHandler {
 		MessagingUtil.silentClose(session);
 	}
 
-		/**
-		 * {@inheritDoc}
-		 */
-		@Override
-		public void onMessage(ClientMessage msg) {
-			try {
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void onMessage(ClientMessage msg) {
+		try {
+
+			if (msg.containsProperty(MessageFactory.HASH_PROPERTY_NAME)) {
+				long hash = msg.getLongProperty(MessageFactory.HASH_PROPERTY_NAME);
+				int trackingId = msg.getIntProperty(MessageFactory.TRACKING_PROPERTY_NAME);
+				LOGGER.debug("Received result message with id {} and hash {}", trackingId, hash);
+
+				PendingHashImage pending = pendingRepository.getById(trackingId);
+				storeHash(pending.getPathAsPath(), hash);
+				pendingRepository.removeById(trackingId);
+			} else if (ArtemisHashProducer.MESSAGE_TASK_VALUE_CORRUPT
+					.equals(msg.getStringProperty(ArtemisHashProducer.MESSAGE_TASK_PROPERTY))) {
 				Path path = Paths.get(msg.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY));
-
-
-				if (msg.containsProperty(ArtemisHashProducer.MESSAGE_HASH_PROPERTY)) {
-					long hash = msg.getLongProperty(ArtemisHashProducer.MESSAGE_HASH_PROPERTY);
-					storeHash(path,hash);
-				} else if (ArtemisHashProducer.MESSAGE_TASK_VALUE_CORRUPT
-						.equals(msg.getStringProperty(ArtemisHashProducer.MESSAGE_TASK_PROPERTY))) {
-					markAsCorrupt(path);
-				} else {
-					LOGGER.error("Unhandled message: {}", msg);
-				}
-			} catch (RepositoryException e) {
-				LOGGER.warn("Failed to store result message: {}", e.toString());
+				LOGGER.debug("Corrupt image message for {}", path);
+				markAsCorrupt(path);
+			} else {
+				LOGGER.error("Unhandled message: {}", msg);
 			}
+		} catch (RepositoryException e) {
+			LOGGER.warn("Failed to store result message: {}", e.toString());
 		}
+	}
 
 		private void markAsCorrupt(Path path) {
 			if (eaQuery.isEaSupported(path)) {

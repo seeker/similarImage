@@ -23,6 +23,8 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.imageio.IIOException;
 
@@ -35,9 +37,14 @@ import org.apache.activemq.artemis.api.core.client.MessageHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.dozedoff.similarImage.db.PendingHashImage;
+import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
+import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
 import com.github.dozedoff.similarImage.image.ImageResizer;
 import com.github.dozedoff.similarImage.util.ImageUtil;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 
 import at.dhyan.open_imaging.GifDecoder;
 import at.dhyan.open_imaging.GifDecoder.GifImage;
@@ -51,10 +58,17 @@ import at.dhyan.open_imaging.GifDecoder.GifImage;
 public class ArtemisResizeRequestConsumer implements MessageHandler {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ArtemisResizeRequestConsumer.class);
 
+	private static final int SEND_ACK_CACHE_TIMEOUT = 5;
+	private static final AtomicInteger TRACKING_ID_SEQUENCE = new AtomicInteger();
+	private static final String DUPLICATE_MESSAGE = "Image {} is already in the hashing queue, discarding";
+
 	private final ClientConsumer consumer;
 	private final ClientProducer producer;
 	private final ClientSession session;
 	private final ImageResizer resizer;
+	private final PendingHashImageRepository pendingRepo; // TODO replace with repository messages
+	private final Cache<Integer, String> messageSendAcknowledgedCache;
+	private MessageFactory messageFactory;
 
 	/**
 	 * Create a new consumer for hash messages
@@ -67,17 +81,37 @@ public class ArtemisResizeRequestConsumer implements MessageHandler {
 	 *            for hashes
 	 * @param resultAddress
 	 *            for result messages
+	 * @param pendingRepo
+	 *            for pending hash requests
 	 * @throws ActiveMQException
 	 *             if there is an error with the queues
 	 */
-	public ArtemisResizeRequestConsumer(ClientSession session, ImageResizer resizer, String requestAddress, String resultAddress)
+	public ArtemisResizeRequestConsumer(ClientSession session, ImageResizer resizer, String requestAddress,
+			String resultAddress, PendingHashImageRepository pendingRepo)
 			throws ActiveMQException {
+
 		this.session = session;
 		this.consumer = session.createConsumer(requestAddress);
 		this.producer = session.createProducer(resultAddress);
 		this.resizer = resizer;
+		this.pendingRepo = pendingRepo;
+		this.messageFactory = new MessageFactory(session);
 
 		this.consumer.setMessageHandler(this);
+
+		// if we don't hear from the broker in this time, then it won't happen
+		this.messageSendAcknowledgedCache = CacheBuilder.newBuilder()
+				.expireAfterAccess(SEND_ACK_CACHE_TIMEOUT, TimeUnit.MINUTES).build();
+	}
+
+	/**
+	 * Overwrite the {@link MessageFactory} of the class.
+	 * 
+	 * @param messageFactory
+	 *            to set
+	 */
+	protected final void setMessageFactory(MessageFactory messageFactory) {
+		this.messageFactory = messageFactory;
 	}
 
 	/**
@@ -85,15 +119,23 @@ public class ArtemisResizeRequestConsumer implements MessageHandler {
 	 */
 	@Override
 	public void onMessage(ClientMessage message) {
-		String path = null;
+		String pathPropterty = null;
+		int trackingId = -1;
 
 		try {
-			path = message.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY);
+			pathPropterty = message.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY);
+			LOGGER.debug("Resize request for image {}", pathPropterty);
+
+			Path path = Paths.get(pathPropterty);
+			if (pendingRepo.exists(new PendingHashImage(path))) {
+				LOGGER.info(DUPLICATE_MESSAGE, path);
+				return;
+			}
 
 			ByteBuffer buffer = ByteBuffer.allocate(message.getBodySize());
 			message.getBodyBuffer().readBytes(buffer);
 
-			Path filename = Paths.get(path).getFileName();
+			Path filename = path.getFileName();
 			InputStream is = new ByteArrayInputStream(buffer.array());
 			
 			if (filename != null && filename.toString().toLowerCase().endsWith(".gif")) {
@@ -103,20 +145,39 @@ public class ArtemisResizeRequestConsumer implements MessageHandler {
 			
 			byte[] resizedImageData = resizer.resize(is);
 
-			ClientMessage response = session.createMessage(true);
-			response.getBodyBuffer().writeBytes(resizedImageData);
-			response.putStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY, path);
-			producer.send(response);
+
+
+			PendingHashImage pending = new PendingHashImage(path);
+
+			if (pendingRepo.store(pending)) {
+				trackingId = pending.getId();
+				ClientMessage response = messageFactory.hashRequestMessage(resizedImageData, trackingId);
+
+				LOGGER.debug("Sending hash request with id {} instead of path {}", trackingId, path);
+				producer.send(response);
+				messageSendAcknowledgedCache.put(trackingId, pathPropterty);
+				return; // FIXME ugly hack to remove pending records in case of failure
+			} else {
+				LOGGER.warn(DUPLICATE_MESSAGE, path);
+			}
 		} catch (ActiveMQException e) {
 			LOGGER.error("Failed to send message: {}", e.toString());
 		} catch (IIOException | ArrayIndexOutOfBoundsException ie) {
-			markImageCorrupt(path);
+			markImageCorrupt(pathPropterty);
 		} catch (IOException e) {
 			if (isImageError(e.getMessage())) {
-				markImageCorrupt(path);
+				markImageCorrupt(pathPropterty);
 			} else {
 				LOGGER.error("Failed to process image: {}", e.toString());
 			}
+		} catch (RepositoryException e) {
+			LOGGER.warn("Failed to store pending image entry: {}, cause: {}", e.toString(), e.getCause().getMessage());
+		}
+
+		try {
+			pendingRepo.removeById(trackingId);// hack hack
+		} catch (RepositoryException e) {
+			LOGGER.error("Failed to remove pending image with id {} after failure: {}", trackingId, e.toString());
 		}
 	}
 

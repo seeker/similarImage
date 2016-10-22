@@ -18,6 +18,7 @@
 package com.github.dozedoff.similarImage.messaging;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -31,9 +32,12 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
+import com.github.dozedoff.similarImage.db.PendingHashImage;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
+import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.HashAttribute;
+import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ArtemisResultConsumerTest extends MessagingBaseTest {
@@ -49,12 +53,22 @@ public class ArtemisResultConsumerTest extends MessagingBaseTest {
 	@Mock
 	private ImageRepository imageRepository;
 
+	@Mock
+	private PendingHashImageRepository pendingRepository;
+
+	@Mock
+	private PendingHashImage pendingImage;
+
 	private ArtemisResultConsumer cut;
 	private MockMessageBuilder messageBuilder;
 
 	@Before
 	public void setUp() throws Exception {
-		cut = new ArtemisResultConsumer(session, imageRepository, eaQuery, hashAttribute);
+		when(pendingImage.getPathAsPath()).thenReturn(Paths.get(TEST_PATH));
+		when(pendingRepository.getById(anyInt())).thenReturn(pendingImage);
+
+		cut = new ArtemisResultConsumer(session, imageRepository, eaQuery, hashAttribute, pendingRepository,
+				QueueAddress.RESULT.toString());
 		messageBuilder = new MockMessageBuilder();
 	}
 

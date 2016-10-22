@@ -4,6 +4,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyVararg;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -12,6 +13,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.spi.FileSystemProvider;
+import java.util.Arrays;
 
 import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
@@ -23,6 +25,8 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
+
+import com.github.dozedoff.similarImage.messaging.QueryMessage;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ArtemisHashProducerTest {
@@ -36,6 +40,9 @@ public class ArtemisHashProducerTest {
 
 	@Mock
 	private ClientMessage message;
+
+	@Mock
+	private QueryMessage query;
 
 	private Path testFile;
 
@@ -97,5 +104,21 @@ public class ArtemisHashProducerTest {
 		when(fsp.newInputStream(any(Path.class), anyVararg())).thenThrow(new IOException());
 
 		assertThat(cut.handle(file), is(false));
+	}
+
+	@Test
+	public void testImageAlreadyPendingHandled() throws Exception {
+		when(query.pendingImagePaths()).thenReturn(Arrays.asList(testFile.toString()));
+		cut = new ArtemisHashProducer(session, TEST_ADDRESS, query);
+
+		assertThat(cut.handle(testFile), is(true));
+	}
+
+	@Test
+	public void testImageAlreadyPendingNoMessageSent() throws Exception {
+		when(query.pendingImagePaths()).thenReturn(Arrays.asList(testFile.toString()));
+		cut = new ArtemisHashProducer(session, TEST_ADDRESS, query);
+
+		verify(producer, never()).send(any(ClientMessage.class));
 	}
 }

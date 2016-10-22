@@ -58,6 +58,7 @@ public class ArtemisResizeRequestConsumerTest extends MessagingBaseTest {
 	@Before
 	public void setUp() throws Exception {
 		when(pendingRepo.store(any(PendingHashImage.class))).thenReturn(true);
+		when(pendingRepo.exists(any(PendingHashImage.class))).thenReturn(false);
 
 		cut = new ArtemisResizeRequestConsumer(session, resizer, REQUEST_ADDRESS, RESULT_ADDRESS, pendingRepo);
 		messageBuilder = new MockMessageBuilder();
@@ -130,5 +131,25 @@ public class ArtemisResizeRequestConsumerTest extends MessagingBaseTest {
 		cut.onMessage(message);
 
 		verify(sessionMessage).putStringProperty(ArtemisHashProducer.MESSAGE_TASK_PROPERTY, ArtemisHashProducer.MESSAGE_TASK_VALUE_CORRUPT);
+	}
+
+	@Test
+	public void testDuplicateRequestBeforeResize() throws Exception {
+		when(pendingRepo.exists(any(PendingHashImage.class))).thenReturn(true);
+		message = messageBuilder.configureResizeMessage().build();
+
+		cut.onMessage(message);
+
+		verify(producer, never()).send(sessionMessage);
+	}
+
+	@Test
+	public void testDuplicateRequestAfterResize() throws Exception {
+		when(pendingRepo.store(any(PendingHashImage.class))).thenReturn(false);
+		message = messageBuilder.configureResizeMessage().build();
+
+		cut.onMessage(message);
+
+		verify(producer, never()).send(sessionMessage);
 	}
 }

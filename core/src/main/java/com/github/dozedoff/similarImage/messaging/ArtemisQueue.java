@@ -18,6 +18,7 @@
 package com.github.dozedoff.similarImage.messaging;
 
 import org.apache.activemq.artemis.api.core.ActiveMQException;
+import org.apache.activemq.artemis.api.core.client.ClientRequestor;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +38,11 @@ public class ArtemisQueue {
 		/**
 		 * Full sized images are sent here for resizing
 		 */
-		RESIZE_REQUEST
+		RESIZE_REQUEST,
+		/**
+		 * Used for repository queries via {@link ClientRequestor}
+		 */
+		REPOSITORY_QUERY
 	}
 	
 	private final ClientSession session;
@@ -59,6 +64,7 @@ public class ArtemisQueue {
 		queueHelper(QueueAddress.RESULT, true);
 		queueHelper(QueueAddress.RESIZE_REQUEST, false);
 		queueHelper(QueueAddress.HASH_REQUEST, true);
+		queueHelper(QueueAddress.REPOSITORY_QUERY, false);
 	}
 	
 	private void queueHelper(QueueAddress address, boolean durable) {

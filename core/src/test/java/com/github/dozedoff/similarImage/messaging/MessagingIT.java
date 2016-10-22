@@ -26,6 +26,7 @@ import java.io.BufferedInputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -38,6 +39,7 @@ import org.apache.activemq.artemis.api.core.client.ClientConsumer;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
 import org.apache.activemq.artemis.api.core.client.ServerLocator;
 import org.apache.activemq.artemis.core.remoting.impl.invm.InVMConnectorFactory;
+import org.awaitility.Duration;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -62,7 +64,6 @@ import com.github.dozedoff.similarImage.io.ExtendedAttribute;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeDirectoryCache;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.HashAttribute;
-import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.util.TestUtil;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.table.TableUtils;
@@ -86,6 +87,8 @@ public class MessagingIT {
 	private static Path workingdir;
 	private static Path testImageAutumn;
 	private static long testImageAutumnReferenceHash;
+
+	private Duration messageTimeout = new Duration(6, TimeUnit.SECONDS);
 
 	@BeforeClass
 	public static void classSetup() throws Exception {
@@ -132,27 +135,41 @@ public class MessagingIT {
 
 	@Before
 	public void setup() throws Exception {
-		TableUtils.createTableIfNotExists(database.getCs(), ImageRecord.class);
-		TableUtils.clearTable(database.getCs(), ImageRecord.class);
+		cleanTable(ImageRecord.class);
+		cleanTable(PendingHashImage.class);
+	}
+
+	private static void cleanTable(Class<? extends Object> clazz) throws SQLException {
+		TableUtils.createTableIfNotExists(database.getCs(), clazz);
+		TableUtils.clearTable(database.getCs(), clazz);
 	}
 
 	@Test
 	public void testHashImage() throws Exception {
-		new ArtemisHashRequestConsumer(as.getSession(), new ImagePHash(), QueueAddress.HASH_REQUEST.toString(),
-				QueueAddress.RESULT.toString());
+		String hashQueue = "hashImageHash";
+		String resizeQueue = "hashImageResize";
+		String resultQueue = "hashImageResult";
+
+		ClientSession noDupe = as.getSession();
+		noDupe.createTemporaryQueue(resizeQueue, resizeQueue);
+		noDupe.createTemporaryQueue(hashQueue, hashQueue);
+		noDupe.createTemporaryQueue(resultQueue, resultQueue);
+
+		new ArtemisHashRequestConsumer(as.getSession(), new ImagePHash(), hashQueue,
+				resultQueue);
 		new ArtemisResizeRequestConsumer(as.getSession(), new ImageResizer(RESIZE_SIZE),
-				QueueAddress.RESIZE_REQUEST.toString(), QueueAddress.HASH_REQUEST.toString(), pendingRepo);
+				resizeQueue, hashQueue, pendingRepo);
 
 		ExtendedAttributeQuery eaQuery = new ExtendedAttributeDirectoryCache(new ExtendedAttribute(), 1,
 				TimeUnit.MINUTES);
-		ahp = new ArtemisHashProducer(as.getSession(), QueueAddress.RESIZE_REQUEST.toString());
+		ahp = new ArtemisHashProducer(as.getSession(), resizeQueue);
 
 		arc = new ArtemisResultConsumer(as.getSession(), imageRepository, eaQuery,
-				new HashAttribute(HashNames.DEFAULT_DCT_HASH_2), pendingRepo);
+				new HashAttribute(HashNames.DEFAULT_DCT_HASH_2), pendingRepo, resultQueue);
 
 		ahp.handle(testImageAutumn);
 
-		await().atMost(5, TimeUnit.SECONDS).untilCall(to(imageRepository).getByHash(testImageAutumnReferenceHash),
+		await().atMost(messageTimeout).untilCall(to(imageRepository).getByHash(testImageAutumnReferenceHash),
 				containsInAnyOrder(new ImageRecord(testImageAutumn.toString(), testImageAutumnReferenceHash)));
 	}
 
@@ -174,7 +191,7 @@ public class MessagingIT {
 
 		ClientConsumer checkConsumer = noDupe.createConsumer(hashQueue, true);
 
-		await().atMost(5, TimeUnit.SECONDS).until(new Callable<Long>() {
+		await().atMost(messageTimeout).until(new Callable<Long>() {
 
 			@Override
 			public Long call() throws Exception {
@@ -183,5 +200,26 @@ public class MessagingIT {
 		}, is(1L));
 
 		noDupe.close();
+	}
+
+	@Test
+	public void testPendingImagesQuery() throws Exception {
+		String requestQueue = "pendingQueryRequest";
+
+		ClientSession noDupe = as.getSession();
+		noDupe.createTemporaryQueue(requestQueue, requestQueue);
+
+		pendingRepo.store(new PendingHashImage(testImageAutumn));
+
+		QueryMessage qm = new QueryMessage(noDupe, requestQueue);
+		QueryResponder qr = new QueryResponder(noDupe, requestQueue, pendingRepo);
+		
+		await().atMost(messageTimeout).until(new Callable<List<String>>() {
+
+			@Override
+			public List<String> call() throws Exception {
+				return qm.pendingImagePaths();
+			}
+		}, is(containsInAnyOrder(testImageAutumn.toString())));
 	}
 }
