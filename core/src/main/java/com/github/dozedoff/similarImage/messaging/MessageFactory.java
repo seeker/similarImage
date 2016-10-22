@@ -17,8 +17,16 @@
  */
 package com.github.dozedoff.similarImage.messaging;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.util.LinkedList;
+import java.util.List;
+
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
+
+import com.github.dozedoff.similarImage.db.PendingHashImage;
 
 /**
  * Used to create pre-configured messages.
@@ -29,6 +37,9 @@ import org.apache.activemq.artemis.api.core.client.ClientSession;
 public class MessageFactory {
 	public static final String TRACKING_PROPERTY_NAME = "id";
 	public static final String HASH_PROPERTY_NAME = "hashResult";
+	public static final String QUERY_PROPERTY_NAME = "repository_query";
+
+	public static final String QUERY_PROPERTY_VALUE_PENDING = "pending";
 
 	private final ClientSession session;
 
@@ -76,5 +87,45 @@ public class MessageFactory {
 		message.putLongProperty(HASH_PROPERTY_NAME, hash);
 
 		return message;
+	}
+
+	/**
+	 * Query the repository for all pending images.
+	 * 
+	 * @return configured message
+	 */
+	public ClientMessage pendingImageQuery() {
+		ClientMessage message = session.createMessage(false);
+		
+		message.putStringProperty(QUERY_PROPERTY_NAME, QUERY_PROPERTY_VALUE_PENDING);
+		
+		return message;
+	}
+
+	/**
+	 * Create a response message for a pending images query.
+	 * 
+	 * @param pendingImages
+	 *            a list of pending messages
+	 * @return configured message
+	 * @throws IOException
+	 *             if there was an error writing the object stream
+	 */
+	public ClientMessage pendingImageResponse(List<PendingHashImage> pendingImages) throws IOException {
+		List<String> pendingPaths= new LinkedList<String>();
+		
+		for(PendingHashImage p : pendingImages) {
+			pendingPaths.add(p.getPath());
+		}
+		
+		try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				ObjectOutputStream oos = new ObjectOutputStream(baos);) {
+			ClientMessage message = session.createMessage(false);
+
+			oos.writeObject(pendingPaths);
+			message.writeBodyBufferBytes(baos.toByteArray());
+
+			return message;
+		}
 	}
 }

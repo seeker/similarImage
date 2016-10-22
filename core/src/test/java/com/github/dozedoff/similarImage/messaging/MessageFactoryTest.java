@@ -22,6 +22,8 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 
+import java.util.Arrays;
+
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.apache.activemq.artemis.core.client.impl.ClientMessageImpl;
 import org.junit.Before;
@@ -29,11 +31,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import com.github.dozedoff.similarImage.db.PendingHashImage;
+
 @RunWith(MockitoJUnitRunner.class)
 public class MessageFactoryTest extends MessagingBaseTest {
 	private static final int TRACKING_ID = 42;
 	private static final long HASH = 12L;
 	private static final byte[] IMAGE_DATA = { 0, 1, 2, 3, 4 };
+	private static final String PATH = "foo";
 
 	private MessageFactory cut;
 
@@ -77,5 +82,20 @@ public class MessageFactoryTest extends MessagingBaseTest {
 		ClientMessage result = cut.resultMessage(HASH, TRACKING_ID);
 
 		assertThat(result.getLongProperty(MessageFactory.HASH_PROPERTY_NAME), is(HASH));
+	}
+
+	@Test
+	public void testPendingImageQuery() throws Exception {
+		ClientMessage result = cut.pendingImageQuery();
+
+		assertThat(result.getStringProperty(MessageFactory.QUERY_PROPERTY_NAME),
+				is(MessageFactory.QUERY_PROPERTY_VALUE_PENDING));
+	}
+
+	@Test
+	public void testPendingImageResponse() throws Exception {
+		ClientMessage result = cut.pendingImageResponse(Arrays.asList(new PendingHashImage(PATH)));
+
+		assertThat(result.getBodySize(), is(54));
 	}
 }
