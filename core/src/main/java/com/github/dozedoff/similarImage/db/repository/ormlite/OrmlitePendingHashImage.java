@@ -50,9 +50,14 @@ public class OrmlitePendingHashImage implements PendingHashImageRepository {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void store(PendingHashImage image) throws RepositoryException {
+	public boolean store(PendingHashImage image) throws RepositoryException {
 		try {
-			pendingDao.create(image);
+			if (pendingDao.queryForMatchingArgs(image).isEmpty()) {
+				pendingDao.create(image);
+				return true;
+			} else {
+				return false;
+			}
 		} catch (SQLException e) {
 			throw new RepositoryException("Failed to store entry", e);
 		}

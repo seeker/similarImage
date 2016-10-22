@@ -35,6 +35,8 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import com.github.dozedoff.similarImage.db.PendingHashImage;
+import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
 import com.github.dozedoff.similarImage.image.ImageResizer;
 
@@ -46,13 +48,18 @@ public class ArtemisResizeRequestConsumerTest extends MessagingBaseTest {
 	@Mock
 	private ImageResizer resizer;
 
+	@Mock
+	private PendingHashImageRepository pendingRepo;
+
 	private ArtemisResizeRequestConsumer cut;
 
 	private MockMessageBuilder messageBuilder;
 
 	@Before
 	public void setUp() throws Exception {
-		cut = new ArtemisResizeRequestConsumer(session, resizer, REQUEST_ADDRESS, RESULT_ADDRESS);
+		when(pendingRepo.store(any(PendingHashImage.class))).thenReturn(true);
+
+		cut = new ArtemisResizeRequestConsumer(session, resizer, REQUEST_ADDRESS, RESULT_ADDRESS, pendingRepo);
 		messageBuilder = new MockMessageBuilder();
 	}
 

@@ -28,10 +28,11 @@ public interface PendingHashImageRepository {
 	 * 
 	 * @param image
 	 *            to store
+	 * @return true if the entry was stored, false if it was a duplicate
 	 * @throws RepositoryException
-	 *             if there is an error accessing the datasource, or a duplicate was stored
+	 *             if there is an error accessing the datasource
 	 */
-	void store(PendingHashImage image) throws RepositoryException;
+	boolean store(PendingHashImage image) throws RepositoryException;
 
 	/**
 	 * Check if the given record exists

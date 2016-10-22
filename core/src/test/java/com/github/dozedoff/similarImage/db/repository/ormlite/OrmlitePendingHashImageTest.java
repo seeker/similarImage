@@ -29,7 +29,6 @@ import org.junit.Test;
 
 import com.github.dozedoff.similarImage.db.PendingHashImage;
 import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
-import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 
@@ -56,15 +55,20 @@ public class OrmlitePendingHashImageTest extends BaseOrmliteRepositoryTest {
 	}
 
 	@Test
-	public void testStore() throws Exception {
+	public void testStoreQueryDatabase() throws Exception {
 		cut.store(newEntry);
-		
+
 		assertThat(dao.queryForMatchingArgs(newEntry), hasSize(1));
 	}
 
-	@Test(expected = RepositoryException.class)
+	@Test
+	public void testStoreReturnValue() throws Exception {
+		assertThat(cut.store(newEntry), is(true));
+	}
+
+	@Test
 	public void testStoreDuplicate() throws Exception {
-		cut.store(existingEntry);
+		assertThat(cut.store(existingEntry), is(false));
 	}
 
 	@Test
