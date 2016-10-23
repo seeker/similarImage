@@ -1,0 +1,50 @@
+<?xml version='1.0'?>
+
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns="urn:activemq" xsi:schemaLocation="urn:activemq /schema/artemis-server.xsd">
+	<core xmlns="urn:activemq:core">
+		<acceptors>
+			<acceptor name="netty-ssl-acceptor">tcp://0.0.0.0:61616?sslEnabled=true;keyStorePath=${storepath};keyStorePassword=${storepw};</acceptor>
+			<acceptor name="vm">vm://0</acceptor>
+		</acceptors>
+
+		<security-enabled>false</security-enabled>
+
+		<queues>
+			<queue name="RESULT">
+				<address>RESULT</address>
+				<durable>true</durable>
+			</queue>
+			<queue name="RESIZE_REQUEST">
+				<address>RESIZE_REQUEST</address>
+				<durable>false</durable>
+			</queue>
+			<queue name="HASH_REQUEST">
+				<address>HASH_REQUEST</address>
+				<durable>true</durable>
+			</queue>
+			<queue name="REPOSITORY_QUERY">
+				<address>REPOSITORY_QUERY</address>
+				<durable>false</durable>
+			</queue>
+		</queues>
+
+		<address-settings>
+			<address-setting match="HASH_REQUEST">
+				<max-size-bytes>1048576</max-size-bytes>
+				<address-full-policy>BLOCK</address-full-policy>
+			</address-setting>
+		</address-settings>
+
+		<security-settings>
+			<security-setting match="#">
+				<permission type="createDurableQueue" roles="guest" />
+				<permission type="deleteDurableQueue" roles="guest" />
+				<permission type="createNonDurableQueue" roles="guest" />
+				<permission type="deleteNonDurableQueue" roles="guest" />
+				<permission type="consume" roles="guest" />
+				<permission type="send" roles="guest" />
+			</security-setting>
+		</security-settings>
+	</core>
+</configuration>

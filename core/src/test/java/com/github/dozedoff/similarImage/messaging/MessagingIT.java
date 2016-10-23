@@ -113,8 +113,6 @@ public class MessagingIT {
 				.setCacheLargeMessagesClient(false).setMinLargeMessageSize(LARGE_MESSAGE_SIZE_THRESHOLD)
 				.setBlockOnNonDurableSend(false);
 		as = new ArtemisSession(locator);
-		ArtemisQueue aq = new ArtemisQueue(as.getSession());
-		aq.createAll();
 
 		database = new SQLiteDatabase(Files.createTempFile(workingdir, "database", ".db"));
 		RepositoryFactory repositoryFactory = new OrmliteRepositoryFactory(database);

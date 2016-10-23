@@ -31,6 +31,7 @@ import org.apache.activemq.artemis.api.core.TransportConfiguration;
 import org.apache.activemq.artemis.api.core.client.ActiveMQClient;
 import org.apache.activemq.artemis.api.core.client.ServerLocator;
 import org.apache.activemq.artemis.core.remoting.impl.netty.NettyConnectorFactory;
+import org.apache.activemq.artemis.core.remoting.impl.netty.TransportConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -138,11 +139,12 @@ public class ArgumentPasrser {
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("host", parsedArgs.getString("ip"));
 		params.put("port", parsedArgs.getInt("port"));
+		params.put(TransportConstants.SSL_ENABLED_PROP_NAME, "true");
 
 		ServerLocator locator = ActiveMQClient
 				.createServerLocatorWithoutHA(new TransportConfiguration(NettyConnectorFactory.class.getName(), params))
 				.setCacheLargeMessagesClient(false).setMinLargeMessageSize(LARGE_MESSAGE_SIZE_THRESHOLD)
-				.setBlockOnNonDurableSend(false).setPreAcknowledge(true).setReconnectAttempts(-1);
+				.setBlockOnNonDurableSend(false).setPreAcknowledge(true).setReconnectAttempts(3);
 
 		try {
 			List<ArtemisHashRequestConsumer> workers = new LinkedList<ArtemisHashRequestConsumer>();
