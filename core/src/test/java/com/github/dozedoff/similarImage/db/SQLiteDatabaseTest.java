@@ -27,6 +27,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.j256.ormlite.support.ConnectionSource;
+
 public class SQLiteDatabaseTest {
 	private static Path testDirectory;
 	private Path databaseFile;
@@ -57,6 +59,19 @@ public class SQLiteDatabaseTest {
 	@Test
 	public void testGetCs() throws Exception {
 		assertThat(new SQLiteDatabase(databaseFile).getCs().isOpen(), is(true));
+
+	}
+
+	@Test
+	public void testClose() throws Exception {
+		Database db = new SQLiteDatabase(databaseFile);
+		ConnectionSource cs = db.getCs();
+
+		assertThat(cs.isOpen(), is(true)); // guard assert
+
+		db.close();
+
+		assertThat(cs.isOpen(), is(false));
 
 	}
 }

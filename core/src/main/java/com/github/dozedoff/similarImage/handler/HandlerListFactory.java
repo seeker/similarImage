@@ -48,17 +48,11 @@ public class HandlerListFactory {
 
 		handlers.add(new DatabaseHandler(imageRepository, statistics));
 		handlers.add(new ExtendedAttributeHandler(hashAttribute, imageRepository, eaQuery));
-		handlers.add(new ArtemisHashProducer(session.getSession(), QueueAddress.RESIZE_REQUEST.toString()));
-
-		return handlers;
-	}
-
-	@Deprecated
-	public List<HashHandler> noExtendedAttributeSupport(HashAttribute hashAttribute) throws ActiveMQException {
-		List<HashHandler> handlers = new LinkedList<HashHandler>();
-
-		handlers.add(new DatabaseHandler(imageRepository, statistics));
-		handlers.add(new ArtemisHashProducer(session.getSession(), QueueAddress.HASH_REQUEST.toString()));
+		try {
+			handlers.add(new ArtemisHashProducer(session.getSession(), QueueAddress.RESIZE_REQUEST.toString()));
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to setup hash producer");
+		}
 
 		return handlers;
 	}

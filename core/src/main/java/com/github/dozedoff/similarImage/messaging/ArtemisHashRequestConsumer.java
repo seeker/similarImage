@@ -19,8 +19,6 @@ package com.github.dozedoff.similarImage.messaging;
 
 import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.client.ClientConsumer;
@@ -32,7 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
-import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
 import com.github.dozedoff.similarImage.util.ImageUtil;
 import com.github.dozedoff.similarImage.util.MessagingUtil;
 
@@ -49,7 +46,7 @@ public class ArtemisHashRequestConsumer implements MessageHandler {
 	private final ClientProducer producer;
 	private final ClientSession session;
 	private final ImagePHash hasher;
-
+	private MessageFactory messageFactory;
 
 	/**
 	 * Create a hash consumer that listens and responds on the given addresses.
@@ -72,6 +69,11 @@ public class ArtemisHashRequestConsumer implements MessageHandler {
 		this.consumer = session.createConsumer(requestAddress);
 		this.producer = session.createProducer(resultAddress);
 		this.consumer.setMessageHandler(this);
+		this.messageFactory = new MessageFactory(session);
+	}
+
+	protected final void setMessageFactory(MessageFactory messageFactory) {
+		this.messageFactory = messageFactory;
 	}
 
 	/**
@@ -84,33 +86,27 @@ public class ArtemisHashRequestConsumer implements MessageHandler {
 		MessagingUtil.silentClose(session);
 	}
 
-		/**
-		 * {@inheritDoc}
-		 */
-		@Override
-		public void onMessage(ClientMessage message) {
-			
-			Path path =null;
-			try {
-				path= Paths.get(message.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY));
-				ByteBuffer buffer = ByteBuffer.allocate(message.getBodySize());
-				message.getBodyBuffer().readBytes(buffer);
-			
-			long hash = doHash(path, ImageUtil.bytesToImage(buffer.array()));
-				ClientMessage response = session.createMessage(true);
-				response.putStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY, path.toString());
-				response.putLongProperty(ArtemisHashProducer.MESSAGE_HASH_PROPERTY, hash);
-			
-				producer.send(response);
-				LOGGER.debug("Sent hash response message for {}", path);
-			} catch (ActiveMQException e) {
-				LOGGER.error("Failed to process message: {}", e.toString());
-		} catch (Exception e) {
-				LOGGER.error("Failed to process image: {}", e.toString());
-			}
-		}
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void onMessage(ClientMessage message) {
+		try {
+			int trackingId = message.getIntProperty(MessageFactory.TRACKING_PROPERTY_NAME);
+			ByteBuffer buffer = ByteBuffer.allocate(message.getBodySize());
+			message.getBodyBuffer().readBytes(buffer);
 
-	private long doHash(Path next, BufferedImage image) throws Exception {
+			long hash = doHash(ImageUtil.bytesToImage(buffer.array()));
+			ClientMessage response = messageFactory.resultMessage(hash, trackingId);
+			producer.send(response);
+		} catch (ActiveMQException e) {
+			LOGGER.error("Failed to process message: {}", e.toString());
+		} catch (Exception e) {
+			LOGGER.error("Failed to process image: {}", e.toString());
+		}
+	}
+
+	private long doHash(BufferedImage image) throws Exception {
 		long hash = hasher.getLongHashScaledImage(image);
 		return hash;
 	}

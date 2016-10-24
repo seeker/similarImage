@@ -15,22 +15,31 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.dozedoff.similarImage.db;
+package com.github.dozedoff.similarImage.db.repository.ormlite;
 
-import com.j256.ormlite.support.ConnectionSource;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
-public interface Database {
+import org.junit.After;
+import org.junit.Before;
 
-	/**
-	 * Get a connection source for the database.
-	 * 
-	 * @return {@link ConnectionSource} for the database
-	 */
-	ConnectionSource getCs();
+import com.github.dozedoff.similarImage.db.Database;
+import com.github.dozedoff.similarImage.db.SQLiteDatabase;
 
-	/**
-	 * Close the database connection and clean up resources.
-	 */
-	void close();
+public abstract class BaseOrmliteRepositoryTest {
+	private Path path;
+	protected Database db;
 
+	@Before
+	public void databaseSetup() throws IOException {
+		path = Files.createTempFile("OrmliteRepositoryTest", ".db");
+		db = new SQLiteDatabase(path);
+	}
+
+	@After
+	public void databaseTearDown() throws IOException {
+		db.close();
+		Files.deleteIfExists(path);
+	}
 }

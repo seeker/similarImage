@@ -17,20 +17,13 @@
  */
 package com.github.dozedoff.similarImage.db;
 
-import com.j256.ormlite.support.ConnectionSource;
+import org.junit.Test;
 
-public interface Database {
+import nl.jqno.equalsverifier.EqualsVerifier;
 
-	/**
-	 * Get a connection source for the database.
-	 * 
-	 * @return {@link ConnectionSource} for the database
-	 */
-	ConnectionSource getCs();
-
-	/**
-	 * Close the database connection and clean up resources.
-	 */
-	void close();
-
+public class PendingHashImageTest {
+	@Test
+	public void testEqualsAndHashvalue() {
+		EqualsVerifier.forClass(PendingHashImage.class);
+	}
 }

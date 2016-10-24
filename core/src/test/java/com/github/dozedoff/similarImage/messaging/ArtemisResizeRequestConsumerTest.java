@@ -35,6 +35,8 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import com.github.dozedoff.similarImage.db.PendingHashImage;
+import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
 import com.github.dozedoff.similarImage.image.ImageResizer;
 
@@ -46,13 +48,19 @@ public class ArtemisResizeRequestConsumerTest extends MessagingBaseTest {
 	@Mock
 	private ImageResizer resizer;
 
+	@Mock
+	private PendingHashImageRepository pendingRepo;
+
 	private ArtemisResizeRequestConsumer cut;
 
 	private MockMessageBuilder messageBuilder;
 
 	@Before
 	public void setUp() throws Exception {
-		cut = new ArtemisResizeRequestConsumer(session, resizer, REQUEST_ADDRESS, RESULT_ADDRESS);
+		when(pendingRepo.store(any(PendingHashImage.class))).thenReturn(true);
+		when(pendingRepo.exists(any(PendingHashImage.class))).thenReturn(false);
+
+		cut = new ArtemisResizeRequestConsumer(session, resizer, REQUEST_ADDRESS, RESULT_ADDRESS, pendingRepo);
 		messageBuilder = new MockMessageBuilder();
 	}
 
@@ -123,5 +131,25 @@ public class ArtemisResizeRequestConsumerTest extends MessagingBaseTest {
 		cut.onMessage(message);
 
 		verify(sessionMessage).putStringProperty(ArtemisHashProducer.MESSAGE_TASK_PROPERTY, ArtemisHashProducer.MESSAGE_TASK_VALUE_CORRUPT);
+	}
+
+	@Test
+	public void testDuplicateRequestBeforeResize() throws Exception {
+		when(pendingRepo.exists(any(PendingHashImage.class))).thenReturn(true);
+		message = messageBuilder.configureResizeMessage().build();
+
+		cut.onMessage(message);
+
+		verify(producer, never()).send(sessionMessage);
+	}
+
+	@Test
+	public void testDuplicateRequestAfterResize() throws Exception {
+		when(pendingRepo.store(any(PendingHashImage.class))).thenReturn(false);
+		message = messageBuilder.configureResizeMessage().build();
+
+		cut.onMessage(message);
+
+		verify(producer, never()).send(sessionMessage);
 	}
 }

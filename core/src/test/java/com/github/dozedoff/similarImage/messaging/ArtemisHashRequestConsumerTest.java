@@ -42,6 +42,7 @@ public class ArtemisHashRequestConsumerTest extends MessagingBaseTest {
 	private static final String TEST_ADDRESS_RESULT = "test_result";
 	private static final String TEST_PATH = "foo";
 	private static final long TEST_HASH = 42L;
+	private static final int TEST_ID = 12;
 
 	@Mock
 	private ImagePHash hasher;
@@ -64,10 +65,12 @@ public class ArtemisHashRequestConsumerTest extends MessagingBaseTest {
 	}
 
 	@Test
-	public void testMessagePathProperty() throws Exception {
+	public void testMessageTrackingIDProperty() throws Exception {
+		when(message.getIntProperty(MessageFactory.TRACKING_PROPERTY_NAME)).thenReturn(TEST_ID);
+
 		cut.onMessage(message);
 
-		verify(sessionMessage).putStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY, TEST_PATH);
+		verify(sessionMessage).putIntProperty(MessageFactory.TRACKING_PROPERTY_NAME, TEST_ID);
 	}
 
 	@Test
