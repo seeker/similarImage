@@ -93,11 +93,6 @@
 					<failOnError>false</failOnError>
 				</configuration>
 				<executions>
-					<execution>
-						<goals>
-							<goal>check</goal>
-						</goals>
-					</execution>
 				</executions>
 			</plugin>
 			<plugin>
@@ -109,11 +104,6 @@
 					<propertiesLocation>checkstyle_maven.properties</propertiesLocation>
 				</configuration>
 				<executions>
-					<execution>
-						<goals>
-							<goal>check</goal>
-						</goals>
-					</execution>
 				</executions>
 			</plugin>
 		      <plugin>
