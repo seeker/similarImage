@@ -27,6 +27,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.TransportConfiguration;
 import org.apache.activemq.artemis.api.core.client.ActiveMQClient;
 import org.apache.activemq.artemis.api.core.client.ServerLocator;
@@ -153,12 +154,22 @@ public class ArgumentPasrser {
 
 			for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
 				LOGGER.info("Starting worker {} ...", i);
+				try {
 				ArtemisHashRequestConsumer consumer = new ArtemisHashRequestConsumer(session.getSession(), new ImagePHash(),
 					ArtemisQueue.QueueAddress.HASH_REQUEST.toString(),
 					ArtemisQueue.QueueAddress.RESULT.toString());
-
-				workers.add(consumer);
+					workers.add(consumer);
+				} catch (ActiveMQException e) {
+					LOGGER.warn("Failed to create hash consumer: {} cause:", e.toString(), e.getCause().getMessage());
+				}
 			}
+
+			if (workers.isEmpty()) {
+				LOGGER.error("Failed to create any consumers, shutting down...");
+				throw new RuntimeException("No cunsumers created");
+			}
+
+			Runtime.getRuntime().addShutdownHook(new CleanupWorkersOnShutdown(workers));
 
 			try {
 				// FIXME ugly, but it works...
@@ -168,15 +179,26 @@ public class ArgumentPasrser {
 			} catch (InterruptedException e) {
 				LOGGER.debug("Interrupted!");
 			}
+		} catch (Exception e) {
+			LOGGER.error("Failed to start node: {}", e.toString());
+		}
+	}
 
+	private class CleanupWorkersOnShutdown extends Thread {
+		private final List<ArtemisHashRequestConsumer> workers;
+
+		public CleanupWorkersOnShutdown(List<ArtemisHashRequestConsumer> workers) {
+			super("Shutdown Hook");
+			this.workers = workers;
+		}
+
+		@Override
+		public void run() {
 			LOGGER.info("Shutting down...");
 
 			for (ArtemisHashRequestConsumer worker : workers) {
 				worker.stop();
 			}
-
-		} catch (Exception e) {
-			LOGGER.error("Failed to start node: {}", e.toString());
 		}
 	}
 }
