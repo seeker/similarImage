@@ -30,6 +30,8 @@ import org.apache.activemq.artemis.api.core.client.ClientSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
+
 /**
  * For request-response messaging
  * 
@@ -56,13 +58,32 @@ public class QueryMessage {
 	 *            address where query requests are received and responses sent
 	 * @throws Exception
 	 *             if there was an error setting up the requestors
+	 * @deprecated Use constructor with enum.
 	 */
+	@Deprecated
 	public QueryMessage(ClientSession session, String queryAddress) throws Exception {
-	this.session = session;
+		this.session = session;
 		LOGGER.info("Preparing to send query requests on {} ...", queryAddress);
 		repositoryQuery = new ClientRequestor(session, queryAddress);
 		messageFactory = new MessageFactory(session);
-}
+	}
+
+	/**
+	 * Create a new {@link QueryMessage} instance using the given session.
+	 * 
+	 * @param session
+	 *            to use for messaging
+	 * @param queryAddress
+	 *            address where query requests are received and responses sent
+	 * @throws Exception
+	 *             if there was an error setting up the requestors
+	 */
+	public QueryMessage(ClientSession session, QueueAddress queryAddress) throws Exception {
+		this.session = session;
+		LOGGER.info("Preparing to send query requests on {} ...", queryAddress.toString());
+		repositoryQuery = new ClientRequestor(session, queryAddress.toString());
+		messageFactory = new MessageFactory(session);
+	}
 
 	/**
 	 * Get a list of paths that are currently waiting to be hashed.
