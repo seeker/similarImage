@@ -29,11 +29,16 @@ import org.apache.activemq.artemis.core.client.impl.ClientMessageImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.dozedoff.similarImage.db.PendingHashImage;
 import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
+import com.github.dozedoff.similarImage.messaging.MessageFactory.QueryType;
 
 public class QueryResponder implements MessageHandler {
 	private static final Logger LOGGER = LoggerFactory.getLogger(QueryResponder.class);
+
+	private static final String REPOSITORY_ERROR_MESSAGE = "Failed to access repository:{}, cause:{}";
+	private static final String RESPONSE_SEND_ERROR = "Failed to send response message: {}";
 
 	private final ClientConsumer consumer;
 	private final ClientProducer producer;
@@ -42,10 +47,8 @@ public class QueryResponder implements MessageHandler {
 
 	public QueryResponder(ClientSession session, String queryAddress, PendingHashImageRepository pendingRepository)
 			throws ActiveMQException {
-		String messageFilter = MessageFactory.QUERY_PROPERTY_NAME.toString() + " IN ('"
-				+ MessageFactory.QUERY_PROPERTY_VALUE_PENDING.toString() + "')";
 
-		this.consumer = session.createConsumer(queryAddress, messageFilter);
+		this.consumer = session.createConsumer(queryAddress);
 		this.producer = session.createProducer();
 		this.pendingRepository = pendingRepository;
 		this.consumer.setMessageHandler(this);
@@ -57,13 +60,24 @@ public class QueryResponder implements MessageHandler {
 		return message.getStringProperty(ClientMessageImpl.REPLYTO_HEADER_NAME);
 	}
 
+	private boolean isQueryType(String messageValue, QueryType queryType) {
+		return queryType.toString().equals(messageValue);
+	}
+
+	/**
+	 * Accept messages and check if they are query messages, if so handle them.
+	 * 
+	 * @param message
+	 *            recieved message
+	 */
 	@Override
 	public void onMessage(ClientMessage message) {
 		if (message.containsProperty(MessageFactory.QUERY_PROPERTY_NAME)) {
 			String queryType = message.getStringProperty(MessageFactory.QUERY_PROPERTY_NAME);
 			LOGGER.debug("Got query message: {}", queryType);
 
-			if (MessageFactory.QUERY_PROPERTY_VALUE_PENDING.equals(queryType)) {
+			if (isQueryType(queryType, QueryType.pending)) {
+				LOGGER.debug("Query for pending files");
 				try {
 					ClientMessage response = messageFactory.pendingImageResponse(pendingRepository.getAll());
 					producer.send(getReplyReturnAddress(message), response);
@@ -71,9 +85,23 @@ public class QueryResponder implements MessageHandler {
 				} catch (IOException e) {
 					LOGGER.error("Failed to add paths to message:", e.toString());
 				} catch (RepositoryException e) {
-					LOGGER.error("Failed to access repository:{}, cause:{}", e.toString(), e.getCause().getMessage());
+					LOGGER.error(REPOSITORY_ERROR_MESSAGE, e.toString(), e.getCause().getMessage());
 				} catch (ActiveMQException e) {
-					LOGGER.error("Failed to send response message: {}", e.toString());
+					LOGGER.error(RESPONSE_SEND_ERROR, e.toString());
+				}
+			} else if (isQueryType(queryType, QueryType.TRACK)) {
+				LOGGER.trace("Query for tracking id");
+				try {
+					PendingHashImage pending = new PendingHashImage(message.getBodyBuffer().readString());
+					pendingRepository.store(pending);
+					int pendingId = pending.getId();
+					ClientMessage response = messageFactory.trackPathResponse(pendingId);
+					producer.send(getReplyReturnAddress(message), response);
+					LOGGER.trace("Sent tracking id query response with id {}", pendingId);
+				} catch (RepositoryException e) {
+					LOGGER.error(REPOSITORY_ERROR_MESSAGE, e.toString(), e.getCause().getMessage());
+				} catch (ActiveMQException e) {
+					LOGGER.error(RESPONSE_SEND_ERROR, e.toString());
 				}
 			} else {
 				LOGGER.error("Unhandled query request: {}", queryType);
