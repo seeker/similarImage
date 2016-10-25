@@ -61,10 +61,6 @@ public class ArtemisQueue {
 	 * Creates all queues. Does not check if they already exist.
 	 */
 	public void createAll() {
-		queueHelper(QueueAddress.RESULT, true);
-		queueHelper(QueueAddress.RESIZE_REQUEST, false);
-		queueHelper(QueueAddress.HASH_REQUEST, true);
-		queueHelper(QueueAddress.REPOSITORY_QUERY, false);
 	}
 	
 	private void queueHelper(QueueAddress address, boolean durable) {

@@ -60,7 +60,6 @@ import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
 import com.github.dozedoff.similarImage.messaging.ArtemisHashRequestConsumer;
-import com.github.dozedoff.similarImage.messaging.ArtemisQueue;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.messaging.ArtemisResizeRequestConsumer;
 import com.github.dozedoff.similarImage.messaging.ArtemisResultConsumer;
@@ -117,8 +116,6 @@ public class SimilarImage {
 				.setBlockOnNonDurableSend(false);
 				
 		ArtemisSession as = new ArtemisSession(locator);
-		ArtemisQueue aq = new ArtemisQueue(as.getSession());
-		aq.createAll();
 
 		Database database = new SQLiteDatabase();
 
@@ -126,8 +123,8 @@ public class SimilarImage {
 				DaoManager.createDao(database.getCs(), PendingHashImage.class));
 
 		for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
-			ahrcs.add(new ArtemisHashRequestConsumer(as.getSession(), new ImagePHash(), QueueAddress.HASH_REQUEST.toString(),
-					QueueAddress.RESULT.toString()));
+			ahrcs.add(new ArtemisHashRequestConsumer(as.getSession(), new ImagePHash(),
+					QueueAddress.HASH_REQUEST.toString(), QueueAddress.RESULT.toString()));
 			arrcs.add(new ArtemisResizeRequestConsumer(as.getSession(), new ImageResizer(RESIZE_SIZE),
 					QueueAddress.RESIZE_REQUEST.toString(), QueueAddress.HASH_REQUEST.toString(), pendingRepo));
 		}

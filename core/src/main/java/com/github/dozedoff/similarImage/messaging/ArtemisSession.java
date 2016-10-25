@@ -37,7 +37,6 @@ public class ArtemisSession {
 	}
 
 	private ClientSession createAndConfigureSession() throws ActiveMQException {
-
 		ClientSession session = factory.createSession();
 		session.start();
 		return session;

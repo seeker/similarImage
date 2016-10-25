@@ -50,7 +50,7 @@ public class OrmlitePendingHashImage implements PendingHashImageRepository {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public boolean store(PendingHashImage image) throws RepositoryException {
+	public synchronized boolean store(PendingHashImage image) throws RepositoryException {
 		try {
 			if (pendingDao.queryForMatchingArgs(image).isEmpty()) {
 				pendingDao.create(image);
@@ -83,7 +83,7 @@ public class OrmlitePendingHashImage implements PendingHashImageRepository {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void removeById(int id) throws RepositoryException {
+	public synchronized void removeById(int id) throws RepositoryException {
 		try {
 			pendingDao.deleteById(id);
 		} catch (SQLException e) {
