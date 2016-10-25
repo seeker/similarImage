@@ -20,6 +20,7 @@ package com.github.dozedoff.similarImage.messaging;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -89,6 +90,10 @@ public class MessageFactory {
 	 */
 	public MessageFactory(ClientSession session) {
 		this.session = session;
+	}
+
+	private void setQueryType(ClientMessage message, QueryType type) {
+		message.putStringProperty(MessageProperty.repository_query.toString(), type.toString());
 	}
 
 	/**
@@ -165,5 +170,36 @@ public class MessageFactory {
 
 			return message;
 		}
+	}
+
+	/**
+	 * Create a query message for a tracking id for the given path.
+	 * 
+	 * @param path
+	 *            to query and track
+	 * @return configured message
+	 */
+	public ClientMessage trackPathQuery(Path path) {
+		ClientMessage message = session.createMessage(false);
+		setQueryType(message, QueryType.TRACK);
+
+		message.getBodyBuffer().writeString(path.toString());
+
+		return message;
+	}
+
+	/**
+	 * Create a response message for a tracking id query.
+	 * 
+	 * @param trackingId
+	 *            for the path in the query
+	 * @return configured message
+	 */
+	public ClientMessage trackPathResponse(int trackingId) {
+		ClientMessage message = session.createMessage(false);
+
+		message.getBodyBuffer().writeInt(trackingId);
+
+		return message;
 	}
 }
