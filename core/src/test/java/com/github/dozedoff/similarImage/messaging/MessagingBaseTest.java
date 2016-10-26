@@ -26,6 +26,7 @@ import org.apache.activemq.artemis.api.core.client.ClientConsumer;
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.apache.activemq.artemis.api.core.client.ClientProducer;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
+import org.apache.activemq.artemis.core.client.impl.ClientMessageImpl;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -57,10 +58,10 @@ public abstract class MessagingBaseTest {
 
 	@Before
 	public void messagingSetup() throws ActiveMQException {
+		sessionMessage = new ClientMessageImpl(ClientMessageImpl.DEFAULT_TYPE, false, 0, 0, (byte) 0, 0);
+
 		when(session.createConsumer(any(String.class))).thenReturn(consumer);
 		when(session.createProducer(any(String.class))).thenReturn(producer);
-		when(sessionMessage.getBodyBuffer()).thenReturn(sessionBodyBuffer);
 		when(session.createMessage(any(Boolean.class))).thenReturn(sessionMessage);
-		when(message.getBodyBuffer()).thenReturn(bodyBuffer);
 	}
 }
