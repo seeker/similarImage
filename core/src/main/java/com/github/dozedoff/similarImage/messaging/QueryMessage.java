@@ -116,7 +116,7 @@ public class QueryMessage {
 	 * 
 	 * @param path
 	 *            to track
-	 * @return a unique tracking id for the requested path
+	 * @return a unique tracking id for the requested path, or -1 if the path is already tracked
 	 * @throws Exception
 	 *             if there was an error performing the query
 	 */

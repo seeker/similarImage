@@ -62,6 +62,7 @@ public abstract class MessagingBaseTest {
 
 		when(session.createConsumer(any(String.class))).thenReturn(consumer);
 		when(session.createProducer(any(String.class))).thenReturn(producer);
+		when(session.createProducer()).thenReturn(producer);
 		when(session.createMessage(any(Boolean.class))).thenReturn(sessionMessage);
 	}
 }

@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import com.github.dozedoff.similarImage.db.PendingHashImage;
 import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
+import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.messaging.MessageFactory.QueryType;
 
 public class QueryResponder implements MessageHandler {
@@ -45,6 +46,18 @@ public class QueryResponder implements MessageHandler {
 	private final PendingHashImageRepository pendingRepository;
 	private final MessageFactory messageFactory;
 
+	/**
+	 * Create a instance using the given instance and repository
+	 * 
+	 * @param session
+	 *            to use for messages
+	 * @param queryAddress
+	 *            to use for listening to queries
+	 * @param pendingRepository
+	 *            for pending file queries
+	 * @throws ActiveMQException
+	 *             if there is an error setting up messaging
+	 */
 	public QueryResponder(ClientSession session, String queryAddress, PendingHashImageRepository pendingRepository)
 			throws ActiveMQException {
 
@@ -54,6 +67,20 @@ public class QueryResponder implements MessageHandler {
 		this.consumer.setMessageHandler(this);
 		messageFactory = new MessageFactory(session);
 		LOGGER.info("Listening to request messages on {} ...", queryAddress);
+	}
+
+	/**
+	 * Create a instance using the given instance and repository. The default address is used to listen for queries.
+	 * 
+	 * @param session
+	 *            to use for messages
+	 * @param pendingRepository
+	 *            for pending file queries
+	 * @throws ActiveMQException
+	 *             if there is an error setting up messaging
+	 */
+	public QueryResponder(ClientSession session, PendingHashImageRepository pendingRepository) throws ActiveMQException {
+		this(session, QueueAddress.REPOSITORY_QUERY.toString(), pendingRepository);
 	}
 
 	private String getReplyReturnAddress(ClientMessage message) {
@@ -93,8 +120,12 @@ public class QueryResponder implements MessageHandler {
 				LOGGER.trace("Query for tracking id");
 				try {
 					PendingHashImage pending = new PendingHashImage(message.getBodyBuffer().readString());
-					pendingRepository.store(pending);
-					int pendingId = pending.getId();
+					int pendingId = -1;
+
+					if (pendingRepository.store(pending)) {
+						pendingId = pending.getId();
+					}
+					
 					ClientMessage response = messageFactory.trackPathResponse(pendingId);
 					producer.send(getReplyReturnAddress(message), response);
 					LOGGER.trace("Sent tracking id query response with id {}", pendingId);
