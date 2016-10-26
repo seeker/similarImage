@@ -27,6 +27,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 
 import javax.imageio.IIOException;
 
@@ -54,6 +55,9 @@ public class ArtemisResizeRequestConsumerTest extends MessagingBaseTest {
 	@Mock
 	private PendingHashImageRepository pendingRepo;
 
+	@Mock
+	private QueryMessage queryMessage;
+
 	private ArtemisResizeRequestConsumer cut;
 
 	private MockMessageBuilder messageBuilder;
@@ -64,7 +68,7 @@ public class ArtemisResizeRequestConsumerTest extends MessagingBaseTest {
 		when(pendingRepo.exists(any(PendingHashImage.class))).thenReturn(false);
 		when(resizer.resize(any(InputStream.class))).thenReturn(new byte[0]);
 
-		cut = new ArtemisResizeRequestConsumer(session, resizer, REQUEST_ADDRESS, RESULT_ADDRESS, pendingRepo);
+		cut = new ArtemisResizeRequestConsumer(session, resizer, REQUEST_ADDRESS, RESULT_ADDRESS, queryMessage);
 		messageBuilder = new MockMessageBuilder();
 	}
 
@@ -158,22 +162,12 @@ public class ArtemisResizeRequestConsumerTest extends MessagingBaseTest {
 	}
 
 	@Test
-	public void testDuplicateRequestBeforeResize() throws Exception {
-		when(pendingRepo.exists(any(PendingHashImage.class))).thenReturn(true);
+	public void testDuplicateImage() throws Exception {
 		message = messageBuilder.configureResizeMessage().build();
+		when(queryMessage.trackPath(any(Path.class))).thenReturn(-1);
 
 		cut.onMessage(message);
 
-		verify(producer, never()).send(sessionMessage);
-	}
-
-	@Test
-	public void testDuplicateRequestAfterResize() throws Exception {
-		when(pendingRepo.store(any(PendingHashImage.class))).thenReturn(false);
-		message = messageBuilder.configureResizeMessage().build();
-
-		cut.onMessage(message);
-
-		verify(producer, never()).send(sessionMessage);
+		verify(producer, never()).send(any(ClientMessage.class));
 	}
 }

@@ -58,9 +58,7 @@ public class QueryMessage {
 	 *            address where query requests are received and responses sent
 	 * @throws Exception
 	 *             if there was an error setting up the requestors
-	 * @deprecated Use constructor with enum.
 	 */
-	@Deprecated
 	public QueryMessage(ClientSession session, String queryAddress) throws Exception {
 		this.session = session;
 		LOGGER.info("Preparing to send query requests on {} ...", queryAddress);

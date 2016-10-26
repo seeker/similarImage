@@ -23,8 +23,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.TimeoutException;
 
 import javax.imageio.IIOException;
 
@@ -37,14 +36,11 @@ import org.apache.activemq.artemis.api.core.client.MessageHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.dozedoff.similarImage.db.PendingHashImage;
-import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
 import com.github.dozedoff.similarImage.image.ImageResizer;
+import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.util.ImageUtil;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 
 import at.dhyan.open_imaging.GifDecoder;
 import at.dhyan.open_imaging.GifDecoder.GifImage;
@@ -58,20 +54,53 @@ import at.dhyan.open_imaging.GifDecoder.GifImage;
 public class ArtemisResizeRequestConsumer implements MessageHandler {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ArtemisResizeRequestConsumer.class);
 
-	private static final int SEND_ACK_CACHE_TIMEOUT = 5;
-	private static final AtomicInteger TRACKING_ID_SEQUENCE = new AtomicInteger();
 	private static final String DUPLICATE_MESSAGE = "Image {} is already in the hashing queue, discarding";
 
 	private final ClientConsumer consumer;
 	private final ClientProducer producer;
 	private final ClientSession session;
 	private final ImageResizer resizer;
-	private final PendingHashImageRepository pendingRepo; // TODO replace with repository messages
-	private final Cache<Integer, String> messageSendAcknowledgedCache;
 	private MessageFactory messageFactory;
+	private QueryMessage queryMessage;
 
 	/**
-	 * Create a new consumer for hash messages
+	 * Create a new consumer for hash messages. Uses the default addresses for queues.
+	 * 
+	 * @param session
+	 *            to talk to the server
+	 * @param resizer
+	 *            for resizing images
+	 * @throws Exception
+	 *             if the setup for {@link QueryMessage} failed
+	 */
+	public ArtemisResizeRequestConsumer(ClientSession session, ImageResizer resizer) throws Exception {
+
+		this(session, resizer, QueueAddress.RESIZE_REQUEST.toString(), QueueAddress.HASH_REQUEST.toString(),
+				new QueryMessage(session, QueueAddress.REPOSITORY_QUERY));
+	}
+
+	/**
+	 * Create a new consumer for hash messages. Uses the default address for repository queries.
+	 * 
+	 * @param session
+	 *            to talk to the server
+	 * @param resizer
+	 *            for resizing images
+	 * @param inAddress
+	 *            for hashes
+	 * @param outAddress
+	 *            for result messages
+	 * @throws Exception
+	 *             if the setup for {@link QueryMessage} failed
+	 */
+	public ArtemisResizeRequestConsumer(ClientSession session, ImageResizer resizer, String inAddress, String outAddress)
+			throws Exception {
+
+		this(session, resizer, inAddress, outAddress, new QueryMessage(session, QueueAddress.REPOSITORY_QUERY));
+	}
+
+	/**
+	 * Create a new consumer for hash messages. Uses the default address for repository queries. <b>For testing only!</b>
 	 * 
 	 * @param session
 	 *            to talk to the server
@@ -81,31 +110,26 @@ public class ArtemisResizeRequestConsumer implements MessageHandler {
 	 *            for hashes
 	 * @param resultAddress
 	 *            for result messages
-	 * @param pendingRepo
-	 *            for pending hash requests
-	 * @throws ActiveMQException
-	 *             if there is an error with the queues
+	 * @param queryMessage
+	 *            instance to use for repository queries
+	 * @throws Exception
+	 *             if the setup for {@link QueryMessage} failed
 	 */
-	public ArtemisResizeRequestConsumer(ClientSession session, ImageResizer resizer, String requestAddress,
-			String resultAddress, PendingHashImageRepository pendingRepo)
-			throws ActiveMQException {
+	protected ArtemisResizeRequestConsumer(ClientSession session, ImageResizer resizer, String requestAddress, String resultAddress,
+			QueryMessage queryMessage) throws Exception {
 
 		this.session = session;
 		this.consumer = session.createConsumer(requestAddress);
 		this.producer = session.createProducer(resultAddress);
 		this.resizer = resizer;
-		this.pendingRepo = pendingRepo;
 		this.messageFactory = new MessageFactory(session);
+		this.queryMessage = queryMessage;
 
 		this.consumer.setMessageHandler(this);
-
-		// if we don't hear from the broker in this time, then it won't happen
-		this.messageSendAcknowledgedCache = CacheBuilder.newBuilder()
-				.expireAfterAccess(SEND_ACK_CACHE_TIMEOUT, TimeUnit.MINUTES).build();
 	}
 
 	/**
-	 * Overwrite the {@link MessageFactory} of the class.
+	 * Overwrite the {@link MessageFactory} of the class. For testing only!
 	 * 
 	 * @param messageFactory
 	 *            to set
@@ -115,23 +139,30 @@ public class ArtemisResizeRequestConsumer implements MessageHandler {
 	}
 
 	/**
+	 * Set the {@link QueryMessage} of this class. For testing only!
+	 * 
+	 * @param queryMessage
+	 *            to set
+	 */
+	protected void setQueryMessage(QueryMessage queryMessage) {
+		this.queryMessage = queryMessage;
+	}
+
+	private boolean isDuplicatePath(int trackingId) {
+		return trackingId == -1;
+	}
+	/**
 	 * {@inheritDoc}
 	 */
 	@Override
 	public void onMessage(ClientMessage message) {
 		String pathPropterty = null;
-		int trackingId = -1;
 
 		try {
 			pathPropterty = message.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY);
 			LOGGER.debug("Resize request for image {}", pathPropterty);
 
 			Path path = Paths.get(pathPropterty);
-			if (pendingRepo.exists(new PendingHashImage(path))) {
-				LOGGER.info(DUPLICATE_MESSAGE, path);
-				return;
-			}
-
 			ByteBuffer buffer = ByteBuffer.allocate(message.getBodySize());
 			message.getBodyBuffer().readBytes(buffer);
 
@@ -145,20 +176,14 @@ public class ArtemisResizeRequestConsumer implements MessageHandler {
 			
 			byte[] resizedImageData = resizer.resize(is);
 
-
-
-			PendingHashImage pending = new PendingHashImage(path);
-
-			if (pendingRepo.store(pending)) {
-				trackingId = pending.getId();
+			int trackingId = queryMessage.trackPath(path);
+			if (!isDuplicatePath(trackingId)) {
 				ClientMessage response = messageFactory.hashRequestMessage(resizedImageData, trackingId);
 
-				LOGGER.debug("Sending hash request with id {} instead of path {}", trackingId, path);
+				LOGGER.trace("Sending hash request with id {} instead of path {}", trackingId, path);
 				producer.send(response);
-				messageSendAcknowledgedCache.put(trackingId, pathPropterty);
-				return; // FIXME ugly hack to remove pending records in case of failure
 			} else {
-				LOGGER.warn(DUPLICATE_MESSAGE, path);
+				LOGGER.warn(DUPLICATE_MESSAGE);
 			}
 		} catch (ActiveMQException e) {
 			LOGGER.error("Failed to send message: {}", e.toString());
@@ -172,12 +197,10 @@ public class ArtemisResizeRequestConsumer implements MessageHandler {
 			}
 		} catch (RepositoryException e) {
 			LOGGER.warn("Failed to store pending image entry: {}, cause: {}", e.toString(), e.getCause().getMessage());
-		}
-
-		try {
-			pendingRepo.removeById(trackingId);// hack hack
-		} catch (RepositoryException e) {
-			LOGGER.error("Failed to remove pending image with id {} after failure: {}", trackingId, e.toString());
+		} catch (TimeoutException e) {
+			LOGGER.warn("Failed to get tracking id for {} because the query timed out");
+		} catch (Exception e) {
+			LOGGER.error("Unhandled exception: {}", e.toString());
 		}
 	}
 

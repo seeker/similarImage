@@ -143,16 +143,21 @@ public class MessagingIT {
 		String hashQueue = "hashImageHash";
 		String resizeQueue = "hashImageResize";
 		String resultQueue = "hashImageResult";
+		String queryQueue = "hashImageQuery";
 
 		ClientSession noDupe = as.getSession();
 		noDupe.createTemporaryQueue(resizeQueue, resizeQueue);
 		noDupe.createTemporaryQueue(hashQueue, hashQueue);
 		noDupe.createTemporaryQueue(resultQueue, resultQueue);
+		noDupe.createTemporaryQueue(queryQueue, queryQueue);
+
+		QueryMessage queryMessage = new QueryMessage(as.getSession(), queryQueue);
+		QueryResponder queryResponder = new QueryResponder(as.getSession(), queryQueue, pendingRepo);
 
 		new ArtemisHashRequestConsumer(as.getSession(), new ImagePHash(), hashQueue,
 				resultQueue);
 		new ArtemisResizeRequestConsumer(as.getSession(), new ImageResizer(RESIZE_SIZE),
-				resizeQueue, hashQueue, pendingRepo);
+				resizeQueue, hashQueue, queryMessage);
 
 		ExtendedAttributeQuery eaQuery = new ExtendedAttributeDirectoryCache(new ExtendedAttribute(), 1,
 				TimeUnit.MINUTES);
@@ -171,19 +176,24 @@ public class MessagingIT {
 	public void testDoNotQueueDuplicates() throws Exception {
 		String resizeQueue = "dupeResize";
 		String hashQueue = "dupeHash";
+		String queryQueue = "dupeQuery";
 
 		ClientSession noDupe = as.getSession();
 		noDupe.createTemporaryQueue(resizeQueue, resizeQueue);
 		noDupe.createTemporaryQueue(hashQueue, hashQueue);
+		noDupe.createTemporaryQueue(queryQueue, queryQueue);
 
-		ArtemisHashProducer ahp =new ArtemisHashProducer(as.getSession(), resizeQueue);
+		QueryMessage queryMessage = new QueryMessage(as.getSession(), queryQueue);
+		QueryResponder queryResponder = new QueryResponder(as.getSession(), queryQueue, pendingRepo);
+
+		ArtemisHashProducer ahp = new ArtemisHashProducer(as.getSession(), resizeQueue, queryMessage);
 		ArtemisResizeRequestConsumer arrc = new ArtemisResizeRequestConsumer(as.getSession(),
-				new ImageResizer(RESIZE_SIZE), resizeQueue, hashQueue, pendingRepo);
-
-		ahp.handle(testImageAutumn);
-		ahp.handle(testImageAutumn);
+				new ImageResizer(RESIZE_SIZE), resizeQueue, hashQueue, queryMessage);
 
 		ClientConsumer checkConsumer = noDupe.createConsumer(hashQueue, true);
+
+		ahp.handle(testImageAutumn);
+		ahp.handle(testImageAutumn);
 
 		await().atMost(messageTimeout).until(new Callable<Long>() {
 
