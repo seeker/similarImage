@@ -74,6 +74,13 @@ public class MessageFactoryTest extends MessagingBaseTest {
 	}
 
 	@Test
+	public void testResultMessageTask() throws Exception {
+		ClientMessage result = cut.resultMessage(HASH, TRACKING_ID);
+
+		assertThat(result.getStringProperty(MessageProperty.task.toString()), is(TaskType.result.toString()));
+	}
+
+	@Test
 	public void testResultMessageTrackingId() throws Exception {
 		ClientMessage result = cut.resultMessage(HASH, TRACKING_ID);
 

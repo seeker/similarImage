@@ -55,7 +55,7 @@ public class MessageFactory {
 	 * What kind of task this message represents
 	 */
 	public enum TaskType {
-		hash, corr
+		hash, corr, result
 	};
 
 	/**
@@ -101,6 +101,10 @@ public class MessageFactory {
 		message.putStringProperty(MessageProperty.repository_query.toString(), type.toString());
 	}
 
+	private void setTaskType(ClientMessage message, TaskType task) {
+		message.putStringProperty(MessageProperty.task.toString(), task.toString());
+	}
+
 	/**
 	 * Create a new message for a hashing request.
 	 * 
@@ -131,8 +135,9 @@ public class MessageFactory {
 	public ClientMessage resultMessage(long hash, int trackingId) {
 		ClientMessage message = session.createMessage(true);
 
-		message.putIntProperty(TRACKING_PROPERTY_NAME, trackingId);
-		message.putLongProperty(HASH_PROPERTY_NAME, hash);
+		setTaskType(message, TaskType.result);
+		message.putIntProperty(MessageProperty.id.toString(), trackingId);
+		message.putLongProperty(MessageProperty.hashResult.toString(), hash);
 
 		return message;
 	}
