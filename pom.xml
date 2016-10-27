@@ -22,6 +22,7 @@
 		<module>core</module>
 		<module>gui</module>
 		<module>cli</module>
+		<module>distributed</module>
 	</modules>
 
 	<build>

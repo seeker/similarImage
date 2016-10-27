@@ -31,6 +31,7 @@ import org.apache.activemq.artemis.api.core.client.ClientSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.dozedoff.similarImage.handler.HashHandler;
 import com.github.dozedoff.similarImage.messaging.MessageFactory;
 import com.github.dozedoff.similarImage.messaging.QueryMessage;
 import com.google.common.cache.Cache;

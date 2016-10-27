@@ -31,7 +31,6 @@ import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.io.ExtendedAttribute;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.HashAttribute;
-import com.github.dozedoff.similarImage.messaging.ArtemisResultConsumer;
 
 /**
  * This handler reads the hash from the extended attributes of a file and stores them in the database.
@@ -41,6 +40,8 @@ import com.github.dozedoff.similarImage.messaging.ArtemisResultConsumer;
  */
 public class ExtendedAttributeHandler implements HashHandler {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ExtendedAttributeHandler.class);
+
+	public static final String CORRUPT_EA_NAMESPACE = ExtendedAttribute.createName("corrupt");
 
 	private HashAttribute hashAttribute;
 	private final ImageRepository imageRepository;
@@ -77,7 +78,7 @@ public class ExtendedAttributeHandler implements HashHandler {
 		if (eaQuery.isEaSupported(file) && hashAttribute.areAttributesValid(file)) {
 			LOGGER.trace("{} has valid extended attributes", file);
 			try {
-				if (ExtendedAttribute.isExtendedAttributeSet(file, ArtemisResultConsumer.CORRUPT_EA_NAMESPACE)) {
+				if (ExtendedAttribute.isExtendedAttributeSet(file, CORRUPT_EA_NAMESPACE)) {
 					return true;
 				}
 

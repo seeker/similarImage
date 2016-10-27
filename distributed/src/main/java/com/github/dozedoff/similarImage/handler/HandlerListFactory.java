@@ -35,8 +35,7 @@ public class HandlerListFactory {
 	private final ArtemisSession session;
 	private final ExtendedAttributeQuery eaQuery;
 
-	public HandlerListFactory(ImageRepository imageRepository, Statistics statistics, ArtemisSession as,
-			ExtendedAttributeQuery eaQuery) {
+	public HandlerListFactory(ImageRepository imageRepository, Statistics statistics, ArtemisSession as, ExtendedAttributeQuery eaQuery) {
 		this.imageRepository = imageRepository;
 		this.statistics = statistics;
 		this.session = as;

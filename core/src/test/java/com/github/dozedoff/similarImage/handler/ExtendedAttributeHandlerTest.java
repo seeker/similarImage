@@ -43,7 +43,6 @@ import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.io.ExtendedAttribute;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.HashAttribute;
-import com.github.dozedoff.similarImage.messaging.ArtemisResultConsumer;
 import com.github.dozedoff.similarImage.util.TestUtil;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -107,7 +106,7 @@ public class ExtendedAttributeHandlerTest {
 	public void testHandleCorruptFileIsHandled() throws Exception {
 		when(eaQuery.isEaSupported(testFile)).thenReturn(true);
 		when(hashAttribute.areAttributesValid(testFile)).thenReturn(true);
-		ExtendedAttribute.setExtendedAttribute(testFile, ArtemisResultConsumer.CORRUPT_EA_NAMESPACE, "");
+		ExtendedAttribute.setExtendedAttribute(testFile, ExtendedAttributeHandler.CORRUPT_EA_NAMESPACE, "");
 
 		assertThat(cut.handle(testFile), is(true));
 	}
@@ -116,7 +115,7 @@ public class ExtendedAttributeHandlerTest {
 	public void testHandleCorruptFileNotStored() throws Exception {
 		when(eaQuery.isEaSupported(testFile)).thenReturn(true);
 		when(hashAttribute.areAttributesValid(testFile)).thenReturn(true);
-		ExtendedAttribute.setExtendedAttribute(testFile, ArtemisResultConsumer.CORRUPT_EA_NAMESPACE, "");
+		ExtendedAttribute.setExtendedAttribute(testFile, ExtendedAttributeHandler.CORRUPT_EA_NAMESPACE, "");
 
 		verify(imageRepository, never()).store(any(ImageRecord.class));
 	}
