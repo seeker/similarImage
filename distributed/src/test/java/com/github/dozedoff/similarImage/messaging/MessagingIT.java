@@ -59,12 +59,10 @@ import com.github.dozedoff.similarImage.db.repository.ormlite.OrmlitePendingHash
 import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteRepositoryFactory;
 import com.github.dozedoff.similarImage.db.repository.ormlite.RepositoryFactory;
 import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
-import com.github.dozedoff.similarImage.handler.HashNames;
 import com.github.dozedoff.similarImage.image.ImageResizer;
 import com.github.dozedoff.similarImage.io.ExtendedAttribute;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeDirectoryCache;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
-import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.util.TestUtil;
 import com.j256.ormlite.dao.DaoManager;
 
@@ -77,7 +75,6 @@ public class MessagingIT {
 	private static final int RESIZE_SIZE = 32;
 	private static final Path TEST_PATH = Paths.get("foo");
 
-	private static ArtemisResultConsumer arc;
 	private static ArtemisEmbeddedServer aes;
 	private Database database;
 	private ImageRepository imageRepository;
@@ -96,14 +93,13 @@ public class MessagingIT {
 	public static void classSetup() throws Exception {
 		workingdir = Files.createTempDirectory("MessageIntegration");
 
-		testImageAutumn = Paths
-				.get(Thread.currentThread().getContextClassLoader().getResource("images/autumn.jpg").toURI());
+		testImageAutumn = Paths.get(Thread.currentThread().getContextClassLoader().getResource("images/autumn.jpg").toURI());
 
 		try (BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(testImageAutumn))) {
 			testImageAutumnReferenceHash = new ImagePHash().getLongHash(bis);
 		}
-		
-		try(BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(testImageAutumn))){
+
+		try (BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(testImageAutumn))) {
 			testImageAutumnReferenceHash = new ImagePHash().getLongHash(bis);
 		}
 
@@ -112,8 +108,7 @@ public class MessagingIT {
 
 		ServerLocator locator = ActiveMQClient
 				.createServerLocatorWithoutHA(new TransportConfiguration(InVMConnectorFactory.class.getName()))
-				.setCacheLargeMessagesClient(false).setMinLargeMessageSize(LARGE_MESSAGE_SIZE_THRESHOLD)
-				.setBlockOnNonDurableSend(false);
+				.setCacheLargeMessagesClient(false).setMinLargeMessageSize(LARGE_MESSAGE_SIZE_THRESHOLD).setBlockOnNonDurableSend(false);
 		as = new ArtemisSession(locator);
 	}
 
@@ -152,19 +147,15 @@ public class MessagingIT {
 		noDupe.createTemporaryQueue(queryQueue, queryQueue);
 
 		QueryMessage queryMessage = new QueryMessage(as.getSession(), queryQueue);
-		QueryResponder queryResponder = new QueryResponder(as.getSession(), queryQueue, pendingRepo);
+		RepositoryNode queryResponder = new RepositoryNode(as.getSession(), queryQueue, pendingRepo, imageRepository);
 
-		new ArtemisHashRequestConsumer(as.getSession(), new ImagePHash(), hashQueue,
-				resultQueue);
-		new ArtemisResizeRequestConsumer(as.getSession(), new ImageResizer(RESIZE_SIZE),
-				resizeQueue, hashQueue, queryMessage);
+		new ArtemisHashRequestConsumer(as.getSession(), new ImagePHash(), hashQueue, resultQueue);
+		new ArtemisResizeRequestConsumer(as.getSession(), new ImageResizer(RESIZE_SIZE), resizeQueue, hashQueue, queryMessage);
 
-		ExtendedAttributeQuery eaQuery = new ExtendedAttributeDirectoryCache(new ExtendedAttribute(), 1,
-				TimeUnit.MINUTES);
+		ExtendedAttributeQuery eaQuery = new ExtendedAttributeDirectoryCache(new ExtendedAttribute(), 1, TimeUnit.MINUTES);
 		ahp = new ArtemisHashProducer(as.getSession(), resizeQueue);
 
-		arc = new ArtemisResultConsumer(as.getSession(), imageRepository, eaQuery,
-				new HashAttribute(HashNames.DEFAULT_DCT_HASH_2), pendingRepo, resultQueue);
+		RepositoryNode rn = new RepositoryNode(noDupe, queryQueue, resultQueue, pendingRepo, imageRepository);
 
 		ahp.handle(testImageAutumn);
 
@@ -184,11 +175,11 @@ public class MessagingIT {
 		noDupe.createTemporaryQueue(queryQueue, queryQueue);
 
 		QueryMessage queryMessage = new QueryMessage(as.getSession(), queryQueue);
-		QueryResponder queryResponder = new QueryResponder(as.getSession(), queryQueue, pendingRepo);
+		RepositoryNode queryResponder = new RepositoryNode(as.getSession(), queryQueue, pendingRepo, imageRepository);
 
 		ArtemisHashProducer ahp = new ArtemisHashProducer(as.getSession(), resizeQueue, queryMessage);
-		ArtemisResizeRequestConsumer arrc = new ArtemisResizeRequestConsumer(as.getSession(),
-				new ImageResizer(RESIZE_SIZE), resizeQueue, hashQueue, queryMessage);
+		ArtemisResizeRequestConsumer arrc = new ArtemisResizeRequestConsumer(as.getSession(), new ImageResizer(RESIZE_SIZE), resizeQueue,
+				hashQueue, queryMessage);
 
 		ClientConsumer checkConsumer = noDupe.createConsumer(hashQueue, true);
 
@@ -216,8 +207,8 @@ public class MessagingIT {
 		pendingRepo.store(new PendingHashImage(testImageAutumn));
 
 		QueryMessage qm = new QueryMessage(noDupe, requestQueue);
-		QueryResponder qr = new QueryResponder(noDupe, requestQueue, pendingRepo);
-		
+		RepositoryNode qr = new RepositoryNode(noDupe, requestQueue, pendingRepo, imageRepository);
+
 		await().atMost(messageTimeout).until(new Callable<List<String>>() {
 
 			@Override
@@ -233,7 +224,7 @@ public class MessagingIT {
 		as.getSession().createTemporaryQueue(testqueue, testqueue);
 
 		QueryMessage qm = new QueryMessage(as.getSession(), testqueue);
-		QueryResponder qr = new QueryResponder(as.getSession(), testqueue, pendingRepo);
+		RepositoryNode qr = new RepositoryNode(as.getSession(), testqueue, pendingRepo, imageRepository);
 
 		assertThat(qm.trackPath(TEST_PATH), is(1));
 	}

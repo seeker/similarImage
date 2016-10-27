@@ -33,27 +33,32 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.db.PendingHashImage;
+import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 
 @RunWith(MockitoJUnitRunner.class)
-public class QueryResponderTest extends MessagingBaseTest {
+public class RepositoryNodeTest extends MessagingBaseTest {
 	private static final Path PATH = Paths.get("foo");
 	private static final String RETURN_ADDRESS = "return";
 
 	@Mock
 	private PendingHashImageRepository pendingRepository;
 
+	@Mock
+	private ImageRepository imageRepository;
+
 	private MessageFactory messageFactory;
 
-	private QueryResponder cut;
+	private RepositoryNode cut;
 
 	@Before
 	public void setUp() throws Exception {
 		when(pendingRepository.store(any(PendingHashImage.class))).thenReturn(true);
+		when(session.createConsumer(any(String.class), any(String.class))).thenReturn(consumer);
 		message.putStringProperty(ClientMessageImpl.REPLYTO_HEADER_NAME.toString(), RETURN_ADDRESS);
 
 		messageFactory = new MessageFactory(session);
-		cut = new QueryResponder(session, pendingRepository);
+		cut = new RepositoryNode(session, pendingRepository, imageRepository);
 	}
 
 	@Test
@@ -71,5 +76,4 @@ public class QueryResponderTest extends MessagingBaseTest {
 
 		assertThat(sessionMessage.getBodyBuffer().readInt(), is(-1));
 	}
-
 }

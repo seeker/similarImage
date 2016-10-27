@@ -51,19 +51,17 @@ import com.github.dozedoff.similarImage.gui.SimilarImageController;
 import com.github.dozedoff.similarImage.gui.SimilarImageView;
 import com.github.dozedoff.similarImage.gui.UserTagSettingController;
 import com.github.dozedoff.similarImage.handler.HandlerListFactory;
-import com.github.dozedoff.similarImage.handler.HashNames;
 import com.github.dozedoff.similarImage.image.ImageResizer;
 import com.github.dozedoff.similarImage.io.ExtendedAttribute;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeDirectoryCache;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
-import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
 import com.github.dozedoff.similarImage.messaging.ArtemisHashRequestConsumer;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.messaging.ArtemisResizeRequestConsumer;
-import com.github.dozedoff.similarImage.messaging.ArtemisResultConsumer;
 import com.github.dozedoff.similarImage.messaging.ArtemisSession;
+import com.github.dozedoff.similarImage.messaging.RepositoryNode;
 import com.github.dozedoff.similarImage.thread.NamedThreadFactory;
 import com.github.dozedoff.similarImage.thread.SorterFactory;
 import com.j256.ormlite.dao.DaoManager;
@@ -78,7 +76,7 @@ public class SimilarImage {
 
 	private ExecutorService threadPool;
 	private Statistics statistics;
-	ArtemisResultConsumer arc;
+	RepositoryNode rn;
 	List<ArtemisHashRequestConsumer> ahrcs = new LinkedList<>();
 	List<ArtemisResizeRequestConsumer> arrcs = new LinkedList<>();
 
@@ -133,9 +131,7 @@ public class SimilarImage {
 		TagRepository tagRepository = repositoryFactory.buildTagRepository();
 
 		ExtendedAttributeQuery eaQuery = new ExtendedAttributeDirectoryCache(new ExtendedAttribute(), 1, TimeUnit.MINUTES);
-
-		arc = new ArtemisResultConsumer(as.getSession(), imageRepository, eaQuery, new HashAttribute(HashNames.DEFAULT_DCT_HASH_2),
-				pendingRepo, QueueAddress.RESULT.toString());
+		rn = new RepositoryNode(as.getSession(), pendingRepo, imageRepository);
 
 		DuplicateOperations dupOps = new DuplicateOperations(filterRepository, tagRepository, imageRepository);
 		SorterFactory sf = new SorterFactory(imageRepository, filterRepository, tagRepository);
