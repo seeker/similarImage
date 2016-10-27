@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.activemq.artemis.api.core.ActiveMQException;
@@ -35,7 +36,6 @@ public class StorageNode implements MessageHandler {
 	private final HashAttribute hashAttribute;
 	private final ClientProducer producer;
 	private final ClientConsumer consumer;
-	private final QueryMessage queryMessage;
 	private final MessageFactory messageFactory;
 	private final Cache<Path, Integer> sentRequests;
 
@@ -48,6 +48,8 @@ public class StorageNode implements MessageHandler {
 	 *            to check for ea support
 	 * @param hashAttribute
 	 *            to write extended attributes to files
+	 * @param pendingPaths
+	 *            list of paths that are pending, will be added to the cache
 	 * @param resizeAddress
 	 *            where to send resize requests
 	 * @param eaUpdateAddress
@@ -55,18 +57,24 @@ public class StorageNode implements MessageHandler {
 	 * @throws Exception
 	 *             if there is a error with the queue
 	 */
-	public StorageNode(ClientSession session, ExtendedAttributeQuery eaQuery, HashAttribute hashAttribute, String resizeAddress,
-			String eaUpdateAddress) throws Exception {
+	public StorageNode(ClientSession session, ExtendedAttributeQuery eaQuery, HashAttribute hashAttribute, List<Path> pendingPaths,
+			String resizeAddress, String eaUpdateAddress) throws Exception {
 		this.eaQuery = eaQuery;
 		this.hashAttribute = hashAttribute;
 		this.consumer = session.createConsumer(eaUpdateAddress);
 		this.producer = session.createProducer(resizeAddress);
-		this.queryMessage = new QueryMessage(session, QueueAddress.REPOSITORY_QUERY);
 		this.messageFactory = new MessageFactory(session);
 
 		sentRequests = CacheBuilder.newBuilder().expireAfterAccess(10, TimeUnit.MINUTES).build();
 
 		this.consumer.setMessageHandler(this);
+		loadSentRequestCache(pendingPaths);
+	}
+
+	private void loadSentRequestCache(List<Path> pendingPaths) {
+		for (Path path : pendingPaths) {
+			sentRequests.put(path, 0);
+		}
 	}
 
 	/**
@@ -78,11 +86,14 @@ public class StorageNode implements MessageHandler {
 	 *            to check for ea support
 	 * @param hashAttribute
 	 *            to write extended attributes to files
+	 * @param pendingPaths
+	 *            list of paths that are pending, will be added to the cache
 	 * @throws Exception
 	 *             if there is a error with the queue
 	 */
-	public StorageNode(ClientSession session, ExtendedAttributeQuery eaQuery, HashAttribute hashAttribute) throws Exception {
-		this(session, eaQuery, hashAttribute, QueueAddress.RESIZE_REQUEST.toString(), QueueAddress.EA_UPDATE.toString());
+	public StorageNode(ClientSession session, ExtendedAttributeQuery eaQuery, HashAttribute hashAttribute, List<Path> pendingPaths)
+			throws Exception {
+		this(session, eaQuery, hashAttribute, pendingPaths, QueueAddress.RESIZE_REQUEST.toString(), QueueAddress.EA_UPDATE.toString());
 	}
 
 	/**

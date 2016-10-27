@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 
 import org.junit.After;
 import org.junit.Before;
@@ -32,17 +33,22 @@ public class StorageNodeTest extends MessagingBaseTest {
 	private StorageNode cut;
 	private MessageFactory messageFactory;
 	private Path testFile;
+	private Path cachedFile;
 
 	@Before
 	public void setUp() throws Exception {
 		messageFactory = new MessageFactory(session);
-		cut = new StorageNode(session, eaQuery, hashAttribute);
 		testFile = Files.createTempFile("StorageNodeTest", null);
+		cachedFile = Files.createTempFile("StorageNodeTest", null);
+
+		cut = new StorageNode(session, eaQuery, hashAttribute, Arrays.asList(cachedFile));
+
 	}
 
 	@After
 	public void tearDown() throws Exception {
 		Files.deleteIfExists(testFile);
+		Files.deleteIfExists(cachedFile);
 	}
 
 	@Test
@@ -88,4 +94,10 @@ public class StorageNodeTest extends MessagingBaseTest {
 		verify(producer, times(1)).send(messageFactory.resizeRequest(testFile, Files.newInputStream(testFile)));
 	}
 
+	@Test
+	public void testProcessFileSkipDuplicateCached() throws Exception {
+		cut.processFile(cachedFile);
+
+		verify(producer, never()).send(messageFactory.resizeRequest(testFile, Files.newInputStream(testFile)));
+	}
 }
