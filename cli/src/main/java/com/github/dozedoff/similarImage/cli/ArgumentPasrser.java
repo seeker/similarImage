@@ -37,8 +37,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
+import com.github.dozedoff.similarImage.image.ImageResizer;
 import com.github.dozedoff.similarImage.messaging.ArtemisHashRequestConsumer;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue;
+import com.github.dozedoff.similarImage.messaging.ArtemisResizeRequestConsumer;
 import com.github.dozedoff.similarImage.messaging.ArtemisSession;
 
 import net.sourceforge.argparse4j.ArgumentParsers;
@@ -59,6 +61,9 @@ public class ArgumentPasrser {
 	private static final int LARGE_MESSAGE_SIZE_THRESHOLD = 1024 * 1024;
 	private static final int DEFAULT_ARTEMIS_CORE_PORT = 61616;
 	private static final String DEFAULT_IP = "127.0.0.1";
+
+	private final List<ArtemisHashRequestConsumer> hashWorkers = new LinkedList<ArtemisHashRequestConsumer>();
+	private final List<ArtemisResizeRequestConsumer> resizeWorkers = new LinkedList<ArtemisResizeRequestConsumer>();
 
 	private enum CommandLineOptions {
 		path, update,
@@ -97,9 +102,14 @@ public class ArgumentPasrser {
 		localSubcommand.addArgument(enumToString(CommandLineOptions.path)).metavar("P").nargs("*").type(String.class)
 				.help("Process all files in the given directory");
 
+		int processors = Runtime.getRuntime().availableProcessors();
 		Subparser nodeSubcommand = parser.addSubparsers().addParser("node").setDefault("subcommand", Subcommand.node);
 		nodeSubcommand.addArgument("--port").type(Integer.class).setDefault(DEFAULT_ARTEMIS_CORE_PORT);
 		nodeSubcommand.addArgument("--ip").type(String.class).setDefault(DEFAULT_IP);
+		nodeSubcommand.addArgument("--resize").action(Arguments.storeTrue());
+		nodeSubcommand.addArgument("--hash").action(Arguments.storeTrue());
+		nodeSubcommand.addArgument("--resize-workers").help("Number of resize workers to start").type(Integer.class).setDefault(processors);
+		nodeSubcommand.addArgument("--hash-workers").help("Number of hash workers to start").type(Integer.class).setDefault(processors);
 	}
 
 	/**
@@ -148,28 +158,24 @@ public class ArgumentPasrser {
 				.setBlockOnNonDurableSend(false).setPreAcknowledge(true).setReconnectAttempts(3);
 
 		try {
-			List<ArtemisHashRequestConsumer> workers = new LinkedList<ArtemisHashRequestConsumer>();
+
 
 			ArtemisSession session = new ArtemisSession(locator);
 
-			for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
-				LOGGER.info("Starting worker {} ...", i);
-				try {
-				ArtemisHashRequestConsumer consumer = new ArtemisHashRequestConsumer(session.getSession(), new ImagePHash(),
-					ArtemisQueue.QueueAddress.HASH_REQUEST.toString(),
-					ArtemisQueue.QueueAddress.RESULT.toString());
-					workers.add(consumer);
-				} catch (ActiveMQException e) {
-					LOGGER.warn("Failed to create hash consumer: {} cause:", e.toString(), e.getCause().getMessage());
-				}
+			if (parsedArgs.getBoolean("resize")) {
+				startResizeWorkers(session, parsedArgs.getInt("resize_workers"));
 			}
 
-			if (workers.isEmpty()) {
+			if (parsedArgs.getBoolean("hash")) {
+				startHashWorkers(session, parsedArgs.getInt("hash_workers"));
+			}
+
+			if (resizeWorkers.isEmpty() && hashWorkers.isEmpty()) {
 				LOGGER.error("Failed to create any consumers, shutting down...");
-				throw new RuntimeException("No cunsumers created");
+				throw new RuntimeException("No consumers created");
 			}
 
-			Runtime.getRuntime().addShutdownHook(new CleanupWorkersOnShutdown(workers));
+			Runtime.getRuntime().addShutdownHook(new CleanupWorkersOnShutdown(hashWorkers, resizeWorkers));
 
 			try {
 				// FIXME ugly, but it works...
@@ -184,19 +190,50 @@ public class ArgumentPasrser {
 		}
 	}
 
-	private class CleanupWorkersOnShutdown extends Thread {
-		private final List<ArtemisHashRequestConsumer> workers;
+	private void startHashWorkers(ArtemisSession session, int workerCount) {
+		for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
+			LOGGER.info("Starting hash worker {} ...", i);
+			try {
+				ArtemisHashRequestConsumer consumer = new ArtemisHashRequestConsumer(session.getSession(), new ImagePHash(),
+						ArtemisQueue.QueueAddress.HASH_REQUEST.toString(), ArtemisQueue.QueueAddress.RESULT.toString());
+				hashWorkers.add(consumer);
+			} catch (ActiveMQException e) {
+				LOGGER.warn("Failed to create hash consumer: {} cause:", e.toString(), e.getCause().getMessage());
+			}
+		}
+	}
 
-		public CleanupWorkersOnShutdown(List<ArtemisHashRequestConsumer> workers) {
+	private void startResizeWorkers(ArtemisSession session, int workerCount) {
+		for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
+			LOGGER.info("Starting resize worker {} ...", i);
+			try {
+				ArtemisResizeRequestConsumer arrc = new ArtemisResizeRequestConsumer(session.getSession(), new ImageResizer(32));
+				resizeWorkers.add(arrc);
+			} catch (Exception e) {
+				LOGGER.warn("Failed to create resize consumer: {} cause:", e.toString(), e.getCause().getMessage());
+			}
+		}
+	}
+
+	private class CleanupWorkersOnShutdown extends Thread {
+		private final List<ArtemisHashRequestConsumer> hashWorkers;
+		private final List<ArtemisResizeRequestConsumer> resizeWorkers;
+
+		public CleanupWorkersOnShutdown(List<ArtemisHashRequestConsumer> hashWorkers, List<ArtemisResizeRequestConsumer> resizeWorker) {
 			super("Shutdown Hook");
-			this.workers = workers;
+			this.hashWorkers = hashWorkers;
+			this.resizeWorkers = resizeWorker;
 		}
 
 		@Override
 		public void run() {
 			LOGGER.info("Shutting down...");
 
-			for (ArtemisHashRequestConsumer worker : workers) {
+			for (ArtemisHashRequestConsumer worker : this.hashWorkers) {
+				worker.stop();
+			}
+
+			for (ArtemisResizeRequestConsumer worker : this.resizeWorkers) {
 				worker.stop();
 			}
 		}
