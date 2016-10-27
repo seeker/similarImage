@@ -26,7 +26,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,9 +74,8 @@ public class SimilarImageController {
 	 * @param statistics
 	 *            tracking stats
 	 */
-	public SimilarImageController(SorterFactory sorterFactory, HandlerListFactory handlerCollectionFactory,
-			DuplicateOperations dupOps, DisplayGroupView displayGroup, Statistics statistics,
-			UserTagSettingController utsc) {
+	public SimilarImageController(SorterFactory sorterFactory, HandlerListFactory handlerCollectionFactory, DuplicateOperations dupOps,
+			DisplayGroupView displayGroup, Statistics statistics, UserTagSettingController utsc) {
 
 		results = MultimapBuilder.hashKeys().hashSetValues().build();
 		this.displayGroup = displayGroup;
@@ -145,14 +143,12 @@ public class SimilarImageController {
 
 		logger.info("Loading {} thumbnails for group {}", grouplist.size(), group);
 
-
 		for (ImageRecord rec : grouplist) {
 			Path path = Paths.get(rec.getPath());
 
 			if (Files.exists(path)) {
 				ImageInfo info = new ImageInfo(path, rec.getpHash());
 				OperationsMenu opMenu;
-
 
 				opMenu = new OperationsMenu(info, dupOps, utsc);
 				DuplicateEntryController entry = new DuplicateEntryController(info, imageDim);
@@ -203,7 +199,7 @@ public class SimilarImageController {
 			t.setName("Image Find Job");
 			startTask(t);
 
-		} catch (ActiveMQException e) {
+		} catch (Exception e) {
 			logger.error("Failed to setup broker connection: {}", e.toString());
 		}
 	}

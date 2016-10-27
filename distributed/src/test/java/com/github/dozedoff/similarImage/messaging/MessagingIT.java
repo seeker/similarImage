@@ -27,6 +27,7 @@ import java.io.BufferedInputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -59,10 +60,12 @@ import com.github.dozedoff.similarImage.db.repository.ormlite.OrmlitePendingHash
 import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteRepositoryFactory;
 import com.github.dozedoff.similarImage.db.repository.ormlite.RepositoryFactory;
 import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
+import com.github.dozedoff.similarImage.handler.HashNames;
 import com.github.dozedoff.similarImage.image.ImageResizer;
 import com.github.dozedoff.similarImage.io.ExtendedAttribute;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeDirectoryCache;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
+import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.util.TestUtil;
 import com.j256.ormlite.dao.DaoManager;
 
@@ -139,12 +142,14 @@ public class MessagingIT {
 		String resizeQueue = "hashImageResize";
 		String resultQueue = "hashImageResult";
 		String queryQueue = "hashImageQuery";
+		String eaQueue = "eaqueue";
 
 		ClientSession noDupe = as.getSession();
 		noDupe.createTemporaryQueue(resizeQueue, resizeQueue);
 		noDupe.createTemporaryQueue(hashQueue, hashQueue);
 		noDupe.createTemporaryQueue(resultQueue, resultQueue);
 		noDupe.createTemporaryQueue(queryQueue, queryQueue);
+		noDupe.createTemporaryQueue(eaQueue, eaQueue);
 
 		QueryMessage queryMessage = new QueryMessage(as.getSession(), queryQueue);
 		RepositoryNode queryResponder = new RepositoryNode(as.getSession(), queryQueue, pendingRepo, imageRepository);
@@ -153,7 +158,9 @@ public class MessagingIT {
 		new ResizerNode(as.getSession(), new ImageResizer(RESIZE_SIZE), resizeQueue, hashQueue, queryMessage);
 
 		ExtendedAttributeQuery eaQuery = new ExtendedAttributeDirectoryCache(new ExtendedAttribute(), 1, TimeUnit.MINUTES);
-		ahp = new ArtemisHashProducer(as.getSession(), resizeQueue);
+		StorageNode sn = new StorageNode(as.getSession(), new ExtendedAttributeDirectoryCache(new ExtendedAttribute()),
+				new HashAttribute(HashNames.DEFAULT_DCT_HASH_2), Collections.emptyList(), resizeQueue, eaQueue);
+		ahp = new ArtemisHashProducer(sn);
 
 		RepositoryNode rn = new RepositoryNode(noDupe, queryQueue, resultQueue, pendingRepo, imageRepository);
 
@@ -168,18 +175,21 @@ public class MessagingIT {
 		String resizeQueue = "dupeResize";
 		String hashQueue = "dupeHash";
 		String queryQueue = "dupeQuery";
+		String eaQueue = "eaQuery";
 
 		ClientSession noDupe = as.getSession();
 		noDupe.createTemporaryQueue(resizeQueue, resizeQueue);
 		noDupe.createTemporaryQueue(hashQueue, hashQueue);
 		noDupe.createTemporaryQueue(queryQueue, queryQueue);
+		noDupe.createTemporaryQueue(eaQueue, eaQueue);
 
 		QueryMessage queryMessage = new QueryMessage(as.getSession(), queryQueue);
 		RepositoryNode queryResponder = new RepositoryNode(as.getSession(), queryQueue, pendingRepo, imageRepository);
 
-		ArtemisHashProducer ahp = new ArtemisHashProducer(as.getSession(), resizeQueue, queryMessage);
-		ResizerNode arrc = new ResizerNode(as.getSession(), new ImageResizer(RESIZE_SIZE), resizeQueue,
-				hashQueue, queryMessage);
+		StorageNode sn = new StorageNode(as.getSession(), new ExtendedAttributeDirectoryCache(new ExtendedAttribute()),
+				new HashAttribute(HashNames.DEFAULT_DCT_HASH_2), Collections.emptyList(), resizeQueue, eaQueue);
+		ArtemisHashProducer ahp = new ArtemisHashProducer(sn);
+		ResizerNode arrc = new ResizerNode(as.getSession(), new ImageResizer(RESIZE_SIZE), resizeQueue, hashQueue, queryMessage);
 
 		ClientConsumer checkConsumer = noDupe.createConsumer(hashQueue, true);
 
