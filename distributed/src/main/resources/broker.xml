@@ -29,7 +29,7 @@
 			</queue>
 			<queue name="REPOSITORY_QUERY">
 				<address>REPOSITORY_QUERY</address>
-				<durable>false</durable>
+				<durable>true</durable>
 			</queue>
 			<queue name="EA_UPDATE">
 				<address>EA_UPDATE</address>
