@@ -135,4 +135,25 @@ public class MessageFactoryTest extends MessagingBaseTest {
 
 		assertThat(result.getStringProperty(MessageProperty.task.toString()), is(TaskType.corr.toString()));
 	}
+
+	@Test
+	public void testEaUpdatePath() throws Exception {
+		ClientMessage result = cut.eaUpdate(PATH, HASH);
+
+		assertThat(result.getStringProperty(MessageProperty.path.toString()), is(PATH.toString()));
+	}
+
+	@Test
+	public void testEaUpdateHash() throws Exception {
+		ClientMessage result = cut.eaUpdate(PATH, HASH);
+
+		assertThat(result.getBodyBuffer().readLong(), is(HASH));
+	}
+
+	@Test
+	public void testEaUpdateTask() throws Exception {
+		ClientMessage result = cut.eaUpdate(PATH, HASH);
+
+		assertThat(result.getStringProperty(MessageProperty.task.toString()), is(TaskType.eaupdate.toString()));
+	}
 }
