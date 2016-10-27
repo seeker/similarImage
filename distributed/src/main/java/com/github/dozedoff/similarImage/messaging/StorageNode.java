@@ -101,10 +101,12 @@ public class StorageNode implements MessageHandler {
 	 */
 	@Override
 	public void onMessage(ClientMessage message) {
+		LOGGER.trace("Got message {}", message);
 		if (isEaUpdate(message)) {
 			Path path = getPath(message);
 			long hash = message.getBodyBuffer().readLong();
 			hashAttribute.writeHash(path, hash);
+			LOGGER.trace("Updated EA for {} with hash {}", path, hash);
 		} else if (isCorrupt(message)) {
 			Path path = getPath(message);
 			try {

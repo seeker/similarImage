@@ -29,9 +29,14 @@ public class TaskMessageHandler implements MessageHandler {
 
 	public TaskMessageHandler(PendingHashImageRepository pendingRepository, ImageRepository imageRepository, ClientSession session)
 			throws ActiveMQException {
+		this(pendingRepository, imageRepository, session, QueueAddress.EA_UPDATE.toString());
+	}
+
+	public TaskMessageHandler(PendingHashImageRepository pendingRepository, ImageRepository imageRepository, ClientSession session,
+			String eaUpdateAddress) throws ActiveMQException {
 		this.pendingRepository = pendingRepository;
 		this.imageRepository = imageRepository;
-		this.producer = session.createProducer(QueueAddress.EA_UPDATE.toString());
+		this.producer = session.createProducer(eaUpdateAddress);
 		this.messageFactory = new MessageFactory(session);
 	}
 
@@ -44,7 +49,7 @@ public class TaskMessageHandler implements MessageHandler {
 			if (isTaskType(msg, TaskType.result)) {
 				long hash = msg.getLongProperty(MessageProperty.hashResult.toString());
 				int trackingId = msg.getIntProperty(MessageProperty.id.toString());
-				LOGGER.debug("Received result message with id {} and hash {}", trackingId, hash);
+				LOGGER.trace("Received result message with id {} and hash {}", trackingId, hash);
 
 				PendingHashImage pending = pendingRepository.getById(trackingId);
 				storeHash(pending.getPathAsPath(), hash);
@@ -53,6 +58,7 @@ public class TaskMessageHandler implements MessageHandler {
 
 				try {
 					producer.send(eaUpdate);
+					LOGGER.trace("Sent EA update for {}", pending.getPath());
 				} catch (ActiveMQException e) {
 					LOGGER.warn("Failed to send ea update message for {}: {}", pending.getPath(), e.toString());
 				}

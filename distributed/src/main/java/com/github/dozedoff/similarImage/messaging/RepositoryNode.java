@@ -71,10 +71,34 @@ public class RepositoryNode implements MessageHandler {
 	 */
 	public RepositoryNode(ClientSession session, String queryAddress, String taskAddress, PendingHashImageRepository pendingRepository,
 			ImageRepository imageRepository) throws ActiveMQException {
+		this(session, queryAddress, taskAddress, pendingRepository, imageRepository,
+				new TaskMessageHandler(pendingRepository, imageRepository, session));
+	}
+
+	/**
+	 * Create a instance using the given instance and repository
+	 * 
+	 * @param session
+	 *            to use for messages
+	 * @param queryAddress
+	 *            to use for listening to queries
+	 * @param taskAddress
+	 *            address for listening to tasks
+	 * @param pendingRepository
+	 *            for pending file queries
+	 * @param imageRepository
+	 *            for storing hash results
+	 * @param taskMessageHandler
+	 *            handler to use for task messages
+	 * @throws ActiveMQException
+	 *             if there is an error setting up messaging
+	 */
+	public RepositoryNode(ClientSession session, String queryAddress, String taskAddress, PendingHashImageRepository pendingRepository,
+			ImageRepository imageRepository, TaskMessageHandler taskMessageHandler) throws ActiveMQException {
 
 		this.consumer = session.createConsumer(queryAddress);
 		this.taskConsumer = session.createConsumer(taskAddress, MessageProperty.task.toString() + " IS NOT NULL");
-		this.taskConsumer.setMessageHandler(new TaskMessageHandler(pendingRepository, imageRepository, session));
+		this.taskConsumer.setMessageHandler(taskMessageHandler);
 		this.producer = session.createProducer();
 		this.pendingRepository = pendingRepository;
 		this.imageRepository = imageRepository;

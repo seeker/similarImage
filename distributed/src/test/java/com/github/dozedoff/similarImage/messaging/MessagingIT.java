@@ -27,6 +27,7 @@ import java.io.BufferedInputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -87,7 +88,8 @@ public class MessagingIT {
 
 	private Path dbFile;
 	private static Path workingdir;
-	private static Path testImageAutumn;
+	private static Path testImageAutumnOriginal;
+	private Path testImageAutumn;
 	private static long testImageAutumnReferenceHash;
 
 	private Duration messageTimeout = new Duration(6, TimeUnit.SECONDS);
@@ -96,13 +98,13 @@ public class MessagingIT {
 	public static void classSetup() throws Exception {
 		workingdir = Files.createTempDirectory("MessageIntegration");
 
-		testImageAutumn = Paths.get(Thread.currentThread().getContextClassLoader().getResource("images/autumn.jpg").toURI());
+		testImageAutumnOriginal = Paths.get(Thread.currentThread().getContextClassLoader().getResource("images/autumn.jpg").toURI());
 
-		try (BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(testImageAutumn))) {
+		try (BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(testImageAutumnOriginal))) {
 			testImageAutumnReferenceHash = new ImagePHash().getLongHash(bis);
 		}
 
-		try (BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(testImageAutumn))) {
+		try (BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(testImageAutumnOriginal))) {
 			testImageAutumnReferenceHash = new ImagePHash().getLongHash(bis);
 		}
 
@@ -127,6 +129,8 @@ public class MessagingIT {
 		database = new SQLiteDatabase(dbFile);
 		RepositoryFactory repositoryFactory = new OrmliteRepositoryFactory(database);
 
+		testImageAutumn = Files.createTempFile(Paths.get(""), "testImage", ".jpg");
+		Files.copy(testImageAutumnOriginal, testImageAutumn, StandardCopyOption.REPLACE_EXISTING);
 		imageRepository = repositoryFactory.buildImageRepository();
 		pendingRepo = new OrmlitePendingHashImage(DaoManager.createDao(database.getCs(), PendingHashImage.class));
 	}
@@ -134,6 +138,7 @@ public class MessagingIT {
 	@After
 	public void tearDown() throws Exception {
 		database.close();
+		Files.delete(testImageAutumn);
 	}
 
 	@Test
@@ -237,5 +242,42 @@ public class MessagingIT {
 		RepositoryNode qr = new RepositoryNode(as.getSession(), testqueue, pendingRepo, imageRepository);
 
 		assertThat(qm.trackPath(TEST_PATH), is(1));
+	}
+
+	@Test
+	public void testEAupdated() throws Exception {
+		String hashQueue = "eaHash";
+		String resizeQueue = "eaResize";
+		String resultQueue = "eaResult";
+		String queryQueue = "eaeaQuery";
+		String eaQueue = "eaeaqueue";
+
+		ClientSession noDupe = as.getSession();
+		noDupe.createTemporaryQueue(resizeQueue, resizeQueue);
+		noDupe.createTemporaryQueue(hashQueue, hashQueue);
+		noDupe.createTemporaryQueue(resultQueue, resultQueue);
+		noDupe.createTemporaryQueue(queryQueue, queryQueue);
+		noDupe.createTemporaryQueue(eaQueue, eaQueue);
+
+		QueryMessage queryMessage = new QueryMessage(as.getSession(), queryQueue);
+		RepositoryNode queryResponder = new RepositoryNode(as.getSession(), queryQueue, resultQueue, pendingRepo, imageRepository,
+				new TaskMessageHandler(pendingRepo, imageRepository, as.getSession(), eaQueue));
+
+		new HasherNode(as.getSession(), new ImagePHash(), hashQueue, resultQueue);
+		new ResizerNode(as.getSession(), new ImageResizer(RESIZE_SIZE), resizeQueue, hashQueue, queryMessage);
+
+		HashAttribute ha = new HashAttribute(HashNames.DEFAULT_DCT_HASH_2);
+
+		ExtendedAttributeQuery eaQuery = new ExtendedAttributeDirectoryCache(new ExtendedAttribute(), 1, TimeUnit.MINUTES);
+		StorageNode sn = new StorageNode(as.getSession(), new ExtendedAttribute(), ha, Collections.emptyList(), resizeQueue, eaQueue);
+		ahp = new ArtemisHashProducer(sn);
+
+		RepositoryNode rn = new RepositoryNode(noDupe, queryQueue, resultQueue, pendingRepo, imageRepository);
+
+		assertThat(ha.areAttributesValid(testImageAutumn), is(false));// guard assert
+
+		ahp.handle(testImageAutumn);
+
+		await().atMost(messageTimeout).untilCall(to(ha).areAttributesValid(testImageAutumn), is(true));
 	}
 }
