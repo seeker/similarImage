@@ -31,6 +31,10 @@
 				<address>REPOSITORY_QUERY</address>
 				<durable>false</durable>
 			</queue>
+			<queue name="EA_UPDATE">
+				<address>EA_UPDATE</address>
+				<durable>true</durable>
+			</queue>
 		</queues>
 
 		<address-settings>
