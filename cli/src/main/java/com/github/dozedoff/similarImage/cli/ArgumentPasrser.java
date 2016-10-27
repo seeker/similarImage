@@ -28,8 +28,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.activemq.artemis.api.core.ActiveMQException;
+import org.apache.activemq.artemis.api.core.SimpleString;
 import org.apache.activemq.artemis.api.core.TransportConfiguration;
 import org.apache.activemq.artemis.api.core.client.ActiveMQClient;
+import org.apache.activemq.artemis.api.core.client.ClientSession;
 import org.apache.activemq.artemis.api.core.client.ServerLocator;
 import org.apache.activemq.artemis.core.remoting.impl.netty.NettyConnectorFactory;
 import org.apache.activemq.artemis.core.remoting.impl.netty.TransportConstants;
@@ -38,10 +40,11 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.image.ImageResizer;
-import com.github.dozedoff.similarImage.messaging.HasherNode;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue;
-import com.github.dozedoff.similarImage.messaging.ResizerNode;
+import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.messaging.ArtemisSession;
+import com.github.dozedoff.similarImage.messaging.HasherNode;
+import com.github.dozedoff.similarImage.messaging.ResizerNode;
 
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
@@ -110,6 +113,7 @@ public class ArgumentPasrser {
 		nodeSubcommand.addArgument("--hash").action(Arguments.storeTrue());
 		nodeSubcommand.addArgument("--resize-workers").help("Number of resize workers to start").type(Integer.class).setDefault(processors);
 		nodeSubcommand.addArgument("--hash-workers").help("Number of hash workers to start").type(Integer.class).setDefault(processors);
+		nodeSubcommand.addArgument("--status").action(Arguments.storeTrue());
 	}
 
 	/**
@@ -166,6 +170,10 @@ public class ArgumentPasrser {
 				startHashWorkers(session, parsedArgs.getInt("hash_workers"));
 			}
 
+			if (parsedArgs.getBoolean("status")) {
+				logQueueSizes(session);
+			}
+
 			if (resizeWorkers.isEmpty() && hashWorkers.isEmpty()) {
 				LOGGER.error("Failed to create any consumers, shutting down...");
 				throw new RuntimeException("No consumers created");
@@ -209,6 +217,25 @@ public class ArgumentPasrser {
 				LOGGER.warn("Failed to create resize consumer: {} cause:", e.toString(), e.getCause().getMessage());
 			}
 		}
+	}
+
+	private void logQueueSizes(ArtemisSession aSession) {
+		try (ClientSession session = aSession.getSession()) {
+			for (QueueAddress qa : QueueAddress.values()) {
+				try {
+					long queueSize = getQueueSize(session, qa);
+					LOGGER.info("Queue {} size: {}", qa.toString(), queueSize);
+				} catch (ActiveMQException e) {
+					LOGGER.warn("Failed to get queue size for {}: {}", qa.toString(), e.toString());
+				}
+			}
+		} catch (ActiveMQException e1) {
+			LOGGER.error("Failed to get session: {}", e1.toString());
+		}
+	}
+
+	private long getQueueSize(ClientSession session, QueueAddress address) throws ActiveMQException {
+		return session.queueQuery(new SimpleString(address.toString())).getMessageCount();
 	}
 
 	private class CleanupWorkersOnShutdown extends Thread {
