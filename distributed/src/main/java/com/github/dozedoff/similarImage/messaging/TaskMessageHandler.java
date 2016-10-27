@@ -52,21 +52,30 @@ public class TaskMessageHandler implements MessageHandler {
 				LOGGER.trace("Received result message with id {} and hash {}", trackingId, hash);
 
 				PendingHashImage pending = pendingRepository.getById(trackingId);
-				storeHash(pending.getPathAsPath(), hash);
-				pendingRepository.removeById(trackingId);
-				ClientMessage eaUpdate = messageFactory.eaUpdate(pending.getPathAsPath(), hash);
-
-				try {
-					producer.send(eaUpdate);
-					LOGGER.trace("Sent EA update for {}", pending.getPath());
-				} catch (ActiveMQException e) {
-					LOGGER.warn("Failed to send ea update message for {}: {}", pending.getPath(), e.toString());
+				if (pending != null) {
+					updateRecords(trackingId, hash, pending);
+				} else {
+					LOGGER.warn("No pending hash record found for {}", trackingId);
 				}
+
 			} else {
 				LOGGER.error("Unhandled message: {}", msg);
 			}
 		} catch (RepositoryException e) {
 			LOGGER.warn("Failed to store result message: {}", e.toString());
+		}
+	}
+
+	private void updateRecords(int trackingId, long hash, PendingHashImage pending) throws RepositoryException {
+		storeHash(pending.getPathAsPath(), hash);
+		pendingRepository.removeById(trackingId);
+		ClientMessage eaUpdate = messageFactory.eaUpdate(pending.getPathAsPath(), hash);
+
+		try {
+			producer.send(eaUpdate);
+			LOGGER.trace("Sent EA update for {}", pending.getPath());
+		} catch (ActiveMQException e) {
+			LOGGER.warn("Failed to send ea update message for {}: {}", pending.getPath(), e.toString());
 		}
 	}
 

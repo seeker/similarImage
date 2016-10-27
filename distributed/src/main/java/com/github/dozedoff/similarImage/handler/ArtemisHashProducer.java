@@ -19,6 +19,9 @@ package com.github.dozedoff.similarImage.handler;
 
 import java.nio.file.Path;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.dozedoff.similarImage.messaging.MessageFactory;
 import com.github.dozedoff.similarImage.messaging.MessageFactory.MessageProperty;
 import com.github.dozedoff.similarImage.messaging.MessageFactory.TaskType;
@@ -31,6 +34,7 @@ import com.github.dozedoff.similarImage.messaging.StorageNode;
  *
  */
 public class ArtemisHashProducer implements HashHandler {
+	private static final Logger LOGGER = LoggerFactory.getLogger(ArtemisHashProducer.class);
 	/**
 	 * @deprecated Use {@link MessageProperty}
 	 */
@@ -81,6 +85,7 @@ public class ArtemisHashProducer implements HashHandler {
 	 */
 	@Override
 	public boolean handle(Path file) {
+		LOGGER.trace("Handling {} with {}", file, this.getClass().getSimpleName());
 		return storageNode.processFile(file);
 	}
 }

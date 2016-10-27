@@ -57,11 +57,11 @@ import com.github.dozedoff.similarImage.io.ExtendedAttributeDirectoryCache;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
-import com.github.dozedoff.similarImage.messaging.HasherNode;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
-import com.github.dozedoff.similarImage.messaging.ResizerNode;
 import com.github.dozedoff.similarImage.messaging.ArtemisSession;
+import com.github.dozedoff.similarImage.messaging.HasherNode;
 import com.github.dozedoff.similarImage.messaging.RepositoryNode;
+import com.github.dozedoff.similarImage.messaging.ResizerNode;
 import com.github.dozedoff.similarImage.thread.NamedThreadFactory;
 import com.github.dozedoff.similarImage.thread.SorterFactory;
 import com.j256.ormlite.dao.DaoManager;
@@ -79,6 +79,8 @@ public class SimilarImage {
 	RepositoryNode rn;
 	List<HasherNode> ahrcs = new LinkedList<>();
 	List<ResizerNode> arrcs = new LinkedList<>();
+
+	ArtemisEmbeddedServer aes;
 
 	public static void main(String[] args) {
 		try {
@@ -104,7 +106,7 @@ public class SimilarImage {
 		Settings settings = new Settings(new SettingsValidator());
 		settings.loadPropertiesFromFile(PROPERTIES_FILENAME);
 
-		ArtemisEmbeddedServer aes = new ArtemisEmbeddedServer();
+		aes = new ArtemisEmbeddedServer();
 		aes.start();
 
 		ServerLocator locator = ActiveMQClient

@@ -139,6 +139,7 @@ public class StorageNode implements MessageHandler {
 	 * @return true if the request was sent
 	 */
 	public boolean processFile(Path path) {
+		LOGGER.trace("Processing {}", path);
 		if (isAlreadySent(path)) {
 			LOGGER.trace("File {} has already been sent, ignoring...", path);
 			return true;
@@ -148,6 +149,7 @@ public class StorageNode implements MessageHandler {
 			ClientMessage request = messageFactory.resizeRequest(path, bis);
 			producer.send(request);
 			sentRequests.put(path, 0);
+			LOGGER.trace("Sent resize request for {}", path);
 			return true;
 		} catch (IOException e) {
 			LOGGER.warn("Failed to access file {}: {}", path, e.toString());
