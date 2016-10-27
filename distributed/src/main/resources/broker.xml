@@ -4,10 +4,14 @@
 	xmlns="urn:activemq" xsi:schemaLocation="urn:activemq /schema/artemis-server.xsd">
 	<core xmlns="urn:activemq:core">
 		<acceptors>
-			<acceptor name="netty-ssl-acceptor">tcp://0.0.0.0:61616?sslEnabled=true;keyStorePath=${storepath};keyStorePassword=${storepw};</acceptor>
+			<acceptor name="netty-ssl-acceptor">tcp://0.0.0.0:61616?sslEnabled=true;keyStorePath=${storepath:keystore.jks};keyStorePassword=${storepw:changeit};</acceptor>
 			<acceptor name="vm">vm://0</acceptor>
 		</acceptors>
 
+		<bindings-directory>${datadir:.}/bindings</bindings-directory>
+		<journal-directory>${datadir:.}/journal</journal-directory>
+		<large-messages-directory>${datadir:.}/largemessages</large-messages-directory>
+		
 		<security-enabled>false</security-enabled>
 
 		<queues>
