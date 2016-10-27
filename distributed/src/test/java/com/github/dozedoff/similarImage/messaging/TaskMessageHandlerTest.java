@@ -3,10 +3,11 @@ package com.github.dozedoff.similarImage.messaging;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.nio.file.Paths;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
@@ -27,7 +28,6 @@ public class TaskMessageHandlerTest extends MessagingBaseTest {
 	@Mock
 	private PendingHashImageRepository pendingRepository;
 
-	@InjectMocks
 	private TaskMessageHandler cut;
 
 	private MessageFactory messageFactory;
@@ -35,6 +35,7 @@ public class TaskMessageHandlerTest extends MessagingBaseTest {
 	@Before
 	public void setUp() throws Exception {
 		messageFactory = new MessageFactory(session);
+		cut = new TaskMessageHandler(pendingRepository, imageRepository, session);
 	}
 
 	@Test
@@ -45,5 +46,15 @@ public class TaskMessageHandlerTest extends MessagingBaseTest {
 		cut.onMessage(message);
 
 		verify(imageRepository).store(new ImageRecord(TEST_PATH, TEST_HASH));
+	}
+
+	@Test
+	public void testSendEaUpdate() throws Exception {
+		message = messageFactory.resultMessage(TEST_HASH, TEST_ID);
+		when(pendingRepository.getById(TEST_ID)).thenReturn(new PendingHashImage(TEST_PATH));
+
+		cut.onMessage(message);
+
+		verify(producer).send(messageFactory.eaUpdate(Paths.get(TEST_PATH), TEST_HASH));
 	}
 }

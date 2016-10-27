@@ -74,7 +74,7 @@ public class RepositoryNode implements MessageHandler {
 
 		this.consumer = session.createConsumer(queryAddress);
 		this.taskConsumer = session.createConsumer(taskAddress, MessageProperty.task.toString() + " IS NOT NULL");
-		this.taskConsumer.setMessageHandler(new TaskMessageHandler(pendingRepository, imageRepository));
+		this.taskConsumer.setMessageHandler(new TaskMessageHandler(pendingRepository, imageRepository, session));
 		this.producer = session.createProducer();
 		this.pendingRepository = pendingRepository;
 		this.imageRepository = imageRepository;
