@@ -19,6 +19,7 @@ package com.github.dozedoff.similarImage.messaging;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.nio.file.Path;
 import java.util.LinkedList;
@@ -247,6 +248,25 @@ public class MessageFactory {
 		setTaskType(message, TaskType.eaupdate);
 		setPath(message, path);
 		message.getBodyBuffer().writeLong(hash);
+
+		return message;
+	}
+
+	/**
+	 * Create a message for resizing an image.
+	 * 
+	 * @param path
+	 *            of the image
+	 * @param is
+	 *            {@link InputStream} to the image file
+	 * @return configured message
+	 */
+	public ClientMessage resizeRequest(Path path, InputStream is) {
+		ClientMessage message = session.createMessage(true);
+
+		message.setBodyInputStream(is);
+		setTaskType(message, TaskType.hash);
+		setPath(message, path);
 
 		return message;
 	}
