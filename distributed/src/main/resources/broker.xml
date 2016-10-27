@@ -38,8 +38,9 @@
 		</queues>
 
 		<address-settings>
-			<address-setting match="HASH_REQUEST">
-				<max-size-bytes>1048576</max-size-bytes>
+			<address-setting match="RESIZE_REQUEST">
+				<!-- 200 mb -->
+				<max-size-bytes>209715200</max-size-bytes>
 				<address-full-policy>BLOCK</address-full-policy>
 			</address-setting>
 		</address-settings>
