@@ -42,9 +42,13 @@ public class ArtemisQueue {
 		/**
 		 * Used for repository queries via {@link ClientRequestor}
 		 */
-		REPOSITORY_QUERY
+		REPOSITORY_QUERY,
+		/**
+		 * Update messages for extended attributes
+		 */
+		EA_UPDATE
 	}
-	
+
 	private final ClientSession session;
 
 	/**
@@ -56,16 +60,16 @@ public class ArtemisQueue {
 	public ArtemisQueue(ClientSession session) {
 		this.session = session;
 	}
-	
+
 	/**
 	 * Creates all queues. Does not check if they already exist.
 	 */
 	public void createAll() {
 	}
-	
+
 	private void queueHelper(QueueAddress address, boolean durable) {
 		String addr = address.toString();
-		
+
 		LOGGER.info("Creating queue for address {}, durable: {} ...", addr, durable);
 
 		try {

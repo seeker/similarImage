@@ -19,6 +19,7 @@ package com.github.dozedoff.similarImage.messaging;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.nio.file.Path;
 import java.util.LinkedList;
@@ -55,7 +56,7 @@ public class MessageFactory {
 	 * What kind of task this message represents
 	 */
 	public enum TaskType {
-		hash, corr, result
+		hash, corr, result, eaupdate
 	};
 
 	/**
@@ -103,6 +104,10 @@ public class MessageFactory {
 
 	private void setTaskType(ClientMessage message, TaskType task) {
 		message.putStringProperty(MessageProperty.task.toString(), task.toString());
+	}
+
+	private void setPath(ClientMessage message, Path value) {
+		message.putStringProperty(MessageProperty.path.toString(), value.toString());
 	}
 
 	/**
@@ -187,7 +192,7 @@ public class MessageFactory {
 			pendingPaths.add(p.getPath());
 		}
 
-		try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); ObjectOutputStream oos = new ObjectOutputStream(baos);) {
+		try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); ObjectOutputStream oos = new ObjectOutputStream(baos)) {
 			ClientMessage message = session.createMessage(false);
 
 			oos.writeObject(pendingPaths);
@@ -224,6 +229,44 @@ public class MessageFactory {
 		ClientMessage message = session.createMessage(false);
 
 		message.getBodyBuffer().writeInt(trackingId);
+
+		return message;
+	}
+
+	/**
+	 * Create a message for updating extended attributes of files.
+	 * 
+	 * @param path
+	 *            to update
+	 * @param hash
+	 *            for the file
+	 * @return configured message
+	 */
+	public ClientMessage eaUpdate(Path path, long hash) {
+		ClientMessage message = session.createMessage(true);
+
+		setTaskType(message, TaskType.eaupdate);
+		setPath(message, path);
+		message.getBodyBuffer().writeLong(hash);
+
+		return message;
+	}
+
+	/**
+	 * Create a message for resizing an image.
+	 * 
+	 * @param path
+	 *            of the image
+	 * @param is
+	 *            {@link InputStream} to the image file
+	 * @return configured message
+	 */
+	public ClientMessage resizeRequest(Path path, InputStream is) {
+		ClientMessage message = session.createMessage(true);
+
+		message.setBodyInputStream(is);
+		setTaskType(message, TaskType.hash);
+		setPath(message, path);
 
 		return message;
 	}

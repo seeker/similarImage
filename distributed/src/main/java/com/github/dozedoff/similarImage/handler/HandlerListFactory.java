@@ -17,17 +17,18 @@
  */
 package com.github.dozedoff.similarImage.handler;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.activemq.artemis.api.core.ActiveMQException;
-
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
+import com.github.dozedoff.similarImage.io.ExtendedAttribute;
+import com.github.dozedoff.similarImage.io.ExtendedAttributeDirectoryCache;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.io.Statistics;
-import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.messaging.ArtemisSession;
+import com.github.dozedoff.similarImage.messaging.StorageNode;
 
 public class HandlerListFactory {
 	private final ImageRepository imageRepository;
@@ -42,13 +43,17 @@ public class HandlerListFactory {
 		this.eaQuery = eaQuery;
 	}
 
-	public List<HashHandler> withExtendedAttributeSupport(HashAttribute hashAttribute) throws ActiveMQException {
+	public List<HashHandler> withExtendedAttributeSupport(HashAttribute hashAttribute) throws Exception {
 		List<HashHandler> handlers = new LinkedList<HashHandler>();
 
 		handlers.add(new DatabaseHandler(imageRepository, statistics));
 		handlers.add(new ExtendedAttributeHandler(hashAttribute, imageRepository, eaQuery));
+
+		StorageNode sn = new StorageNode(session.getSession(), new ExtendedAttributeDirectoryCache(new ExtendedAttribute()),
+				new HashAttribute(HashNames.DEFAULT_DCT_HASH_2), Collections.emptyList());
+
 		try {
-			handlers.add(new ArtemisHashProducer(session.getSession(), QueueAddress.RESIZE_REQUEST.toString()));
+			handlers.add(new ArtemisHashProducer(sn));
 		} catch (Exception e) {
 			throw new RuntimeException("Failed to setup hash producer");
 		}
