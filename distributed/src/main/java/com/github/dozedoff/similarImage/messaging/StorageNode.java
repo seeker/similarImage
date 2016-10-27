@@ -1,8 +1,12 @@
 package com.github.dozedoff.similarImage.messaging;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.client.ClientConsumer;
@@ -18,6 +22,8 @@ import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.messaging.MessageFactory.MessageProperty;
 import com.github.dozedoff.similarImage.messaging.MessageFactory.TaskType;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 
 /**
  * Reads files and creates resize requests. Listens to extended attribute update messages.
@@ -29,6 +35,9 @@ public class StorageNode implements MessageHandler {
 	private final HashAttribute hashAttribute;
 	private final ClientProducer producer;
 	private final ClientConsumer consumer;
+	private final QueryMessage queryMessage;
+	private final MessageFactory messageFactory;
+	private final Cache<Path, Integer> sentRequests;
 
 	/**
 	 * Create a instance for handling updates and generating resize requests.
@@ -43,15 +52,19 @@ public class StorageNode implements MessageHandler {
 	 *            where to send resize requests
 	 * @param eaUpdateAddress
 	 *            where to listen for ea updates
-	 * @throws ActiveMQException
+	 * @throws Exception
 	 *             if there is a error with the queue
 	 */
 	public StorageNode(ClientSession session, ExtendedAttributeQuery eaQuery, HashAttribute hashAttribute, String resizeAddress,
-			String eaUpdateAddress) throws ActiveMQException {
+			String eaUpdateAddress) throws Exception {
 		this.eaQuery = eaQuery;
 		this.hashAttribute = hashAttribute;
 		this.consumer = session.createConsumer(eaUpdateAddress);
 		this.producer = session.createProducer(resizeAddress);
+		this.queryMessage = new QueryMessage(session, QueueAddress.REPOSITORY_QUERY);
+		this.messageFactory = new MessageFactory(session);
+
+		sentRequests = CacheBuilder.newBuilder().expireAfterAccess(10, TimeUnit.MINUTES).build();
 
 		this.consumer.setMessageHandler(this);
 	}
@@ -65,10 +78,10 @@ public class StorageNode implements MessageHandler {
 	 *            to check for ea support
 	 * @param hashAttribute
 	 *            to write extended attributes to files
-	 * @throws ActiveMQException
+	 * @throws Exception
 	 *             if there is a error with the queue
 	 */
-	public StorageNode(ClientSession session, ExtendedAttributeQuery eaQuery, HashAttribute hashAttribute) throws ActiveMQException {
+	public StorageNode(ClientSession session, ExtendedAttributeQuery eaQuery, HashAttribute hashAttribute) throws Exception {
 		this(session, eaQuery, hashAttribute, QueueAddress.RESIZE_REQUEST.toString(), QueueAddress.EA_UPDATE.toString());
 	}
 
@@ -105,7 +118,34 @@ public class StorageNode implements MessageHandler {
 		return TaskType.corr.toString().equals(message.getStringProperty(MessageProperty.task.toString()));
 	}
 
-	public void processFile(Path path) {
-		throw new RuntimeException("Not implemented");
+	/**
+	 * Send a request to process the file. This will generate and send a new resize request. The class keeps track of the files sent within
+	 * 
+	 * @param path
+	 *            to process
+	 * @return true if the request was sent
+	 */
+	public boolean processFile(Path path) {
+		if (isAlreadySent(path)) {
+			LOGGER.trace("File {} has already been sent, ignoring...", path);
+			return true;
+		}
+
+		try (InputStream bis = new BufferedInputStream(Files.newInputStream(path))) {
+			ClientMessage request = messageFactory.resizeRequest(path, bis);
+			producer.send(request);
+			sentRequests.put(path, 0);
+			return true;
+		} catch (IOException e) {
+			LOGGER.warn("Failed to access file {}: {}", path, e.toString());
+		} catch (ActiveMQException e) {
+			LOGGER.warn("Failed to send resize request for {}: {}", path, e.toString());
+		}
+
+		return false;
+	}
+
+	private boolean isAlreadySent(Path path) {
+		return sentRequests.getIfPresent(path) != null;
 	}
 }

@@ -1,13 +1,15 @@
 package com.github.dozedoff.similarImage.messaging;
 
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -28,13 +30,19 @@ public class StorageNodeTest extends MessagingBaseTest {
 	private HashAttribute hashAttribute;
 
 	private StorageNode cut;
-
 	private MessageFactory messageFactory;
+	private Path testFile;
 
 	@Before
 	public void setUp() throws Exception {
 		messageFactory = new MessageFactory(session);
 		cut = new StorageNode(session, eaQuery, hashAttribute);
+		testFile = Files.createTempFile("StorageNodeTest", null);
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		Files.deleteIfExists(testFile);
 	}
 
 	@Test
@@ -65,10 +73,19 @@ public class StorageNodeTest extends MessagingBaseTest {
 		verify(hashAttribute, never()).markCorrupted(PATH);
 	}
 
-	@Ignore
 	@Test
 	public void testProcessFile() throws Exception {
-		throw new RuntimeException("not yet implemented");
+		cut.processFile(testFile);
+
+		verify(producer).send(messageFactory.resizeRequest(testFile, Files.newInputStream(testFile)));
+	}
+
+	@Test
+	public void testProcessFileSkipDuplicate() throws Exception {
+		cut.processFile(testFile);
+		cut.processFile(testFile);
+
+		verify(producer, times(1)).send(messageFactory.resizeRequest(testFile, Files.newInputStream(testFile)));
 	}
 
 }
