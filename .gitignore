@@ -2,6 +2,9 @@
 .DS_Store
 *.db
 
+# Certificates
+fullchain.pem
+
 # Eclipse files
 .project
 .classpath
