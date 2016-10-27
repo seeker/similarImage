@@ -17,6 +17,8 @@
  */
 package com.github.dozedoff.similarImage.messaging;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.never;
@@ -25,6 +27,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 
 import javax.imageio.IIOException;
 
@@ -39,6 +42,7 @@ import com.github.dozedoff.similarImage.db.PendingHashImage;
 import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
 import com.github.dozedoff.similarImage.image.ImageResizer;
+import com.github.dozedoff.similarImage.messaging.MessageFactory.MessageProperty;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ArtemisResizeRequestConsumerTest extends MessagingBaseTest {
@@ -51,6 +55,9 @@ public class ArtemisResizeRequestConsumerTest extends MessagingBaseTest {
 	@Mock
 	private PendingHashImageRepository pendingRepo;
 
+	@Mock
+	private QueryMessage queryMessage;
+
 	private ArtemisResizeRequestConsumer cut;
 
 	private MockMessageBuilder messageBuilder;
@@ -59,19 +66,37 @@ public class ArtemisResizeRequestConsumerTest extends MessagingBaseTest {
 	public void setUp() throws Exception {
 		when(pendingRepo.store(any(PendingHashImage.class))).thenReturn(true);
 		when(pendingRepo.exists(any(PendingHashImage.class))).thenReturn(false);
+		when(resizer.resize(any(InputStream.class))).thenReturn(new byte[0]);
 
-		cut = new ArtemisResizeRequestConsumer(session, resizer, REQUEST_ADDRESS, RESULT_ADDRESS, pendingRepo);
+		cut = new ArtemisResizeRequestConsumer(session, resizer, REQUEST_ADDRESS, RESULT_ADDRESS, queryMessage);
 		messageBuilder = new MockMessageBuilder();
 	}
 
 	@Test
-	public void testValidImage() throws Exception {
+	public void testValidImageSent() throws Exception {
 		message = messageBuilder.configureResizeMessage().build();
 
 		cut.onMessage(message);
 
-		verify(producer).send(sessionMessage);
-		verify(sessionMessage, never()).putStringProperty(eq(ArtemisHashProducer.MESSAGE_TASK_PROPERTY), any(String.class));
+		verify(producer).send(eq(sessionMessage));
+	}
+
+	@Test
+	public void testValidImageHasId() throws Exception {
+		message = messageBuilder.configureResizeMessage().build();
+
+		cut.onMessage(message);
+
+		assertThat(sessionMessage.containsProperty(MessageProperty.id.toString()), is(true));
+	}
+
+	@Test
+	public void testValidImageNotCorrupt() throws Exception {
+		message = messageBuilder.configureResizeMessage().build();
+
+		cut.onMessage(message);
+
+		assertThat(sessionMessage.containsProperty(ArtemisHashProducer.MESSAGE_TASK_PROPERTY), is(false));
 	}
 
 	@Test
@@ -90,7 +115,8 @@ public class ArtemisResizeRequestConsumerTest extends MessagingBaseTest {
 
 		cut.onMessage(message);
 
-		verify(sessionMessage).putStringProperty(ArtemisHashProducer.MESSAGE_TASK_PROPERTY, ArtemisHashProducer.MESSAGE_TASK_VALUE_CORRUPT);
+		assertThat(sessionMessage.getStringProperty(ArtemisHashProducer.MESSAGE_TASK_PROPERTY),
+				is(ArtemisHashProducer.MESSAGE_TASK_VALUE_CORRUPT));
 	}
 
 	@Test
@@ -100,7 +126,7 @@ public class ArtemisResizeRequestConsumerTest extends MessagingBaseTest {
 
 		cut.onMessage(message);
 
-		verify(sessionMessage).putStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY, "foo");
+		assertThat(sessionMessage.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY), is("foo"));
 	}
 
 	@Test
@@ -120,7 +146,8 @@ public class ArtemisResizeRequestConsumerTest extends MessagingBaseTest {
 
 		cut.onMessage(message);
 
-		verify(sessionMessage).putStringProperty(ArtemisHashProducer.MESSAGE_TASK_PROPERTY, ArtemisHashProducer.MESSAGE_TASK_VALUE_CORRUPT);
+		assertThat(sessionMessage.getStringProperty(ArtemisHashProducer.MESSAGE_TASK_PROPERTY),
+				is(ArtemisHashProducer.MESSAGE_TASK_VALUE_CORRUPT));
 	}
 
 	@Test
@@ -130,26 +157,17 @@ public class ArtemisResizeRequestConsumerTest extends MessagingBaseTest {
 
 		cut.onMessage(message);
 
-		verify(sessionMessage).putStringProperty(ArtemisHashProducer.MESSAGE_TASK_PROPERTY, ArtemisHashProducer.MESSAGE_TASK_VALUE_CORRUPT);
+		assertThat(sessionMessage.getStringProperty(ArtemisHashProducer.MESSAGE_TASK_PROPERTY),
+				is(ArtemisHashProducer.MESSAGE_TASK_VALUE_CORRUPT));
 	}
 
 	@Test
-	public void testDuplicateRequestBeforeResize() throws Exception {
-		when(pendingRepo.exists(any(PendingHashImage.class))).thenReturn(true);
+	public void testDuplicateImage() throws Exception {
 		message = messageBuilder.configureResizeMessage().build();
+		when(queryMessage.trackPath(any(Path.class))).thenReturn(-1);
 
 		cut.onMessage(message);
 
-		verify(producer, never()).send(sessionMessage);
-	}
-
-	@Test
-	public void testDuplicateRequestAfterResize() throws Exception {
-		when(pendingRepo.store(any(PendingHashImage.class))).thenReturn(false);
-		message = messageBuilder.configureResizeMessage().build();
-
-		cut.onMessage(message);
-
-		verify(producer, never()).send(sessionMessage);
+		verify(producer, never()).send(any(ClientMessage.class));
 	}
 }

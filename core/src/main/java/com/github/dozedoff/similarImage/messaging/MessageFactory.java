@@ -20,6 +20,7 @@ package com.github.dozedoff.similarImage.messaging;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -35,11 +36,49 @@ import com.github.dozedoff.similarImage.db.PendingHashImage;
  *
  */
 public class MessageFactory {
-	public static final String TRACKING_PROPERTY_NAME = "id";
-	public static final String HASH_PROPERTY_NAME = "hashResult";
-	public static final String QUERY_PROPERTY_NAME = "repository_query";
 
-	public static final String QUERY_PROPERTY_VALUE_PENDING = "pending";
+
+
+	/**
+	 * Property name in the message
+	 */
+	public enum MessageProperty {
+		repository_query, id, hashResult
+	}
+
+	/**
+	 * What kind of query this message represents
+	 */
+	public enum QueryType {
+		pending, TRACK
+	};
+
+	/**
+	 * @deprecated Use enum {@link MessageProperty}.
+	 */
+	@Deprecated
+	public static final String TRACKING_PROPERTY_NAME = MessageProperty.id.toString();
+	/**
+	 * @deprecated Use enum {@link MessageProperty}.
+	 */
+	@Deprecated
+	public static final String HASH_PROPERTY_NAME = MessageProperty.hashResult.toString();
+	/**
+	 * @deprecated Use enum {@link MessageProperty}.
+	 */
+	@Deprecated
+	public static final String QUERY_PROPERTY_NAME = MessageProperty.repository_query.toString();
+
+	/**
+	 * @deprecated Use enum {@link QueryType}.
+	 */
+	@Deprecated
+	public static final String QUERY_PROPERTY_VALUE_PENDING = QueryType.pending.toString();
+	/**
+	 * @deprecated Use enum {@link QueryType}.
+	 */
+	@Deprecated
+	public static final String QUERY_PROPERTY_VALUE_TRACK = QueryType.TRACK.toString();
 
 	private final ClientSession session;
 
@@ -51,6 +90,10 @@ public class MessageFactory {
 	 */
 	public MessageFactory(ClientSession session) {
 		this.session = session;
+	}
+
+	private void setQueryType(ClientMessage message, QueryType type) {
+		message.putStringProperty(MessageProperty.repository_query.toString(), type.toString());
 	}
 
 	/**
@@ -127,5 +170,36 @@ public class MessageFactory {
 
 			return message;
 		}
+	}
+
+	/**
+	 * Create a query message for a tracking id for the given path.
+	 * 
+	 * @param path
+	 *            to query and track
+	 * @return configured message
+	 */
+	public ClientMessage trackPathQuery(Path path) {
+		ClientMessage message = session.createMessage(false);
+		setQueryType(message, QueryType.TRACK);
+
+		message.getBodyBuffer().writeString(path.toString());
+
+		return message;
+	}
+
+	/**
+	 * Create a response message for a tracking id query.
+	 * 
+	 * @param trackingId
+	 *            for the path in the query
+	 * @return configured message
+	 */
+	public ClientMessage trackPathResponse(int trackingId) {
+		ClientMessage message = session.createMessage(false);
+
+		message.getBodyBuffer().writeInt(trackingId);
+
+		return message;
 	}
 }

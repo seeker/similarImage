@@ -21,12 +21,12 @@ import static org.awaitility.Awaitility.await;
 import static org.awaitility.Awaitility.to;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.junit.Assert.assertThat;
 
 import java.io.BufferedInputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -40,6 +40,7 @@ import org.apache.activemq.artemis.api.core.client.ClientSession;
 import org.apache.activemq.artemis.api.core.client.ServerLocator;
 import org.apache.activemq.artemis.core.remoting.impl.invm.InVMConnectorFactory;
 import org.awaitility.Duration;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -66,7 +67,6 @@ import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.util.TestUtil;
 import com.j256.ormlite.dao.DaoManager;
-import com.j256.ormlite.table.TableUtils;
 
 @RunWith(MockitoJUnitRunner.class)
 public class MessagingIT {
@@ -75,15 +75,17 @@ public class MessagingIT {
 
 	private static final int LARGE_MESSAGE_SIZE_THRESHOLD = 1024 * 1024;
 	private static final int RESIZE_SIZE = 32;
+	private static final Path TEST_PATH = Paths.get("foo");
 
 	private static ArtemisResultConsumer arc;
 	private static ArtemisEmbeddedServer aes;
-	private static Database database;
-	private static ImageRepository imageRepository;
+	private Database database;
+	private ImageRepository imageRepository;
 	private static ArtemisHashProducer ahp;
 	private static ArtemisSession as;
-	private static PendingHashImageRepository pendingRepo;
+	private PendingHashImageRepository pendingRepo;
 
+	private Path dbFile;
 	private static Path workingdir;
 	private static Path testImageAutumn;
 	private static long testImageAutumnReferenceHash;
@@ -113,16 +115,6 @@ public class MessagingIT {
 				.setCacheLargeMessagesClient(false).setMinLargeMessageSize(LARGE_MESSAGE_SIZE_THRESHOLD)
 				.setBlockOnNonDurableSend(false);
 		as = new ArtemisSession(locator);
-
-		database = new SQLiteDatabase(Files.createTempFile(workingdir, "database", ".db"));
-		RepositoryFactory repositoryFactory = new OrmliteRepositoryFactory(database);
-
-		imageRepository = repositoryFactory.buildImageRepository();
-
-		pendingRepo = new OrmlitePendingHashImage(
-				DaoManager.createDao(database.getCs(), PendingHashImage.class));
-
-
 	}
 
 	@AfterClass
@@ -133,13 +125,17 @@ public class MessagingIT {
 
 	@Before
 	public void setup() throws Exception {
-		cleanTable(ImageRecord.class);
-		cleanTable(PendingHashImage.class);
+		dbFile = Files.createTempFile(workingdir, "database", ".db");
+		database = new SQLiteDatabase(dbFile);
+		RepositoryFactory repositoryFactory = new OrmliteRepositoryFactory(database);
+
+		imageRepository = repositoryFactory.buildImageRepository();
+		pendingRepo = new OrmlitePendingHashImage(DaoManager.createDao(database.getCs(), PendingHashImage.class));
 	}
 
-	private static void cleanTable(Class<? extends Object> clazz) throws SQLException {
-		TableUtils.createTableIfNotExists(database.getCs(), clazz);
-		TableUtils.clearTable(database.getCs(), clazz);
+	@After
+	public void tearDown() throws Exception {
+		database.close();
 	}
 
 	@Test
@@ -147,16 +143,21 @@ public class MessagingIT {
 		String hashQueue = "hashImageHash";
 		String resizeQueue = "hashImageResize";
 		String resultQueue = "hashImageResult";
+		String queryQueue = "hashImageQuery";
 
 		ClientSession noDupe = as.getSession();
 		noDupe.createTemporaryQueue(resizeQueue, resizeQueue);
 		noDupe.createTemporaryQueue(hashQueue, hashQueue);
 		noDupe.createTemporaryQueue(resultQueue, resultQueue);
+		noDupe.createTemporaryQueue(queryQueue, queryQueue);
+
+		QueryMessage queryMessage = new QueryMessage(as.getSession(), queryQueue);
+		QueryResponder queryResponder = new QueryResponder(as.getSession(), queryQueue, pendingRepo);
 
 		new ArtemisHashRequestConsumer(as.getSession(), new ImagePHash(), hashQueue,
 				resultQueue);
 		new ArtemisResizeRequestConsumer(as.getSession(), new ImageResizer(RESIZE_SIZE),
-				resizeQueue, hashQueue, pendingRepo);
+				resizeQueue, hashQueue, queryMessage);
 
 		ExtendedAttributeQuery eaQuery = new ExtendedAttributeDirectoryCache(new ExtendedAttribute(), 1,
 				TimeUnit.MINUTES);
@@ -175,19 +176,24 @@ public class MessagingIT {
 	public void testDoNotQueueDuplicates() throws Exception {
 		String resizeQueue = "dupeResize";
 		String hashQueue = "dupeHash";
+		String queryQueue = "dupeQuery";
 
 		ClientSession noDupe = as.getSession();
 		noDupe.createTemporaryQueue(resizeQueue, resizeQueue);
 		noDupe.createTemporaryQueue(hashQueue, hashQueue);
+		noDupe.createTemporaryQueue(queryQueue, queryQueue);
 
-		ArtemisHashProducer ahp =new ArtemisHashProducer(as.getSession(), resizeQueue);
+		QueryMessage queryMessage = new QueryMessage(as.getSession(), queryQueue);
+		QueryResponder queryResponder = new QueryResponder(as.getSession(), queryQueue, pendingRepo);
+
+		ArtemisHashProducer ahp = new ArtemisHashProducer(as.getSession(), resizeQueue, queryMessage);
 		ArtemisResizeRequestConsumer arrc = new ArtemisResizeRequestConsumer(as.getSession(),
-				new ImageResizer(RESIZE_SIZE), resizeQueue, hashQueue, pendingRepo);
-
-		ahp.handle(testImageAutumn);
-		ahp.handle(testImageAutumn);
+				new ImageResizer(RESIZE_SIZE), resizeQueue, hashQueue, queryMessage);
 
 		ClientConsumer checkConsumer = noDupe.createConsumer(hashQueue, true);
+
+		ahp.handle(testImageAutumn);
+		ahp.handle(testImageAutumn);
 
 		await().atMost(messageTimeout).until(new Callable<Long>() {
 
@@ -219,5 +225,16 @@ public class MessagingIT {
 				return qm.pendingImagePaths();
 			}
 		}, is(containsInAnyOrder(testImageAutumn.toString())));
+	}
+
+	@Test(timeout = 5000)
+	public void testTrackPath() throws Exception {
+		String testqueue = "trackPath";
+		as.getSession().createTemporaryQueue(testqueue, testqueue);
+
+		QueryMessage qm = new QueryMessage(as.getSession(), testqueue);
+		QueryResponder qr = new QueryResponder(as.getSession(), testqueue, pendingRepo);
+
+		assertThat(qm.trackPath(TEST_PATH), is(1));
 	}
 }

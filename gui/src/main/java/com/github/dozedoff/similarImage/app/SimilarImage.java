@@ -109,12 +109,10 @@ public class SimilarImage {
 		ArtemisEmbeddedServer aes = new ArtemisEmbeddedServer();
 		aes.start();
 
-
 		ServerLocator locator = ActiveMQClient
 				.createServerLocatorWithoutHA(new TransportConfiguration(InVMConnectorFactory.class.getName()))
-				.setCacheLargeMessagesClient(false).setMinLargeMessageSize(LARGE_MESSAGE_SIZE_THRESHOLD)
-				.setBlockOnNonDurableSend(false);
-				
+				.setCacheLargeMessagesClient(false).setMinLargeMessageSize(LARGE_MESSAGE_SIZE_THRESHOLD).setBlockOnNonDurableSend(false);
+
 		ArtemisSession as = new ArtemisSession(locator);
 
 		Database database = new SQLiteDatabase();
@@ -123,12 +121,10 @@ public class SimilarImage {
 				DaoManager.createDao(database.getCs(), PendingHashImage.class));
 
 		for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
-			ahrcs.add(new ArtemisHashRequestConsumer(as.getSession(), new ImagePHash(),
-					QueueAddress.HASH_REQUEST.toString(), QueueAddress.RESULT.toString()));
-			arrcs.add(new ArtemisResizeRequestConsumer(as.getSession(), new ImageResizer(RESIZE_SIZE),
-					QueueAddress.RESIZE_REQUEST.toString(), QueueAddress.HASH_REQUEST.toString(), pendingRepo));
+			ahrcs.add(new ArtemisHashRequestConsumer(as.getSession(), new ImagePHash(), QueueAddress.HASH_REQUEST.toString(),
+					QueueAddress.RESULT.toString()));
+			arrcs.add(new ArtemisResizeRequestConsumer(as.getSession(), new ImageResizer(RESIZE_SIZE)));
 		}
-
 
 		RepositoryFactory repositoryFactory = new OrmliteRepositoryFactory(database);
 
@@ -138,8 +134,8 @@ public class SimilarImage {
 
 		ExtendedAttributeQuery eaQuery = new ExtendedAttributeDirectoryCache(new ExtendedAttribute(), 1, TimeUnit.MINUTES);
 
-		arc = new ArtemisResultConsumer(as.getSession(), imageRepository, eaQuery,
-				new HashAttribute(HashNames.DEFAULT_DCT_HASH_2), pendingRepo, QueueAddress.RESULT.toString());
+		arc = new ArtemisResultConsumer(as.getSession(), imageRepository, eaQuery, new HashAttribute(HashNames.DEFAULT_DCT_HASH_2),
+				pendingRepo, QueueAddress.RESULT.toString());
 
 		DuplicateOperations dupOps = new DuplicateOperations(filterRepository, tagRepository, imageRepository);
 		SorterFactory sf = new SorterFactory(imageRepository, filterRepository, tagRepository);

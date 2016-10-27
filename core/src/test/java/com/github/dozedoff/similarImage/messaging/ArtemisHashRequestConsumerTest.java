@@ -17,6 +17,8 @@
  */
 package com.github.dozedoff.similarImage.messaging;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -33,7 +35,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
-import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
+import com.github.dozedoff.similarImage.messaging.MessageFactory.MessageProperty;
 
 @SuppressWarnings("deprecation")
 @RunWith(MockitoJUnitRunner.class)
@@ -70,14 +72,14 @@ public class ArtemisHashRequestConsumerTest extends MessagingBaseTest {
 
 		cut.onMessage(message);
 
-		verify(sessionMessage).putIntProperty(MessageFactory.TRACKING_PROPERTY_NAME, TEST_ID);
+		assertThat(sessionMessage.getIntProperty(MessageProperty.id.toString()), is(TEST_ID));
 	}
 
 	@Test
 	public void testMessageHashProperty() throws Exception {
 		cut.onMessage(message);
 
-		verify(sessionMessage).putLongProperty(ArtemisHashProducer.MESSAGE_HASH_PROPERTY, TEST_HASH);
+		assertThat(sessionMessage.getLongProperty(MessageFactory.MessageProperty.hashResult.toString()), is(TEST_HASH));
 	}
 
 	@Test

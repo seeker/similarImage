@@ -20,6 +20,7 @@ package com.github.dozedoff.similarImage.messaging;
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
@@ -29,6 +30,8 @@ import org.apache.activemq.artemis.api.core.client.ClientSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
+
 /**
  * For request-response messaging
  * 
@@ -37,9 +40,13 @@ import org.slf4j.LoggerFactory;
  */
 public class QueryMessage {
 	private static final Logger LOGGER = LoggerFactory.getLogger(QueryMessage.class);
+
 	private static final int QUERY_TIMEOUT_MILLIS = 5000;
+	private static final String QUERY_TIMEOUT_ERROR_MESSAGE = "Did not get a query response within the timelimit";
+
 	private final ClientSession session;
-	private ClientRequestor repositoryQuery;
+	private final MessageFactory messageFactory;
+	private final ClientRequestor repositoryQuery;
 
 	
 	/**
@@ -53,10 +60,28 @@ public class QueryMessage {
 	 *             if there was an error setting up the requestors
 	 */
 	public QueryMessage(ClientSession session, String queryAddress) throws Exception {
-	this.session = session;
+		this.session = session;
 		LOGGER.info("Preparing to send query requests on {} ...", queryAddress);
 		repositoryQuery = new ClientRequestor(session, queryAddress);
-}
+		messageFactory = new MessageFactory(session);
+	}
+
+	/**
+	 * Create a new {@link QueryMessage} instance using the given session.
+	 * 
+	 * @param session
+	 *            to use for messaging
+	 * @param queryAddress
+	 *            address where query requests are received and responses sent
+	 * @throws Exception
+	 *             if there was an error setting up the requestors
+	 */
+	public QueryMessage(ClientSession session, QueueAddress queryAddress) throws Exception {
+		this.session = session;
+		LOGGER.info("Preparing to send query requests on {} ...", queryAddress.toString());
+		repositoryQuery = new ClientRequestor(session, queryAddress.toString());
+		messageFactory = new MessageFactory(session);
+	}
 
 	/**
 	 * Get a list of paths that are currently waiting to be hashed.
@@ -67,11 +92,11 @@ public class QueryMessage {
 	 */
 	public List<String> pendingImagePaths() throws Exception {
 		LOGGER.debug("Sending pending image query request...");
-		ClientMessage queryResponse = repositoryQuery.request(new MessageFactory(session).pendingImageQuery(),
+		ClientMessage queryResponse = repositoryQuery.request(messageFactory.pendingImageQuery(),
 				QUERY_TIMEOUT_MILLIS);
 
 		if (queryResponse == null) {
-			throw new TimeoutException("Did not get a query response within the timelimit");
+			throw new TimeoutException(QUERY_TIMEOUT_ERROR_MESSAGE);
 		}
 
 		ByteBuffer buffer = ByteBuffer.allocate(queryResponse.getBodySize());
@@ -82,5 +107,26 @@ public class QueryMessage {
 		List<String> pending = (List<String>) ois.readObject();
 		LOGGER.debug("Got response for pending images with {} entries", pending.size());
 		return pending;
+	}
+
+	/**
+	 * Request a unique tracking id for the path.
+	 * 
+	 * @param path
+	 *            to track
+	 * @return a unique tracking id for the requested path, or -1 if the path is already tracked
+	 * @throws Exception
+	 *             if there was an error performing the query
+	 */
+	public int trackPath(Path path) throws Exception {
+		LOGGER.trace("Sending path track request for {}", path);
+
+		ClientMessage queryResponse = repositoryQuery.request(messageFactory.trackPathQuery(path), QUERY_TIMEOUT_MILLIS);
+
+		if (queryResponse == null) {
+			throw new TimeoutException(QUERY_TIMEOUT_ERROR_MESSAGE);
+		}
+
+		return queryResponse.getBodyBuffer().readInt();
 	}
 }
