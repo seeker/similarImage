@@ -17,12 +17,11 @@
  */
 package com.github.dozedoff.similarImage.messaging;
 
-import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import org.apache.activemq.artemis.core.config.Configuration;
-import org.apache.activemq.artemis.core.config.impl.ConfigurationImpl;
+import org.apache.activemq.artemis.core.config.FileDeploymentManager;
+import org.apache.activemq.artemis.core.config.impl.FileConfiguration;
 import org.apache.activemq.artemis.core.server.embedded.EmbeddedActiveMQ;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,20 +36,17 @@ import org.slf4j.LoggerFactory;
 public class ArtemisEmbeddedServer {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ArtemisEmbeddedServer.class);
 	private final EmbeddedActiveMQ server;
-	
-
 
 	/**
 	 * Create a new embedded artemis server that listens to network and in VM connections. he data directory will be created in the current
 	 * working directory.
 	 * 
-	 * @throws UnknownHostException
-	 *             if the local address cannot be resolved
+	 * @throws Exception
+	 *             if the server setup failed
 	 */
-	public ArtemisEmbeddedServer() throws UnknownHostException {
+	public ArtemisEmbeddedServer() throws Exception {
 		this(Paths.get(""));
 	}
-
 
 	/**
 	 * Create a new embedded artemis server that listens to network and in VM connections. The data directory will be created in the given
@@ -58,15 +54,20 @@ public class ArtemisEmbeddedServer {
 	 * 
 	 * @param workingDirectory
 	 *            base directory where the data directory will be created
-	 * 
-	 * @throws UnknownHostException
-	 *             if the local address cannot be resolved
+	 * @throws Exception
+	 *             if the server setup failed
 	 */
-	public ArtemisEmbeddedServer(Path workingDirectory) throws UnknownHostException {
-		Configuration config = new ConfigurationImpl();
+	public ArtemisEmbeddedServer(Path workingDirectory) throws Exception {
+
+		FileConfiguration config = new FileConfiguration();
+		FileDeploymentManager fdm = new FileDeploymentManager("broker.xml");
+		fdm.addDeployable(config);
+		fdm.readConfiguration();
+
 		config.setBrokerInstance(workingDirectory.toFile());
 
 		server = new EmbeddedActiveMQ();
+		server.setConfiguration(config);
 	}
 
 	/**
