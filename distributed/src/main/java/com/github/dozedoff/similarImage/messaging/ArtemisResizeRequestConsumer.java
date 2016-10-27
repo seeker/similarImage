@@ -219,9 +219,7 @@ public class ArtemisResizeRequestConsumer implements MessageHandler {
 	}
 
 	private void sendImageErrorResponse(String path) throws ActiveMQException {
-		ClientMessage response = session.createMessage(true);
-		response.putStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY, path);
-		response.putStringProperty(ArtemisHashProducer.MESSAGE_TASK_PROPERTY, ArtemisHashProducer.MESSAGE_TASK_VALUE_CORRUPT);
+		ClientMessage response = messageFactory.corruptMessage(Paths.get(path));
 		producer.send(response);
 	}
 

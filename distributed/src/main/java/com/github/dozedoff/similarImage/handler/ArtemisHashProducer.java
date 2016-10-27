@@ -31,8 +31,9 @@ import org.apache.activemq.artemis.api.core.client.ClientSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.dozedoff.similarImage.handler.HashHandler;
 import com.github.dozedoff.similarImage.messaging.MessageFactory;
+import com.github.dozedoff.similarImage.messaging.MessageFactory.MessageProperty;
+import com.github.dozedoff.similarImage.messaging.MessageFactory.TaskType;
 import com.github.dozedoff.similarImage.messaging.QueryMessage;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -46,15 +47,30 @@ import com.google.common.cache.CacheBuilder;
 public class ArtemisHashProducer implements HashHandler {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ArtemisHashProducer.class);
 	private static final String PLACE_HOLDER = "";
-	// TODO move this or use enums?
+	/**
+	 * @deprecated Use {@link MessageProperty}
+	 */
+	@Deprecated
 	public static final String MESSAGE_TASK_PROPERTY = "task";
+	/**
+	 * @deprecated Use {@link MessageProperty}
+	 */
+	@Deprecated
 	public static final String MESSAGE_PATH_PROPERTY = "path";
 	/**
-	 * @deprecated Use {@link MessageFactory}
+	 * @deprecated Use {@link MessageProperty}
 	 */
 	@Deprecated
 	public static final String MESSAGE_HASH_PROPERTY = MessageFactory.HASH_PROPERTY_NAME;
+	/**
+	 * @deprecated Use {@link TaskType}
+	 */
+	@Deprecated
 	public static final String MESSAGE_TASK_VALUE_HASH = "hash";
+	/**
+	 * @deprecated Use {@link TaskType}
+	 */
+	@Deprecated
 	public static final String MESSAGE_TASK_VALUE_CORRUPT = "corr";
 
 	private final ClientProducer producer;
