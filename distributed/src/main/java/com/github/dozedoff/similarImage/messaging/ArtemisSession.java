@@ -21,9 +21,13 @@ import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
 import org.apache.activemq.artemis.api.core.client.ClientSessionFactory;
 import org.apache.activemq.artemis.api.core.client.ServerLocator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class ArtemisSession {
+public class ArtemisSession implements AutoCloseable {
+	private static final Logger LOGGER = LoggerFactory.getLogger(ArtemisSession.class);
 	private final ClientSessionFactory factory;
+
 	/**
 	 * Create a session factory
 	 * 
@@ -50,6 +54,12 @@ public class ArtemisSession {
 	 *             if the session setup fails
 	 */
 	public ClientSession getSession() throws ActiveMQException {
-			return createAndConfigureSession();
+		return createAndConfigureSession();
+	}
+
+	@Override
+	public void close() throws Exception {
+		LOGGER.info("Closing {}", this.getClass().getSimpleName());
+		factory.close();
 	}
 }

@@ -157,11 +157,7 @@ public class ArgumentPasrser {
 				.setCacheLargeMessagesClient(false).setMinLargeMessageSize(LARGE_MESSAGE_SIZE_THRESHOLD)
 				.setBlockOnNonDurableSend(false).setPreAcknowledge(true).setReconnectAttempts(3);
 
-		try {
-
-
-			ArtemisSession session = new ArtemisSession(locator);
-
+		try (ArtemisSession session = new ArtemisSession(locator);) {
 			if (parsedArgs.getBoolean("resize")) {
 				startResizeWorkers(session, parsedArgs.getInt("resize_workers"));
 			}
