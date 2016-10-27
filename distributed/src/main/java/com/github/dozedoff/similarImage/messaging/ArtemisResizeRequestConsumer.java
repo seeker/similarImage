@@ -41,6 +41,7 @@ import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
 import com.github.dozedoff.similarImage.image.ImageResizer;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.util.ImageUtil;
+import com.github.dozedoff.similarImage.util.MessagingUtil;
 
 import at.dhyan.open_imaging.GifDecoder;
 import at.dhyan.open_imaging.GifDecoder.GifImage;
@@ -93,8 +94,7 @@ public class ArtemisResizeRequestConsumer implements MessageHandler {
 	 * @throws Exception
 	 *             if the setup for {@link QueryMessage} failed
 	 */
-	public ArtemisResizeRequestConsumer(ClientSession session, ImageResizer resizer, String inAddress, String outAddress)
-			throws Exception {
+	public ArtemisResizeRequestConsumer(ClientSession session, ImageResizer resizer, String inAddress, String outAddress) throws Exception {
 
 		this(session, resizer, inAddress, outAddress, new QueryMessage(session, QueueAddress.REPOSITORY_QUERY));
 	}
@@ -151,6 +151,7 @@ public class ArtemisResizeRequestConsumer implements MessageHandler {
 	private boolean isDuplicatePath(int trackingId) {
 		return trackingId == -1;
 	}
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -168,12 +169,12 @@ public class ArtemisResizeRequestConsumer implements MessageHandler {
 
 			Path filename = path.getFileName();
 			InputStream is = new ByteArrayInputStream(buffer.array());
-			
+
 			if (filename != null && filename.toString().toLowerCase().endsWith(".gif")) {
 				GifImage gi = GifDecoder.read(is);
 				is = new ByteArrayInputStream(ImageUtil.imageToBytes(gi.getFrame(0)));
 			}
-			
+
 			byte[] resizedImageData = resizer.resize(is);
 
 			int trackingId = queryMessage.trackPath(path);
@@ -222,5 +223,15 @@ public class ArtemisResizeRequestConsumer implements MessageHandler {
 		response.putStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY, path);
 		response.putStringProperty(ArtemisHashProducer.MESSAGE_TASK_PROPERTY, ArtemisHashProducer.MESSAGE_TASK_VALUE_CORRUPT);
 		producer.send(response);
+	}
+
+	/**
+	 * Stop this consumer and clean up resources.
+	 */
+	public void stop() {
+		LOGGER.info("Stopping {}...", this.getClass().getSimpleName());
+		MessagingUtil.silentClose(consumer);
+		MessagingUtil.silentClose(producer);
+		MessagingUtil.silentClose(session);
 	}
 }
