@@ -57,9 +57,9 @@ import com.github.dozedoff.similarImage.io.ExtendedAttributeDirectoryCache;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
-import com.github.dozedoff.similarImage.messaging.ArtemisHashRequestConsumer;
+import com.github.dozedoff.similarImage.messaging.HasherNode;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
-import com.github.dozedoff.similarImage.messaging.ArtemisResizeRequestConsumer;
+import com.github.dozedoff.similarImage.messaging.ResizerNode;
 import com.github.dozedoff.similarImage.messaging.ArtemisSession;
 import com.github.dozedoff.similarImage.messaging.RepositoryNode;
 import com.github.dozedoff.similarImage.thread.NamedThreadFactory;
@@ -77,8 +77,8 @@ public class SimilarImage {
 	private ExecutorService threadPool;
 	private Statistics statistics;
 	RepositoryNode rn;
-	List<ArtemisHashRequestConsumer> ahrcs = new LinkedList<>();
-	List<ArtemisResizeRequestConsumer> arrcs = new LinkedList<>();
+	List<HasherNode> ahrcs = new LinkedList<>();
+	List<ResizerNode> arrcs = new LinkedList<>();
 
 	public static void main(String[] args) {
 		try {
@@ -119,9 +119,9 @@ public class SimilarImage {
 				DaoManager.createDao(database.getCs(), PendingHashImage.class));
 
 		for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
-			ahrcs.add(new ArtemisHashRequestConsumer(as.getSession(), new ImagePHash(), QueueAddress.HASH_REQUEST.toString(),
+			ahrcs.add(new HasherNode(as.getSession(), new ImagePHash(), QueueAddress.HASH_REQUEST.toString(),
 					QueueAddress.RESULT.toString()));
-			arrcs.add(new ArtemisResizeRequestConsumer(as.getSession(), new ImageResizer(RESIZE_SIZE)));
+			arrcs.add(new ResizerNode(as.getSession(), new ImageResizer(RESIZE_SIZE)));
 		}
 
 		RepositoryFactory repositoryFactory = new OrmliteRepositoryFactory(database);

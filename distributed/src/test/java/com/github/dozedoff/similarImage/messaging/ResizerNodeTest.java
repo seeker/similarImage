@@ -45,7 +45,7 @@ import com.github.dozedoff.similarImage.image.ImageResizer;
 import com.github.dozedoff.similarImage.messaging.MessageFactory.MessageProperty;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ArtemisResizeRequestConsumerTest extends MessagingBaseTest {
+public class ResizerNodeTest extends MessagingBaseTest {
 	private static final String REQUEST_ADDRESS = "request";
 	private static final String RESULT_ADDRESS = "result";
 
@@ -58,7 +58,7 @@ public class ArtemisResizeRequestConsumerTest extends MessagingBaseTest {
 	@Mock
 	private QueryMessage queryMessage;
 
-	private ArtemisResizeRequestConsumer cut;
+	private ResizerNode cut;
 
 	private MockMessageBuilder messageBuilder;
 
@@ -68,7 +68,7 @@ public class ArtemisResizeRequestConsumerTest extends MessagingBaseTest {
 		when(pendingRepo.exists(any(PendingHashImage.class))).thenReturn(false);
 		when(resizer.resize(any(InputStream.class))).thenReturn(new byte[0]);
 
-		cut = new ArtemisResizeRequestConsumer(session, resizer, REQUEST_ADDRESS, RESULT_ADDRESS, queryMessage);
+		cut = new ResizerNode(session, resizer, REQUEST_ADDRESS, RESULT_ADDRESS, queryMessage);
 		messageBuilder = new MockMessageBuilder();
 	}
 

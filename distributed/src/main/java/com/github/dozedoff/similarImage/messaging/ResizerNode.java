@@ -52,8 +52,8 @@ import at.dhyan.open_imaging.GifDecoder.GifImage;
  * @author Nicholas Wright
  *
  */
-public class ArtemisResizeRequestConsumer implements MessageHandler {
-	private static final Logger LOGGER = LoggerFactory.getLogger(ArtemisResizeRequestConsumer.class);
+public class ResizerNode implements MessageHandler {
+	private static final Logger LOGGER = LoggerFactory.getLogger(ResizerNode.class);
 
 	private static final String DUPLICATE_MESSAGE = "Image {} is already in the hashing queue, discarding";
 
@@ -74,7 +74,7 @@ public class ArtemisResizeRequestConsumer implements MessageHandler {
 	 * @throws Exception
 	 *             if the setup for {@link QueryMessage} failed
 	 */
-	public ArtemisResizeRequestConsumer(ClientSession session, ImageResizer resizer) throws Exception {
+	public ResizerNode(ClientSession session, ImageResizer resizer) throws Exception {
 
 		this(session, resizer, QueueAddress.RESIZE_REQUEST.toString(), QueueAddress.HASH_REQUEST.toString(),
 				new QueryMessage(session, QueueAddress.REPOSITORY_QUERY));
@@ -94,7 +94,7 @@ public class ArtemisResizeRequestConsumer implements MessageHandler {
 	 * @throws Exception
 	 *             if the setup for {@link QueryMessage} failed
 	 */
-	public ArtemisResizeRequestConsumer(ClientSession session, ImageResizer resizer, String inAddress, String outAddress) throws Exception {
+	public ResizerNode(ClientSession session, ImageResizer resizer, String inAddress, String outAddress) throws Exception {
 
 		this(session, resizer, inAddress, outAddress, new QueryMessage(session, QueueAddress.REPOSITORY_QUERY));
 	}
@@ -115,7 +115,7 @@ public class ArtemisResizeRequestConsumer implements MessageHandler {
 	 * @throws Exception
 	 *             if the setup for {@link QueryMessage} failed
 	 */
-	protected ArtemisResizeRequestConsumer(ClientSession session, ImageResizer resizer, String requestAddress, String resultAddress,
+	protected ResizerNode(ClientSession session, ImageResizer resizer, String requestAddress, String resultAddress,
 			QueryMessage queryMessage) throws Exception {
 
 		this.session = session;

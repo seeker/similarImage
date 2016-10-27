@@ -38,9 +38,9 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.image.ImageResizer;
-import com.github.dozedoff.similarImage.messaging.ArtemisHashRequestConsumer;
+import com.github.dozedoff.similarImage.messaging.HasherNode;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue;
-import com.github.dozedoff.similarImage.messaging.ArtemisResizeRequestConsumer;
+import com.github.dozedoff.similarImage.messaging.ResizerNode;
 import com.github.dozedoff.similarImage.messaging.ArtemisSession;
 
 import net.sourceforge.argparse4j.ArgumentParsers;
@@ -62,8 +62,8 @@ public class ArgumentPasrser {
 	private static final int DEFAULT_ARTEMIS_CORE_PORT = 61616;
 	private static final String DEFAULT_IP = "127.0.0.1";
 
-	private final List<ArtemisHashRequestConsumer> hashWorkers = new LinkedList<ArtemisHashRequestConsumer>();
-	private final List<ArtemisResizeRequestConsumer> resizeWorkers = new LinkedList<ArtemisResizeRequestConsumer>();
+	private final List<HasherNode> hashWorkers = new LinkedList<HasherNode>();
+	private final List<ResizerNode> resizeWorkers = new LinkedList<ResizerNode>();
 
 	private enum CommandLineOptions {
 		path, update,
@@ -190,7 +190,7 @@ public class ArgumentPasrser {
 		for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
 			LOGGER.info("Starting hash worker {} ...", i);
 			try {
-				ArtemisHashRequestConsumer consumer = new ArtemisHashRequestConsumer(session.getSession(), new ImagePHash(),
+				HasherNode consumer = new HasherNode(session.getSession(), new ImagePHash(),
 						ArtemisQueue.QueueAddress.HASH_REQUEST.toString(), ArtemisQueue.QueueAddress.RESULT.toString());
 				hashWorkers.add(consumer);
 			} catch (ActiveMQException e) {
@@ -203,7 +203,7 @@ public class ArgumentPasrser {
 		for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
 			LOGGER.info("Starting resize worker {} ...", i);
 			try {
-				ArtemisResizeRequestConsumer arrc = new ArtemisResizeRequestConsumer(session.getSession(), new ImageResizer(32));
+				ResizerNode arrc = new ResizerNode(session.getSession(), new ImageResizer(32));
 				resizeWorkers.add(arrc);
 			} catch (Exception e) {
 				LOGGER.warn("Failed to create resize consumer: {} cause:", e.toString(), e.getCause().getMessage());
@@ -212,10 +212,10 @@ public class ArgumentPasrser {
 	}
 
 	private class CleanupWorkersOnShutdown extends Thread {
-		private final List<ArtemisHashRequestConsumer> hashWorkers;
-		private final List<ArtemisResizeRequestConsumer> resizeWorkers;
+		private final List<HasherNode> hashWorkers;
+		private final List<ResizerNode> resizeWorkers;
 
-		public CleanupWorkersOnShutdown(List<ArtemisHashRequestConsumer> hashWorkers, List<ArtemisResizeRequestConsumer> resizeWorker) {
+		public CleanupWorkersOnShutdown(List<HasherNode> hashWorkers, List<ResizerNode> resizeWorker) {
 			super("Shutdown Hook");
 			this.hashWorkers = hashWorkers;
 			this.resizeWorkers = resizeWorker;
@@ -225,11 +225,11 @@ public class ArgumentPasrser {
 		public void run() {
 			LOGGER.info("Shutting down...");
 
-			for (ArtemisHashRequestConsumer worker : this.hashWorkers) {
+			for (HasherNode worker : this.hashWorkers) {
 				worker.stop();
 			}
 
-			for (ArtemisResizeRequestConsumer worker : this.resizeWorkers) {
+			for (ResizerNode worker : this.resizeWorkers) {
 				worker.stop();
 			}
 		}

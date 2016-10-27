@@ -39,7 +39,7 @@ import com.github.dozedoff.similarImage.messaging.MessageFactory.MessageProperty
 
 @SuppressWarnings("deprecation")
 @RunWith(MockitoJUnitRunner.class)
-public class ArtemisHashRequestConsumerTest extends MessagingBaseTest {
+public class HasherNodeTest extends MessagingBaseTest {
 	private static final String TEST_ADDRESS_REQUEST = "test_request";
 	private static final String TEST_ADDRESS_RESULT = "test_result";
 	private static final String TEST_PATH = "foo";
@@ -49,14 +49,14 @@ public class ArtemisHashRequestConsumerTest extends MessagingBaseTest {
 	@Mock
 	private ImagePHash hasher;
 
-	private ArtemisHashRequestConsumer cut;
+	private HasherNode cut;
 
 	@Before
 	public void setUp() throws Exception {
 		when(hasher.getLongHashScaledImage(any(BufferedImage.class))).thenReturn(TEST_HASH);
 		message = new MockMessageBuilder().configureHashRequestMessage().build();
 		
-		cut = new ArtemisHashRequestConsumer(session, hasher, TEST_ADDRESS_REQUEST, TEST_ADDRESS_RESULT);
+		cut = new HasherNode(session, hasher, TEST_ADDRESS_REQUEST, TEST_ADDRESS_RESULT);
 	}
 
 	@Test

@@ -39,8 +39,8 @@ import com.github.dozedoff.similarImage.util.MessagingUtil;
  * @author Nicholas Wright
  *
  */
-public class ArtemisHashRequestConsumer implements MessageHandler {
-	private static final Logger LOGGER = LoggerFactory.getLogger(ArtemisHashRequestConsumer.class);
+public class HasherNode implements MessageHandler {
+	private static final Logger LOGGER = LoggerFactory.getLogger(HasherNode.class);
 
 	private final ClientConsumer consumer;
 	private final ClientProducer producer;
@@ -62,7 +62,7 @@ public class ArtemisHashRequestConsumer implements MessageHandler {
 	 * @throws ActiveMQException
 	 *             if there is an error with the queue
 	 */
-	public ArtemisHashRequestConsumer(ClientSession session, ImagePHash hasher, String requestAddress, String resultAddress)
+	public HasherNode(ClientSession session, ImagePHash hasher, String requestAddress, String resultAddress)
 			throws ActiveMQException {
 		this.hasher = hasher;
 		this.session = session;

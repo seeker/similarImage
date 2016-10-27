@@ -68,8 +68,8 @@ import com.j256.ormlite.dao.DaoManager;
 
 @RunWith(MockitoJUnitRunner.class)
 public class MessagingIT {
-	private static List<ArtemisHashRequestConsumer> ahrcs = new LinkedList<>();
-	private static List<ArtemisResizeRequestConsumer> arrcs = new LinkedList<>();
+	private static List<HasherNode> ahrcs = new LinkedList<>();
+	private static List<ResizerNode> arrcs = new LinkedList<>();
 
 	private static final int LARGE_MESSAGE_SIZE_THRESHOLD = 1024 * 1024;
 	private static final int RESIZE_SIZE = 32;
@@ -149,8 +149,8 @@ public class MessagingIT {
 		QueryMessage queryMessage = new QueryMessage(as.getSession(), queryQueue);
 		RepositoryNode queryResponder = new RepositoryNode(as.getSession(), queryQueue, pendingRepo, imageRepository);
 
-		new ArtemisHashRequestConsumer(as.getSession(), new ImagePHash(), hashQueue, resultQueue);
-		new ArtemisResizeRequestConsumer(as.getSession(), new ImageResizer(RESIZE_SIZE), resizeQueue, hashQueue, queryMessage);
+		new HasherNode(as.getSession(), new ImagePHash(), hashQueue, resultQueue);
+		new ResizerNode(as.getSession(), new ImageResizer(RESIZE_SIZE), resizeQueue, hashQueue, queryMessage);
 
 		ExtendedAttributeQuery eaQuery = new ExtendedAttributeDirectoryCache(new ExtendedAttribute(), 1, TimeUnit.MINUTES);
 		ahp = new ArtemisHashProducer(as.getSession(), resizeQueue);
@@ -178,7 +178,7 @@ public class MessagingIT {
 		RepositoryNode queryResponder = new RepositoryNode(as.getSession(), queryQueue, pendingRepo, imageRepository);
 
 		ArtemisHashProducer ahp = new ArtemisHashProducer(as.getSession(), resizeQueue, queryMessage);
-		ArtemisResizeRequestConsumer arrc = new ArtemisResizeRequestConsumer(as.getSession(), new ImageResizer(RESIZE_SIZE), resizeQueue,
+		ResizerNode arrc = new ResizerNode(as.getSession(), new ImageResizer(RESIZE_SIZE), resizeQueue,
 				hashQueue, queryMessage);
 
 		ClientConsumer checkConsumer = noDupe.createConsumer(hashQueue, true);
