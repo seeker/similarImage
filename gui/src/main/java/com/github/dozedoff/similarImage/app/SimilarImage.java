@@ -111,7 +111,8 @@ public class SimilarImage {
 
 		ServerLocator locator = ActiveMQClient
 				.createServerLocatorWithoutHA(new TransportConfiguration(InVMConnectorFactory.class.getName()))
-				.setCacheLargeMessagesClient(false).setMinLargeMessageSize(LARGE_MESSAGE_SIZE_THRESHOLD).setBlockOnNonDurableSend(false);
+				.setCacheLargeMessagesClient(false).setMinLargeMessageSize(LARGE_MESSAGE_SIZE_THRESHOLD)
+				.setBlockOnNonDurableSend(false).setBlockOnDurableSend(false).setPreAcknowledge(true);
 
 		ArtemisSession as = new ArtemisSession(locator);
 

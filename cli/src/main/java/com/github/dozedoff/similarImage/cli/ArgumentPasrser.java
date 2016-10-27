@@ -159,7 +159,8 @@ public class ArgumentPasrser {
 		ServerLocator locator = ActiveMQClient
 				.createServerLocatorWithoutHA(new TransportConfiguration(NettyConnectorFactory.class.getName(), params))
 				.setCacheLargeMessagesClient(false).setMinLargeMessageSize(LARGE_MESSAGE_SIZE_THRESHOLD)
-				.setBlockOnNonDurableSend(false).setPreAcknowledge(true).setReconnectAttempts(3);
+				.setBlockOnNonDurableSend(false).setBlockOnDurableSend(false).setPreAcknowledge(true)
+				.setReconnectAttempts(3);
 
 		try (ArtemisSession session = new ArtemisSession(locator);) {
 			if (parsedArgs.getBoolean("resize")) {
