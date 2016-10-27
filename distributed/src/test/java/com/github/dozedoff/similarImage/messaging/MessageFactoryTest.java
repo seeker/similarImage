@@ -36,6 +36,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.github.dozedoff.similarImage.db.PendingHashImage;
 import com.github.dozedoff.similarImage.messaging.MessageFactory.MessageProperty;
 import com.github.dozedoff.similarImage.messaging.MessageFactory.QueryType;
+import com.github.dozedoff.similarImage.messaging.MessageFactory.TaskType;
 
 @RunWith(MockitoJUnitRunner.class)
 public class MessageFactoryTest extends MessagingBaseTest {
@@ -48,11 +49,9 @@ public class MessageFactoryTest extends MessagingBaseTest {
 
 	@Before
 	public void setUp() throws Exception {
-		when(session.createMessage(true))
-				.thenReturn(new ClientMessageImpl(ClientMessageImpl.DEFAULT_TYPE, true, 0, 0, (byte) 0, 0));
+		when(session.createMessage(true)).thenReturn(new ClientMessageImpl(ClientMessageImpl.DEFAULT_TYPE, true, 0, 0, (byte) 0, 0));
 
-		when(session.createMessage(false))
-				.thenReturn(new ClientMessageImpl(ClientMessageImpl.DEFAULT_TYPE, false, 0, 0, (byte) 0, 0));
+		when(session.createMessage(false)).thenReturn(new ClientMessageImpl(ClientMessageImpl.DEFAULT_TYPE, false, 0, 0, (byte) 0, 0));
 
 		cut = new MessageFactory(session);
 	}
@@ -70,14 +69,21 @@ public class MessageFactoryTest extends MessagingBaseTest {
 
 		byte[] data = new byte[IMAGE_DATA.length];
 		result.getBodyBuffer().readBytes(data);
-		
+
 		assertArrayEquals(data, IMAGE_DATA);
+	}
+
+	@Test
+	public void testResultMessageTask() throws Exception {
+		ClientMessage result = cut.resultMessage(HASH, TRACKING_ID);
+
+		assertThat(result.getStringProperty(MessageProperty.task.toString()), is(TaskType.result.toString()));
 	}
 
 	@Test
 	public void testResultMessageTrackingId() throws Exception {
 		ClientMessage result = cut.resultMessage(HASH, TRACKING_ID);
-		
+
 		assertThat(result.getIntProperty(MessageFactory.TRACKING_PROPERTY_NAME), is(TRACKING_ID));
 	}
 
@@ -92,8 +98,7 @@ public class MessageFactoryTest extends MessagingBaseTest {
 	public void testPendingImageQuery() throws Exception {
 		ClientMessage result = cut.pendingImageQuery();
 
-		assertThat(result.getStringProperty(MessageFactory.QUERY_PROPERTY_NAME),
-				is(MessageFactory.QUERY_PROPERTY_VALUE_PENDING));
+		assertThat(result.getStringProperty(MessageFactory.QUERY_PROPERTY_NAME), is(MessageFactory.QUERY_PROPERTY_VALUE_PENDING));
 	}
 
 	@Test
@@ -115,5 +120,19 @@ public class MessageFactoryTest extends MessagingBaseTest {
 		ClientMessage result = cut.trackPathQuery(PATH);
 
 		assertThat(result.getBodyBuffer().readString(), is(PATH.toString()));
+	}
+
+	@Test
+	public void testCorruptMessagePath() throws Exception {
+		ClientMessage result = cut.corruptMessage(PATH);
+
+		assertThat(result.getStringProperty(MessageProperty.path.toString()), is(PATH.toString()));
+	}
+
+	@Test
+	public void testCorruptMessageTask() throws Exception {
+		ClientMessage result = cut.corruptMessage(PATH);
+
+		assertThat(result.getStringProperty(MessageProperty.task.toString()), is(TaskType.corr.toString()));
 	}
 }

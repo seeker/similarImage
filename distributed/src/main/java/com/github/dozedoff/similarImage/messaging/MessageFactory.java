@@ -37,13 +37,11 @@ import com.github.dozedoff.similarImage.db.PendingHashImage;
  */
 public class MessageFactory {
 
-
-
 	/**
 	 * Property name in the message
 	 */
 	public enum MessageProperty {
-		repository_query, id, hashResult
+		repository_query, id, hashResult, task, path
 	}
 
 	/**
@@ -51,6 +49,13 @@ public class MessageFactory {
 	 */
 	public enum QueryType {
 		pending, TRACK
+	};
+
+	/**
+	 * What kind of task this message represents
+	 */
+	public enum TaskType {
+		hash, corr, result
 	};
 
 	/**
@@ -96,6 +101,10 @@ public class MessageFactory {
 		message.putStringProperty(MessageProperty.repository_query.toString(), type.toString());
 	}
 
+	private void setTaskType(ClientMessage message, TaskType task) {
+		message.putStringProperty(MessageProperty.task.toString(), task.toString());
+	}
+
 	/**
 	 * Create a new message for a hashing request.
 	 * 
@@ -126,8 +135,25 @@ public class MessageFactory {
 	public ClientMessage resultMessage(long hash, int trackingId) {
 		ClientMessage message = session.createMessage(true);
 
-		message.putIntProperty(TRACKING_PROPERTY_NAME, trackingId);
-		message.putLongProperty(HASH_PROPERTY_NAME, hash);
+		setTaskType(message, TaskType.result);
+		message.putIntProperty(MessageProperty.id.toString(), trackingId);
+		message.putLongProperty(MessageProperty.hashResult.toString(), hash);
+
+		return message;
+	}
+
+	/**
+	 * Create a new message for a corrupt image.
+	 * 
+	 * @param path
+	 *            of the corrupt image
+	 * @return configured message
+	 */
+	public ClientMessage corruptMessage(Path path) {
+		ClientMessage message = session.createMessage(true);
+
+		message.putStringProperty(MessageProperty.path.toString(), path.toString());
+		message.putStringProperty(MessageProperty.task.toString(), TaskType.corr.toString());
 
 		return message;
 	}
@@ -139,9 +165,9 @@ public class MessageFactory {
 	 */
 	public ClientMessage pendingImageQuery() {
 		ClientMessage message = session.createMessage(false);
-		
+
 		message.putStringProperty(QUERY_PROPERTY_NAME, QUERY_PROPERTY_VALUE_PENDING);
-		
+
 		return message;
 	}
 
@@ -155,14 +181,13 @@ public class MessageFactory {
 	 *             if there was an error writing the object stream
 	 */
 	public ClientMessage pendingImageResponse(List<PendingHashImage> pendingImages) throws IOException {
-		List<String> pendingPaths= new LinkedList<String>();
-		
-		for(PendingHashImage p : pendingImages) {
+		List<String> pendingPaths = new LinkedList<String>();
+
+		for (PendingHashImage p : pendingImages) {
 			pendingPaths.add(p.getPath());
 		}
-		
-		try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-				ObjectOutputStream oos = new ObjectOutputStream(baos);) {
+
+		try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); ObjectOutputStream oos = new ObjectOutputStream(baos);) {
 			ClientMessage message = session.createMessage(false);
 
 			oos.writeObject(pendingPaths);

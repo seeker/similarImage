@@ -30,21 +30,58 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.similarImage.db.PendingHashImage;
+import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
+import com.github.dozedoff.similarImage.messaging.MessageFactory.MessageProperty;
 import com.github.dozedoff.similarImage.messaging.MessageFactory.QueryType;
 
-public class QueryResponder implements MessageHandler {
-	private static final Logger LOGGER = LoggerFactory.getLogger(QueryResponder.class);
+/**
+ * This node connects to repositories. Used for storing hash results and answering query messages.
+ */
+public class RepositoryNode implements MessageHandler {
+	private static final Logger LOGGER = LoggerFactory.getLogger(RepositoryNode.class);
 
 	private static final String REPOSITORY_ERROR_MESSAGE = "Failed to access repository:{}, cause:{}";
 	private static final String RESPONSE_SEND_ERROR = "Failed to send response message: {}";
 
 	private final ClientConsumer consumer;
+	private final ClientConsumer taskConsumer;
 	private final ClientProducer producer;
 	private final PendingHashImageRepository pendingRepository;
+	private final ImageRepository imageRepository;
 	private final MessageFactory messageFactory;
+
+	/**
+	 * Create a instance using the given instance and repository
+	 * 
+	 * @param session
+	 *            to use for messages
+	 * @param queryAddress
+	 *            to use for listening to queries
+	 * @param taskAddress
+	 *            address for listening to tasks
+	 * @param pendingRepository
+	 *            for pending file queries
+	 * @param imageRepository
+	 *            for storing hash results
+	 * @throws ActiveMQException
+	 *             if there is an error setting up messaging
+	 */
+	public RepositoryNode(ClientSession session, String queryAddress, String taskAddress, PendingHashImageRepository pendingRepository,
+			ImageRepository imageRepository) throws ActiveMQException {
+
+		this.consumer = session.createConsumer(queryAddress);
+		this.taskConsumer = session.createConsumer(taskAddress, MessageProperty.task.toString() + " IS NOT NULL");
+		this.taskConsumer.setMessageHandler(new TaskMessageHandler(pendingRepository, imageRepository));
+		this.producer = session.createProducer();
+		this.pendingRepository = pendingRepository;
+		this.imageRepository = imageRepository;
+		this.consumer.setMessageHandler(this);
+		messageFactory = new MessageFactory(session);
+		LOGGER.info("Listening to request messages on {} ...", queryAddress);
+	}
 
 	/**
 	 * Create a instance using the given instance and repository
@@ -55,18 +92,17 @@ public class QueryResponder implements MessageHandler {
 	 *            to use for listening to queries
 	 * @param pendingRepository
 	 *            for pending file queries
+	 * @param imageRepository
+	 *            for storing hash results
 	 * @throws ActiveMQException
 	 *             if there is an error setting up messaging
+	 * @deprecated Use one of the other constructors
 	 */
-	public QueryResponder(ClientSession session, String queryAddress, PendingHashImageRepository pendingRepository)
-			throws ActiveMQException {
+	@Deprecated
+	public RepositoryNode(ClientSession session, String queryAddress, PendingHashImageRepository pendingRepository,
+			ImageRepository imageRepository) throws ActiveMQException {
 
-		this.consumer = session.createConsumer(queryAddress);
-		this.producer = session.createProducer();
-		this.pendingRepository = pendingRepository;
-		this.consumer.setMessageHandler(this);
-		messageFactory = new MessageFactory(session);
-		LOGGER.info("Listening to request messages on {} ...", queryAddress);
+		this(session, queryAddress, QueueAddress.RESULT.toString(), pendingRepository, imageRepository);
 	}
 
 	/**
@@ -79,8 +115,9 @@ public class QueryResponder implements MessageHandler {
 	 * @throws ActiveMQException
 	 *             if there is an error setting up messaging
 	 */
-	public QueryResponder(ClientSession session, PendingHashImageRepository pendingRepository) throws ActiveMQException {
-		this(session, QueueAddress.REPOSITORY_QUERY.toString(), pendingRepository);
+	public RepositoryNode(ClientSession session, PendingHashImageRepository pendingRepository, ImageRepository imageRepository)
+			throws ActiveMQException {
+		this(session, QueueAddress.REPOSITORY_QUERY.toString(), QueueAddress.RESULT.toString(), pendingRepository, imageRepository);
 	}
 
 	private String getReplyReturnAddress(ClientMessage message) {
@@ -125,7 +162,7 @@ public class QueryResponder implements MessageHandler {
 					if (pendingRepository.store(pending)) {
 						pendingId = pending.getId();
 					}
-					
+
 					ClientMessage response = messageFactory.trackPathResponse(pendingId);
 					producer.send(getReplyReturnAddress(message), response);
 					LOGGER.trace("Sent tracking id query response with id {}", pendingId);
@@ -141,4 +178,5 @@ public class QueryResponder implements MessageHandler {
 			LOGGER.warn("Received non query message. Properties: {}", message.getPropertyNames());
 		}
 	}
+
 }
