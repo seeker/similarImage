@@ -18,6 +18,7 @@
 package com.github.dozedoff.similarImage.db.repository;
 
 import java.util.List;
+import java.util.UUID;
 
 import com.github.dozedoff.similarImage.db.PendingHashImage;
 
@@ -46,25 +47,27 @@ public interface PendingHashImageRepository {
 	boolean exists(PendingHashImage image) throws RepositoryException;
 
 	/**
-	 * Remove an image via id.
+	 * Query a {@link PendingHashImage} by {@link UUID}
 	 * 
-	 * @param id
-	 *            of the image to remove
-	 * @throws RepositoryException
-	 *             if there is an error accessing the datasource
-	 */
-	void removeById(int id) throws RepositoryException;
-
-	/**
-	 * Query a {@link PendingHashImage} by id.
-	 * 
-	 * @param id
-	 *            to query
+	 * @param most
+	 *            most significant bits
+	 * @param least
+	 *            least significant bits
 	 * @return {@link PendingHashImage}, if found otherwise null.
 	 * @throws RepositoryException
 	 *             if there is an error accessing the datasource
 	 */
-	PendingHashImage getById(int id) throws RepositoryException;
+	PendingHashImage getByUUID(long most, long least) throws RepositoryException;
+
+	/**
+	 * Remove a image from the datasource.
+	 * 
+	 * @param image
+	 *            to remove
+	 * @throws RepositoryException
+	 *             if there is an error accessing the datasource
+	 */
+	void remove(PendingHashImage image) throws RepositoryException;
 
 	/**
 	 * Get all {@link PendingHashImage} entries
