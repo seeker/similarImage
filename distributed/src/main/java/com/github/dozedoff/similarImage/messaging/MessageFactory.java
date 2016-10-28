@@ -24,6 +24,7 @@ import java.io.ObjectOutputStream;
 import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.UUID;
 
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
@@ -42,7 +43,13 @@ public class MessageFactory {
 	 * Property name in the message
 	 */
 	public enum MessageProperty {
-		repository_query, id, hashResult, task, path
+		repository_query,
+
+		/**
+		 * @deprecated Use UUIDs messages from {@link MessageFactory#trackPath(Path, UUID)} instead.
+		 */
+		@Deprecated
+		id, hashResult, task, path
 	}
 
 	/**
@@ -56,7 +63,7 @@ public class MessageFactory {
 	 * What kind of task this message represents
 	 */
 	public enum TaskType {
-		hash, corr, result, eaupdate
+		hash, corr, result, eaupdate, track
 	};
 
 	/**
@@ -208,7 +215,9 @@ public class MessageFactory {
 	 * @param path
 	 *            to query and track
 	 * @return configured message
+	 * @deprecated Use UUID tracking messages from {@link MessageFactory#trackPath(Path, UUID)} instead.
 	 */
+	@Deprecated
 	public ClientMessage trackPathQuery(Path path) {
 		ClientMessage message = session.createMessage(false);
 		setQueryType(message, QueryType.TRACK);
@@ -224,11 +233,33 @@ public class MessageFactory {
 	 * @param trackingId
 	 *            for the path in the query
 	 * @return configured message
+	 * @deprecated Use UUID tracking messages from {@link MessageFactory#trackPath(Path, UUID)} instead.
 	 */
+	@Deprecated
 	public ClientMessage trackPathResponse(int trackingId) {
 		ClientMessage message = session.createMessage(false);
 
 		message.getBodyBuffer().writeInt(trackingId);
+
+		return message;
+	}
+
+	/**
+	 * Create a message to track a path with the given {@link UUID}
+	 * 
+	 * @param path
+	 *            to track
+	 * @param uuid
+	 *            for this path
+	 * @return configured message
+	 */
+	public ClientMessage trackPath(Path path, UUID uuid) {
+		ClientMessage message = session.createMessage(false);
+
+		setTaskType(message, TaskType.track);
+		setPath(message, path);
+		message.getBodyBuffer().writeLong(uuid.getMostSignificantBits());
+		message.getBodyBuffer().writeLong(uuid.getLeastSignificantBits());
 
 		return message;
 	}

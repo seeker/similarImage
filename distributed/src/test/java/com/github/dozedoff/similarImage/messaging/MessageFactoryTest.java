@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.UUID;
 
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.apache.activemq.artemis.core.client.impl.ClientMessageImpl;
@@ -33,7 +34,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.db.PendingHashImage;
@@ -41,12 +41,14 @@ import com.github.dozedoff.similarImage.messaging.MessageFactory.MessageProperty
 import com.github.dozedoff.similarImage.messaging.MessageFactory.QueryType;
 import com.github.dozedoff.similarImage.messaging.MessageFactory.TaskType;
 
+@SuppressWarnings("deprecation")
 @RunWith(MockitoJUnitRunner.class)
 public class MessageFactoryTest extends MessagingBaseTest {
 	private static final int TRACKING_ID = 42;
 	private static final long HASH = 12L;
 	private static final byte[] IMAGE_DATA = { 0, 1, 2, 3, 4 };
 	private static final Path PATH = Paths.get("foo");
+	private static final UUID UUID = new UUID(1, 2);
 
 	@Mock
 	private InputStream is;
@@ -175,5 +177,29 @@ public class MessageFactoryTest extends MessagingBaseTest {
 		ClientMessage result = cut.resizeRequest(PATH, is);
 
 		assertThat(result.getStringProperty(MessageProperty.task.toString()), is(TaskType.hash.toString()));
+	}
+
+	@Test
+	public void testTrackPathPathProperty() throws Exception {
+		ClientMessage result = cut.trackPath(PATH, UUID);
+
+		assertThat(result.getStringProperty(MessageProperty.path.toString()), is(PATH.toString()));
+	}
+
+	@Test
+	public void testTrackPathTaskProperty() throws Exception {
+		ClientMessage result = cut.trackPath(PATH, UUID);
+
+		assertThat(result.getStringProperty(MessageProperty.task.toString()), is(TaskType.track.toString()));
+	}
+
+	@Test
+	public void testTrackPathMessageBody() throws Exception {
+		ClientMessage result = cut.trackPath(PATH, UUID);
+
+		long most = result.getBodyBuffer().readLong();
+		long least = result.getBodyBuffer().readLong();
+
+		assertThat(new UUID(most, least), is(UUID));
 	}
 }
