@@ -28,6 +28,7 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.Arrays;
 
 import javax.imageio.IIOException;
 
@@ -48,6 +49,7 @@ import com.github.dozedoff.similarImage.messaging.MessageFactory.MessageProperty
 public class ResizerNodeTest extends MessagingBaseTest {
 	private static final String REQUEST_ADDRESS = "request";
 	private static final String RESULT_ADDRESS = "result";
+	private static final String PATH = "bar";
 
 	@Mock
 	private ImageResizer resizer;
@@ -67,6 +69,7 @@ public class ResizerNodeTest extends MessagingBaseTest {
 		when(pendingRepo.store(any(PendingHashImage.class))).thenReturn(true);
 		when(pendingRepo.exists(any(PendingHashImage.class))).thenReturn(false);
 		when(resizer.resize(any(InputStream.class))).thenReturn(new byte[0]);
+		when(queryMessage.pendingImagePaths()).thenReturn(Arrays.asList(PATH));
 
 		cut = new ResizerNode(session, resizer, REQUEST_ADDRESS, RESULT_ADDRESS, queryMessage);
 		messageBuilder = new MockMessageBuilder();
@@ -136,7 +139,7 @@ public class ResizerNodeTest extends MessagingBaseTest {
 
 		cut.onMessage(message);
 
-		verify(producer,never()).send(any(ClientMessage.class));
+		verify(producer, never()).send(any(ClientMessage.class));
 	}
 
 	@Test
@@ -165,6 +168,15 @@ public class ResizerNodeTest extends MessagingBaseTest {
 	public void testDuplicateImage() throws Exception {
 		message = messageBuilder.configureResizeMessage().build();
 		when(queryMessage.trackPath(any(Path.class))).thenReturn(-1);
+
+		cut.onMessage(message);
+
+		verify(producer, never()).send(any(ClientMessage.class));
+	}
+
+	@Test
+	public void testDuplicatePreLoaded() throws Exception {
+		message = messageBuilder.configureResizeMessage().addProperty(MessageProperty.path.toString(), PATH).build();
 
 		cut.onMessage(message);
 

@@ -121,25 +121,25 @@ public class SimilarImage {
 		PendingHashImageRepository pendingRepo = new OrmlitePendingHashImage(
 				DaoManager.createDao(database.getCs(), PendingHashImage.class));
 
-		for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
-			ahrcs.add(new HasherNode(as.getSession(), new ImagePHash(), QueueAddress.HASH_REQUEST.toString(),
-					QueueAddress.RESULT.toString()));
-			arrcs.add(new ResizerNode(as.getSession(), new ImageResizer(RESIZE_SIZE)));
-		}
-
 		RepositoryFactory repositoryFactory = new OrmliteRepositoryFactory(database);
 
 		ImageRepository imageRepository = repositoryFactory.buildImageRepository();
 		FilterRepository filterRepository = repositoryFactory.buildFilterRepository();
 		TagRepository tagRepository = repositoryFactory.buildTagRepository();
 
-		ExtendedAttributeQuery eaQuery = new ExtendedAttributeDirectoryCache(new ExtendedAttribute(), 1, TimeUnit.MINUTES);
 		rn = new RepositoryNode(as.getSession(), pendingRepo, imageRepository);
+
+		for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
+			ahrcs.add(new HasherNode(as.getSession(), new ImagePHash(), QueueAddress.HASH_REQUEST.toString(),
+					QueueAddress.RESULT.toString()));
+			arrcs.add(new ResizerNode(as.getSession(), new ImageResizer(RESIZE_SIZE)));
+		}
 
 		DuplicateOperations dupOps = new DuplicateOperations(filterRepository, tagRepository, imageRepository);
 		SorterFactory sf = new SorterFactory(imageRepository, filterRepository, tagRepository);
 
 		statistics = new Statistics();
+		ExtendedAttributeQuery eaQuery = new ExtendedAttributeDirectoryCache(new ExtendedAttribute(), 1, TimeUnit.MINUTES);
 		HandlerListFactory hlf = new HandlerListFactory(imageRepository, statistics, as, eaQuery);
 		UserTagSettingController utsc = new UserTagSettingController(tagRepository);
 

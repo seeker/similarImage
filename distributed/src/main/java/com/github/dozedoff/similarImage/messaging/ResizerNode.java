@@ -23,6 +23,8 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import javax.imageio.IIOException;
@@ -42,6 +44,8 @@ import com.github.dozedoff.similarImage.image.ImageResizer;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.util.ImageUtil;
 import com.github.dozedoff.similarImage.util.MessagingUtil;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 
 import at.dhyan.open_imaging.GifDecoder;
 import at.dhyan.open_imaging.GifDecoder.GifImage;
@@ -56,6 +60,7 @@ public class ResizerNode implements MessageHandler {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ResizerNode.class);
 
 	private static final String DUPLICATE_MESSAGE = "Image {} is already in the hashing queue, discarding";
+	private static final String DUMMY = "";
 
 	private final ClientConsumer consumer;
 	private final ClientProducer producer;
@@ -63,6 +68,8 @@ public class ResizerNode implements MessageHandler {
 	private final ImageResizer resizer;
 	private MessageFactory messageFactory;
 	private QueryMessage queryMessage;
+
+	private final Cache<String, String> pendingCache;
 
 	/**
 	 * Create a new consumer for hash messages. Uses the default addresses for queues.
@@ -124,8 +131,19 @@ public class ResizerNode implements MessageHandler {
 		this.resizer = resizer;
 		this.messageFactory = new MessageFactory(session);
 		this.queryMessage = queryMessage;
+		this.pendingCache = CacheBuilder.newBuilder().expireAfterAccess(5, TimeUnit.MINUTES).build();
 
 		this.consumer.setMessageHandler(this);
+
+		preLoadCache();
+	}
+
+	private void preLoadCache() throws Exception {
+		List<String> pending = queryMessage.pendingImagePaths();
+		LOGGER.info("Pre loading cache with {} pending paths", pending.size());
+		for (String path : pending) {
+			pendingCache.put(path, DUMMY);
+		}
 	}
 
 	/**
@@ -163,6 +181,11 @@ public class ResizerNode implements MessageHandler {
 			pathPropterty = message.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY);
 			LOGGER.debug("Resize request for image {}", pathPropterty);
 
+			if (pendingCache.getIfPresent(pathPropterty) != null) {
+				LOGGER.trace("{} found in cache, skipping...", pathPropterty);
+				return;
+			}
+
 			Path path = Paths.get(pathPropterty);
 			ByteBuffer buffer = ByteBuffer.allocate(message.getBodySize());
 			message.getBodyBuffer().readBytes(buffer);
@@ -184,8 +207,10 @@ public class ResizerNode implements MessageHandler {
 				LOGGER.trace("Sending hash request with id {} instead of path {}", trackingId, path);
 				producer.send(response);
 			} else {
-				LOGGER.warn(DUPLICATE_MESSAGE);
+				LOGGER.warn(DUPLICATE_MESSAGE, path);
 			}
+
+			pendingCache.put(pathPropterty, DUMMY);
 		} catch (ActiveMQException e) {
 			LOGGER.error("Failed to send message: {}", e.toString());
 		} catch (IIOException | ArrayIndexOutOfBoundsException ie) {
@@ -199,7 +224,7 @@ public class ResizerNode implements MessageHandler {
 		} catch (RepositoryException e) {
 			LOGGER.warn("Failed to store pending image entry: {}, cause: {}", e.toString(), e.getCause().getMessage());
 		} catch (TimeoutException e) {
-			LOGGER.warn("Failed to get tracking id for {} because the query timed out");
+			LOGGER.warn("Failed to get tracking id because the query timed out");
 		} catch (Exception e) {
 			LOGGER.error("Unhandled exception: {}", e.toString());
 		}
