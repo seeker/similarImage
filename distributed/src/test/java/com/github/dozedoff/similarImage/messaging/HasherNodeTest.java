@@ -25,6 +25,7 @@ import static org.mockito.Mockito.when;
 
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
+import java.util.UUID;
 
 import javax.imageio.IIOException;
 
@@ -44,16 +45,20 @@ public class HasherNodeTest extends MessagingBaseTest {
 	private static final String TEST_PATH = "foo";
 	private static final long TEST_HASH = 42L;
 	private static final int TEST_ID = 12;
+	private static final byte[] TEST_DATA = { 12, 13, 14, 15, 16 };
+	private static final UUID TEST_UUID = new UUID(12, 42);
 
 	@Mock
 	private ImagePHash hasher;
 
 	private HasherNode cut;
+	private MessageFactory messageFactory;
 
 	@Before
 	public void setUp() throws Exception {
 		when(hasher.getLongHashScaledImage(any(BufferedImage.class))).thenReturn(TEST_HASH);
-		message = new MockMessageBuilder().configureHashRequestMessage().build();
+		messageFactory = new MessageFactory(session);
+		message = messageFactory.hashRequestMessage(TEST_DATA, TEST_UUID);
 
 		cut = new HasherNode(session, hasher, TEST_ADDRESS_REQUEST, TEST_ADDRESS_RESULT);
 	}
@@ -66,18 +71,15 @@ public class HasherNodeTest extends MessagingBaseTest {
 	}
 
 	@Test
-	public void testMessageTrackingIDProperty() throws Exception {
-		when(message.getIntProperty(MessageFactory.TRACKING_PROPERTY_NAME)).thenReturn(TEST_ID);
-		when(message.getBodyBuffer().readLong()).thenReturn(13L, 12L, 0L);
-
+	public void testMessageUuid() throws Exception {
 		cut.onMessage(message);
 
-		assertThat(sessionMessage.getBodyBuffer().readLong(), is(13L));
-		assertThat(sessionMessage.getBodyBuffer().readLong(), is(12L));
+		assertThat(sessionMessage.getBodyBuffer().readLong(), is(TEST_UUID.getMostSignificantBits()));
+		assertThat(sessionMessage.getBodyBuffer().readLong(), is(TEST_UUID.getLeastSignificantBits()));
 	}
 
 	@Test
-	public void testMessageHashProperty() throws Exception {
+	public void testMessageHash() throws Exception {
 		cut.onMessage(message);
 
 		sessionMessage.getBodyBuffer().readLong();
