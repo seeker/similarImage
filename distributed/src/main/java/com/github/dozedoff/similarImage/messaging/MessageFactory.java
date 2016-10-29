@@ -26,6 +26,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 
+import org.apache.activemq.artemis.api.core.ActiveMQBuffer;
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
 
@@ -122,34 +123,40 @@ public class MessageFactory {
 	 * 
 	 * @param resizedImage
 	 *            resized image to be hashed
-	 * @param trackingId
+	 * @param uuid
 	 *            used to track the original path of the image
 	 * @return configured message
 	 */
-	public ClientMessage hashRequestMessage(byte[] resizedImage, int trackingId) {
+	public ClientMessage hashRequestMessage(byte[] resizedImage, UUID uuid) {
 		ClientMessage message = session.createMessage(true);
 
-		message.putIntProperty(TRACKING_PROPERTY_NAME, trackingId);
+		message.getBodyBuffer().writeLong(uuid.getMostSignificantBits());
+		message.getBodyBuffer().writeLong(uuid.getLeastSignificantBits());
 		message.getBodyBuffer().writeBytes(resizedImage);
 
 		return message;
 	}
 
 	/**
-	 * Create a new message for the hashing result
+	 * Create a new message for the hashing result.
 	 * 
 	 * @param hash
 	 *            that was calculated
-	 * @param trackingId
-	 *            used to track the original path of the image
+	 * @param most
+	 *            most significant bits of the {@link UUID}
+	 * @param least
+	 *            least significant bits of the {@link UUID}
 	 * @return configured message
 	 */
-	public ClientMessage resultMessage(long hash, int trackingId) {
+	public ClientMessage resultMessage(long hash, long most, long least) {
 		ClientMessage message = session.createMessage(true);
 
 		setTaskType(message, TaskType.result);
-		message.putIntProperty(MessageProperty.id.toString(), trackingId);
-		message.putLongProperty(MessageProperty.hashResult.toString(), hash);
+		ActiveMQBuffer buffer = message.getBodyBuffer();
+
+		buffer.writeLong(most);
+		buffer.writeLong(least);
+		buffer.writeLong(hash);
 
 		return message;
 	}

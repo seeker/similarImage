@@ -24,8 +24,8 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import javax.imageio.IIOException;
 
@@ -38,7 +38,6 @@ import org.apache.activemq.artemis.api.core.client.MessageHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
 import com.github.dozedoff.similarImage.image.ImageResizer;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
@@ -67,7 +66,6 @@ public class ResizerNode implements MessageHandler {
 	private final ClientSession session;
 	private final ImageResizer resizer;
 	private MessageFactory messageFactory;
-	private QueryMessage queryMessage;
 
 	private final Cache<String, String> pendingCache;
 
@@ -124,21 +122,20 @@ public class ResizerNode implements MessageHandler {
 	 */
 	protected ResizerNode(ClientSession session, ImageResizer resizer, String requestAddress, String resultAddress,
 			QueryMessage queryMessage) throws Exception {
-
+		// TODO replace with list of pending files
 		this.session = session;
 		this.consumer = session.createConsumer(requestAddress);
 		this.producer = session.createProducer(resultAddress);
 		this.resizer = resizer;
 		this.messageFactory = new MessageFactory(session);
-		this.queryMessage = queryMessage;
 		this.pendingCache = CacheBuilder.newBuilder().expireAfterAccess(5, TimeUnit.MINUTES).build();
 
 		this.consumer.setMessageHandler(this);
 
-		preLoadCache();
+		preLoadCache(queryMessage);
 	}
 
-	private void preLoadCache() throws Exception {
+	private void preLoadCache(QueryMessage queryMessage) throws Exception {
 		List<String> pending = queryMessage.pendingImagePaths();
 		LOGGER.info("Pre loading cache with {} pending paths", pending.size());
 		for (String path : pending) {
@@ -154,20 +151,6 @@ public class ResizerNode implements MessageHandler {
 	 */
 	protected final void setMessageFactory(MessageFactory messageFactory) {
 		this.messageFactory = messageFactory;
-	}
-
-	/**
-	 * Set the {@link QueryMessage} of this class. For testing only!
-	 * 
-	 * @param queryMessage
-	 *            to set
-	 */
-	protected void setQueryMessage(QueryMessage queryMessage) {
-		this.queryMessage = queryMessage;
-	}
-
-	private boolean isDuplicatePath(int trackingId) {
-		return trackingId == -1;
 	}
 
 	/**
@@ -200,16 +183,15 @@ public class ResizerNode implements MessageHandler {
 
 			byte[] resizedImageData = resizer.resize(is);
 
-			int trackingId = queryMessage.trackPath(path);
-			if (!isDuplicatePath(trackingId)) {
-				ClientMessage response = messageFactory.hashRequestMessage(resizedImageData, trackingId);
+			UUID uuid = UUID.randomUUID();
+			ClientMessage trackMessage = messageFactory.trackPath(path, uuid);
+			producer.send(QueueAddress.RESULT.toString(), trackMessage);
+			LOGGER.trace("Sent tracking message for {} with UUID {}", pathPropterty, uuid);
 
-				LOGGER.trace("Sending hash request with id {} instead of path {}", trackingId, path);
-				producer.send(response);
-			} else {
-				LOGGER.warn(DUPLICATE_MESSAGE, path);
-			}
+			ClientMessage response = messageFactory.hashRequestMessage(resizedImageData, uuid);
 
+			LOGGER.trace("Sending hash request with id {} instead of path {}", uuid, path);
+			producer.send(response);
 			pendingCache.put(pathPropterty, DUMMY);
 		} catch (ActiveMQException e) {
 			LOGGER.error("Failed to send message: {}", e.toString());
@@ -221,10 +203,6 @@ public class ResizerNode implements MessageHandler {
 			} else {
 				LOGGER.error("Failed to process image: {}", e.toString());
 			}
-		} catch (RepositoryException e) {
-			LOGGER.warn("Failed to store pending image entry: {}, cause: {}", e.toString(), e.getCause().getMessage());
-		} catch (TimeoutException e) {
-			LOGGER.warn("Failed to get tracking id because the query timed out");
 		} catch (Exception e) {
 			LOGGER.error("Unhandled exception: {}", e.toString());
 		}

@@ -35,7 +35,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
-import com.github.dozedoff.similarImage.messaging.MessageFactory.MessageProperty;
 
 @SuppressWarnings("deprecation")
 @RunWith(MockitoJUnitRunner.class)
@@ -55,7 +54,7 @@ public class HasherNodeTest extends MessagingBaseTest {
 	public void setUp() throws Exception {
 		when(hasher.getLongHashScaledImage(any(BufferedImage.class))).thenReturn(TEST_HASH);
 		message = new MockMessageBuilder().configureHashRequestMessage().build();
-		
+
 		cut = new HasherNode(session, hasher, TEST_ADDRESS_REQUEST, TEST_ADDRESS_RESULT);
 	}
 
@@ -69,17 +68,22 @@ public class HasherNodeTest extends MessagingBaseTest {
 	@Test
 	public void testMessageTrackingIDProperty() throws Exception {
 		when(message.getIntProperty(MessageFactory.TRACKING_PROPERTY_NAME)).thenReturn(TEST_ID);
+		when(message.getBodyBuffer().readLong()).thenReturn(13L, 12L, 0L);
 
 		cut.onMessage(message);
 
-		assertThat(sessionMessage.getIntProperty(MessageProperty.id.toString()), is(TEST_ID));
+		assertThat(sessionMessage.getBodyBuffer().readLong(), is(13L));
+		assertThat(sessionMessage.getBodyBuffer().readLong(), is(12L));
 	}
 
 	@Test
 	public void testMessageHashProperty() throws Exception {
 		cut.onMessage(message);
 
-		assertThat(sessionMessage.getLongProperty(MessageFactory.MessageProperty.hashResult.toString()), is(TEST_HASH));
+		sessionMessage.getBodyBuffer().readLong();
+		sessionMessage.getBodyBuffer().readLong();
+
+		assertThat(sessionMessage.getBodyBuffer().readLong(), is(TEST_HASH));
 	}
 
 	@Test

@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.SimpleString;
 import org.apache.activemq.artemis.api.core.TransportConfiguration;
 import org.apache.activemq.artemis.api.core.client.ActiveMQClient;
@@ -67,6 +68,7 @@ import com.github.dozedoff.similarImage.io.ExtendedAttribute;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeDirectoryCache;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.HashAttribute;
+import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.util.TestUtil;
 import com.j256.ormlite.dao.DaoManager;
 
@@ -94,6 +96,8 @@ public class MessagingIT {
 
 	private Duration messageTimeout = new Duration(6, TimeUnit.SECONDS);
 
+	ClientSession queueJanitor;
+
 	@BeforeClass
 	public static void classSetup() throws Exception {
 		workingdir = Files.createTempDirectory("MessageIntegration");
@@ -111,10 +115,6 @@ public class MessagingIT {
 		aes = new ArtemisEmbeddedServer(workingdir);
 		aes.start();
 
-		ServerLocator locator = ActiveMQClient
-				.createServerLocatorWithoutHA(new TransportConfiguration(InVMConnectorFactory.class.getName()))
-				.setCacheLargeMessagesClient(false).setMinLargeMessageSize(LARGE_MESSAGE_SIZE_THRESHOLD).setBlockOnNonDurableSend(false);
-		as = new ArtemisSession(locator);
 	}
 
 	@AfterClass
@@ -133,12 +133,33 @@ public class MessagingIT {
 		Files.copy(testImageAutumnOriginal, testImageAutumn, StandardCopyOption.REPLACE_EXISTING);
 		imageRepository = repositoryFactory.buildImageRepository();
 		pendingRepo = new OrmlitePendingHashImage(DaoManager.createDao(database.getCs(), PendingHashImage.class));
+
+		ServerLocator locator = ActiveMQClient
+				.createServerLocatorWithoutHA(new TransportConfiguration(InVMConnectorFactory.class.getName()))
+				.setCacheLargeMessagesClient(false).setMinLargeMessageSize(LARGE_MESSAGE_SIZE_THRESHOLD).setBlockOnNonDurableSend(false);
+
+		as = new ArtemisSession(locator);
+
+		queueJanitor = as.getSession();
+
+		try {
+			queueJanitor.deleteQueue(QueueAddress.RESULT.toString());
+		} catch (ActiveMQException e) {
+			System.err.println(e.toString());
+		}
+
+		try {
+			queueJanitor.createQueue(QueueAddress.RESULT.toString(), QueueAddress.RESULT.toString());
+		} catch (ActiveMQException e) {
+			System.err.println(e.toString());
+		}
 	}
 
 	@After
 	public void tearDown() throws Exception {
 		database.close();
 		Files.delete(testImageAutumn);
+		as.close();
 	}
 
 	@Test
@@ -248,15 +269,17 @@ public class MessagingIT {
 	public void testEAupdated() throws Exception {
 		String hashQueue = "eaHash";
 		String resizeQueue = "eaResize";
-		String resultQueue = "eaResult";
+		String resultQueue = QueueAddress.RESULT.toString();
 		String queryQueue = "eaeaQuery";
-		String eaQueue = "eaeaqueue";
+		String eaQueue = "EA_UPDATE";
 
 		ClientSession noDupe = as.getSession();
 		noDupe.createTemporaryQueue(resizeQueue, resizeQueue);
 		noDupe.createTemporaryQueue(hashQueue, hashQueue);
+		noDupe.deleteQueue(resultQueue);
 		noDupe.createTemporaryQueue(resultQueue, resultQueue);
 		noDupe.createTemporaryQueue(queryQueue, queryQueue);
+		noDupe.deleteQueue(eaQueue);
 		noDupe.createTemporaryQueue(eaQueue, eaQueue);
 
 		QueryMessage queryMessage = new QueryMessage(as.getSession(), queryQueue);

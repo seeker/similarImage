@@ -48,7 +48,7 @@ public class MessageFactoryTest extends MessagingBaseTest {
 	private static final long HASH = 12L;
 	private static final byte[] IMAGE_DATA = { 0, 1, 2, 3, 4 };
 	private static final Path PATH = Paths.get("foo");
-	private static final UUID UUID = new UUID(1, 2);
+	private static final UUID UUID = new UUID(99, 100);
 
 	@Mock
 	private InputStream is;
@@ -66,14 +66,17 @@ public class MessageFactoryTest extends MessagingBaseTest {
 
 	@Test
 	public void testHashRequestMessageTrackingId() throws Exception {
-		ClientMessage result = cut.hashRequestMessage(IMAGE_DATA, TRACKING_ID);
+		ClientMessage result = cut.hashRequestMessage(IMAGE_DATA, UUID);
 
-		assertThat(result.getIntProperty(MessageFactory.TRACKING_PROPERTY_NAME), is(TRACKING_ID));
+		UUID id = new UUID(result.getBodyBuffer().readLong(), result.getBodyBuffer().readLong());
+		assertThat(id, is(UUID));
 	}
 
 	@Test
 	public void testHashRequestMessageImageData() throws Exception {
-		ClientMessage result = cut.hashRequestMessage(IMAGE_DATA, TRACKING_ID);
+		ClientMessage result = cut.hashRequestMessage(IMAGE_DATA, UUID);
+		result.getBodyBuffer().readLong();
+		result.getBodyBuffer().readLong();
 
 		byte[] data = new byte[IMAGE_DATA.length];
 		result.getBodyBuffer().readBytes(data);
@@ -82,24 +85,42 @@ public class MessageFactoryTest extends MessagingBaseTest {
 	}
 
 	@Test
+	public void testHashRequestMessageImageSize() throws Exception {
+		ClientMessage result = cut.hashRequestMessage(IMAGE_DATA, UUID);
+		result.getBodyBuffer().readLong();
+		result.getBodyBuffer().readLong();
+
+		byte[] data = new byte[result.getBodySize()];
+		result.getBodyBuffer().readBytes(data);
+
+		assertArrayEquals(data, IMAGE_DATA);
+	}
+
+	@Test
 	public void testResultMessageTask() throws Exception {
-		ClientMessage result = cut.resultMessage(HASH, TRACKING_ID);
+		ClientMessage result = cut.resultMessage(HASH, UUID.getMostSignificantBits(), UUID.getLeastSignificantBits());
 
 		assertThat(result.getStringProperty(MessageProperty.task.toString()), is(TaskType.result.toString()));
 	}
 
 	@Test
-	public void testResultMessageTrackingId() throws Exception {
-		ClientMessage result = cut.resultMessage(HASH, TRACKING_ID);
+	public void testResultMessageUuid() throws Exception {
+		ClientMessage result = cut.resultMessage(HASH, UUID.getMostSignificantBits(), UUID.getLeastSignificantBits());
 
-		assertThat(result.getIntProperty(MessageFactory.TRACKING_PROPERTY_NAME), is(TRACKING_ID));
+		UUID id = new UUID(result.getBodyBuffer().readLong(), result.getBodyBuffer().readLong());
+
+		assertThat(id, is(UUID));
 	}
 
 	@Test
 	public void testResultMessageHash() throws Exception {
-		ClientMessage result = cut.resultMessage(HASH, TRACKING_ID);
+		ClientMessage result = cut.resultMessage(HASH, UUID.getMostSignificantBits(), UUID.getLeastSignificantBits());
 
-		assertThat(result.getLongProperty(MessageFactory.HASH_PROPERTY_NAME), is(HASH));
+		result.getBodyBuffer().readLong();
+		result.getBodyBuffer().readLong();
+		long hash = result.getBodyBuffer().readLong();
+
+		assertThat(hash, is(HASH));
 	}
 
 	@Test
@@ -202,4 +223,5 @@ public class MessageFactoryTest extends MessagingBaseTest {
 
 		assertThat(new UUID(most, least), is(UUID));
 	}
+
 }
