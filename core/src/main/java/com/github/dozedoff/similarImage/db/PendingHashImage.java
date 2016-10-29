@@ -38,13 +38,13 @@ public class PendingHashImage {
 	@DatabaseField(generatedId=true)
 	private int id;
 	
-	@DatabaseField(unique = true)
+	@DatabaseField(unique = true, index = true)
 	private String path;
 
-	@DatabaseField(uniqueCombo = true, columnName = MOST_SIGN_COL_NAME)
+	@DatabaseField(uniqueCombo = true, columnName = MOST_SIGN_COL_NAME, index = true)
 	private long mostSignificant;
 
-	@DatabaseField(uniqueCombo = true, columnName = LEAST_SIGN_COL_NAME)
+	@DatabaseField(uniqueCombo = true, columnName = LEAST_SIGN_COL_NAME, index = true)
 	private long leastSignificant;
 
 	/**
