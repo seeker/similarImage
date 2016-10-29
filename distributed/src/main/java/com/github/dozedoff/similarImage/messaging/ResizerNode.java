@@ -222,8 +222,10 @@ public class ResizerNode implements MessageHandler {
 	}
 
 	private void sendImageErrorResponse(String path) throws ActiveMQException {
+		String corruptMessageAddress = QueueAddress.EA_UPDATE.toString();
+		LOGGER.trace("Sending corrupt image message for {} to address {}", path, corruptMessageAddress);
 		ClientMessage response = messageFactory.corruptMessage(Paths.get(path));
-		producer.send(response);
+		producer.send(corruptMessageAddress, response);
 	}
 
 	/**

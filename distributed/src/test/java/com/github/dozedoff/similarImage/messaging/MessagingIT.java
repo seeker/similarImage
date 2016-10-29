@@ -93,6 +93,8 @@ public class MessagingIT {
 	private static Path workingdir;
 	private static Path testImageAutumnOriginal;
 	private Path testImageAutumn;
+	private static Path testImageCorruptOriginal;
+	private Path testImageCorrupt;
 	private static long testImageAutumnReferenceHash;
 
 	private Duration messageTimeout = new Duration(6, TimeUnit.SECONDS);
@@ -104,10 +106,7 @@ public class MessagingIT {
 		workingdir = Files.createTempDirectory("MessageIntegration");
 
 		testImageAutumnOriginal = Paths.get(Thread.currentThread().getContextClassLoader().getResource("images/autumn.jpg").toURI());
-
-		try (BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(testImageAutumnOriginal))) {
-			testImageAutumnReferenceHash = new ImagePHash().getLongHash(bis);
-		}
+		testImageCorruptOriginal = Paths.get(Thread.currentThread().getContextClassLoader().getResource("images/corrupt.jpg").toURI());
 
 		try (BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(testImageAutumnOriginal))) {
 			testImageAutumnReferenceHash = new ImagePHash().getLongHash(bis);
@@ -131,7 +130,11 @@ public class MessagingIT {
 		RepositoryFactory repositoryFactory = new OrmliteRepositoryFactory(database);
 
 		testImageAutumn = Files.createTempFile(Paths.get(""), "testImage", ".jpg");
+		testImageCorrupt = Files.createTempFile(Paths.get(""), "corrupt", ".jpg");
+
 		Files.copy(testImageAutumnOriginal, testImageAutumn, StandardCopyOption.REPLACE_EXISTING);
+		Files.copy(testImageCorruptOriginal, testImageCorrupt, StandardCopyOption.REPLACE_EXISTING);
+
 		imageRepository = repositoryFactory.buildImageRepository();
 		pendingRepo = new OrmlitePendingHashImage(DaoManager.createDao(database.getCs(), PendingHashImage.class));
 
@@ -143,14 +146,20 @@ public class MessagingIT {
 
 		queueJanitor = as.getSession();
 
+		for (String queue : new String[] { QueueAddress.RESULT.toString(), QueueAddress.EA_UPDATE.toString() }) {
+			recreateQueue(queue);
+		}
+	}
+
+	private void recreateQueue(String queueName) {
 		try {
-			queueJanitor.deleteQueue(QueueAddress.RESULT.toString());
+			queueJanitor.deleteQueue(queueName);
 		} catch (ActiveMQException e) {
 			System.err.println(e.toString());
 		}
 
 		try {
-			queueJanitor.createQueue(QueueAddress.RESULT.toString(), QueueAddress.RESULT.toString());
+			queueJanitor.createQueue(queueName, queueName);
 		} catch (ActiveMQException e) {
 			System.err.println(e.toString());
 		}
@@ -160,6 +169,7 @@ public class MessagingIT {
 	public void tearDown() throws Exception {
 		database.close();
 		Files.delete(testImageAutumn);
+		Files.delete(testImageCorrupt);
 		as.close();
 	}
 
@@ -266,11 +276,7 @@ public class MessagingIT {
 		ClientSession noDupe = as.getSession();
 		noDupe.createTemporaryQueue(resizeQueue, resizeQueue);
 		noDupe.createTemporaryQueue(hashQueue, hashQueue);
-		noDupe.deleteQueue(resultQueue);
-		noDupe.createTemporaryQueue(resultQueue, resultQueue);
 		noDupe.createTemporaryQueue(queryQueue, queryQueue);
-		noDupe.deleteQueue(eaQueue);
-		noDupe.createTemporaryQueue(eaQueue, eaQueue);
 
 		QueryMessage queryMessage = new QueryMessage(as.getSession(), queryQueue);
 		RepositoryNode queryResponder = new RepositoryNode(as.getSession(), queryQueue, resultQueue, pendingRepo, imageRepository,
@@ -292,5 +298,40 @@ public class MessagingIT {
 		ahp.handle(testImageAutumn);
 
 		await().atMost(messageTimeout).untilCall(to(ha).areAttributesValid(testImageAutumn), is(true));
+	}
+
+	@Test
+	public void testMarkCorrupt() throws Exception {
+		String hashQueue = "corrHash";
+		String resizeQueue = "corrResize";
+		String resultQueue = QueueAddress.RESULT.toString();
+		String queryQueue = "correaQuery";
+		String eaQueue = "EA_UPDATE";
+
+		ClientSession noDupe = as.getSession();
+		noDupe.createTemporaryQueue(resizeQueue, resizeQueue);
+		noDupe.createTemporaryQueue(hashQueue, hashQueue);
+		noDupe.createTemporaryQueue(queryQueue, queryQueue);
+
+		QueryMessage queryMessage = new QueryMessage(as.getSession(), queryQueue);
+		RepositoryNode queryResponder = new RepositoryNode(as.getSession(), queryQueue, resultQueue, pendingRepo, imageRepository,
+				new TaskMessageHandler(pendingRepo, imageRepository, as.getSession(), eaQueue));
+
+		new HasherNode(as.getSession(), new ImagePHash(), hashQueue, resultQueue);
+		new ResizerNode(as.getSession(), new ImageResizer(RESIZE_SIZE), resizeQueue, hashQueue, queryMessage);
+
+		HashAttribute ha = new HashAttribute(HashNames.DEFAULT_DCT_HASH_2);
+
+		ExtendedAttributeQuery eaQuery = new ExtendedAttributeDirectoryCache(new ExtendedAttribute(), 1, TimeUnit.MINUTES);
+		StorageNode sn = new StorageNode(as.getSession(), new ExtendedAttribute(), ha, Collections.emptyList(), resizeQueue, eaQueue);
+		ahp = new ArtemisHashProducer(sn);
+
+		RepositoryNode rn = new RepositoryNode(noDupe, queryQueue, resultQueue, pendingRepo, imageRepository);
+
+		assertThat(ha.isCorrupted(testImageCorrupt), is(false));// guard assert
+
+		ahp.handle(testImageCorrupt);
+
+		await().atMost(messageTimeout).untilCall(to(ha).isCorrupted(testImageCorrupt), is(true));
 	}
 }
