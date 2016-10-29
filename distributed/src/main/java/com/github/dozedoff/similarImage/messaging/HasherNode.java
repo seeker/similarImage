@@ -62,8 +62,7 @@ public class HasherNode implements MessageHandler {
 	 * @throws ActiveMQException
 	 *             if there is an error with the queue
 	 */
-	public HasherNode(ClientSession session, ImagePHash hasher, String requestAddress, String resultAddress)
-			throws ActiveMQException {
+	public HasherNode(ClientSession session, ImagePHash hasher, String requestAddress, String resultAddress) throws ActiveMQException {
 		this.hasher = hasher;
 		this.session = session;
 		this.consumer = session.createConsumer(requestAddress);
@@ -92,12 +91,13 @@ public class HasherNode implements MessageHandler {
 	@Override
 	public void onMessage(ClientMessage message) {
 		try {
-			int trackingId = message.getIntProperty(MessageFactory.TRACKING_PROPERTY_NAME);
+			long most = message.getBodyBuffer().readLong();
+			long least = message.getBodyBuffer().readLong();
 			ByteBuffer buffer = ByteBuffer.allocate(message.getBodySize());
 			message.getBodyBuffer().readBytes(buffer);
 
 			long hash = doHash(ImageUtil.bytesToImage(buffer.array()));
-			ClientMessage response = messageFactory.resultMessage(hash, trackingId);
+			ClientMessage response = messageFactory.resultMessage(hash, most, least);
 			producer.send(response);
 		} catch (ActiveMQException e) {
 			LOGGER.error("Failed to process message: {}", e.toString());

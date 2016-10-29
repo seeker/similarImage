@@ -18,11 +18,13 @@
 package com.github.dozedoff.similarImage.db.repository.ormlite;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
+
+import java.util.UUID;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -35,7 +37,8 @@ import com.j256.ormlite.dao.DaoManager;
 public class OrmlitePendingHashImageTest extends BaseOrmliteRepositoryTest {
 	private static final String NEW_PATH = "foo";
 	private static final String EXISTING_PATH = "bar";
-	private static final int UNKNOWN_ID = 42;
+	private static final UUID UUID_NEW = UUID.fromString("0e7156c1-bff3-4954-9693-63a3136bf885");
+	private static final UUID UUID_EXISTING = UUID.fromString("4dc1a7ad-0d52-4606-a77d-ca3e7fcd227c");
 
 	private PendingHashImage newEntry;
 	private PendingHashImage existingEntry;
@@ -48,8 +51,9 @@ public class OrmlitePendingHashImageTest extends BaseOrmliteRepositoryTest {
 		dao = DaoManager.createDao(db.getCs(), PendingHashImage.class);
 		cut = new OrmlitePendingHashImage(DaoManager.createDao(db.getCs(), PendingHashImage.class));
 
-		newEntry = new PendingHashImage(NEW_PATH);
-		existingEntry = new PendingHashImage(EXISTING_PATH);
+		newEntry = new PendingHashImage(NEW_PATH, UUID_NEW.getMostSignificantBits(), UUID_NEW.getLeastSignificantBits());
+		existingEntry = new PendingHashImage(EXISTING_PATH, UUID_EXISTING.getMostSignificantBits(),
+				UUID_EXISTING.getLeastSignificantBits());
 
 		dao.create(existingEntry);
 	}
@@ -78,7 +82,7 @@ public class OrmlitePendingHashImageTest extends BaseOrmliteRepositoryTest {
 
 	@Test
 	public void testExistsByPath() throws Exception {
-		assertThat(cut.exists(new PendingHashImage(EXISTING_PATH)), is(true));
+		assertThat(cut.exists(new PendingHashImage(EXISTING_PATH, UUID_EXISTING)), is(true));
 	}
 
 	@Test
@@ -87,36 +91,28 @@ public class OrmlitePendingHashImageTest extends BaseOrmliteRepositoryTest {
 	}
 
 	@Test
-	public void testRemoveByIdExisting() throws Exception {
-		cut.removeById(1);
-
-		assertThat(dao.queryForSameId(existingEntry), nullValue());
-	}
-
-	@Test
-	public void testRemoveByIdNonExisting() throws Exception {
-		cut.removeById(UNKNOWN_ID);
-	}
-
-	@Test
-	public void testGetByIdExisting() throws Exception {
-		assertThat(cut.getById(existingEntry.getId()), is(existingEntry));
-	}
-	
-	@Test
-	public void testGetByIdNotFOund() throws Exception {
-		assertThat(cut.getById(UNKNOWN_ID), nullValue());
-	}
-	
-	@Test
-	public void testFirstIdNotZero() {
-		assertThat(existingEntry.getId(), is(not(0)));
-	}
-
-	@Test
 	public void testGetAll() throws Exception {
 		dao.create(newEntry);
 
 		assertThat(cut.getAll(), containsInAnyOrder(newEntry, existingEntry));
+	}
+
+	@Test
+	public void testGetByUuidNonExisting() throws Exception {
+		assertThat(cut.getByUUID(UUID_NEW.getMostSignificantBits(), UUID_NEW.getLeastSignificantBits()), is(nullValue()));
+	}
+
+	@Test
+	public void testGetByUuidExisting() throws Exception {
+		assertThat(cut.getByUUID(UUID_EXISTING.getMostSignificantBits(), UUID_EXISTING.getLeastSignificantBits()), is(existingEntry));
+	}
+
+	@Test
+	public void testRemove() throws Exception {
+		assertThat(dao.queryForSameId(existingEntry), is(notNullValue())); // guard assert
+
+		cut.remove(existingEntry);
+
+		assertThat(dao.queryForSameId(existingEntry), is(nullValue()));
 	}
 }

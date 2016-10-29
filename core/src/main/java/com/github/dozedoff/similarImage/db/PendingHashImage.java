@@ -19,6 +19,7 @@ package com.github.dozedoff.similarImage.db;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.UUID;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
@@ -31,11 +32,20 @@ import com.j256.ormlite.table.DatabaseTable;
  */
 @DatabaseTable
 public class PendingHashImage {
+	public static final String MOST_SIGN_COL_NAME = "most";
+	public static final String LEAST_SIGN_COL_NAME = "least";
+
 	@DatabaseField(generatedId=true)
 	private int id;
 	
 	@DatabaseField(unique = true)
 	private String path;
+
+	@DatabaseField(uniqueCombo = true, columnName = MOST_SIGN_COL_NAME)
+	private long mostSignificant;
+
+	@DatabaseField(uniqueCombo = true, columnName = LEAST_SIGN_COL_NAME)
+	private long leastSignificant;
 
 	/**
 	 * Intended for DAO only
@@ -50,20 +60,51 @@ public class PendingHashImage {
 	 * Create a new {@link PendingHashImage} record with the given path.
 	 * 
 	 * @param path
-	 *            to set
+	 *            to track
+	 * @param most
+	 *            most significant bits of the {@link UUID}
+	 * @param least
+	 *            least significant bits of the {@link UUID}
 	 */
-	public PendingHashImage(String path) {
+	public PendingHashImage(String path, long most, long least) {
 		this.path = path;
+		this.mostSignificant = most;
+		this.leastSignificant = least;
 	}
 
 	/**
-	 * Create a new {@link PendingHashImage} record with the given path.
+	 * Create a new {@link PendingHashImage} record with the given path and UUID.
 	 * 
 	 * @param path
-	 *            to set
+	 *            to track
+	 * @param uuid
+	 *            {@link UUID} that corresponds to the path
 	 */
-	public PendingHashImage(Path path) {
-		this.path = path.toString();
+	public PendingHashImage(String path, UUID uuid) {
+		this.path = path;
+		this.mostSignificant = uuid.getMostSignificantBits();
+		this.leastSignificant = uuid.getLeastSignificantBits();
+	}
+
+	/**
+	 * Create a new {@link PendingHashImage} record with the given path and UUID.
+	 * 
+	 * @param path
+	 *            to track
+	 * @param uuid
+	 *            {@link UUID} that corresponds to the path
+	 */
+	public PendingHashImage(Path path, UUID uuid) {
+		this(path.toString(), uuid);
+	}
+
+	/**
+	 * Convenience method that builds a {@link UUID} from the bits.
+	 * 
+	 * @return the {@link UUID} representing the path
+	 */
+	public UUID getUuid() {
+		return new UUID(mostSignificant, leastSignificant);
 	}
 
 	/**
@@ -85,21 +126,21 @@ public class PendingHashImage {
 	}
 
 	/**
-	 * Get the id of this entry. This is also the the tracking ID of the message.
+	 * Get the most significant bits of the {@link UUID}
 	 * 
-	 * @return the id of this entry
+	 * @return most significant bits of the {@link UUID}
 	 */
-	public int getId() {
-		return id;
+	public long getMostSignificant() {
+		return mostSignificant;
 	}
 
 	/**
-	 * Check if the instance has been stored in the repository and was assigned a unique id.
+	 * Get the least significant bits of the {@link UUID}
 	 * 
-	 * @return true if a unique id was assigned
+	 * @return least significant bits of the {@link UUID}
 	 */
-	public boolean isIdValid() {
-		return id != 0;
+	public long getLeastSignificant() {
+		return leastSignificant;
 	}
 
 	@Override

@@ -7,6 +7,7 @@ import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.apache.activemq.artemis.api.core.client.ClientProducer;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
 import org.apache.activemq.artemis.api.core.client.MessageHandler;
+import org.jgroups.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,17 +48,31 @@ public class TaskMessageHandler implements MessageHandler {
 	public void onMessage(ClientMessage msg) {
 		try {
 			if (isTaskType(msg, TaskType.result)) {
-				long hash = msg.getLongProperty(MessageProperty.hashResult.toString());
-				int trackingId = msg.getIntProperty(MessageProperty.id.toString());
-				LOGGER.trace("Received result message with id {} and hash {}", trackingId, hash);
+				long most = msg.getBodyBuffer().readLong();
+				long least = msg.getBodyBuffer().readLong();
+				long hash = msg.getBodyBuffer().readLong();
 
-				PendingHashImage pending = pendingRepository.getById(trackingId);
-				if (pending != null) {
-					updateRecords(trackingId, hash, pending);
-				} else {
-					LOGGER.warn("No pending hash record found for {}", trackingId);
+				if (LOGGER.isTraceEnabled()) {
+					LOGGER.trace("Received result message with id {} and hash {}", new UUID(most, least), hash);
 				}
 
+				PendingHashImage pending = pendingRepository.getByUUID(most, least);
+				if (pending != null) {
+					updateRecords(hash, pending);
+				} else {
+					LOGGER.warn("No pending hash record found for {}", new UUID(most, least));
+				}
+
+			} else if (isTaskType(msg, TaskType.track)) {
+				String path = msg.getStringProperty(MessageProperty.path.toString());
+				long most = msg.getBodyBuffer().readLong();
+				long least = msg.getBodyBuffer().readLong();
+
+				if (LOGGER.isTraceEnabled()) {
+					LOGGER.trace("Tracking new path {} with UUID {}", path, new UUID(most, least));
+				}
+
+				pendingRepository.store(new PendingHashImage(path, most, least));
 			} else {
 				LOGGER.error("Unhandled message: {}", msg);
 			}
@@ -66,21 +81,21 @@ public class TaskMessageHandler implements MessageHandler {
 		}
 	}
 
-	private void updateRecords(int trackingId, long hash, PendingHashImage pending) throws RepositoryException {
+	private void updateRecords(long hash, PendingHashImage pending) throws RepositoryException {
 		storeHash(pending.getPathAsPath(), hash);
-		pendingRepository.removeById(trackingId);
+		pendingRepository.remove(pending);
 		ClientMessage eaUpdate = messageFactory.eaUpdate(pending.getPathAsPath(), hash);
 
 		try {
 			producer.send(eaUpdate);
-			LOGGER.trace("Sent EA update for {}", pending.getPath());
+			LOGGER.trace("Sent EA update for {} to address {}", pending.getPath(), producer.getAddress());
 		} catch (ActiveMQException e) {
 			LOGGER.warn("Failed to send ea update message for {}: {}", pending.getPath(), e.toString());
 		}
 	}
 
 	private void storeHash(Path path, long hash) throws RepositoryException {
-		LOGGER.debug("Creating record for {} with hash {}", path, hash);
+		LOGGER.trace("Creating record for {} with hash {}", path, hash);
 		imageRepository.store(new ImageRecord(path.toString(), hash));
 	}
 

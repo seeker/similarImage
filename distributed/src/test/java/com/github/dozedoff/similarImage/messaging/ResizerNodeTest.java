@@ -18,6 +18,7 @@
 package com.github.dozedoff.similarImage.messaging;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -27,7 +28,6 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Path;
 import java.util.Arrays;
 
 import javax.imageio.IIOException;
@@ -37,6 +37,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.db.PendingHashImage;
@@ -44,6 +45,7 @@ import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository
 import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
 import com.github.dozedoff.similarImage.image.ImageResizer;
 import com.github.dozedoff.similarImage.messaging.MessageFactory.MessageProperty;
+import com.github.dozedoff.similarImage.messaging.MessageFactory.TaskType;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ResizerNodeTest extends MessagingBaseTest {
@@ -90,16 +92,28 @@ public class ResizerNodeTest extends MessagingBaseTest {
 
 		cut.onMessage(message);
 
-		assertThat(sessionMessage.containsProperty(MessageProperty.id.toString()), is(true));
+		assertThat(sessionMessage.getBodyBuffer().readLong(), is(not(0L)));
+		assertThat(sessionMessage.getBodyBuffer().readLong(), is(not(0L)));
 	}
 
 	@Test
 	public void testValidImageNotCorrupt() throws Exception {
 		message = messageBuilder.configureResizeMessage().build();
+		when(session.createMessage(any(Boolean.class))).thenReturn(Mockito.mock(ClientMessage.class), sessionMessage);
 
 		cut.onMessage(message);
 
 		assertThat(sessionMessage.containsProperty(ArtemisHashProducer.MESSAGE_TASK_PROPERTY), is(false));
+	}
+
+	@Test
+	public void testValidImageTrackSent() throws Exception {
+		message = messageBuilder.configureResizeMessage().build();
+		when(session.createMessage(any(Boolean.class))).thenReturn(sessionMessage, Mockito.mock(ClientMessage.class));
+
+		cut.onMessage(message);
+
+		assertThat(sessionMessage.getStringProperty(MessageProperty.task.toString()), is(TaskType.track.toString()));
 	}
 
 	@Test
@@ -162,16 +176,6 @@ public class ResizerNodeTest extends MessagingBaseTest {
 
 		assertThat(sessionMessage.getStringProperty(ArtemisHashProducer.MESSAGE_TASK_PROPERTY),
 				is(ArtemisHashProducer.MESSAGE_TASK_VALUE_CORRUPT));
-	}
-
-	@Test
-	public void testDuplicateImage() throws Exception {
-		message = messageBuilder.configureResizeMessage().build();
-		when(queryMessage.trackPath(any(Path.class))).thenReturn(-1);
-
-		cut.onMessage(message);
-
-		verify(producer, never()).send(any(ClientMessage.class));
 	}
 
 	@Test

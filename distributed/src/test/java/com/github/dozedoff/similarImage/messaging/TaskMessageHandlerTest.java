@@ -4,6 +4,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.nio.file.Paths;
+import java.util.UUID;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -21,6 +22,9 @@ public class TaskMessageHandlerTest extends MessagingBaseTest {
 	private static final int TEST_ID = 1;
 	private static final long TEST_HASH = 42L;
 	private static final String TEST_PATH = "foo";
+	private static final UUID UUID = new UUID(99, 100);
+	private static final long MOST = UUID.getMostSignificantBits();
+	private static final long LEAST = UUID.getLeastSignificantBits();
 
 	@Mock
 	private ImageRepository imageRepository;
@@ -40,8 +44,8 @@ public class TaskMessageHandlerTest extends MessagingBaseTest {
 
 	@Test
 	public void testStoreHash() throws Exception {
-		message = messageFactory.resultMessage(TEST_HASH, TEST_ID);
-		when(pendingRepository.getById(TEST_ID)).thenReturn(new PendingHashImage(TEST_PATH));
+		message = messageFactory.resultMessage(TEST_HASH, MOST, LEAST);
+		when(pendingRepository.getByUUID(MOST, LEAST)).thenReturn(new PendingHashImage(TEST_PATH, MOST, LEAST));
 
 		cut.onMessage(message);
 
@@ -50,8 +54,8 @@ public class TaskMessageHandlerTest extends MessagingBaseTest {
 
 	@Test
 	public void testSendEaUpdate() throws Exception {
-		message = messageFactory.resultMessage(TEST_HASH, TEST_ID);
-		when(pendingRepository.getById(TEST_ID)).thenReturn(new PendingHashImage(TEST_PATH));
+		message = messageFactory.resultMessage(TEST_HASH, MOST, LEAST);
+		when(pendingRepository.getByUUID(MOST, LEAST)).thenReturn(new PendingHashImage(TEST_PATH, MOST, LEAST));
 
 		cut.onMessage(message);
 

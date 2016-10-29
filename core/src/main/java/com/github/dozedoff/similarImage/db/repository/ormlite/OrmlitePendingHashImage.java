@@ -24,6 +24,8 @@ import com.github.dozedoff.similarImage.db.PendingHashImage;
 import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.stmt.PreparedQuery;
+import com.j256.ormlite.stmt.SelectArg;
 
 /**
  * Repository for accessing {@link PendingHashImage} database table via ORMlite.
@@ -33,6 +35,10 @@ import com.j256.ormlite.dao.Dao;
  */
 public class OrmlitePendingHashImage implements PendingHashImageRepository {
 	private final Dao<PendingHashImage, Integer> pendingDao;
+
+	private final PreparedQuery<PendingHashImage> uuidQuery;
+	private final SelectArg mostParam;
+	private final SelectArg leastParam;
 
 	/**
 	 * Create a repository using ORMlite DAO to access the database.
@@ -44,6 +50,16 @@ public class OrmlitePendingHashImage implements PendingHashImageRepository {
 	 */
 	public OrmlitePendingHashImage(Dao<PendingHashImage, Integer> pendingDao) throws RepositoryException {
 		this.pendingDao = pendingDao;
+
+		mostParam = new SelectArg();
+		leastParam = new SelectArg();
+
+		try {
+			uuidQuery = pendingDao.queryBuilder().where().eq(PendingHashImage.MOST_SIGN_COL_NAME, mostParam).and()
+					.eq(PendingHashImage.LEAST_SIGN_COL_NAME, leastParam).prepare();
+		} catch (SQLException e) {
+			throw new RepositoryException("Failed to prepare queries", e);
+		}
 	}
 
 	/**
@@ -83,11 +99,11 @@ public class OrmlitePendingHashImage implements PendingHashImageRepository {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public synchronized void removeById(int id) throws RepositoryException {
+	public List<PendingHashImage> getAll() throws RepositoryException {
 		try {
-			pendingDao.deleteById(id);
+			return pendingDao.queryForAll();
 		} catch (SQLException e) {
-			throw new RepositoryException("Failed to delete entry", e);
+			throw new RepositoryException("Failed to query for all entries", e);
 		}
 	}
 
@@ -95,9 +111,13 @@ public class OrmlitePendingHashImage implements PendingHashImageRepository {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public PendingHashImage getById(int id) throws RepositoryException {
+	public PendingHashImage getByUUID(long most, long least) throws RepositoryException {
 		try {
-			return pendingDao.queryForId(id);
+			synchronized (uuidQuery) {
+				mostParam.setValue(most);
+				leastParam.setValue(least);
+				return pendingDao.queryForFirst(uuidQuery);
+			}
 		} catch (SQLException e) {
 			throw new RepositoryException("Failed to get entry by id", e);
 		}
@@ -107,11 +127,11 @@ public class OrmlitePendingHashImage implements PendingHashImageRepository {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public List<PendingHashImage> getAll() throws RepositoryException {
+	public void remove(PendingHashImage image) throws RepositoryException {
 		try {
-			return pendingDao.queryForAll();
+			pendingDao.delete(image);
 		} catch (SQLException e) {
-			throw new RepositoryException("Failed to query for all entries", e);
+			throw new RepositoryException("Failed to remove entry", e);
 		}
 	}
 }
