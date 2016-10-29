@@ -18,7 +18,6 @@
 package com.github.dozedoff.similarImage.db.repository.ormlite;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
@@ -38,7 +37,6 @@ import com.j256.ormlite.dao.DaoManager;
 public class OrmlitePendingHashImageTest extends BaseOrmliteRepositoryTest {
 	private static final String NEW_PATH = "foo";
 	private static final String EXISTING_PATH = "bar";
-	private static final int UNKNOWN_ID = 42;
 	private static final UUID UUID_NEW = UUID.fromString("0e7156c1-bff3-4954-9693-63a3136bf885");
 	private static final UUID UUID_EXISTING = UUID.fromString("4dc1a7ad-0d52-4606-a77d-ca3e7fcd227c");
 
@@ -90,11 +88,6 @@ public class OrmlitePendingHashImageTest extends BaseOrmliteRepositoryTest {
 	@Test
 	public void testExistsNotFound() throws Exception {
 		assertThat(cut.exists(newEntry), is(false));
-	}
-
-	@Test
-	public void testFirstIdNotZero() {
-		assertThat(existingEntry.getId(), is(not(0)));
 	}
 
 	@Test

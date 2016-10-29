@@ -132,7 +132,7 @@ public class MessageFactoryTest extends MessagingBaseTest {
 
 	@Test
 	public void testPendingImageResponse() throws Exception {
-		ClientMessage result = cut.pendingImageResponse(Arrays.asList(new PendingHashImage(PATH)));
+		ClientMessage result = cut.pendingImageResponse(Arrays.asList(new PendingHashImage(PATH, UUID)));
 
 		assertThat(result.getBodySize(), is(54));
 	}

@@ -31,6 +31,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
@@ -240,7 +241,7 @@ public class MessagingIT {
 		ClientSession noDupe = as.getSession();
 		noDupe.createTemporaryQueue(requestQueue, requestQueue);
 
-		pendingRepo.store(new PendingHashImage(testImageAutumn));
+		pendingRepo.store(new PendingHashImage(testImageAutumn, UUID.randomUUID()));
 
 		QueryMessage qm = new QueryMessage(noDupe, requestQueue);
 		RepositoryNode qr = new RepositoryNode(noDupe, requestQueue, pendingRepo, imageRepository);
@@ -252,17 +253,6 @@ public class MessagingIT {
 				return qm.pendingImagePaths();
 			}
 		}, is(containsInAnyOrder(testImageAutumn.toString())));
-	}
-
-	@Test(timeout = 5000)
-	public void testTrackPath() throws Exception {
-		String testqueue = "trackPath";
-		as.getSession().createTemporaryQueue(testqueue, testqueue);
-
-		QueryMessage qm = new QueryMessage(as.getSession(), testqueue);
-		RepositoryNode qr = new RepositoryNode(as.getSession(), testqueue, pendingRepo, imageRepository);
-
-		assertThat(qm.trackPath(TEST_PATH), is(1));
 	}
 
 	@Test

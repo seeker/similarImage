@@ -87,27 +87,17 @@ public class PendingHashImage {
 	}
 
 	/**
-	 * Create a new {@link PendingHashImage} record with the given path.
+	 * Create a new {@link PendingHashImage} record with the given path and UUID.
 	 * 
 	 * @param path
-	 *            to set
+	 *            to track
+	 * @param uuid
+	 *            {@link UUID} that corresponds to the path
 	 */
-	@Deprecated
-	public PendingHashImage(String path) {
-		this.path = path;
+	public PendingHashImage(Path path, UUID uuid) {
+		this(path.toString(), uuid);
 	}
 
-	/**
-	 * Create a new {@link PendingHashImage} record with the given path.
-	 * 
-	 * @param path
-	 *            to set
-	 */
-	@Deprecated
-	public PendingHashImage(Path path) {
-		this.path = path.toString();
-	}
-	
 	/**
 	 * Convenience method that builds a {@link UUID} from the bits.
 	 * 
@@ -151,26 +141,6 @@ public class PendingHashImage {
 	 */
 	public long getLeastSignificant() {
 		return leastSignificant;
-	}
-
-	/**
-	 * Get the id of this entry. This is also the the tracking ID of the message.
-	 * 
-	 * @return the id of this entry
-	 */
-	@Deprecated
-	public int getId() {
-		return id;
-	}
-
-	/**
-	 * Check if the instance has been stored in the repository and was assigned a unique id.
-	 * 
-	 * @return true if a unique id was assigned
-	 */
-	@Deprecated
-	public boolean isIdValid() {
-		return id != 0;
 	}
 
 	@Override

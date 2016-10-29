@@ -29,7 +29,6 @@ import org.apache.activemq.artemis.core.client.impl.ClientMessageImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.dozedoff.similarImage.db.PendingHashImage;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
@@ -178,23 +177,9 @@ public class RepositoryNode implements MessageHandler {
 					LOGGER.error(RESPONSE_SEND_ERROR, e.toString());
 				}
 			} else if (isQueryType(queryType, QueryType.TRACK)) {
-				LOGGER.trace("Query for tracking id");
-				try {
-					PendingHashImage pending = new PendingHashImage(message.getBodyBuffer().readString());
-					int pendingId = -1;
-
-					if (pendingRepository.store(pending)) {
-						pendingId = pending.getId();
-					}
-
-					ClientMessage response = messageFactory.trackPathResponse(pendingId);
-					producer.send(getReplyReturnAddress(message), response);
-					LOGGER.trace("Sent tracking id query response with id {}", pendingId);
-				} catch (RepositoryException e) {
-					LOGGER.error(REPOSITORY_ERROR_MESSAGE, e.toString(), e.getCause().getMessage());
-				} catch (ActiveMQException e) {
-					LOGGER.error(RESPONSE_SEND_ERROR, e.toString());
-				}
+				String errorMessage = "Tracking id requests are no longer supported!";
+				LOGGER.error(errorMessage);
+				throw new UnsupportedOperationException(errorMessage);
 			} else {
 				LOGGER.error("Unhandled query request: {}", queryType);
 			}

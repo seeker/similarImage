@@ -201,7 +201,7 @@ public class MessageFactory {
 	 */
 	public ClientMessage pendingImageResponse(List<PendingHashImage> pendingImages) throws IOException {
 		List<String> pendingPaths = new LinkedList<String>();
-
+		// TODO write list size followed by strings. Avoid serialization
 		for (PendingHashImage p : pendingImages) {
 			pendingPaths.add(p.getPath());
 		}

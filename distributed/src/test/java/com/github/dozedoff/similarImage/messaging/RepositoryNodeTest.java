@@ -17,13 +17,15 @@
  */
 package com.github.dozedoff.similarImage.messaging;
 
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.UUID;
 
 import org.apache.activemq.artemis.core.client.impl.ClientMessageImpl;
 import org.junit.Before;
@@ -39,6 +41,7 @@ import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository
 @RunWith(MockitoJUnitRunner.class)
 public class RepositoryNodeTest extends MessagingBaseTest {
 	private static final Path PATH = Paths.get("foo");
+	private static final UUID UUID = new UUID(42L, 24L);
 	private static final String RETURN_ADDRESS = "return";
 
 	@Mock
@@ -54,6 +57,7 @@ public class RepositoryNodeTest extends MessagingBaseTest {
 	@Before
 	public void setUp() throws Exception {
 		when(pendingRepository.store(any(PendingHashImage.class))).thenReturn(true);
+		when(pendingRepository.getAll()).thenReturn(Arrays.asList(new PendingHashImage(PATH, UUID)));
 		when(session.createConsumer(any(String.class), any(String.class))).thenReturn(consumer);
 		message.putStringProperty(ClientMessageImpl.REPLYTO_HEADER_NAME.toString(), RETURN_ADDRESS);
 
@@ -62,18 +66,11 @@ public class RepositoryNodeTest extends MessagingBaseTest {
 	}
 
 	@Test
-	public void testQueryTrackId() throws Exception {
-		cut.onMessage(messageFactory.trackPathQuery(PATH));
+	public void testQueryPending() throws Exception {
+		message = messageFactory.pendingImageQuery();
 
-		assertThat(sessionMessage.getBodyBuffer().readInt(), is(0));
-	}
-
-	@Test
-	public void testQueryTrackDuplicate() throws Exception {
-		when(pendingRepository.store(any(PendingHashImage.class))).thenReturn(false);
-
-		cut.onMessage(messageFactory.trackPathQuery(PATH));
-
-		assertThat(sessionMessage.getBodyBuffer().readInt(), is(-1));
+		cut.onMessage(message);
+		// TODO test actual message contents
+		assertThat(sessionMessage.getBodySize(), greaterThan(0));
 	}
 }
