@@ -95,7 +95,7 @@ public class TaskMessageHandler implements MessageHandler {
 	}
 
 	private void storeHash(Path path, long hash) throws RepositoryException {
-		LOGGER.debug("Creating record for {} with hash {}", path, hash);
+		LOGGER.trace("Creating record for {} with hash {}", path, hash);
 		imageRepository.store(new ImageRecord(path.toString(), hash));
 	}
 
