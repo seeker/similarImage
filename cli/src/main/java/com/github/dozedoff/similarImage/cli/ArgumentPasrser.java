@@ -64,6 +64,7 @@ public class ArgumentPasrser {
 	private static final int LARGE_MESSAGE_SIZE_THRESHOLD = 1024 * 1024;
 	private static final int DEFAULT_ARTEMIS_CORE_PORT = 61616;
 	private static final String DEFAULT_IP = "127.0.0.1";
+	private static final int DEFAULT_WINDOW = 1024 * 1024;
 
 	private final List<HasherNode> hashWorkers = new LinkedList<HasherNode>();
 	private final List<ResizerNode> resizeWorkers = new LinkedList<ResizerNode>();
@@ -114,6 +115,7 @@ public class ArgumentPasrser {
 		nodeSubcommand.addArgument("--resize-workers").help("Number of resize workers to start").type(Integer.class).setDefault(processors);
 		nodeSubcommand.addArgument("--hash-workers").help("Number of hash workers to start").type(Integer.class).setDefault(processors);
 		nodeSubcommand.addArgument("--status").action(Arguments.storeTrue());
+		nodeSubcommand.addArgument("--window").help("Consumer window size in bytes").type(Integer.class).setDefault(DEFAULT_WINDOW);
 	}
 
 	/**
@@ -160,8 +162,8 @@ public class ArgumentPasrser {
 				.createServerLocatorWithoutHA(new TransportConfiguration(NettyConnectorFactory.class.getName(), params))
 				.setCacheLargeMessagesClient(false).setMinLargeMessageSize(LARGE_MESSAGE_SIZE_THRESHOLD)
 				.setBlockOnNonDurableSend(false).setBlockOnDurableSend(false).setPreAcknowledge(true)
-				.setReconnectAttempts(3);
-
+				.setReconnectAttempts(3).setConsumerWindowSize(parsedArgs.getInt("window"));
+		
 		try (ArtemisSession session = new ArtemisSession(locator);) {
 			if (parsedArgs.getBoolean("resize")) {
 				startResizeWorkers(session, parsedArgs.getInt("resize_workers"));
@@ -192,6 +194,9 @@ public class ArgumentPasrser {
 			}
 		} catch (Exception e) {
 			LOGGER.error("Failed to start node: {}", e.toString());
+			if (LOGGER.isDebugEnabled()) {
+				LOGGER.debug("", e);
+			}
 		}
 	}
 
