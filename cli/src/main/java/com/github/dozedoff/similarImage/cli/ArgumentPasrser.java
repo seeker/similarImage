@@ -215,7 +215,8 @@ public class ArgumentPasrser {
 				ResizerNode arrc = new ResizerNode(session.getSession(), new ImageResizer(32));
 				resizeWorkers.add(arrc);
 			} catch (Exception e) {
-				LOGGER.warn("Failed to create resize consumer: {} cause:", e.toString(), e.getCause().getMessage());
+				LOGGER.warn("Failed to create resize consumer: {} cause:", e.toString(),
+						e.getCause() == null ? null : e.getCause().toString());
 			}
 		}
 	}
