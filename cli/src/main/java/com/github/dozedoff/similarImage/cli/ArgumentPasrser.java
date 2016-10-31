@@ -39,7 +39,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
+import com.github.dozedoff.similarImage.handler.HashNames;
 import com.github.dozedoff.similarImage.image.ImageResizer;
+import com.github.dozedoff.similarImage.io.HashAttribute;
+import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.messaging.ArtemisSession;
@@ -70,7 +73,7 @@ public class ArgumentPasrser {
 	private final List<ResizerNode> resizeWorkers = new LinkedList<ResizerNode>();
 
 	private enum CommandLineOptions {
-		path, update,
+		path, update, progress
 	};
 
 	private enum Subcommand {
@@ -105,6 +108,8 @@ public class ArgumentPasrser {
 				.help("Check extended attributes and update if missing or invalid");
 		localSubcommand.addArgument(enumToString(CommandLineOptions.path)).metavar("P").nargs("*").type(String.class)
 				.help("Process all files in the given directory");
+		localSubcommand.addArgument("--" + enumToString(CommandLineOptions.progress)).action(Arguments.storeTrue())
+				.help("Check the hashing progress of the given paths");
 
 		int processors = Runtime.getRuntime().availableProcessors();
 		Subparser nodeSubcommand = parser.addSubparsers().addParser("node").setDefault("subcommand", Subcommand.node);
@@ -139,15 +144,31 @@ public class ArgumentPasrser {
 	}
 
 	private void localCommand(Namespace parsedArgs) {
+		List<Object> paths = parsedArgs.getList(enumToString(CommandLineOptions.path));
 		if (parsedArgs.getBoolean(enumToString(CommandLineOptions.update))) {
-			for (Object path : parsedArgs.getList(enumToString(CommandLineOptions.path))) {
-				try {
-					Files.walkFileTree(Paths.get((String) path), visitor);
-				} catch (IOException e) {
-					LOGGER.error("Failed to walk {}: {}", e.toString());
-				}
+			walkPathsWithVisitor(paths, visitor);
+		} else if (parsedArgs.getBoolean(enumToString(CommandLineOptions.progress))) {
+			LOGGER.info("Checking progress...");
+			Statistics statistics = new Statistics();
+			walkPathsWithVisitor(paths,
+					new ProgressVisitor(statistics, new HashAttribute(HashNames.DEFAULT_DCT_HASH_2)));
+			outputProgress(statistics);
+		}
+	}
+
+	private void walkPathsWithVisitor(List<Object> paths, FileVisitor<Path> pathVisitor) {
+		for (Object path : paths) {
+			try {
+				Files.walkFileTree(Paths.get((String) path), pathVisitor);
+			} catch (IOException e) {
+				LOGGER.error("Failed to walk {}: {}", e.toString());
 			}
 		}
+	}
+
+	private void outputProgress(Statistics statistics) {
+		ProgressCalc pc = new ProgressCalc(statistics);
+		System.out.println(pc.toString());
 	}
 
 	private void nodeCommand(Namespace parsedArgs) {
