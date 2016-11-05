@@ -29,6 +29,8 @@ import org.apache.activemq.artemis.api.core.client.MessageHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.util.ImageUtil;
 import com.github.dozedoff.similarImage.util.MessagingUtil;
@@ -48,6 +50,38 @@ public class HasherNode implements MessageHandler {
 	private final ImagePHash hasher;
 	private MessageFactory messageFactory;
 
+	private final Meter hashRequests;
+
+	public static final String METRIC_NAME_HASH_MESSAGES = MetricRegistry.name(HasherNode.class, "hash", "messages");
+
+	/**
+	 * Create a hash consumer that listens and responds on the given addresses.
+	 * 
+	 * @param session
+	 *            of the client
+	 * @param hasher
+	 *            to use for hashing files
+	 * @param requestAddress
+	 *            to listen to
+	 * @param resultAddress
+	 *            where to send the results of hashing
+	 * @param metrics
+	 *            registry for tracking metrics
+	 * @throws ActiveMQException
+	 *             if there is an error with the queue
+	 */
+	public HasherNode(ClientSession session, ImagePHash hasher, String requestAddress, String resultAddress,
+			MetricRegistry metrics) throws ActiveMQException {
+		this.hasher = hasher;
+		this.session = session;
+		this.consumer = session.createConsumer(requestAddress);
+		this.producer = session.createProducer(resultAddress);
+		this.consumer.setMessageHandler(this);
+		this.messageFactory = new MessageFactory(session);
+
+		this.hashRequests = metrics.meter(METRIC_NAME_HASH_MESSAGES);
+	}
+
 	/**
 	 * Create a hash consumer that listens and responds on the given addresses.
 	 * 
@@ -61,14 +95,11 @@ public class HasherNode implements MessageHandler {
 	 *            where to send the results of hashing
 	 * @throws ActiveMQException
 	 *             if there is an error with the queue
+	 * @deprecated Use the constructor with {@link MetricRegistry}
 	 */
+	@Deprecated
 	public HasherNode(ClientSession session, ImagePHash hasher, String requestAddress, String resultAddress) throws ActiveMQException {
-		this.hasher = hasher;
-		this.session = session;
-		this.consumer = session.createConsumer(requestAddress);
-		this.producer = session.createProducer(resultAddress);
-		this.consumer.setMessageHandler(this);
-		this.messageFactory = new MessageFactory(session);
+		this(session, hasher, requestAddress, resultAddress, new MetricRegistry());
 	}
 
 	protected final void setMessageFactory(MessageFactory messageFactory) {
@@ -90,6 +121,7 @@ public class HasherNode implements MessageHandler {
 	 */
 	@Override
 	public void onMessage(ClientMessage message) {
+		hashRequests.mark();
 		try {
 			long most = message.getBodyBuffer().readLong();
 			long least = message.getBodyBuffer().readLong();

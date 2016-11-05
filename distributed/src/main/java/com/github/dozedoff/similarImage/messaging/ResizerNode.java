@@ -38,6 +38,8 @@ import org.apache.activemq.artemis.api.core.client.MessageHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
 import com.github.dozedoff.similarImage.image.ImageResizer;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
@@ -58,8 +60,10 @@ import at.dhyan.open_imaging.GifDecoder.GifImage;
 public class ResizerNode implements MessageHandler {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ResizerNode.class);
 
-	private static final String DUPLICATE_MESSAGE = "Image {} is already in the hashing queue, discarding";
 	private static final String DUMMY = "";
+
+	public static final String METRIC_NAME_RESIZE_MESSAGES = MetricRegistry.name(ResizerNode.class, "resize",
+			"messages");
 
 	private final ClientConsumer consumer;
 	private final ClientProducer producer;
@@ -68,6 +72,7 @@ public class ResizerNode implements MessageHandler {
 	private MessageFactory messageFactory;
 
 	private final Cache<String, String> pendingCache;
+	private final Meter resizeRequests;
 
 	/**
 	 * Create a new consumer for hash messages. Uses the default addresses for queues.
@@ -78,8 +83,28 @@ public class ResizerNode implements MessageHandler {
 	 *            for resizing images
 	 * @throws Exception
 	 *             if the setup for {@link QueryMessage} failed
+	 * @deprecated Use constructor with {@link MetricRegistry}
 	 */
+	@Deprecated
 	public ResizerNode(ClientSession session, ImageResizer resizer) throws Exception {
+
+		this(session, resizer, QueueAddress.RESIZE_REQUEST.toString(), QueueAddress.HASH_REQUEST.toString(),
+				new QueryMessage(session, QueueAddress.REPOSITORY_QUERY));
+	}
+
+	/**
+	 * Create a new consumer for hash messages. Uses the default addresses for queues.
+	 * 
+	 * @param session
+	 *            to talk to the server
+	 * @param resizer
+	 *            for resizing images
+	 * @param metrics
+	 *            registry for tracking metrics
+	 * @throws Exception
+	 *             if the setup for {@link QueryMessage} failed
+	 */
+	public ResizerNode(ClientSession session, ImageResizer resizer, MetricRegistry metrics) throws Exception {
 
 		this(session, resizer, QueueAddress.RESIZE_REQUEST.toString(), QueueAddress.HASH_REQUEST.toString(),
 				new QueryMessage(session, QueueAddress.REPOSITORY_QUERY));
@@ -105,7 +130,8 @@ public class ResizerNode implements MessageHandler {
 	}
 
 	/**
-	 * Create a new consumer for hash messages. Uses the default address for repository queries. <b>For testing only!</b>
+	 * Create a new consumer for hash messages. Uses the default address for repository queries. <b>For testing
+	 * only!</b>
 	 * 
 	 * @param session
 	 *            to talk to the server
@@ -119,9 +145,36 @@ public class ResizerNode implements MessageHandler {
 	 *            instance to use for repository queries
 	 * @throws Exception
 	 *             if the setup for {@link QueryMessage} failed
+	 * @deprecated Use constructor with {@link MetricRegistry}
 	 */
+	@Deprecated
 	protected ResizerNode(ClientSession session, ImageResizer resizer, String requestAddress, String resultAddress,
 			QueryMessage queryMessage) throws Exception {
+		this(session, resizer, requestAddress, resultAddress, queryMessage, new MetricRegistry());
+		preLoadCache(queryMessage);
+	}
+
+	/**
+	 * Create a new consumer for hash messages. Uses the default address for repository queries. <b>For testing
+	 * only!</b>
+	 * 
+	 * @param session
+	 *            to talk to the server
+	 * @param resizer
+	 *            for resizing images
+	 * @param requestAddress
+	 *            for hashes
+	 * @param resultAddress
+	 *            for result messages
+	 * @param queryMessage
+	 *            instance to use for repository queries
+	 * @param metrics
+	 *            registry for tracking metrics
+	 * @throws Exception
+	 *             if the setup for {@link QueryMessage} failed
+	 */
+	protected ResizerNode(ClientSession session, ImageResizer resizer, String requestAddress, String resultAddress,
+			QueryMessage queryMessage, MetricRegistry metrics) throws Exception {
 		// TODO replace with list of pending files
 		this.session = session;
 		this.consumer = session.createConsumer(requestAddress);
@@ -129,6 +182,7 @@ public class ResizerNode implements MessageHandler {
 		this.resizer = resizer;
 		this.messageFactory = new MessageFactory(session);
 		this.pendingCache = CacheBuilder.newBuilder().expireAfterAccess(5, TimeUnit.MINUTES).build();
+		this.resizeRequests = metrics.meter(METRIC_NAME_RESIZE_MESSAGES);
 
 		this.consumer.setMessageHandler(this);
 
@@ -159,6 +213,7 @@ public class ResizerNode implements MessageHandler {
 	@Override
 	public void onMessage(ClientMessage message) {
 		String pathPropterty = null;
+		resizeRequests.mark();
 
 		try {
 			pathPropterty = message.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY);

@@ -40,6 +40,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.similarImage.db.PendingHashImage;
 import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
@@ -65,6 +66,7 @@ public class ResizerNodeTest extends MessagingBaseTest {
 	private ResizerNode cut;
 
 	private MockMessageBuilder messageBuilder;
+	private MetricRegistry metrics;
 
 	@Before
 	public void setUp() throws Exception {
@@ -73,7 +75,9 @@ public class ResizerNodeTest extends MessagingBaseTest {
 		when(resizer.resize(any(InputStream.class))).thenReturn(new byte[0]);
 		when(queryMessage.pendingImagePaths()).thenReturn(Arrays.asList(PATH));
 
-		cut = new ResizerNode(session, resizer, REQUEST_ADDRESS, RESULT_ADDRESS, queryMessage);
+		metrics = new MetricRegistry();
+
+		cut = new ResizerNode(session, resizer, REQUEST_ADDRESS, RESULT_ADDRESS, queryMessage, metrics);
 		messageBuilder = new MockMessageBuilder();
 	}
 
@@ -185,5 +189,16 @@ public class ResizerNodeTest extends MessagingBaseTest {
 		cut.onMessage(message);
 
 		verify(producer, never()).send(any(ClientMessage.class));
+	}
+
+	@Test
+	public void testMetricsResizeRequest() throws Exception {
+		message = messageBuilder.configureResizeMessage().build();
+		when(session.createMessage(any(Boolean.class))).thenReturn(Mockito.mock(ClientMessage.class), sessionMessage);
+
+		cut.onMessage(message);
+
+		assertThat(metrics.getMeters().get(ResizerNode.METRIC_NAME_RESIZE_MESSAGES).getCount(),
+				is(1L));
 	}
 }
