@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
 import com.github.dozedoff.similarImage.image.ImageResizer;
+import com.github.dozedoff.similarImage.io.ByteBufferInputstream;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.util.ImageUtil;
 import com.github.dozedoff.similarImage.util.MessagingUtil;
@@ -60,6 +61,7 @@ public class ResizerNode implements MessageHandler {
 
 	private static final String DUPLICATE_MESSAGE = "Image {} is already in the hashing queue, discarding";
 	private static final String DUMMY = "";
+	private static final int BUFFER_SIZE = 1024 * 1024 * 100;
 
 	private final ClientConsumer consumer;
 	private final ClientProducer producer;
@@ -68,6 +70,7 @@ public class ResizerNode implements MessageHandler {
 	private MessageFactory messageFactory;
 
 	private final Cache<String, String> pendingCache;
+	private final ByteBuffer messageBuffer;
 
 	/**
 	 * Create a new consumer for hash messages. Uses the default addresses for queues.
@@ -131,6 +134,7 @@ public class ResizerNode implements MessageHandler {
 		this.pendingCache = CacheBuilder.newBuilder().expireAfterAccess(5, TimeUnit.MINUTES).build();
 
 		this.consumer.setMessageHandler(this);
+		this.messageBuffer = ByteBuffer.allocate(BUFFER_SIZE);
 
 		preLoadCache(queryMessage);
 	}
@@ -170,11 +174,13 @@ public class ResizerNode implements MessageHandler {
 			}
 
 			Path path = Paths.get(pathPropterty);
-			ByteBuffer buffer = ByteBuffer.allocate(message.getBodySize());
-			message.getBodyBuffer().readBytes(buffer);
+			messageBuffer.limit(message.getBodySize());
+			messageBuffer.rewind();
+			message.getBodyBuffer().readBytes(messageBuffer);
+			messageBuffer.rewind();
 
 			Path filename = path.getFileName();
-			InputStream is = new ByteArrayInputStream(buffer.array());
+			InputStream is = new ByteBufferInputstream(messageBuffer);
 
 			if (filename != null && filename.toString().toLowerCase().endsWith(".gif")) {
 				GifImage gi = GifDecoder.read(is);
