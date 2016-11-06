@@ -26,6 +26,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.imageio.IIOException;
 
@@ -61,16 +62,17 @@ public class ResizerNode implements MessageHandler {
 
 	private static final String DUPLICATE_MESSAGE = "Image {} is already in the hashing queue, discarding";
 	private static final String DUMMY = "";
-	private static final int BUFFER_SIZE = 1024 * 1024 * 100;
+	private static final int INITIAL_BUFFER_SIZE = 1024 * 1024 * 5;
 
 	private final ClientConsumer consumer;
 	private final ClientProducer producer;
 	private final ClientSession session;
 	private final ImageResizer resizer;
 	private MessageFactory messageFactory;
+	private final AtomicLong resizeSensing = new AtomicLong();
 
 	private final Cache<String, String> pendingCache;
-	private final ByteBuffer messageBuffer;
+	private ByteBuffer messageBuffer;
 
 	/**
 	 * Create a new consumer for hash messages. Uses the default addresses for queues.
@@ -134,7 +136,7 @@ public class ResizerNode implements MessageHandler {
 		this.pendingCache = CacheBuilder.newBuilder().expireAfterAccess(5, TimeUnit.MINUTES).build();
 
 		this.consumer.setMessageHandler(this);
-		this.messageBuffer = ByteBuffer.allocate(BUFFER_SIZE);
+		this.messageBuffer = ByteBuffer.allocate(INITIAL_BUFFER_SIZE);
 
 		preLoadCache(queryMessage);
 	}
@@ -157,6 +159,26 @@ public class ResizerNode implements MessageHandler {
 		this.messageFactory = messageFactory;
 	}
 
+	private void checkBufferCapacity(int messageSize) {
+		if (messageSize > messageBuffer.capacity()) {
+			// TODO add metrics to count buffer resizes
+			resizeSensing.getAndIncrement();
+			int oldBufferCap = messageBuffer.capacity();
+			allocateNewBuffer(messageSize);
+			int newBufferCap = messageBuffer.capacity();
+			LOGGER.debug("Message size of {} exceeds buffer capacity of {}, allocated new buffer with capactiy {}", messageSize,
+					oldBufferCap, newBufferCap);
+		}
+	}
+
+	protected void allocateNewBuffer(int messageSize) {
+		messageBuffer = ByteBuffer.allocateDirect(calcNewBufferSize(messageSize));
+	}
+	
+	private int calcNewBufferSize(int messageSize) {
+		return messageSize * 2;
+	}
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -174,6 +196,7 @@ public class ResizerNode implements MessageHandler {
 			}
 
 			Path path = Paths.get(pathPropterty);
+			checkBufferCapacity(message.getBodySize());
 			messageBuffer.limit(message.getBodySize());
 			messageBuffer.rewind();
 			message.getBodyBuffer().readBytes(messageBuffer);
@@ -242,5 +265,9 @@ public class ResizerNode implements MessageHandler {
 		MessagingUtil.silentClose(consumer);
 		MessagingUtil.silentClose(producer);
 		MessagingUtil.silentClose(session);
+	}
+
+	long getBufferResizes() {
+		return resizeSensing.get();
 	}
 }
