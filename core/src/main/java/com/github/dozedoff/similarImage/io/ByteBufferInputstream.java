@@ -41,7 +41,7 @@ public class ByteBufferInputstream extends InputStream {
 	@Override
 	public int read() throws IOException {
 		if (buffer.hasRemaining()) {
-		return buffer.get();
+			return buffer.get() & 0xFF;
 		} else {
 			return -1;
 		}
