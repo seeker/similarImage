@@ -28,6 +28,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Paths;
 import java.util.Arrays;
 
 import javax.imageio.IIOException;
@@ -52,6 +53,7 @@ public class ResizerNodeTest extends MessagingBaseTest {
 	private static final String REQUEST_ADDRESS = "request";
 	private static final String RESULT_ADDRESS = "result";
 	private static final String PATH = "bar";
+	private static final int BUFFER_TEST_DATA_SIZE = 100;
 
 	@Mock
 	private ImageResizer resizer;
@@ -185,5 +187,20 @@ public class ResizerNodeTest extends MessagingBaseTest {
 		cut.onMessage(message);
 
 		verify(producer, never()).send(any(ClientMessage.class));
+	}
+
+	@Test
+	public void testBufferResize() throws Exception {
+		message = new MessageFactory(session).resizeRequest(Paths.get("foo"), null);
+		
+		for (byte i = 0; i < BUFFER_TEST_DATA_SIZE; i++) {
+			message.getBodyBuffer().writeByte(i);
+		}
+		
+		cut.allocateNewBuffer(1);
+
+		cut.onMessage(message);
+
+		assertThat(cut.getBufferResizes(), is(1L));
 	}
 }

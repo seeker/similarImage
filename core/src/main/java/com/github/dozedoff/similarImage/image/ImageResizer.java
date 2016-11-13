@@ -47,8 +47,14 @@ public class ImageResizer {
 	 */
 	public byte[] resize(InputStream is) throws IOException {
 
-		BufferedImage resized = ImageUtil.resizeImage(ImageUtil.readImage(is), size, size);
+		BufferedImage originalImage = ImageUtil.readImage(is);
 
-		return com.github.dozedoff.similarImage.util.ImageUtil.imageToBytes(resized);
+		BufferedImage resized = ImageUtil.resizeImage(originalImage, size, size);
+		originalImage.flush();
+
+		byte[] resizedBytes = com.github.dozedoff.similarImage.util.ImageUtil.imageToBytes(resized);
+		resized.flush();
+
+		return resizedBytes;
 	}
 }
