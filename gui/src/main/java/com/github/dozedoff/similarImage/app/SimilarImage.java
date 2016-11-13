@@ -18,8 +18,6 @@
 package com.github.dozedoff.similarImage.app;
 
 import java.util.Iterator;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import javax.imageio.ImageIO;
@@ -55,7 +53,6 @@ import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
 import com.github.dozedoff.similarImage.messaging.ArtemisSession;
 import com.github.dozedoff.similarImage.messaging.RepositoryNode;
-import com.github.dozedoff.similarImage.thread.NamedThreadFactory;
 import com.github.dozedoff.similarImage.thread.SorterFactory;
 import com.j256.ormlite.dao.DaoManager;
 
@@ -66,7 +63,6 @@ public class SimilarImage {
 	private final int PRODUCER_QUEUE_SIZE = 400;
 	private static final int LARGE_MESSAGE_SIZE_THRESHOLD = 1024 * 1024;
 
-	private ExecutorService threadPool;
 	private Statistics statistics;
 	RepositoryNode rn;
 
@@ -91,8 +87,6 @@ public class SimilarImage {
 		logger.info("SimilarImage version " + version);
 		logger.info("System has {} processors", Runtime.getRuntime().availableProcessors());
 
-		threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(),
-				new NamedThreadFactory(SimilarImage.class.getSimpleName()));
 		Settings settings = new Settings(new SettingsValidator());
 		settings.loadPropertiesFromFile(PROPERTIES_FILENAME);
 
