@@ -222,7 +222,7 @@ public class ArgumentPasrser {
 	}
 
 	private void startHashWorkers(ArtemisSession session, int workerCount) {
-		for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
+		for (int i = 0; i < workerCount; i++) {
 			LOGGER.info("Starting hash worker {} ...", i);
 			try {
 				HasherNode consumer = new HasherNode(session.getSession(), new ImagePHash(),
@@ -235,7 +235,7 @@ public class ArgumentPasrser {
 	}
 
 	private void startResizeWorkers(ArtemisSession session, int workerCount) {
-		for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
+		for (int i = 0; i < workerCount; i++) {
 			LOGGER.info("Starting resize worker {} ...", i);
 			try {
 				ResizerNode arrc = new ResizerNode(session.getSession(), new ImageResizer(32));
