@@ -18,10 +18,6 @@
 package com.github.dozedoff.similarImage.app;
 
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import javax.imageio.ImageIO;
@@ -34,7 +30,6 @@ import org.apache.activemq.artemis.core.remoting.impl.invm.InVMConnectorFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.db.Database;
 import com.github.dozedoff.similarImage.db.PendingHashImage;
 import com.github.dozedoff.similarImage.db.SQLiteDatabase;
@@ -51,18 +46,13 @@ import com.github.dozedoff.similarImage.gui.SimilarImageController;
 import com.github.dozedoff.similarImage.gui.SimilarImageView;
 import com.github.dozedoff.similarImage.gui.UserTagSettingController;
 import com.github.dozedoff.similarImage.handler.HandlerListFactory;
-import com.github.dozedoff.similarImage.image.ImageResizer;
 import com.github.dozedoff.similarImage.io.ExtendedAttribute;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeDirectoryCache;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
-import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.messaging.ArtemisSession;
-import com.github.dozedoff.similarImage.messaging.HasherNode;
 import com.github.dozedoff.similarImage.messaging.RepositoryNode;
-import com.github.dozedoff.similarImage.messaging.ResizerNode;
-import com.github.dozedoff.similarImage.thread.NamedThreadFactory;
 import com.github.dozedoff.similarImage.thread.SorterFactory;
 import com.j256.ormlite.dao.DaoManager;
 
@@ -72,13 +62,9 @@ public class SimilarImage {
 	private final String PROPERTIES_FILENAME = "similarImage.properties";
 	private final int PRODUCER_QUEUE_SIZE = 400;
 	private static final int LARGE_MESSAGE_SIZE_THRESHOLD = 1024 * 1024;
-	private static final int RESIZE_SIZE = 32;
 
-	private ExecutorService threadPool;
 	private Statistics statistics;
 	RepositoryNode rn;
-	List<HasherNode> ahrcs = new LinkedList<>();
-	List<ResizerNode> arrcs = new LinkedList<>();
 
 	ArtemisEmbeddedServer aes;
 
@@ -101,8 +87,6 @@ public class SimilarImage {
 		logger.info("SimilarImage version " + version);
 		logger.info("System has {} processors", Runtime.getRuntime().availableProcessors());
 
-		threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(),
-				new NamedThreadFactory(SimilarImage.class.getSimpleName()));
 		Settings settings = new Settings(new SettingsValidator());
 		settings.loadPropertiesFromFile(PROPERTIES_FILENAME);
 
@@ -128,12 +112,6 @@ public class SimilarImage {
 		TagRepository tagRepository = repositoryFactory.buildTagRepository();
 
 		rn = new RepositoryNode(as.getSession(), pendingRepo, imageRepository);
-
-		for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
-			ahrcs.add(new HasherNode(as.getSession(), new ImagePHash(), QueueAddress.HASH_REQUEST.toString(),
-					QueueAddress.RESULT.toString()));
-			arrcs.add(new ResizerNode(as.getSession(), new ImageResizer(RESIZE_SIZE)));
-		}
 
 		DuplicateOperations dupOps = new DuplicateOperations(filterRepository, tagRepository, imageRepository);
 		SorterFactory sf = new SorterFactory(imageRepository, filterRepository, tagRepository);

@@ -26,6 +26,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.imageio.IIOException;
 
@@ -42,6 +43,7 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
 import com.github.dozedoff.similarImage.image.ImageResizer;
+import com.github.dozedoff.similarImage.io.ByteBufferInputstream;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.util.ImageUtil;
 import com.github.dozedoff.similarImage.util.MessagingUtil;
@@ -61,6 +63,7 @@ public class ResizerNode implements MessageHandler {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ResizerNode.class);
 
 	private static final String DUMMY = "";
+	private static final int INITIAL_BUFFER_SIZE = 1024 * 1024 * 5;
 
 	public static final String METRIC_NAME_RESIZE_MESSAGES = MetricRegistry.name(ResizerNode.class, "resize",
 			"messages");
@@ -70,8 +73,10 @@ public class ResizerNode implements MessageHandler {
 	private final ClientSession session;
 	private final ImageResizer resizer;
 	private MessageFactory messageFactory;
+	private final AtomicLong resizeSensing = new AtomicLong();
 
 	private final Cache<String, String> pendingCache;
+	private ByteBuffer messageBuffer;
 	private final Meter resizeRequests;
 
 	/**
@@ -185,6 +190,7 @@ public class ResizerNode implements MessageHandler {
 		this.resizeRequests = metrics.meter(METRIC_NAME_RESIZE_MESSAGES);
 
 		this.consumer.setMessageHandler(this);
+		this.messageBuffer = ByteBuffer.allocate(INITIAL_BUFFER_SIZE);
 
 		preLoadCache(queryMessage);
 	}
@@ -207,6 +213,26 @@ public class ResizerNode implements MessageHandler {
 		this.messageFactory = messageFactory;
 	}
 
+	private void checkBufferCapacity(int messageSize) {
+		if (messageSize > messageBuffer.capacity()) {
+			// TODO add metrics to count buffer resizes
+			resizeSensing.getAndIncrement();
+			int oldBufferCap = messageBuffer.capacity();
+			allocateNewBuffer(messageSize);
+			int newBufferCap = messageBuffer.capacity();
+			LOGGER.debug("Message size of {} exceeds buffer capacity of {}, allocated new buffer with capactiy {}", messageSize,
+					oldBufferCap, newBufferCap);
+		}
+	}
+
+	protected void allocateNewBuffer(int messageSize) {
+		messageBuffer = ByteBuffer.allocateDirect(calcNewBufferSize(messageSize));
+	}
+	
+	private int calcNewBufferSize(int messageSize) {
+		return messageSize * 2;
+	}
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -225,11 +251,14 @@ public class ResizerNode implements MessageHandler {
 			}
 
 			Path path = Paths.get(pathPropterty);
-			ByteBuffer buffer = ByteBuffer.allocate(message.getBodySize());
-			message.getBodyBuffer().readBytes(buffer);
+			checkBufferCapacity(message.getBodySize());
+			messageBuffer.limit(message.getBodySize());
+			messageBuffer.rewind();
+			message.getBodyBuffer().readBytes(messageBuffer);
+			messageBuffer.rewind();
 
 			Path filename = path.getFileName();
-			InputStream is = new ByteArrayInputStream(buffer.array());
+			InputStream is = new ByteBufferInputstream(messageBuffer);
 
 			if (filename != null && filename.toString().toLowerCase().endsWith(".gif")) {
 				GifImage gi = GifDecoder.read(is);
@@ -291,5 +320,9 @@ public class ResizerNode implements MessageHandler {
 		MessagingUtil.silentClose(consumer);
 		MessagingUtil.silentClose(producer);
 		MessagingUtil.silentClose(session);
+	}
+
+	long getBufferResizes() {
+		return resizeSensing.get();
 	}
 }
