@@ -237,4 +237,31 @@ public class ResizerNodeTest extends MessagingBaseTest {
 		assertThat(metrics.getMeters().get(ResizerNode.METRIC_NAME_RESIZE_MESSAGES).getCount(),
 				is(1L));
 	}
+
+	@Test
+	public void testImageSizeHistogramCount() throws Exception {
+		message = new MessageFactory(session).resizeRequest(Paths.get(PATH_NEW), null);
+
+		for (byte i = 0; i < BUFFER_TEST_DATA_SIZE; i++) {
+			message.getBodyBuffer().writeByte(i);
+		}
+
+		cut.onMessage(message);
+
+		assertThat(metrics.getHistograms().get(ResizerNode.METRIC_NAME_IMAGE_SIZE).getCount(), is(1L));
+	}
+
+	@Test
+	public void testImageSizeHistogramSize() throws Exception {
+		message = new MessageFactory(session).resizeRequest(Paths.get(PATH_NEW), null);
+
+		for (byte i = 0; i < BUFFER_TEST_DATA_SIZE; i++) {
+			message.getBodyBuffer().writeByte(i);
+		}
+
+		cut.onMessage(message);
+
+		assertThat(metrics.getHistograms().get(ResizerNode.METRIC_NAME_IMAGE_SIZE).getSnapshot().getMean(),
+				is((double) BUFFER_TEST_DATA_SIZE));
+	}
 }

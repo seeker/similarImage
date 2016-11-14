@@ -39,6 +39,7 @@ import org.apache.activemq.artemis.api.core.client.MessageHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
@@ -71,6 +72,7 @@ public class ResizerNode implements MessageHandler {
 			"hit");
 	public static final String METRIC_NAME_PENDING_CACHE_MISS = MetricRegistry.name(ResizerNode.class, "pendingCache",
 			"miss");
+	public static final String METRIC_NAME_IMAGE_SIZE = MetricRegistry.name(ResizerNode.class, "resize", "imageSize");
 
 	private final ClientConsumer consumer;
 	private final ClientProducer producer;
@@ -84,6 +86,7 @@ public class ResizerNode implements MessageHandler {
 	private final Meter resizeRequests;
 	private final Meter pendingCacheHit;
 	private final Meter pendingCacheMiss;
+	private final Histogram imageSize;
 
 	/**
 	 * Create a new consumer for hash messages. Uses the default addresses for queues.
@@ -197,6 +200,7 @@ public class ResizerNode implements MessageHandler {
 		this.resizeRequests = metrics.meter(METRIC_NAME_RESIZE_MESSAGES);
 		this.pendingCacheHit = metrics.meter(METRIC_NAME_PENDING_CACHE_HIT);
 		this.pendingCacheMiss = metrics.meter(METRIC_NAME_PENDING_CACHE_MISS);
+		this.imageSize = metrics.histogram(METRIC_NAME_IMAGE_SIZE);
 
 		this.consumer.setMessageHandler(this);
 		this.messageBuffer = ByteBuffer.allocate(INITIAL_BUFFER_SIZE);
@@ -265,6 +269,7 @@ public class ResizerNode implements MessageHandler {
 			Path path = Paths.get(pathPropterty);
 			checkBufferCapacity(message.getBodySize());
 			messageBuffer.limit(message.getBodySize());
+			imageSize.update(message.getBodySize());
 			messageBuffer.rewind();
 			message.getBodyBuffer().readBytes(messageBuffer);
 			messageBuffer.rewind();
