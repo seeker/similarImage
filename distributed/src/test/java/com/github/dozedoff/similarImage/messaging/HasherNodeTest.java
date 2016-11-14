@@ -45,12 +45,11 @@ import com.github.dozedoff.commonj.hash.ImagePHash;
 public class HasherNodeTest extends MessagingBaseTest {
 	private static final String TEST_ADDRESS_REQUEST = "test_request";
 	private static final String TEST_ADDRESS_RESULT = "test_result";
-	private static final String TEST_PATH = "foo";
 	private static final long TEST_HASH = 42L;
-	private static final int TEST_ID = 12;
 	private static final byte[] TEST_DATA = { 12, 13, 14, 15, 16 };
 	private static final UUID TEST_UUID = new UUID(12, 42);
 	private static final long WORKER_NUMBER = 10L;
+	private static final int LARGE_DATA_SIZE = 5000;
 
 	@Mock
 	private ImagePHash hasher;
@@ -105,11 +104,6 @@ public class HasherNodeTest extends MessagingBaseTest {
 	}
 	
 	@Test
-	public void testMetrics() {
-		assertThat(metrics.getMeters().size(), is(1));
-	}
-
-	@Test
 	public void testMetricsMultipleInstance() throws Exception {
 		List<HasherNode> nodes = new LinkedList<HasherNode>();
 
@@ -120,5 +114,14 @@ public class HasherNodeTest extends MessagingBaseTest {
 
 		assertThat(metrics.getMeters().get(HasherNode.METRIC_NAME_HASH_MESSAGES)
 				.getCount(), is(WORKER_NUMBER));
+	}
+
+	@Test
+	public void testBufferResize() throws Exception {
+		message = messageFactory.hashRequestMessage(new byte[LARGE_DATA_SIZE], TEST_UUID);
+
+		cut.onMessage(message);
+
+		assertThat(metrics.getMeters().get(HasherNode.METRIC_NAME_BUFFER_RESIZE).getCount(), is(1L));
 	}
 }

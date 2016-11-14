@@ -57,8 +57,10 @@ public class HasherNode implements MessageHandler {
 	private MessageFactory messageFactory;
 
 	private final Meter hashRequests;
+	private final Meter bufferResize;
 
 	public static final String METRIC_NAME_HASH_MESSAGES = MetricRegistry.name(HasherNode.class, "hash", "messages");
+	public static final String METRIC_NAME_BUFFER_RESIZE = MetricRegistry.name(HasherNode.class, "buffer", "resize");
 
 	/**
 	 * Create a hash consumer that listens and responds on the given addresses.
@@ -86,6 +88,7 @@ public class HasherNode implements MessageHandler {
 		this.messageFactory = new MessageFactory(session);
 
 		this.hashRequests = metrics.meter(METRIC_NAME_HASH_MESSAGES);
+		this.bufferResize = metrics.meter(METRIC_NAME_BUFFER_RESIZE);
 		this.buffer = ByteBuffer.allocate(INITIAL_BUFFER_SIZE);
 	}
 
@@ -139,6 +142,7 @@ public class HasherNode implements MessageHandler {
 
 			checkBufferCapacity(message.getBodySize());
 			buffer.limit(message.getBodySize());
+			LOGGER.trace("Reading resized image with size {}", message.getBodySize());
 			buffer.rewind();
 			message.getBodyBuffer().readBytes(buffer);
 			buffer.rewind();
@@ -155,6 +159,7 @@ public class HasherNode implements MessageHandler {
 
 	private void checkBufferCapacity(int messageSize) {
 		if (messageSize > buffer.capacity()) {
+			bufferResize.mark();
 			LOGGER.debug("Buffer size {} is too small for message size {}, allocating new buffer...", buffer.capacity(),
 					messageSize);
 			buffer = ByteBuffer.allocate(messageSize);
