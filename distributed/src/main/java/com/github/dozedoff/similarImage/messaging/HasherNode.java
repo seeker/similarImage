@@ -19,6 +19,9 @@ package com.github.dozedoff.similarImage.messaging;
 
 import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
+import java.util.UUID;
+
+import javax.imageio.ImageIO;
 
 import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.client.ClientConsumer;
@@ -32,7 +35,7 @@ import org.slf4j.LoggerFactory;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.commonj.hash.ImagePHash;
-import com.github.dozedoff.similarImage.util.ImageUtil;
+import com.github.dozedoff.similarImage.io.ByteBufferInputstream;
 import com.github.dozedoff.similarImage.util.MessagingUtil;
 
 /**
@@ -44,10 +47,13 @@ import com.github.dozedoff.similarImage.util.MessagingUtil;
 public class HasherNode implements MessageHandler {
 	private static final Logger LOGGER = LoggerFactory.getLogger(HasherNode.class);
 
+	private static final int INITIAL_BUFFER_SIZE = 4096;
+
 	private final ClientConsumer consumer;
 	private final ClientProducer producer;
 	private final ClientSession session;
 	private final ImagePHash hasher;
+	private ByteBuffer buffer;
 	private MessageFactory messageFactory;
 
 	private final Meter hashRequests;
@@ -80,6 +86,7 @@ public class HasherNode implements MessageHandler {
 		this.messageFactory = new MessageFactory(session);
 
 		this.hashRequests = metrics.meter(METRIC_NAME_HASH_MESSAGES);
+		this.buffer = ByteBuffer.allocate(INITIAL_BUFFER_SIZE);
 	}
 
 	/**
@@ -125,16 +132,32 @@ public class HasherNode implements MessageHandler {
 		try {
 			long most = message.getBodyBuffer().readLong();
 			long least = message.getBodyBuffer().readLong();
-			ByteBuffer buffer = ByteBuffer.allocate(message.getBodySize());
-			message.getBodyBuffer().readBytes(buffer);
 
-			long hash = doHash(ImageUtil.bytesToImage(buffer.array()));
+			if (LOGGER.isTraceEnabled()) {
+				LOGGER.trace("Got hash request with UUID {}, size {}", new UUID(most, least), message.getBodySize());
+			}
+
+			checkBufferCapacity(message.getBodySize());
+			buffer.limit(message.getBodySize());
+			buffer.rewind();
+			message.getBodyBuffer().readBytes(buffer);
+			buffer.rewind();
+
+			long hash = doHash(ImageIO.read(new ByteBufferInputstream(buffer)));
 			ClientMessage response = messageFactory.resultMessage(hash, most, least);
 			producer.send(response);
 		} catch (ActiveMQException e) {
 			LOGGER.error("Failed to process message: {}", e.toString());
 		} catch (Exception e) {
 			LOGGER.error("Failed to process image: {}", e.toString());
+		}
+	}
+
+	private void checkBufferCapacity(int messageSize) {
+		if (messageSize > buffer.capacity()) {
+			LOGGER.debug("Buffer size {} is too small for message size {}, allocating new buffer...", buffer.capacity(),
+					messageSize);
+			buffer = ByteBuffer.allocate(messageSize);
 		}
 	}
 
