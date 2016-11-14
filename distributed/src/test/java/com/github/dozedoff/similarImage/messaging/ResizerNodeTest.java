@@ -54,6 +54,7 @@ public class ResizerNodeTest extends MessagingBaseTest {
 	private static final String REQUEST_ADDRESS = "request";
 	private static final String RESULT_ADDRESS = "result";
 	private static final String PATH = "bar";
+	private static final String PATH_NEW = "foo";
 	private static final int BUFFER_TEST_DATA_SIZE = 100;
 
 	@Mock
@@ -149,7 +150,7 @@ public class ResizerNodeTest extends MessagingBaseTest {
 
 		cut.onMessage(message);
 
-		assertThat(sessionMessage.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY), is("foo"));
+		assertThat(sessionMessage.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY), is(PATH_NEW));
 	}
 
 	@Test
@@ -194,8 +195,26 @@ public class ResizerNodeTest extends MessagingBaseTest {
 	}
 
 	@Test
+	public void testDuplicatePreLoadedMetricCacheHit() throws Exception {
+		message = messageBuilder.configureResizeMessage().addProperty(MessageProperty.path.toString(), PATH).build();
+
+		cut.onMessage(message);
+
+		assertThat(metrics.getMeters().get(ResizerNode.METRIC_NAME_PENDING_CACHE_HIT).getCount(), is(1L));
+	}
+
+	@Test
+	public void testDuplicatePreLoadedMetricCacheMiss() throws Exception {
+		message = messageBuilder.configureResizeMessage().build();
+
+		cut.onMessage(message);
+
+		assertThat(metrics.getMeters().get(ResizerNode.METRIC_NAME_PENDING_CACHE_MISS).getCount(), is(1L));
+	}
+
+	@Test
 	public void testBufferResize() throws Exception {
-		message = new MessageFactory(session).resizeRequest(Paths.get("foo"), null);
+		message = new MessageFactory(session).resizeRequest(Paths.get(PATH_NEW), null);
 		
 		for (byte i = 0; i < BUFFER_TEST_DATA_SIZE; i++) {
 			message.getBodyBuffer().writeByte(i);

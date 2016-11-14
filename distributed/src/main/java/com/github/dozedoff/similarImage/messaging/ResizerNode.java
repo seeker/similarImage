@@ -67,6 +67,10 @@ public class ResizerNode implements MessageHandler {
 
 	public static final String METRIC_NAME_RESIZE_MESSAGES = MetricRegistry.name(ResizerNode.class, "resize",
 			"messages");
+	public static final String METRIC_NAME_PENDING_CACHE_HIT = MetricRegistry.name(ResizerNode.class, "pendingCache",
+			"hit");
+	public static final String METRIC_NAME_PENDING_CACHE_MISS = MetricRegistry.name(ResizerNode.class, "pendingCache",
+			"miss");
 
 	private final ClientConsumer consumer;
 	private final ClientProducer producer;
@@ -78,6 +82,8 @@ public class ResizerNode implements MessageHandler {
 	private final Cache<String, String> pendingCache;
 	private ByteBuffer messageBuffer;
 	private final Meter resizeRequests;
+	private final Meter pendingCacheHit;
+	private final Meter pendingCacheMiss;
 
 	/**
 	 * Create a new consumer for hash messages. Uses the default addresses for queues.
@@ -187,7 +193,10 @@ public class ResizerNode implements MessageHandler {
 		this.resizer = resizer;
 		this.messageFactory = new MessageFactory(session);
 		this.pendingCache = CacheBuilder.newBuilder().expireAfterAccess(5, TimeUnit.MINUTES).build();
+
 		this.resizeRequests = metrics.meter(METRIC_NAME_RESIZE_MESSAGES);
+		this.pendingCacheHit = metrics.meter(METRIC_NAME_PENDING_CACHE_HIT);
+		this.pendingCacheMiss = metrics.meter(METRIC_NAME_PENDING_CACHE_MISS);
 
 		this.consumer.setMessageHandler(this);
 		this.messageBuffer = ByteBuffer.allocate(INITIAL_BUFFER_SIZE);
@@ -247,7 +256,10 @@ public class ResizerNode implements MessageHandler {
 
 			if (pendingCache.getIfPresent(pathPropterty) != null) {
 				LOGGER.trace("{} found in cache, skipping...", pathPropterty);
+				pendingCacheHit.mark();
 				return;
+			} else {
+				pendingCacheMiss.mark();
 			}
 
 			Path path = Paths.get(pathPropterty);
