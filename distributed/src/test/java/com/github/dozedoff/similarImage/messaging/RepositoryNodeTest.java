@@ -17,6 +17,7 @@
  */
 package com.github.dozedoff.similarImage.messaging;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
@@ -34,8 +35,8 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.similarImage.db.PendingHashImage;
-import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -48,9 +49,10 @@ public class RepositoryNodeTest extends MessagingBaseTest {
 	private PendingHashImageRepository pendingRepository;
 
 	@Mock
-	private ImageRepository imageRepository;
+	private TaskMessageHandler taskMessageHandler;
 
 	private MessageFactory messageFactory;
+	private MetricRegistry metrics;
 
 	private RepositoryNode cut;
 
@@ -62,7 +64,8 @@ public class RepositoryNodeTest extends MessagingBaseTest {
 		message.putStringProperty(ClientMessageImpl.REPLYTO_HEADER_NAME.toString(), RETURN_ADDRESS);
 
 		messageFactory = new MessageFactory(session);
-		cut = new RepositoryNode(session, pendingRepository, imageRepository);
+		metrics = new MetricRegistry();
+		cut = new RepositoryNode(session, pendingRepository, taskMessageHandler, metrics);
 	}
 
 	@Test
@@ -72,5 +75,14 @@ public class RepositoryNodeTest extends MessagingBaseTest {
 		cut.onMessage(message);
 		// TODO test actual message contents
 		assertThat(sessionMessage.getBodySize(), greaterThan(0));
+	}
+
+	@Test
+	public void testMetricsPending() throws Exception {
+		message = messageFactory.pendingImageQuery();
+
+		cut.onMessage(message);
+
+		assertThat(metrics.getCounters().get(RepositoryNode.METRIC_NAME_PENDING_MESSAGES).getCount(), is(1L));
 	}
 }
