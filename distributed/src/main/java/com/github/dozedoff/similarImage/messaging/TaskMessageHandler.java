@@ -93,7 +93,7 @@ public class TaskMessageHandler implements MessageHandler {
 	}
 
 	/**
-	 * Create a handler for Task messages.
+	 * Create a handler for Task messages, using the default address for extended attribute update messages.
 	 * 
 	 * @param pendingRepository
 	 *            repository for pending messages
