@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.SimpleString;
@@ -38,6 +39,8 @@ import org.apache.activemq.artemis.core.remoting.impl.netty.TransportConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Slf4jReporter;
 import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.handler.HashNames;
 import com.github.dozedoff.similarImage.image.ImageResizer;
@@ -72,6 +75,8 @@ public class ArgumentPasrser {
 	private final List<HasherNode> hashWorkers = new LinkedList<HasherNode>();
 	private final List<ResizerNode> resizeWorkers = new LinkedList<ResizerNode>();
 
+	private final MetricRegistry metrics;
+
 	private enum CommandLineOptions {
 		path, update, progress
 	};
@@ -95,6 +100,7 @@ public class ArgumentPasrser {
 	 */
 	public ArgumentPasrser(FileVisitor<Path> visitor) {
 		this.visitor = visitor;
+		this.metrics = new MetricRegistry();
 
 		// TODO add hash selection
 
@@ -121,6 +127,7 @@ public class ArgumentPasrser {
 		nodeSubcommand.addArgument("--hash-workers").help("Number of hash workers to start").type(Integer.class).setDefault(processors);
 		nodeSubcommand.addArgument("--status").action(Arguments.storeTrue());
 		nodeSubcommand.addArgument("--window").help("Consumer window size in bytes").type(Integer.class).setDefault(DEFAULT_WINDOW);
+		nodeSubcommand.addArgument("--metrics").help("Log metrics once a minute").action(Arguments.storeTrue());
 	}
 
 	/**
@@ -179,6 +186,13 @@ public class ArgumentPasrser {
 		params.put("port", parsedArgs.getInt("port"));
 		params.put(TransportConstants.SSL_ENABLED_PROP_NAME, "true");
 
+		if (parsedArgs.getBoolean("metrics")) {
+			LOGGER.info("Starting metrics reporter...");
+			Slf4jReporter reporter = Slf4jReporter.forRegistry(metrics).outputTo(LoggerFactory.getLogger("similarImage.node.metrics"))
+					.convertRatesTo(TimeUnit.SECONDS).convertDurationsTo(TimeUnit.MILLISECONDS).build();
+			reporter.start(1, TimeUnit.MINUTES);
+		}
+
 		ServerLocator locator = ActiveMQClient
 				.createServerLocatorWithoutHA(new TransportConfiguration(NettyConnectorFactory.class.getName(), params))
 				.setCacheLargeMessagesClient(false).setMinLargeMessageSize(LARGE_MESSAGE_SIZE_THRESHOLD)
@@ -226,7 +240,7 @@ public class ArgumentPasrser {
 			LOGGER.info("Starting hash worker {} ...", i);
 			try {
 				HasherNode consumer = new HasherNode(session.getSession(), new ImagePHash(),
-						ArtemisQueue.QueueAddress.HASH_REQUEST.toString(), ArtemisQueue.QueueAddress.RESULT.toString());
+						ArtemisQueue.QueueAddress.HASH_REQUEST.toString(), ArtemisQueue.QueueAddress.RESULT.toString(), metrics);
 				hashWorkers.add(consumer);
 			} catch (ActiveMQException e) {
 				LOGGER.warn("Failed to create hash consumer: {} cause:", e.toString(), e.getCause().getMessage());
@@ -238,7 +252,7 @@ public class ArgumentPasrser {
 		for (int i = 0; i < workerCount; i++) {
 			LOGGER.info("Starting resize worker {} ...", i);
 			try {
-				ResizerNode arrc = new ResizerNode(session.getSession(), new ImageResizer(32));
+				ResizerNode arrc = new ResizerNode(session.getSession(), new ImageResizer(32), metrics);
 				resizeWorkers.add(arrc);
 			} catch (Exception e) {
 				LOGGER.warn("Failed to create resize consumer: {} cause:", e.toString(),
