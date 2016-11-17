@@ -29,7 +29,6 @@ import org.apache.activemq.artemis.core.client.impl.ClientMessageImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
@@ -47,16 +46,14 @@ public class RepositoryNode implements MessageHandler {
 	private static final String REPOSITORY_ERROR_MESSAGE = "Failed to access repository:{}, cause:{}";
 	private static final String RESPONSE_SEND_ERROR = "Failed to send response message: {}";
 
-	public static final String METRIC_NAME_PENDING_MESSAGES = MetricRegistry.name(RepositoryNode.class, "pending",
-			"messages");
-
 	private final ClientConsumer consumer;
 	private final ClientConsumer taskConsumer;
 	private final ClientProducer producer;
 	private final PendingHashImageRepository pendingRepository;
 	private final ImageRepository imageRepository;
 	private final MessageFactory messageFactory;
-	private final Counter pendingMessages;
+
+	// TODO remove metrics parameter from constructor
 
 	/**
 	 * Create a instance using the given instance and repository
@@ -113,7 +110,6 @@ public class RepositoryNode implements MessageHandler {
 		this.imageRepository = imageRepository;
 		this.consumer.setMessageHandler(this);
 		messageFactory = new MessageFactory(session);
-		this.pendingMessages = metrics.counter(METRIC_NAME_PENDING_MESSAGES);
 		LOGGER.info("Listening to request messages on {} ...", queryAddress);
 	}
 
@@ -226,7 +222,6 @@ public class RepositoryNode implements MessageHandler {
 			LOGGER.debug("Got query message: {}", queryType);
 
 			if (isQueryType(queryType, QueryType.pending)) {
-				pendingMessages.inc();
 				LOGGER.debug("Query for pending files");
 				try {
 					ClientMessage response = messageFactory.pendingImageResponse(pendingRepository.getAll());

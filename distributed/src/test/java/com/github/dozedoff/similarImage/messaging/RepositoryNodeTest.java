@@ -17,7 +17,6 @@
  */
 package com.github.dozedoff.similarImage.messaging;
 
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
@@ -75,14 +74,5 @@ public class RepositoryNodeTest extends MessagingBaseTest {
 		cut.onMessage(message);
 		// TODO test actual message contents
 		assertThat(sessionMessage.getBodySize(), greaterThan(0));
-	}
-
-	@Test
-	public void testMetricsPending() throws Exception {
-		message = messageFactory.pendingImageQuery();
-
-		cut.onMessage(message);
-
-		assertThat(metrics.getCounters().get(RepositoryNode.METRIC_NAME_PENDING_MESSAGES).getCount(), is(1L));
 	}
 }

@@ -41,9 +41,11 @@ import com.github.dozedoff.similarImage.messaging.MessageFactory.TaskType;
 
 public class TaskMessageHandler implements MessageHandler {
 	private static final Logger LOGGER = LoggerFactory.getLogger(TaskMessageHandler.class);
-
+	
 	public static final String METRIC_NAME_PENDING_MESSAGES_MISSING = MetricRegistry.name(RepositoryNode.class,
 			"pending", "messages", "missing");
+	public static final String METRIC_NAME_PENDING_MESSAGES = MetricRegistry.name(TaskMessageHandler.class, "pending",
+			"messages");
 
 	private final PendingHashImageRepository pendingRepository;
 	private final ImageRepository imageRepository;
@@ -51,6 +53,8 @@ public class TaskMessageHandler implements MessageHandler {
 	private final MessageFactory messageFactory;
 	private final Counter pendingMessages;
 	private final Counter pendingMessagesMissing;
+
+
 
 	/**
 	 * Create a handler for Task messages. Use the default address for extended attribute updates.
@@ -133,7 +137,7 @@ public class TaskMessageHandler implements MessageHandler {
 		this.imageRepository = imageRepository;
 		this.producer = session.createProducer(eaUpdateAddress);
 		this.messageFactory = new MessageFactory(session);
-		this.pendingMessages = metrics.counter(RepositoryNode.METRIC_NAME_PENDING_MESSAGES);
+		this.pendingMessages = metrics.counter(METRIC_NAME_PENDING_MESSAGES);
 		this.pendingMessagesMissing = metrics.counter(METRIC_NAME_PENDING_MESSAGES_MISSING);
 	}
 
@@ -170,6 +174,7 @@ public class TaskMessageHandler implements MessageHandler {
 					LOGGER.trace("Tracking new path {} with UUID {}", path, new UUID(most, least));
 				}
 
+				pendingMessages.inc();
 				pendingRepository.store(new PendingHashImage(path, most, least));
 			} else {
 				LOGGER.error("Unhandled message: {}", msg);

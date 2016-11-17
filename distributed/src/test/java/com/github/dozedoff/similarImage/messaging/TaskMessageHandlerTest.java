@@ -84,13 +84,22 @@ public class TaskMessageHandlerTest extends MessagingBaseTest {
 	}
 
 	@Test
-	public void testMetricPendingMessages() throws Exception {
+	public void testMetricPendingMessagesResult() throws Exception {
 		message = messageFactory.resultMessage(TEST_HASH, MOST, LEAST);
 		when(pendingRepository.getByUUID(MOST, LEAST)).thenReturn(new PendingHashImage(TEST_PATH, MOST, LEAST));
 
 		cut.onMessage(message);
 
-		assertThat(metrics.getCounters().get(RepositoryNode.METRIC_NAME_PENDING_MESSAGES).getCount(), is(-1L));
+		assertThat(metrics.getCounters().get(TaskMessageHandler.METRIC_NAME_PENDING_MESSAGES).getCount(), is(-1L));
+	}
+
+	@Test
+	public void testMetricPendingMessagesTrack() throws Exception {
+		message = messageFactory.trackPath(Paths.get(TEST_PATH), UUID);
+
+		cut.onMessage(message);
+
+		assertThat(metrics.getCounters().get(TaskMessageHandler.METRIC_NAME_PENDING_MESSAGES).getCount(), is(1L));
 	}
 
 	@Test
