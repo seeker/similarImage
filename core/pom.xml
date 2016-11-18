@@ -91,5 +91,10 @@
 			<artifactId>Open-Imaging</artifactId>
 			<version>ad64c47f1a</version>
 		</dependency>
+		<dependency>
+			<groupId>com.google.jimfs</groupId>
+			<artifactId>jimfs</artifactId>
+			<version>1.1</version>
+		</dependency>
 	</dependencies>
 </project>
