@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
+import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.PendingHashImage;
@@ -46,6 +47,8 @@ public class TaskMessageHandler implements MessageHandler {
 			"pending", "messages", "missing");
 	public static final String METRIC_NAME_PENDING_MESSAGES = MetricRegistry.name(TaskMessageHandler.class, "pending",
 			"messages");
+	public static final String METRIC_NAME_PROCESSED_IMAGES = MetricRegistry.name(TaskMessageHandler.class,
+			"processed", "images");
 
 	private final PendingHashImageRepository pendingRepository;
 	private final ImageRepository imageRepository;
@@ -53,6 +56,7 @@ public class TaskMessageHandler implements MessageHandler {
 	private final MessageFactory messageFactory;
 	private final Counter pendingMessages;
 	private final Counter pendingMessagesMissing;
+	private final Meter processedImages;
 
 
 
@@ -139,6 +143,7 @@ public class TaskMessageHandler implements MessageHandler {
 		this.messageFactory = new MessageFactory(session);
 		this.pendingMessages = metrics.counter(METRIC_NAME_PENDING_MESSAGES);
 		this.pendingMessagesMissing = metrics.counter(METRIC_NAME_PENDING_MESSAGES_MISSING);
+		this.processedImages = metrics.meter(METRIC_NAME_PROCESSED_IMAGES);
 	}
 
 	/**
@@ -155,10 +160,10 @@ public class TaskMessageHandler implements MessageHandler {
 				if (LOGGER.isTraceEnabled()) {
 					LOGGER.trace("Received result message with id {} and hash {}", new UUID(most, least), hash);
 				}
-
 				PendingHashImage pending = pendingRepository.getByUUID(most, least);
 				if (pending != null) {
 					pendingMessages.dec();
+					processedImages.mark();
 					updateRecords(hash, pending);
 				} else {
 					pendingMessagesMissing.inc();

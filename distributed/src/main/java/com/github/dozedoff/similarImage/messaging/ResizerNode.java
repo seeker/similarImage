@@ -119,9 +119,8 @@ public class ResizerNode implements MessageHandler {
 	 *             if the setup for {@link QueryMessage} failed
 	 */
 	public ResizerNode(ClientSession session, ImageResizer resizer, MetricRegistry metrics) throws Exception {
-
 		this(session, resizer, QueueAddress.RESIZE_REQUEST.toString(), QueueAddress.HASH_REQUEST.toString(),
-				new QueryMessage(session, QueueAddress.REPOSITORY_QUERY));
+				new QueryMessage(session, QueueAddress.REPOSITORY_QUERY), metrics);
 	}
 
 	/**
@@ -137,7 +136,9 @@ public class ResizerNode implements MessageHandler {
 	 *            for result messages
 	 * @throws Exception
 	 *             if the setup for {@link QueryMessage} failed
+	 * @deprecated Use constructor with {@link MetricRegistry}.
 	 */
+	@Deprecated
 	public ResizerNode(ClientSession session, ImageResizer resizer, String inAddress, String outAddress) throws Exception {
 
 		this(session, resizer, inAddress, outAddress, new QueryMessage(session, QueueAddress.REPOSITORY_QUERY));

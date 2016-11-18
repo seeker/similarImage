@@ -94,6 +94,16 @@ public class TaskMessageHandlerTest extends MessagingBaseTest {
 	}
 
 	@Test
+	public void testMetricProcessedImages() throws Exception {
+		message = messageFactory.resultMessage(TEST_HASH, MOST, LEAST);
+		when(pendingRepository.getByUUID(MOST, LEAST)).thenReturn(new PendingHashImage(TEST_PATH, MOST, LEAST));
+
+		cut.onMessage(message);
+
+		assertThat(metrics.getMeters().get(TaskMessageHandler.METRIC_NAME_PROCESSED_IMAGES).getCount(), is(1L));
+	}
+
+	@Test
 	public void testMetricPendingMessagesTrack() throws Exception {
 		message = messageFactory.trackPath(Paths.get(TEST_PATH), UUID);
 
