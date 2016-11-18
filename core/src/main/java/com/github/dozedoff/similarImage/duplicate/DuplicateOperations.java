@@ -20,9 +20,10 @@ package com.github.dozedoff.similarImage.duplicate;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -61,13 +62,14 @@ public class DuplicateOperations {
 	private final FilterRepository filterRepository;
 	private final TagRepository tagRepository;
 	private final ImageRepository imageRepository;
+	private final FileSystem fileSystem;
 
 	public enum Tags {
 		DNW, BLOCK
 	}
 
 	/**
-	 * Create with the given classes to access the data.
+	 * Create with the given classes to access the data. Use the default {@link FileSystem}.
 	 * 
 	 * @param filterRepository
 	 *            Data access for {@link FilterRecord}
@@ -78,9 +80,28 @@ public class DuplicateOperations {
 	 * 
 	 */
 	public DuplicateOperations(FilterRepository filterRepository, TagRepository tagRepository, ImageRepository imageRepository) {
+		this(FileSystems.getDefault(), filterRepository, tagRepository, imageRepository);
+	}
+
+	/**
+	 * Create with the given classes to access the data.
+	 * 
+	 * @param fileSystem
+	 *            to use for accessing files
+	 * @param filterRepository
+	 *            Data access for {@link FilterRecord}
+	 * @param tagRepository
+	 *            Data access for {@link Tag}
+	 * @param imageRepository
+	 *            Data access for {@link ImageRecord}
+	 * 
+	 */
+	public DuplicateOperations(FileSystem fileSystem, FilterRepository filterRepository, TagRepository tagRepository,
+			ImageRepository imageRepository) {
 		this.filterRepository = filterRepository;
 		this.tagRepository = tagRepository;
 		this.imageRepository = imageRepository;
+		this.fileSystem = fileSystem;
 	}
 
 	public void moveToDnw(Path path) {
@@ -90,7 +111,7 @@ public class DuplicateOperations {
 
 	public void deleteAll(Collection<ImageRecord> records) {
 		for (ImageRecord ir : records) {
-			Path path = Paths.get(ir.getPath());
+			Path path = fileSystem.getPath(ir.getPath());
 			deleteFile(path);
 		}
 	}
@@ -184,7 +205,7 @@ public class DuplicateOperations {
 	 */
 	public void markDnwAndDelete(Collection<ImageRecord> records) {
 		for (ImageRecord ir : records) {
-			Path path = Paths.get(ir.getPath());
+			Path path = fileSystem.getPath(ir.getPath());
 
 			try {
 				markAs(ir, getTag(Tags.DNW.toString()));
@@ -275,7 +296,7 @@ public class DuplicateOperations {
 			long pHash = image.getpHash();
 			logger.info("Adding pHash {} to filter, reason {}", pHash, tag);
 
-			Thumbnail thumb = createThumbnail(Paths.get(image.getPath()));
+		Thumbnail thumb = createThumbnail(fileSystem.getPath(image.getPath()));
 
 			filterRepository.store(new FilterRecord(pHash, tag, thumb));
 	}
@@ -430,7 +451,7 @@ public class DuplicateOperations {
 		LinkedList<ImageRecord> toPrune = new LinkedList<>();
 
 		for (ImageRecord ir : records) {
-			Path path = Paths.get(ir.getPath());
+			Path path = fileSystem.getPath(ir.getPath());
 
 			if (!Files.exists(path)) {
 				toPrune.add(ir);

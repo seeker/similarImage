@@ -23,53 +23,50 @@ import static org.junit.Assert.assertThat;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.j256.ormlite.support.ConnectionSource;
 
 public class SQLiteDatabaseTest {
-	private static Path testDirectory;
 	private Path databaseFile;
-	private Path invalidPath;
-
-	@BeforeClass
-	public static void setUpClass() throws Exception {
-		testDirectory = Files.createTempDirectory("SQLiteDatabaseTest");
-	}
+	private SQLiteDatabase cut;
 
 	@Before
 	public void setUp() throws Exception {
-		databaseFile = Files.createTempFile(testDirectory, "test", ".db");
-		invalidPath = testDirectory.resolve("invalid").resolve("foo.db");
-
+		databaseFile = Files.createTempFile(SQLiteDatabaseTest.class.getSimpleName(), ".db");
+		cut = new SQLiteDatabase(databaseFile);
 	}
 
-	@Test
-	public void testSQLiteDatabasePath() throws Exception {
-		new SQLiteDatabase(databaseFile);
+	@After
+	public void tearDown() throws Exception {
+		if (cut != null) {
+			cut.close();
+			cut = null;
+		}
+
+		Files.deleteIfExists(databaseFile);
 	}
 
 	@Test(expected = RuntimeException.class)
 	public void testSQLiteDatabaseInvalidPath() throws Exception {
-		new SQLiteDatabase(invalidPath);
+		new SQLiteDatabase(databaseFile.resolve("invalid"));
 	}
 
 	@Test
 	public void testGetCs() throws Exception {
-		assertThat(new SQLiteDatabase(databaseFile).getCs().isOpen(), is(true));
+		assertThat(cut.getCs().isOpen(), is(true));
 
 	}
 
 	@Test
 	public void testClose() throws Exception {
-		Database db = new SQLiteDatabase(databaseFile);
-		ConnectionSource cs = db.getCs();
+		ConnectionSource cs = cut.getCs();
 
 		assertThat(cs.isOpen(), is(true)); // guard assert
 
-		db.close();
+		cut.close();
 
 		assertThat(cs.isOpen(), is(false));
 
