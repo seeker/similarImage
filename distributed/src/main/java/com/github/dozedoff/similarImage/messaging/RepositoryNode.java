@@ -29,6 +29,7 @@ import org.apache.activemq.artemis.core.client.impl.ClientMessageImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
@@ -52,6 +53,8 @@ public class RepositoryNode implements MessageHandler {
 	private final ImageRepository imageRepository;
 	private final MessageFactory messageFactory;
 
+	// TODO remove metrics parameter from constructor
+
 	/**
 	 * Create a instance using the given instance and repository
 	 * 
@@ -67,7 +70,9 @@ public class RepositoryNode implements MessageHandler {
 	 *            for storing hash results
 	 * @throws ActiveMQException
 	 *             if there is an error setting up messaging
+	 * @deprecated Use constructor with {@link MetricRegistry}.
 	 */
+	@Deprecated
 	public RepositoryNode(ClientSession session, String queryAddress, String taskAddress, PendingHashImageRepository pendingRepository,
 			ImageRepository imageRepository) throws ActiveMQException {
 		this(session, queryAddress, taskAddress, pendingRepository, imageRepository,
@@ -89,11 +94,13 @@ public class RepositoryNode implements MessageHandler {
 	 *            for storing hash results
 	 * @param taskMessageHandler
 	 *            handler to use for task messages
+	 * @param metrics
+	 *            registry for tracking metrics
 	 * @throws ActiveMQException
 	 *             if there is an error setting up messaging
 	 */
 	public RepositoryNode(ClientSession session, String queryAddress, String taskAddress, PendingHashImageRepository pendingRepository,
-			ImageRepository imageRepository, TaskMessageHandler taskMessageHandler) throws ActiveMQException {
+			ImageRepository imageRepository, TaskMessageHandler taskMessageHandler, MetricRegistry metrics) throws ActiveMQException {
 
 		this.consumer = session.createConsumer(queryAddress);
 		this.taskConsumer = session.createConsumer(taskAddress, MessageProperty.task.toString() + " IS NOT NULL");
@@ -104,6 +111,33 @@ public class RepositoryNode implements MessageHandler {
 		this.consumer.setMessageHandler(this);
 		messageFactory = new MessageFactory(session);
 		LOGGER.info("Listening to request messages on {} ...", queryAddress);
+	}
+
+	/**
+	 * Create a instance using the given instance and repository
+	 * 
+	 * @param session
+	 *            to use for messages
+	 * @param queryAddress
+	 *            to use for listening to queries
+	 * @param taskAddress
+	 *            address for listening to tasks
+	 * @param pendingRepository
+	 *            for pending file queries
+	 * @param imageRepository
+	 *            for storing hash results
+	 * @param taskMessageHandler
+	 *            handler to use for task messages
+	 * @throws ActiveMQException
+	 *             if there is an error setting up messaging
+	 * @deprecated Use the constructor with {@link MetricRegistry}.
+	 */
+	@Deprecated
+	public RepositoryNode(ClientSession session, String queryAddress, String taskAddress, PendingHashImageRepository pendingRepository,
+			ImageRepository imageRepository, TaskMessageHandler taskMessageHandler) throws ActiveMQException {
+
+		this(session, queryAddress, taskAddress, pendingRepository, imageRepository, taskMessageHandler,
+				new MetricRegistry());
 	}
 
 	/**
@@ -135,12 +169,36 @@ public class RepositoryNode implements MessageHandler {
 	 *            to use for messages
 	 * @param pendingRepository
 	 *            for pending file queries
+	 * @param imageRepository
+	 *            repository for recorded images
 	 * @throws ActiveMQException
 	 *             if there is an error setting up messaging
+	 * @deprecated Use constructor with {@link MetricRegistry}.
 	 */
+	@Deprecated
 	public RepositoryNode(ClientSession session, PendingHashImageRepository pendingRepository, ImageRepository imageRepository)
 			throws ActiveMQException {
 		this(session, QueueAddress.REPOSITORY_QUERY.toString(), QueueAddress.RESULT.toString(), pendingRepository, imageRepository);
+	}
+
+	/**
+	 * Create a instance using the given instance and repository. The default address is used to listen for queries.
+	 * 
+	 * @param session
+	 *            to use for messages
+	 * @param pendingRepository
+	 *            for pending file queries
+	 * @param taskMessageHandler
+	 *            handler to use for task messages
+	 * @param metrics
+	 *            registry for tracking metrics
+	 * @throws ActiveMQException
+	 *             if there is an error setting up messaging
+	 */
+	public RepositoryNode(ClientSession session, PendingHashImageRepository pendingRepository, TaskMessageHandler taskMessageHandler, MetricRegistry metrics)
+			throws ActiveMQException {
+		this(session, QueueAddress.REPOSITORY_QUERY.toString(), QueueAddress.RESULT.toString(), pendingRepository, null,
+				taskMessageHandler, metrics);
 	}
 
 	private String getReplyReturnAddress(ClientMessage message) {
@@ -159,8 +217,8 @@ public class RepositoryNode implements MessageHandler {
 	 */
 	@Override
 	public void onMessage(ClientMessage message) {
-		if (message.containsProperty(MessageFactory.QUERY_PROPERTY_NAME)) {
-			String queryType = message.getStringProperty(MessageFactory.QUERY_PROPERTY_NAME);
+		if (message.containsProperty(MessageProperty.repository_query.toString())) {
+			String queryType = message.getStringProperty(MessageProperty.repository_query.toString());
 			LOGGER.debug("Got query message: {}", queryType);
 
 			if (isQueryType(queryType, QueryType.pending)) {

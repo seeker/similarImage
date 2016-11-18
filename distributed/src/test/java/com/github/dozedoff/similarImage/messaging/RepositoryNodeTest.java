@@ -34,8 +34,8 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.similarImage.db.PendingHashImage;
-import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -48,9 +48,10 @@ public class RepositoryNodeTest extends MessagingBaseTest {
 	private PendingHashImageRepository pendingRepository;
 
 	@Mock
-	private ImageRepository imageRepository;
+	private TaskMessageHandler taskMessageHandler;
 
 	private MessageFactory messageFactory;
+	private MetricRegistry metrics;
 
 	private RepositoryNode cut;
 
@@ -62,7 +63,8 @@ public class RepositoryNodeTest extends MessagingBaseTest {
 		message.putStringProperty(ClientMessageImpl.REPLYTO_HEADER_NAME.toString(), RETURN_ADDRESS);
 
 		messageFactory = new MessageFactory(session);
-		cut = new RepositoryNode(session, pendingRepository, imageRepository);
+		metrics = new MetricRegistry();
+		cut = new RepositoryNode(session, pendingRepository, taskMessageHandler, metrics);
 	}
 
 	@Test

@@ -30,6 +30,8 @@ import org.apache.activemq.artemis.core.remoting.impl.invm.InVMConnectorFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Slf4jReporter;
 import com.github.dozedoff.similarImage.db.Database;
 import com.github.dozedoff.similarImage.db.PendingHashImage;
 import com.github.dozedoff.similarImage.db.SQLiteDatabase;
@@ -53,6 +55,7 @@ import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
 import com.github.dozedoff.similarImage.messaging.ArtemisSession;
 import com.github.dozedoff.similarImage.messaging.RepositoryNode;
+import com.github.dozedoff.similarImage.messaging.TaskMessageHandler;
 import com.github.dozedoff.similarImage.thread.SorterFactory;
 import com.j256.ormlite.dao.DaoManager;
 
@@ -64,9 +67,12 @@ public class SimilarImage {
 	private static final int LARGE_MESSAGE_SIZE_THRESHOLD = 1024 * 1024;
 
 	private Statistics statistics;
-	RepositoryNode rn;
+	private RepositoryNode rn;
 
-	ArtemisEmbeddedServer aes;
+	private ArtemisEmbeddedServer aes;
+
+	private MetricRegistry metrics;
+	private Slf4jReporter reporter;
 
 	public static void main(String[] args) {
 		try {
@@ -78,6 +84,7 @@ public class SimilarImage {
 	}
 
 	public void init() throws Exception {
+		this.metrics = new MetricRegistry();
 		String version = this.getClass().getPackage().getImplementationVersion();
 
 		if (version == null) {
@@ -111,7 +118,8 @@ public class SimilarImage {
 		FilterRepository filterRepository = repositoryFactory.buildFilterRepository();
 		TagRepository tagRepository = repositoryFactory.buildTagRepository();
 
-		rn = new RepositoryNode(as.getSession(), pendingRepo, imageRepository);
+		TaskMessageHandler tmh = new TaskMessageHandler(pendingRepo, imageRepository, as.getSession(), metrics);
+		rn = new RepositoryNode(as.getSession(), pendingRepo, tmh, metrics);
 
 		DuplicateOperations dupOps = new DuplicateOperations(filterRepository, tagRepository, imageRepository);
 		SorterFactory sf = new SorterFactory(imageRepository, filterRepository, tagRepository);
@@ -126,6 +134,11 @@ public class SimilarImage {
 		SimilarImageView gui = new SimilarImageView(controller, dupOps, PRODUCER_QUEUE_SIZE, utsc, filterRepository);
 
 		controller.setGui(gui);
+
+		logger.info("Starting metrics reporter...");
+		reporter = Slf4jReporter.forRegistry(metrics).outputTo(LoggerFactory.getLogger("similarImage.metrics"))
+				.convertRatesTo(TimeUnit.SECONDS).convertDurationsTo(TimeUnit.MILLISECONDS).build();
+		reporter.start(1, TimeUnit.MINUTES);
 
 		logImageReaders();
 	}

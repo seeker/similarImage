@@ -25,6 +25,8 @@ import static org.mockito.Mockito.when;
 
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.UUID;
 
 import javax.imageio.IIOException;
@@ -35,6 +37,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.commonj.hash.ImagePHash;
 
 @SuppressWarnings("deprecation")
@@ -42,25 +45,27 @@ import com.github.dozedoff.commonj.hash.ImagePHash;
 public class HasherNodeTest extends MessagingBaseTest {
 	private static final String TEST_ADDRESS_REQUEST = "test_request";
 	private static final String TEST_ADDRESS_RESULT = "test_result";
-	private static final String TEST_PATH = "foo";
 	private static final long TEST_HASH = 42L;
-	private static final int TEST_ID = 12;
 	private static final byte[] TEST_DATA = { 12, 13, 14, 15, 16 };
 	private static final UUID TEST_UUID = new UUID(12, 42);
+	private static final long WORKER_NUMBER = 10L;
+	private static final int LARGE_DATA_SIZE = 5000;
 
 	@Mock
 	private ImagePHash hasher;
 
 	private HasherNode cut;
 	private MessageFactory messageFactory;
+	private MetricRegistry metrics;
 
 	@Before
 	public void setUp() throws Exception {
 		when(hasher.getLongHashScaledImage(any(BufferedImage.class))).thenReturn(TEST_HASH);
 		messageFactory = new MessageFactory(session);
 		message = messageFactory.hashRequestMessage(TEST_DATA, TEST_UUID);
+		metrics = new MetricRegistry();
 
-		cut = new HasherNode(session, hasher, TEST_ADDRESS_REQUEST, TEST_ADDRESS_RESULT);
+		cut = new HasherNode(session, hasher, TEST_ADDRESS_REQUEST, TEST_ADDRESS_RESULT, metrics);
 	}
 
 	@Test
@@ -96,5 +101,27 @@ public class HasherNodeTest extends MessagingBaseTest {
 		cut.onMessage(message);
 
 		verify(producer).send(sessionMessage);
+	}
+	
+	@Test
+	public void testMetricsMultipleInstance() throws Exception {
+		List<HasherNode> nodes = new LinkedList<HasherNode>();
+
+		for (long i = 0; i < WORKER_NUMBER; i++) {
+			nodes.add(new HasherNode(session, hasher, TEST_ADDRESS_REQUEST, TEST_ADDRESS_RESULT, metrics));
+			cut.onMessage(message);
+		}
+
+		assertThat(metrics.getMeters().get(HasherNode.METRIC_NAME_HASH_MESSAGES)
+				.getCount(), is(WORKER_NUMBER));
+	}
+
+	@Test
+	public void testBufferResize() throws Exception {
+		message = messageFactory.hashRequestMessage(new byte[LARGE_DATA_SIZE], TEST_UUID);
+
+		cut.onMessage(message);
+
+		assertThat(metrics.getMeters().get(HasherNode.METRIC_NAME_BUFFER_RESIZE).getCount(), is(1L));
 	}
 }

@@ -41,6 +41,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.similarImage.db.PendingHashImage;
 import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
@@ -53,6 +54,7 @@ public class ResizerNodeTest extends MessagingBaseTest {
 	private static final String REQUEST_ADDRESS = "request";
 	private static final String RESULT_ADDRESS = "result";
 	private static final String PATH = "bar";
+	private static final String PATH_NEW = "foo";
 	private static final int BUFFER_TEST_DATA_SIZE = 100;
 
 	@Mock
@@ -67,6 +69,7 @@ public class ResizerNodeTest extends MessagingBaseTest {
 	private ResizerNode cut;
 
 	private MockMessageBuilder messageBuilder;
+	private MetricRegistry metrics;
 
 	@Before
 	public void setUp() throws Exception {
@@ -75,7 +78,9 @@ public class ResizerNodeTest extends MessagingBaseTest {
 		when(resizer.resize(any(InputStream.class))).thenReturn(new byte[0]);
 		when(queryMessage.pendingImagePaths()).thenReturn(Arrays.asList(PATH));
 
-		cut = new ResizerNode(session, resizer, REQUEST_ADDRESS, RESULT_ADDRESS, queryMessage);
+		metrics = new MetricRegistry();
+
+		cut = new ResizerNode(session, resizer, REQUEST_ADDRESS, RESULT_ADDRESS, queryMessage, metrics);
 		messageBuilder = new MockMessageBuilder();
 	}
 
@@ -145,7 +150,7 @@ public class ResizerNodeTest extends MessagingBaseTest {
 
 		cut.onMessage(message);
 
-		assertThat(sessionMessage.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY), is("foo"));
+		assertThat(sessionMessage.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY), is(PATH_NEW));
 	}
 
 	@Test
@@ -190,8 +195,26 @@ public class ResizerNodeTest extends MessagingBaseTest {
 	}
 
 	@Test
+	public void testDuplicatePreLoadedMetricCacheHit() throws Exception {
+		message = messageBuilder.configureResizeMessage().addProperty(MessageProperty.path.toString(), PATH).build();
+
+		cut.onMessage(message);
+
+		assertThat(metrics.getMeters().get(ResizerNode.METRIC_NAME_PENDING_CACHE_HIT).getCount(), is(1L));
+	}
+
+	@Test
+	public void testDuplicatePreLoadedMetricCacheMiss() throws Exception {
+		message = messageBuilder.configureResizeMessage().build();
+
+		cut.onMessage(message);
+
+		assertThat(metrics.getMeters().get(ResizerNode.METRIC_NAME_PENDING_CACHE_MISS).getCount(), is(1L));
+	}
+
+	@Test
 	public void testBufferResize() throws Exception {
-		message = new MessageFactory(session).resizeRequest(Paths.get("foo"), null);
+		message = new MessageFactory(session).resizeRequest(Paths.get(PATH_NEW), null);
 		
 		for (byte i = 0; i < BUFFER_TEST_DATA_SIZE; i++) {
 			message.getBodyBuffer().writeByte(i);
@@ -202,5 +225,43 @@ public class ResizerNodeTest extends MessagingBaseTest {
 		cut.onMessage(message);
 
 		assertThat(cut.getBufferResizes(), is(1L));
+	}
+
+	@Test
+	public void testMetricsResizeRequest() throws Exception {
+		message = messageBuilder.configureResizeMessage().build();
+		when(session.createMessage(any(Boolean.class))).thenReturn(Mockito.mock(ClientMessage.class), sessionMessage);
+
+		cut.onMessage(message);
+
+		assertThat(metrics.getMeters().get(ResizerNode.METRIC_NAME_RESIZE_MESSAGES).getCount(),
+				is(1L));
+	}
+
+	@Test
+	public void testImageSizeHistogramCount() throws Exception {
+		message = new MessageFactory(session).resizeRequest(Paths.get(PATH_NEW), null);
+
+		for (byte i = 0; i < BUFFER_TEST_DATA_SIZE; i++) {
+			message.getBodyBuffer().writeByte(i);
+		}
+
+		cut.onMessage(message);
+
+		assertThat(metrics.getHistograms().get(ResizerNode.METRIC_NAME_IMAGE_SIZE).getCount(), is(1L));
+	}
+
+	@Test
+	public void testImageSizeHistogramSize() throws Exception {
+		message = new MessageFactory(session).resizeRequest(Paths.get(PATH_NEW), null);
+
+		for (byte i = 0; i < BUFFER_TEST_DATA_SIZE; i++) {
+			message.getBodyBuffer().writeByte(i);
+		}
+
+		cut.onMessage(message);
+
+		assertThat(metrics.getHistograms().get(ResizerNode.METRIC_NAME_IMAGE_SIZE).getSnapshot().getMean(),
+				is((double) BUFFER_TEST_DATA_SIZE));
 	}
 }

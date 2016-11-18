@@ -32,6 +32,8 @@ import org.apache.activemq.artemis.api.core.client.MessageHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.io.ByteBufferInputstream;
 import com.github.dozedoff.similarImage.util.MessagingUtil;
@@ -54,6 +56,42 @@ public class HasherNode implements MessageHandler {
 	private ByteBuffer buffer;
 	private MessageFactory messageFactory;
 
+	private final Meter hashRequests;
+	private final Meter bufferResize;
+
+	public static final String METRIC_NAME_HASH_MESSAGES = MetricRegistry.name(HasherNode.class, "hash", "messages");
+	public static final String METRIC_NAME_BUFFER_RESIZE = MetricRegistry.name(HasherNode.class, "buffer", "resize");
+
+	/**
+	 * Create a hash consumer that listens and responds on the given addresses.
+	 * 
+	 * @param session
+	 *            of the client
+	 * @param hasher
+	 *            to use for hashing files
+	 * @param requestAddress
+	 *            to listen to
+	 * @param resultAddress
+	 *            where to send the results of hashing
+	 * @param metrics
+	 *            registry for tracking metrics
+	 * @throws ActiveMQException
+	 *             if there is an error with the queue
+	 */
+	public HasherNode(ClientSession session, ImagePHash hasher, String requestAddress, String resultAddress,
+			MetricRegistry metrics) throws ActiveMQException {
+		this.hasher = hasher;
+		this.session = session;
+		this.consumer = session.createConsumer(requestAddress);
+		this.producer = session.createProducer(resultAddress);
+		this.consumer.setMessageHandler(this);
+		this.messageFactory = new MessageFactory(session);
+
+		this.hashRequests = metrics.meter(METRIC_NAME_HASH_MESSAGES);
+		this.bufferResize = metrics.meter(METRIC_NAME_BUFFER_RESIZE);
+		this.buffer = ByteBuffer.allocate(INITIAL_BUFFER_SIZE);
+	}
+
 	/**
 	 * Create a hash consumer that listens and responds on the given addresses.
 	 * 
@@ -67,15 +105,11 @@ public class HasherNode implements MessageHandler {
 	 *            where to send the results of hashing
 	 * @throws ActiveMQException
 	 *             if there is an error with the queue
+	 * @deprecated Use the constructor with {@link MetricRegistry}
 	 */
+	@Deprecated
 	public HasherNode(ClientSession session, ImagePHash hasher, String requestAddress, String resultAddress) throws ActiveMQException {
-		this.hasher = hasher;
-		this.session = session;
-		this.consumer = session.createConsumer(requestAddress);
-		this.producer = session.createProducer(resultAddress);
-		this.consumer.setMessageHandler(this);
-		this.messageFactory = new MessageFactory(session);
-		this.buffer = ByteBuffer.allocate(INITIAL_BUFFER_SIZE);
+		this(session, hasher, requestAddress, resultAddress, new MetricRegistry());
 	}
 
 	protected final void setMessageFactory(MessageFactory messageFactory) {
@@ -97,6 +131,7 @@ public class HasherNode implements MessageHandler {
 	 */
 	@Override
 	public void onMessage(ClientMessage message) {
+		hashRequests.mark();
 		try {
 			long most = message.getBodyBuffer().readLong();
 			long least = message.getBodyBuffer().readLong();
@@ -107,6 +142,7 @@ public class HasherNode implements MessageHandler {
 
 			checkBufferCapacity(message.getBodySize());
 			buffer.limit(message.getBodySize());
+			LOGGER.trace("Reading resized image with size {}", message.getBodySize());
 			buffer.rewind();
 			message.getBodyBuffer().readBytes(buffer);
 			buffer.rewind();
@@ -123,6 +159,7 @@ public class HasherNode implements MessageHandler {
 
 	private void checkBufferCapacity(int messageSize) {
 		if (messageSize > buffer.capacity()) {
+			bufferResize.mark();
 			LOGGER.debug("Buffer size {} is too small for message size {}, allocating new buffer...", buffer.capacity(),
 					messageSize);
 			buffer = ByteBuffer.allocate(messageSize);

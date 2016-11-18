@@ -101,5 +101,10 @@
 			<artifactId>artemis-core-client</artifactId>
 			<version>1.4.0</version>
 		</dependency>
+		<dependency>
+			<groupId>io.dropwizard.metrics</groupId>
+			<artifactId>metrics-core</artifactId>
+			<version>3.1.0</version>
+		</dependency>
 	</dependencies>
 </project>
