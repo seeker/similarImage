@@ -22,12 +22,14 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,6 +45,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import com.google.common.jimfs.Jimfs;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ImageSorterTest {
@@ -74,13 +77,17 @@ public class ImageSorterTest {
 	private ImageRecord recordSixSix;
 
 	private EventBus eventBus;
+	private FileSystem fs;
 
 	@Before
 	public void setUp() throws Exception {
 		eventBus = new EventBus();
 		eventBus.register(this);
 
-		path = Files.createTempFile(ImageSorterTest.class.getSimpleName(), ".dat");
+		fs = Jimfs.newFileSystem();
+
+		path = fs.getPath(ImageSorterTest.class.getSimpleName() + ".dat");
+		Files.createFile(path);
 
 		List<ImageRecord> records = buildRecords();
 		when(imageRepository.getAll()).thenReturn(records);
@@ -88,6 +95,11 @@ public class ImageSorterTest {
 		
 		result = MultimapBuilder.hashKeys().hashSetValues().build();
 		imageSorter = new ImageSorter(DISTANCE, "", imageRepository, eventBus);
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		fs.close();
 	}
 
 	/**

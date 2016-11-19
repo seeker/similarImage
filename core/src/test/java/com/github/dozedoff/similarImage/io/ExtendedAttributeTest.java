@@ -17,27 +17,49 @@
  */
 package com.github.dozedoff.similarImage.io;
 
+import static com.google.common.jimfs.Feature.FILE_CHANNEL;
+import static com.google.common.jimfs.Feature.LINKS;
+import static com.google.common.jimfs.Feature.SYMBOLIC_LINKS;
+import static com.google.common.jimfs.PathNormalization.CASE_FOLD_ASCII;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.github.dozedoff.similarImage.util.TestUtil;
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
+import com.google.common.jimfs.PathType;
 
 public class ExtendedAttributeTest {
-	private static final String TEMP_FILE_PREFIX = "ExtendedAttributeTest";
+	private static final String TEST_FILE = "ExtendedAttributeTest";
 	private static final String TEST_NAME = ExtendedAttribute.SIMILARIMAGE_NAMESPACE + ".junit";
 	private static final String TEST_VALUE = "foobar";
 
 	private Path tempFile;
+	private FileSystem fs;
 
 	@Before
 	public void setUp() throws Exception {
-		tempFile = TestUtil.getTempFileWithExtendedAttributeSupport(TEMP_FILE_PREFIX);
+		Configuration config = Configuration.builder(PathType.windows()).setRoots("C:\\")
+				.setWorkingDirectory("C:\\work").setNameCanonicalNormalization(CASE_FOLD_ASCII)
+				.setPathEqualityUsesCanonicalForm(true).setAttributeViews("basic", "user")
+				.setSupportedFeatures(LINKS, SYMBOLIC_LINKS, FILE_CHANNEL).build();
+
+		fs = Jimfs.newFileSystem(config);
+
+		tempFile = fs.getPath(TEST_FILE);
+		Files.createFile(tempFile);
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		fs.close();
 	}
 
 	@Test
@@ -47,7 +69,8 @@ public class ExtendedAttributeTest {
 
 	@Test
 	public void testSupportsExtendedAttributesNoFile() throws Exception {
-		assertThat(ExtendedAttribute.supportsExtendedAttributes(Paths.get("foo")), is(false));
+		assertThat(ExtendedAttribute.supportsExtendedAttributes(Jimfs.newFileSystem().getPath("noEAsupport")),
+				is(false));
 	}
 
 	@Test
