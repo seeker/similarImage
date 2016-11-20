@@ -170,6 +170,7 @@ public class MessagingIT {
 		database.close();
 		Files.delete(testImageAutumn);
 		Files.delete(testImageCorrupt);
+		Files.deleteIfExists(dbFile);
 		as.close();
 	}
 

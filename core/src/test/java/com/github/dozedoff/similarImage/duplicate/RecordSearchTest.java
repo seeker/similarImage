@@ -21,10 +21,13 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
 import java.io.IOException;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.LinkedList;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,6 +36,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
+import com.google.common.jimfs.Jimfs;
 
 @RunWith(MockitoJUnitRunner.class)
 public class RecordSearchTest {
@@ -40,9 +44,15 @@ public class RecordSearchTest {
 	private Multimap<Long, ImageRecord> records;
 
 	private Collection<ImageRecord> dbRecords;
+	private FileSystem fs;
+	private Path testDir;
 
 	@Before
 	public void setUp() throws Exception {
+		fs = Jimfs.newFileSystem();
+		testDir = fs.getPath(RecordSearchTest.class.getSimpleName());
+		Files.createDirectory(testDir);
+
 		dbRecords = new LinkedList<ImageRecord>();
 		records = MultimapBuilder.hashKeys().hashSetValues().build();
 
@@ -52,6 +62,11 @@ public class RecordSearchTest {
 
 		cut = new RecordSearch();
 		cut.build(dbRecords);
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		fs.close();
 	}
 
 	private void populateRecords() throws IOException {
@@ -69,7 +84,7 @@ public class RecordSearchTest {
 	}
 
 	private ImageRecord generateRecord(long hash) throws IOException {
-		return new ImageRecord(Files.createTempFile("RecordSearchTest", ".tmp").toString(), hash);
+		return new ImageRecord(Files.createTempFile(testDir, "RecordSearchTest", ".tmp").toString(), hash);
 	}
 
 	@Test

@@ -20,6 +20,7 @@ package com.github.dozedoff.similarImage.db.repository.ormlite;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -35,12 +36,20 @@ public class OrmliteRepositoryFactoryTest {
 	private static final String TEST_STRING = "Foo";
 
 	private static OrmliteRepositoryFactory cut;
+	private static Path testPath;
+	private static SQLiteDatabase db;
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-		Path testPath = Files.createTempFile(OrmliteRepositoryFactoryTest.class.getSimpleName(), ".db");
-		SQLiteDatabase db = new SQLiteDatabase(testPath);
+		testPath = Files.createTempFile(OrmliteRepositoryFactoryTest.class.getSimpleName(), ".db");
+		db = new SQLiteDatabase(testPath);
 		cut = new OrmliteRepositoryFactory(db);
+	}
+
+	@AfterClass
+	public static void tearDownAfterClass() throws Exception {
+		db.close();
+		Files.deleteIfExists(testPath);
 	}
 
 	@Test

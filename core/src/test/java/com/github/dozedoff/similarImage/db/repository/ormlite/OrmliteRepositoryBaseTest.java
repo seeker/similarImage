@@ -30,6 +30,7 @@ public class OrmliteRepositoryBaseTest {
 
 	private ConnectionSource connectionSource;
 	private String databaseName = "OrmliteRepositoryTest";
+	private Path tempDbPath;
 
 	@Before
 	public void baseSetUp() throws Exception {
@@ -39,10 +40,11 @@ public class OrmliteRepositoryBaseTest {
 	@After
 	public void baseTearDown() throws Exception {
 		connectionSource.close();
+		Files.delete(tempDbPath);
 	}
 
 	private void setUpDatabase(String dbName) throws Exception {
-		Path tempDbPath = Files.createTempFile(dbName, ".db");
+		tempDbPath = Files.createTempFile(dbName, ".db");
 		String fullDbPath = "jdbc:sqlite:" + tempDbPath.toString();
 		this.connectionSource = new JdbcConnectionSource(fullDbPath);
 	}

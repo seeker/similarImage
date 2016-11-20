@@ -28,6 +28,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -49,6 +50,7 @@ import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
+import com.google.common.jimfs.Jimfs;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DuplicateOperationsTest {
@@ -61,6 +63,8 @@ public class DuplicateOperationsTest {
 	private static final Tag TAG_BAR = new Tag("bar");
 	private static final Tag TAG_DNW = new Tag("DNW");
 	private static final Tag TAG_ALL = new Tag("all");
+
+	private static final String BASE_DIRECTORY = "DuplicateOperationsTest";
 
 	@Mock
 	private FilterRepository filterRepository;
@@ -76,12 +80,15 @@ public class DuplicateOperationsTest {
 	private Path tempDirectory = null;
 
 	private FilterRecord fooFilter;
+	private FileSystem fs;
 
 	@Before
 	public void setUp() throws Exception {
-		dupOp = new DuplicateOperations(filterRepository, tagRepository, imageRepository);
+		fs = Jimfs.newFileSystem();
+		dupOp = new DuplicateOperations(fs, filterRepository, tagRepository, imageRepository);
 
-		tempDirectory = Files.createTempDirectory("DuplicateOperationsTest");
+		tempDirectory = fs.getPath(BASE_DIRECTORY);
+		Files.createDirectory(tempDirectory);
 		
 		fooFilter = new FilterRecord(TEST_HASH, TAG_FOO);
 	}
@@ -305,7 +312,6 @@ public class DuplicateOperationsTest {
 
 	private LinkedList<Path> createTempTestFiles(int amount) throws IOException {
 		LinkedList<Path> tempFiles = new LinkedList<>();
-		tempDirectory = Files.createTempDirectory("DuplicateOperationsTest");
 
 		for (int i = 0; i < amount; i++) {
 			Path testFile = Files.createTempFile(tempDirectory, "testFile", null);
