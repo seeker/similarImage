@@ -25,6 +25,16 @@
 		<module>distributed</module>
 	</modules>
 
+	<reporting>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jxr-plugin</artifactId>
+				<version>2.5</version>
+			</plugin>
+		</plugins>
+	</reporting>
+	
 	<build>
 		<pluginManagement>
 			<plugins>
@@ -54,6 +64,23 @@
 							<exclude>AllUnitTests.java</exclude>
 						</excludes>
 					</configuration>
+				</plugin>
+				<plugin>
+					<artifactId>maven-pmd-plugin</artifactId>
+					<version>3.7</version>
+					<configuration>
+						<includeTests>true</includeTests>
+						<minimumTokens>50</minimumTokens>
+						<linkXref>true</linkXref>
+						<targetJdk>1.8</targetJdk>
+					</configuration>
+					<executions>
+						<execution>
+							<goals>
+								<goal>cpd</goal>
+							</goals>
+						</execution>
+					</executions>
 				</plugin>
 			</plugins>
 		</pluginManagement>
@@ -124,6 +151,10 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-pmd-plugin</artifactId>
 			</plugin>
 		</plugins>
 	</build>
