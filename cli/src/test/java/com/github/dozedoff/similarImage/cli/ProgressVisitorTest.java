@@ -45,7 +45,9 @@ import com.google.common.jimfs.Jimfs;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ProgressVisitorTest {
-	private static Path PATH;
+	private static Path path;
+	private static Path pathNonImage;
+	private static final String TEST_DIRECTORY = "baz";
 
 	@Mock
 	private HashAttribute hashAttribute;
@@ -64,8 +66,14 @@ public class ProgressVisitorTest {
 	@BeforeClass
 	public static void beforeClass() throws Exception {
 		fs = Jimfs.newFileSystem();
-		PATH = fs.getPath("foo");
-		Files.createFile(PATH);
+		Files.createDirectory(fs.getPath(TEST_DIRECTORY));
+
+		path = fs.getPath(TEST_DIRECTORY, "foo.jpg");
+		Files.createFile(path);
+
+		pathNonImage = fs.getPath(TEST_DIRECTORY, "bar.txt");
+		Files.createFile(pathNonImage);
+
 	}
 
 	@AfterClass
@@ -97,7 +105,7 @@ public class ProgressVisitorTest {
 	}
 
 	private void visitTestFile() throws IOException {
-		cut.visitFile(PATH, null);
+		cut.visitFile(path, null);
 	}
 
 	@Test
@@ -112,6 +120,13 @@ public class ProgressVisitorTest {
 		visitTestFile();
 
 		assertThat(foundFiles.getCount(), is(1L));
+	}
+
+	@Test
+	public void testProcessedFileFoundCountForNonImage() throws Exception {
+		cut.visitFile(pathNonImage, null);
+
+		assertThat(foundFiles.getCount(), is(0L));
 	}
 
 	@Test

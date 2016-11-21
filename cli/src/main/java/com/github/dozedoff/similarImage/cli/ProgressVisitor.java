@@ -28,6 +28,7 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.similarImage.io.HashAttribute;
+import com.github.dozedoff.similarImage.io.ImageFileFilter;
 import com.github.dozedoff.similarImage.io.Statistics;
 
 /**
@@ -40,6 +41,8 @@ public class ProgressVisitor extends SimpleFileVisitor<Path> {
 	private final Counter processedFiles;
 	private final Counter failedFiles;
 	private final Meter filesPerSecond;
+
+	private final ImageFileFilter imageFileFilter;
 
 	/**
 	 * Create a new visitor for the given hash. Results will be stored in the passed {@link Statistics} instance.
@@ -56,6 +59,8 @@ public class ProgressVisitor extends SimpleFileVisitor<Path> {
 		this.processedFiles = metrics.counter(ProgressCalc.METRIC_NAME_PROCESSED);
 		this.failedFiles = metrics.counter(ProgressCalc.METRIC_NAME_FAILED);
 		this.filesPerSecond = metrics.meter(ProgressCalc.METRIC_NAME_FILES_PER_SECOND);
+		
+		this.imageFileFilter = new ImageFileFilter();
 	}
 
 	/**
@@ -71,10 +76,12 @@ public class ProgressVisitor extends SimpleFileVisitor<Path> {
 	 */
 	@Override
 	public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+		if (!imageFileFilter.accept(file)) {
+			return FileVisitResult.CONTINUE;
+		}
+
 		foundFiles.inc();
 		filesPerSecond.mark();
-
-		// FIXME non-images are also counted towards the total
 
 		if (hashAttribute.isCorrupted(file)) {
 			failedFiles.inc();
