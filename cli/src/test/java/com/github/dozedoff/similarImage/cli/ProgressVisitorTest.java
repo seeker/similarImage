@@ -24,10 +24,13 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -37,11 +40,12 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.similarImage.io.HashAttribute;
+import com.google.common.jimfs.Jimfs;
 
 
 @RunWith(MockitoJUnitRunner.class)
 public class ProgressVisitorTest {
-	private static final Path PATH = Paths.get("foo");
+	private static Path PATH;
 
 	@Mock
 	private HashAttribute hashAttribute;
@@ -50,10 +54,24 @@ public class ProgressVisitorTest {
 
 	private ProgressVisitor cut;
 
+	private static FileSystem fs;
+
 	private Counter foundFiles;
 	private Counter processedFiles;
 	private Counter failedFiles;
 	private Meter filesPerSecond;
+
+	@BeforeClass
+	public static void beforeClass() throws Exception {
+		fs = Jimfs.newFileSystem();
+		PATH = fs.getPath("foo");
+		Files.createFile(PATH);
+	}
+
+	@AfterClass
+	public static void afterClass() throws Exception {
+		fs.close();
+	}
 
 	@Before
 	public void setUp() throws Exception {
