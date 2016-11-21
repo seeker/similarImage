@@ -25,10 +25,11 @@ import static org.mockito.Mockito.when;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.similarImage.io.Statistics;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -44,7 +45,9 @@ public class ProgressCalcTest {
 
 	@Mock
 	private Statistics statistics;
-	@InjectMocks
+
+	private MetricRegistry metrics;
+
 	private ProgressCalc cut;
 
 	@Before
@@ -52,6 +55,21 @@ public class ProgressCalcTest {
 		when(statistics.getFoundFiles()).thenReturn(TOTAL_FILE_COUNT);
 		when(statistics.getProcessedFiles()).thenReturn(PROCESSED_FILE_COUNT);
 		when(statistics.getFailedFiles()).thenReturn(FAILED_FILE_COUNT);
+
+		metrics = new MetricRegistry();
+
+		cut = new ProgressCalc(metrics);
+
+		setCounter(ProgressCalc.METRIC_NAME_FOUND, TOTAL_FILE_COUNT);
+		setCounter(ProgressCalc.METRIC_NAME_PROCESSED, PROCESSED_FILE_COUNT);
+		setCounter(ProgressCalc.METRIC_NAME_FAILED, FAILED_FILE_COUNT);
+	}
+
+	private void setCounter(String name, long value) {
+		Counter counter = metrics.getCounters().get(name);
+
+		counter.dec(counter.getCount());
+		counter.inc(value);
 	}
 
 	@Test
@@ -61,8 +79,8 @@ public class ProgressCalcTest {
 
 	@Test
 	public void testTotalProgressPercentWithNoFiles() throws Exception {
-		when(statistics.getFoundFiles()).thenReturn(0);
-		when(statistics.getProcessedFiles()).thenReturn(0);
+		setCounter(ProgressCalc.METRIC_NAME_FOUND, 0);
+		setCounter(ProgressCalc.METRIC_NAME_PROCESSED, 0);
 
 		assertThat(cut.totalProgressPercent(), is(0.0));
 	}
@@ -74,14 +92,14 @@ public class ProgressCalcTest {
 
 	@Test
 	public void testCorruptPercentWithNoFiles() throws Exception {
-		when(statistics.getFoundFiles()).thenReturn(0);
-		when(statistics.getFailedFiles()).thenReturn(0);
+		setCounter(ProgressCalc.METRIC_NAME_FOUND, 0);
+		setCounter(ProgressCalc.METRIC_NAME_FAILED, 0);
 
 		assertThat(cut.corruptPercent(), is(0.0));
 	}
 
 	@Test
 	public void testToString() throws Exception {
-		assertThat(cut.toString(), is("Total progress: 23.81%, corrupt images: 9.52%"));
+		assertThat(cut.toString(), is("Total progress: 23.81%, corrupt images: 9.52%, files per second processed: 0.00"));
 	}
 }

@@ -24,6 +24,9 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.io.Statistics;
 
@@ -31,20 +34,28 @@ import com.github.dozedoff.similarImage.io.Statistics;
  * {@link FileVisitor} to check the progress of hashing for a given hash algorithm.
  */
 public class ProgressVisitor extends SimpleFileVisitor<Path> {
-	private final Statistics statistics;
 	private final HashAttribute hashAttribute;
+
+	private final Counter foundFiles;
+	private final Counter processedFiles;
+	private final Counter failedFiles;
+	private final Meter filesPerSecond;
 
 	/**
 	 * Create a new visitor for the given hash. Results will be stored in the passed {@link Statistics} instance.
 	 * 
-	 * @param statistics
+	 * @param metrics
 	 *            used to store results
 	 * @param hashAttribute
 	 *            for hash to check progress for.
 	 */
-	public ProgressVisitor(Statistics statistics, HashAttribute hashAttribute) {
-		this.statistics = statistics;
+	public ProgressVisitor(MetricRegistry metrics, HashAttribute hashAttribute) {
 		this.hashAttribute = hashAttribute;
+
+		this.foundFiles = metrics.counter(ProgressCalc.METRIC_NAME_FOUND);
+		this.processedFiles = metrics.counter(ProgressCalc.METRIC_NAME_PROCESSED);
+		this.failedFiles = metrics.counter(ProgressCalc.METRIC_NAME_FAILED);
+		this.filesPerSecond = metrics.meter(ProgressCalc.METRIC_NAME_FILES_PER_SECOND);
 	}
 
 	/**
@@ -60,12 +71,15 @@ public class ProgressVisitor extends SimpleFileVisitor<Path> {
 	 */
 	@Override
 	public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-		statistics.incrementFoundFiles();
+		foundFiles.inc();
+		filesPerSecond.mark();
+
+		// FIXME non-images are also counted towards the total
 
 		if (hashAttribute.isCorrupted(file)) {
-			statistics.incrementFailedFiles();
+			failedFiles.inc();
 		} else if (hashAttribute.areAttributesValid(file)) {
-			statistics.incrementProcessedFiles();
+			processedFiles.inc();
 		}
 
 		return FileVisitResult.CONTINUE;

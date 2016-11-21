@@ -45,7 +45,6 @@ import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.handler.HashNames;
 import com.github.dozedoff.similarImage.image.ImageResizer;
 import com.github.dozedoff.similarImage.io.HashAttribute;
-import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.messaging.ArtemisSession;
@@ -156,10 +155,15 @@ public class ArgumentPasrser {
 			walkPathsWithVisitor(paths, visitor);
 		} else if (parsedArgs.getBoolean(enumToString(CommandLineOptions.progress))) {
 			LOGGER.info("Checking progress...");
-			Statistics statistics = new Statistics();
+
+			metrics.remove(ProgressCalc.METRIC_NAME_FOUND);
+			metrics.remove(ProgressCalc.METRIC_NAME_FAILED);
+			metrics.remove(ProgressCalc.METRIC_NAME_PROCESSED);
+			metrics.remove(ProgressCalc.METRIC_NAME_FILES_PER_SECOND);
+
 			walkPathsWithVisitor(paths,
-					new ProgressVisitor(statistics, new HashAttribute(HashNames.DEFAULT_DCT_HASH_2)));
-			outputProgress(statistics);
+					new ProgressVisitor(metrics, new HashAttribute(HashNames.DEFAULT_DCT_HASH_2)));
+			outputProgress(metrics);
 		}
 	}
 
@@ -173,8 +177,8 @@ public class ArgumentPasrser {
 		}
 	}
 
-	private void outputProgress(Statistics statistics) {
-		ProgressCalc pc = new ProgressCalc(statistics);
+	private void outputProgress(MetricRegistry metrics2) {
+		ProgressCalc pc = new ProgressCalc(metrics2);
 		System.out.println(pc.toString());
 	}
 

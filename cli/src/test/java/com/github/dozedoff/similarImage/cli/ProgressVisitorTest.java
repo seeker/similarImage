@@ -18,6 +18,7 @@
 package com.github.dozedoff.similarImage.cli;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
@@ -32,8 +33,10 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.similarImage.io.HashAttribute;
-import com.github.dozedoff.similarImage.io.Statistics;
 
 
 @RunWith(MockitoJUnitRunner.class)
@@ -43,18 +46,28 @@ public class ProgressVisitorTest {
 	@Mock
 	private HashAttribute hashAttribute;
 
-	private Statistics statistics;
+	private MetricRegistry metrics;
 
 	private ProgressVisitor cut;
+
+	private Counter foundFiles;
+	private Counter processedFiles;
+	private Counter failedFiles;
+	private Meter filesPerSecond;
 
 	@Before
 	public void setUp() throws Exception {
 		setCorrupt(false);
 		setValid(true);
 		
-		statistics = new Statistics();
+		metrics = new MetricRegistry();
 
-		cut = new ProgressVisitor(statistics, hashAttribute);
+		cut = new ProgressVisitor(metrics, hashAttribute);
+		foundFiles = metrics.counter(ProgressCalc.METRIC_NAME_FOUND);
+		processedFiles = metrics.counter(ProgressCalc.METRIC_NAME_PROCESSED);
+		failedFiles = metrics.counter(ProgressCalc.METRIC_NAME_FAILED);
+		filesPerSecond = metrics.meter(ProgressCalc.METRIC_NAME_FILES_PER_SECOND);
+
 	}
 
 	private void setValid(boolean isValid) {
@@ -73,21 +86,21 @@ public class ProgressVisitorTest {
 	public void testProcessedFileProcessedCount() throws Exception {
 		visitTestFile();
 
-		assertThat(statistics.getProcessedFiles(), is(1));
+		assertThat(processedFiles.getCount(), is(1L));
 	}
 
 	@Test
 	public void testProcessedFileFoundCount() throws Exception {
 		visitTestFile();
 
-		assertThat(statistics.getFoundFiles(), is(1));
+		assertThat(foundFiles.getCount(), is(1L));
 	}
 
 	@Test
 	public void testProcessedFileFailedCount() throws Exception {
 		visitTestFile();
 
-		assertThat(statistics.getFailedFiles(), is(0));
+		assertThat(failedFiles.getCount(), is(0L));
 	}
 
 	@Test
@@ -96,7 +109,7 @@ public class ProgressVisitorTest {
 
 		visitTestFile();
 
-		assertThat(statistics.getProcessedFiles(), is(0));
+		assertThat(processedFiles.getCount(), is(0L));
 	}
 
 	@Test
@@ -105,7 +118,7 @@ public class ProgressVisitorTest {
 
 		visitTestFile();
 
-		assertThat(statistics.getFailedFiles(), is(1));
+		assertThat(failedFiles.getCount(), is(1L));
 	}
 
 	@Test
@@ -114,7 +127,7 @@ public class ProgressVisitorTest {
 
 		visitTestFile();
 
-		assertThat(statistics.getFoundFiles(), is(1));
+		assertThat(foundFiles.getCount(), is(1L));
 	}
 
 	@Test
@@ -123,7 +136,7 @@ public class ProgressVisitorTest {
 
 		visitTestFile();
 
-		assertThat(statistics.getFoundFiles(), is(1));
+		assertThat(foundFiles.getCount(), is(1L));
 	}
 
 	@Test
@@ -132,7 +145,7 @@ public class ProgressVisitorTest {
 
 		visitTestFile();
 
-		assertThat(statistics.getFailedFiles(), is(0));
+		assertThat(failedFiles.getCount(), is(0L));
 	}
 
 	@Test
@@ -141,6 +154,15 @@ public class ProgressVisitorTest {
 
 		visitTestFile();
 
-		assertThat(statistics.getProcessedFiles(), is(0));
+		assertThat(processedFiles.getCount(), is(0L));
+	}
+
+	@Test
+	public void testProcessedFilesPerSecond() throws Exception {
+		setValid(true);
+
+		visitTestFile();
+
+		assertThat(filesPerSecond.getMeanRate(), is(not(0.0)));
 	}
 }

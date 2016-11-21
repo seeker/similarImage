@@ -17,25 +17,39 @@
  */
 package com.github.dozedoff.similarImage.cli;
 
-import com.github.dozedoff.similarImage.io.Statistics;
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
 
 /**
  * Calculates the progress of hashing according to the recorded stats.
  */
 public class ProgressCalc {
+	private static final String METRIC_NAMESPACE_FILE = "file";
+	public static final String METRIC_NAME_FOUND = MetricRegistry.name(ProgressCalc.class, METRIC_NAMESPACE_FILE, "found");
+	public static final String METRIC_NAME_PROCESSED = MetricRegistry.name(ProgressCalc.class, METRIC_NAMESPACE_FILE, "processed");
+	public static final String METRIC_NAME_FAILED = MetricRegistry.name(ProgressCalc.class, METRIC_NAMESPACE_FILE, "failed");
+	public static final String METRIC_NAME_FILES_PER_SECOND = MetricRegistry.name(ProgressCalc.class, METRIC_NAMESPACE_FILE,
+			"filesPerSecond");
+
 	private static final double PERCENT_100 = 100;
 
-	private final Statistics statistics;
+	private final Counter foundFiles;
+	private final Counter processedFiles;
+	private final Counter failedFiles;
+	private final Meter filesPerSecond;
 
 	/**
-	 * Create a new instance using the given {@link Statistics} object. The instance will be used to get data for the
-	 * calculations.
+	 * Create a new instance using the given {@link MetricRegistry} object. The instance will be used to get data for the calculations.
 	 * 
-	 * @param statistics
+	 * @param metrics
 	 *            instance to use
 	 */
-	public ProgressCalc(Statistics statistics) {
-		this.statistics = statistics;
+	public ProgressCalc(MetricRegistry metrics) {
+		this.foundFiles = metrics.counter(METRIC_NAME_FOUND);
+		this.processedFiles = metrics.counter(METRIC_NAME_PROCESSED);
+		this.failedFiles = metrics.counter(METRIC_NAME_FAILED);
+		this.filesPerSecond = metrics.meter(METRIC_NAME_FILES_PER_SECOND);
 	}
 
 	/**
@@ -44,11 +58,10 @@ public class ProgressCalc {
 	 * @return the percentage of images processed. 100% = 100.000
 	 */
 	public double totalProgressPercent() {
-		if (statistics.getFoundFiles() == 0) {
+		if (foundFiles.getCount() == 0) {
 			return 0;
 		} else {
-			return (PERCENT_100 / statistics.getFoundFiles())
-					* (statistics.getProcessedFiles() + statistics.getFailedFiles());
+			return (PERCENT_100 / foundFiles.getCount()) * (processedFiles.getCount() + failedFiles.getCount());
 		}
 	}
 	
@@ -58,10 +71,10 @@ public class ProgressCalc {
 	 * @return the percentage of corrupt images. 100% = 100.000
 	 */
 	public double corruptPercent() {
-		if (statistics.getFoundFiles() == 0) {
+		if (foundFiles.getCount() == 0) {
 			return 0;
 		} else {
-			return (PERCENT_100 / statistics.getFoundFiles()) * statistics.getFailedFiles();
+			return (PERCENT_100 / foundFiles.getCount()) * failedFiles.getCount();
 		}
 	}
 
@@ -72,7 +85,8 @@ public class ProgressCalc {
 	 */
 	@Override
 	public String toString() {
-		return String.format("Total progress: %.2f%%, corrupt images: %.2f%%", totalProgressPercent(),
-				corruptPercent());
+		return String.format("Total progress: %.2f%%, corrupt images: %.2f%%, files per second processed: %.2f", totalProgressPercent(),
+				corruptPercent(),
+				filesPerSecond.getMeanRate());
 	}
 }
