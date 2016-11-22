@@ -263,4 +263,13 @@ public class ResizerNodeTest extends MessagingBaseTest {
 		assertThat(metrics.getHistograms().get(ResizerNode.METRIC_NAME_IMAGE_SIZE).getSnapshot().getMean(),
 				is((double) BUFFER_TEST_DATA_SIZE));
 	}
+
+	@Test
+	public void testResizeTime() throws Exception {
+		message = messageBuilder.configureResizeMessage().build();
+
+		cut.onMessage(message);
+
+		assertThat(metrics.getTimers().get(ResizerNode.METRIC_NAME_RESIZE_DURATION).getSnapshot().getMean(), is(not(0.0)));
+	}
 }

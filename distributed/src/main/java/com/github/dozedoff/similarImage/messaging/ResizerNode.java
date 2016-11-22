@@ -42,6 +42,8 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
+import com.codahale.metrics.Timer.Context;
 import com.github.dozedoff.similarImage.image.ImageResizer;
 import com.github.dozedoff.similarImage.io.ByteBufferInputstream;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
@@ -71,6 +73,7 @@ public class ResizerNode implements MessageHandler {
 
 	public static final String METRIC_NAME_RESIZE_MESSAGES = MetricRegistry.name(ResizerNode.class, NAME_RESIZE,
 			"messages");
+	public static final String METRIC_NAME_RESIZE_DURATION = MetricRegistry.name(ResizerNode.class, NAME_RESIZE, "duration");
 	public static final String METRIC_NAME_PENDING_CACHE_HIT = MetricRegistry.name(ResizerNode.class, NAME_PENDING_CACHE,
 			"hit");
 	public static final String METRIC_NAME_PENDING_CACHE_MISS = MetricRegistry.name(ResizerNode.class, NAME_PENDING_CACHE,
@@ -91,6 +94,7 @@ public class ResizerNode implements MessageHandler {
 	private final Meter pendingCacheMiss;
 	private final Histogram imageSize;
 	private final Counter bufferResize;
+	private final Timer resizeDuration;
 
 	/**
 	 * Create a new consumer for hash messages. Uses the default addresses for queues.
@@ -203,6 +207,7 @@ public class ResizerNode implements MessageHandler {
 		this.pendingCache = CacheBuilder.newBuilder().expireAfterAccess(5, TimeUnit.MINUTES).build();
 
 		this.resizeRequests = metrics.meter(METRIC_NAME_RESIZE_MESSAGES);
+		this.resizeDuration = metrics.timer(METRIC_NAME_RESIZE_DURATION);
 		this.pendingCacheHit = metrics.meter(METRIC_NAME_PENDING_CACHE_HIT);
 		this.pendingCacheMiss = metrics.meter(METRIC_NAME_PENDING_CACHE_MISS);
 		this.imageSize = metrics.histogram(METRIC_NAME_IMAGE_SIZE);
@@ -258,6 +263,7 @@ public class ResizerNode implements MessageHandler {
 	public void onMessage(ClientMessage message) {
 		String pathPropterty = null;
 		resizeRequests.mark();
+		Context resizeTimeContext = resizeDuration.time();
 
 		try {
 			pathPropterty = message.getStringProperty(MessageProperty.path.toString());
@@ -299,6 +305,7 @@ public class ResizerNode implements MessageHandler {
 			LOGGER.trace("Sending hash request with id {} instead of path {}", uuid, path);
 			producer.send(response);
 			pendingCache.put(pathPropterty, DUMMY);
+			resizeTimeContext.stop();
 		} catch (ActiveMQException e) {
 			LOGGER.error("Failed to send message: {}", e.toString());
 		} catch (IIOException | ArrayIndexOutOfBoundsException ie) {
