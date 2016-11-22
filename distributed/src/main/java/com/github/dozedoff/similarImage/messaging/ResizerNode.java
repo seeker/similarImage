@@ -66,14 +66,17 @@ public class ResizerNode implements MessageHandler {
 	private static final String DUMMY = "";
 	private static final int INITIAL_BUFFER_SIZE = 1024 * 1024 * 5;
 
-	public static final String METRIC_NAME_RESIZE_MESSAGES = MetricRegistry.name(ResizerNode.class, "resize",
+	private static final String NAME_PENDING_CACHE = "pendingCache";
+	private static final String NAME_RESIZE = "resize";
+
+	public static final String METRIC_NAME_RESIZE_MESSAGES = MetricRegistry.name(ResizerNode.class, NAME_RESIZE,
 			"messages");
-	public static final String METRIC_NAME_PENDING_CACHE_HIT = MetricRegistry.name(ResizerNode.class, "pendingCache",
+	public static final String METRIC_NAME_PENDING_CACHE_HIT = MetricRegistry.name(ResizerNode.class, NAME_PENDING_CACHE,
 			"hit");
-	public static final String METRIC_NAME_PENDING_CACHE_MISS = MetricRegistry.name(ResizerNode.class, "pendingCache",
+	public static final String METRIC_NAME_PENDING_CACHE_MISS = MetricRegistry.name(ResizerNode.class, NAME_PENDING_CACHE,
 			"miss");
-	public static final String METRIC_NAME_IMAGE_SIZE = MetricRegistry.name(ResizerNode.class, "resize", "imageSize");
-	public static final String METRIC_NAME_BUFFER_RESIZE = MetricRegistry.name(ResizerNode.class, "buffer", "resize");
+	public static final String METRIC_NAME_IMAGE_SIZE = MetricRegistry.name(ResizerNode.class, NAME_RESIZE, "imageSize");
+	public static final String METRIC_NAME_BUFFER_RESIZE = MetricRegistry.name(ResizerNode.class, "buffer", NAME_RESIZE);
 
 	private final ClientConsumer consumer;
 	private final ClientProducer producer;
