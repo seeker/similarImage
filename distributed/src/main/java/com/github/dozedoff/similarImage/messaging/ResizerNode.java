@@ -42,10 +42,10 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
-import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
 import com.github.dozedoff.similarImage.image.ImageResizer;
 import com.github.dozedoff.similarImage.io.ByteBufferInputstream;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
+import com.github.dozedoff.similarImage.messaging.MessageFactory.MessageProperty;
 import com.github.dozedoff.similarImage.util.ImageUtil;
 import com.github.dozedoff.similarImage.util.MessagingUtil;
 import com.google.common.cache.Cache;
@@ -257,7 +257,7 @@ public class ResizerNode implements MessageHandler {
 		resizeRequests.mark();
 
 		try {
-			pathPropterty = message.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY);
+			pathPropterty = message.getStringProperty(MessageProperty.path.toString());
 			LOGGER.debug("Resize request for image {}", pathPropterty);
 
 			if (pendingCache.getIfPresent(pathPropterty) != null) {

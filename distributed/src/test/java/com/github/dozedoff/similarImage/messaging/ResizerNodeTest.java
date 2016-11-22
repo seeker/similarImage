@@ -44,7 +44,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.similarImage.db.PendingHashImage;
 import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
-import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
 import com.github.dozedoff.similarImage.image.ImageResizer;
 import com.github.dozedoff.similarImage.messaging.MessageFactory.MessageProperty;
 import com.github.dozedoff.similarImage.messaging.MessageFactory.TaskType;
@@ -110,7 +109,7 @@ public class ResizerNodeTest extends MessagingBaseTest {
 
 		cut.onMessage(message);
 
-		assertThat(sessionMessage.containsProperty(ArtemisHashProducer.MESSAGE_TASK_PROPERTY), is(false));
+		assertThat(sessionMessage.containsProperty(MessageProperty.task.toString()), is(false));
 	}
 
 	@Test
@@ -139,8 +138,8 @@ public class ResizerNodeTest extends MessagingBaseTest {
 
 		cut.onMessage(message);
 
-		assertThat(sessionMessage.getStringProperty(ArtemisHashProducer.MESSAGE_TASK_PROPERTY),
-				is(ArtemisHashProducer.MESSAGE_TASK_VALUE_CORRUPT));
+		assertThat(sessionMessage.getStringProperty(MessageProperty.task.toString()),
+				is(TaskType.corr.toString()));
 	}
 
 	@Test
@@ -150,7 +149,7 @@ public class ResizerNodeTest extends MessagingBaseTest {
 
 		cut.onMessage(message);
 
-		assertThat(sessionMessage.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY), is(PATH_NEW));
+		assertThat(sessionMessage.getStringProperty(MessageProperty.path.toString()), is(PATH_NEW));
 	}
 
 	@Test
@@ -170,8 +169,8 @@ public class ResizerNodeTest extends MessagingBaseTest {
 
 		cut.onMessage(message);
 
-		assertThat(sessionMessage.getStringProperty(ArtemisHashProducer.MESSAGE_TASK_PROPERTY),
-				is(ArtemisHashProducer.MESSAGE_TASK_VALUE_CORRUPT));
+		assertThat(sessionMessage.getStringProperty(MessageProperty.task.toString()),
+				is(TaskType.corr.toString()));
 	}
 
 	@Test
@@ -181,8 +180,8 @@ public class ResizerNodeTest extends MessagingBaseTest {
 
 		cut.onMessage(message);
 
-		assertThat(sessionMessage.getStringProperty(ArtemisHashProducer.MESSAGE_TASK_PROPERTY),
-				is(ArtemisHashProducer.MESSAGE_TASK_VALUE_CORRUPT));
+		assertThat(sessionMessage.getStringProperty(MessageProperty.task.toString()),
+				is(TaskType.corr.toString()));
 	}
 
 	@Test
