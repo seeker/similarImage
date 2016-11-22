@@ -224,7 +224,7 @@ public class ResizerNodeTest extends MessagingBaseTest {
 
 		cut.onMessage(message);
 
-		assertThat(cut.getBufferResizes(), is(1L));
+		assertThat(metrics.getCounters().get(ResizerNode.METRIC_NAME_BUFFER_RESIZE).getCount(), is(1L));
 	}
 
 	@Test

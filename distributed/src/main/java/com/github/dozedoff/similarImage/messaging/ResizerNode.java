@@ -26,7 +26,6 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 import javax.imageio.IIOException;
 
@@ -39,6 +38,7 @@ import org.apache.activemq.artemis.api.core.client.MessageHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
@@ -73,13 +73,13 @@ public class ResizerNode implements MessageHandler {
 	public static final String METRIC_NAME_PENDING_CACHE_MISS = MetricRegistry.name(ResizerNode.class, "pendingCache",
 			"miss");
 	public static final String METRIC_NAME_IMAGE_SIZE = MetricRegistry.name(ResizerNode.class, "resize", "imageSize");
+	public static final String METRIC_NAME_BUFFER_RESIZE = MetricRegistry.name(ResizerNode.class, "buffer", "resize");
 
 	private final ClientConsumer consumer;
 	private final ClientProducer producer;
 	private final ClientSession session;
 	private final ImageResizer resizer;
 	private MessageFactory messageFactory;
-	private final AtomicLong resizeSensing = new AtomicLong();
 
 	private final Cache<String, String> pendingCache;
 	private ByteBuffer messageBuffer;
@@ -87,6 +87,7 @@ public class ResizerNode implements MessageHandler {
 	private final Meter pendingCacheHit;
 	private final Meter pendingCacheMiss;
 	private final Histogram imageSize;
+	private final Counter bufferResize;
 
 	/**
 	 * Create a new consumer for hash messages. Uses the default addresses for queues.
@@ -202,6 +203,7 @@ public class ResizerNode implements MessageHandler {
 		this.pendingCacheHit = metrics.meter(METRIC_NAME_PENDING_CACHE_HIT);
 		this.pendingCacheMiss = metrics.meter(METRIC_NAME_PENDING_CACHE_MISS);
 		this.imageSize = metrics.histogram(METRIC_NAME_IMAGE_SIZE);
+		this.bufferResize = metrics.counter(METRIC_NAME_BUFFER_RESIZE);
 
 		this.consumer.setMessageHandler(this);
 		this.messageBuffer = ByteBuffer.allocate(INITIAL_BUFFER_SIZE);
@@ -229,8 +231,7 @@ public class ResizerNode implements MessageHandler {
 
 	private void checkBufferCapacity(int messageSize) {
 		if (messageSize > messageBuffer.capacity()) {
-			// TODO add metrics to count buffer resizes
-			resizeSensing.getAndIncrement();
+			bufferResize.inc();
 			int oldBufferCap = messageBuffer.capacity();
 			allocateNewBuffer(messageSize);
 			int newBufferCap = messageBuffer.capacity();
@@ -338,9 +339,5 @@ public class ResizerNode implements MessageHandler {
 		MessagingUtil.silentClose(consumer);
 		MessagingUtil.silentClose(producer);
 		MessagingUtil.silentClose(session);
-	}
-
-	long getBufferResizes() {
-		return resizeSensing.get();
 	}
 }
