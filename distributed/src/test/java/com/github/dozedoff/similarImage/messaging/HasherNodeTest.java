@@ -18,6 +18,7 @@
 package com.github.dozedoff.similarImage.messaging;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
@@ -123,5 +124,21 @@ public class HasherNodeTest extends MessagingBaseTest {
 		cut.onMessage(message);
 
 		assertThat(metrics.getMeters().get(HasherNode.METRIC_NAME_BUFFER_RESIZE).getCount(), is(1L));
+	}
+
+	@Test
+	public void testHashDuration() throws Exception {
+		cut.onMessage(message);
+
+		assertThat(metrics.getTimers().get(HasherNode.METRIC_NAME_HASH_DURATION).getSnapshot().getMean(), is(not(0.0)));
+	}
+
+	@Test
+	public void testHashDurationOnFailure() throws Exception {
+		when(hasher.getLongHashScaledImage(any(BufferedImage.class))).thenThrow(new Exception("Testing"));
+
+		cut.onMessage(message);
+
+		assertThat(metrics.getTimers().get(HasherNode.METRIC_NAME_HASH_DURATION).getSnapshot().getMean(), is(0.0));
 	}
 }

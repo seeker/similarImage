@@ -34,6 +34,8 @@ import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
+import com.codahale.metrics.Timer.Context;
 import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.io.ByteBufferInputstream;
 import com.github.dozedoff.similarImage.util.MessagingUtil;
@@ -57,9 +59,13 @@ public class HasherNode implements MessageHandler {
 	private MessageFactory messageFactory;
 
 	private final Meter hashRequests;
+	private final Timer hashDuration;
 	private final Meter bufferResize;
 
-	public static final String METRIC_NAME_HASH_MESSAGES = MetricRegistry.name(HasherNode.class, "hash", "messages");
+	private static final String NAME_HASH = "hash";
+
+	public static final String METRIC_NAME_HASH_MESSAGES = MetricRegistry.name(HasherNode.class, NAME_HASH, "messages");
+	public static final String METRIC_NAME_HASH_DURATION = MetricRegistry.name(HasherNode.class, NAME_HASH, "duration");
 	public static final String METRIC_NAME_BUFFER_RESIZE = MetricRegistry.name(HasherNode.class, "buffer", "resize");
 
 	/**
@@ -88,6 +94,7 @@ public class HasherNode implements MessageHandler {
 		this.messageFactory = new MessageFactory(session);
 
 		this.hashRequests = metrics.meter(METRIC_NAME_HASH_MESSAGES);
+		this.hashDuration = metrics.timer(METRIC_NAME_HASH_DURATION);
 		this.bufferResize = metrics.meter(METRIC_NAME_BUFFER_RESIZE);
 		this.buffer = ByteBuffer.allocate(INITIAL_BUFFER_SIZE);
 	}
@@ -112,6 +119,12 @@ public class HasherNode implements MessageHandler {
 		this(session, hasher, requestAddress, resultAddress, new MetricRegistry());
 	}
 
+	/**
+	 * Set the {@link MessageFactory} to use. Intended for testing only.
+	 * 
+	 * @param messageFactory
+	 *            to use
+	 */
 	protected final void setMessageFactory(MessageFactory messageFactory) {
 		this.messageFactory = messageFactory;
 	}
@@ -132,6 +145,8 @@ public class HasherNode implements MessageHandler {
 	@Override
 	public void onMessage(ClientMessage message) {
 		hashRequests.mark();
+		Context hashTimeContext = hashDuration.time();
+
 		try {
 			long most = message.getBodyBuffer().readLong();
 			long least = message.getBodyBuffer().readLong();
@@ -150,6 +165,7 @@ public class HasherNode implements MessageHandler {
 			long hash = doHash(ImageIO.read(new ByteBufferInputstream(buffer)));
 			ClientMessage response = messageFactory.resultMessage(hash, most, least);
 			producer.send(response);
+			hashTimeContext.stop();
 		} catch (ActiveMQException e) {
 			LOGGER.error("Failed to process message: {}", e.toString());
 		} catch (Exception e) {
