@@ -30,6 +30,10 @@ import com.google.common.base.Stopwatch;
 
 public class UUIDlearning {
 	private static final Logger LOGGER = LoggerFactory.getLogger(UUIDlearning.class);
+
+	private static final int BITS_PER_BYTE = 8;
+	private static final int SAMPLE_SIZE = 1000;
+
 	private UUID uuid;
 
 	@Before
@@ -44,18 +48,18 @@ public class UUIDlearning {
 
 	@Test
 	public void testStringSize() {
-		LOGGER.info("UUID string size: {} bits", uuid.toString().getBytes().length * 8);
+		LOGGER.info("UUID string size: {} bits", uuid.toString().getBytes().length * BITS_PER_BYTE);
 	}
 
 	@Test
 	public void testPathSize() throws Exception {
 		LOGGER.info("Path string size: {} bits",
-				"/tmp/foo/bar/baz/a/this is a test/to see how long paths compare/in size".getBytes().length * 8);
+				"/tmp/foo/bar/baz/a/this is a test/to see how long paths compare/in size".getBytes().length * BITS_PER_BYTE);
 	}
 
 	@Test
 	public void testGenerationBenchmark() throws Exception {
-		int sampleCount = 1000;
+		int sampleCount = SAMPLE_SIZE;
 		List<UUID> uuids = new ArrayList<>(sampleCount);
 
 		Stopwatch sw = Stopwatch.createStarted();

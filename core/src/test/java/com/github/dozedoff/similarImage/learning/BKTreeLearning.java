@@ -28,8 +28,12 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class BKTreeLearning {
+	private static final int SAMPLE_COUNT = 11;
+	private static final int NUMBER_OF_CHILDREN = 9;
+	private static final int LAST_INSERT = SAMPLE_COUNT - 1;
+
 	private static BKTree<Integer> bkTree;
-	static int last = -1;
+	private static int last = -1;
 
 	@BeforeClass
 	public static void setUpBeforeClass() {
@@ -41,7 +45,7 @@ public class BKTreeLearning {
 			}
 		}, 0);
 
-		for (int i = 0; i < 11; i++) {
+		for (int i = 0; i < SAMPLE_COUNT; i++) {
 			bkTree.insert(i);
 			last = i;
 		}
@@ -49,12 +53,12 @@ public class BKTreeLearning {
 
 	@Test
 	public void childrenTest() {
-		assertThat(bkTree.numOfChildren(), is(9));
+		assertThat(bkTree.numOfChildren(), is(NUMBER_OF_CHILDREN));
 	}
 
 	@Test
 	public void lastInsert() {
-		assertThat(last, is(10));
+		assertThat(last, is(LAST_INSERT));
 	}
 
 	@Test
