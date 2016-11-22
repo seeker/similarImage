@@ -21,32 +21,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import com.github.dozedoff.similarImage.io.ExtendedAttribute;
-
 //TODO duplicate class, move shared testing code to own module
 public class TestUtil {
-	private static final String TEMP_FILE_PREFIX = "HashAttributeTest";
-	private static final String ALTERNATIVE_TEMP_DIR = "/var/tmp";
-
 	private TestUtil() {
-	}
-
-	public static Path getTempFileWithExtendedAttributeSupport(String prefix) throws IOException {
-		Path xattrTempDir = Files.createTempDirectory(TEMP_FILE_PREFIX);
-
-		boolean useAlternativeTemp = !ExtendedAttribute.supportsExtendedAttributes(xattrTempDir);
-
-		if (useAlternativeTemp) {
-			xattrTempDir = Files.createTempFile(Paths.get(ALTERNATIVE_TEMP_DIR), TEMP_FILE_PREFIX, null);
-		} else {
-			xattrTempDir = Files.createTempFile(TEMP_FILE_PREFIX, null);
-		}
-
-		return xattrTempDir;
 	}
 
 	/**
