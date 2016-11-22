@@ -67,6 +67,7 @@ public class ResizerNode implements MessageHandler {
 
 	private static final String DUMMY = "";
 	private static final int INITIAL_BUFFER_SIZE = 1024 * 1024 * 5;
+	private static final int PENDING_CACHE_TIMEOUT_MINUTES = 5;
 
 	private static final String NAME_PENDING_CACHE = "pendingCache";
 	private static final String NAME_RESIZE = "resize";
@@ -204,7 +205,7 @@ public class ResizerNode implements MessageHandler {
 		this.producer = session.createProducer(resultAddress);
 		this.resizer = resizer;
 		this.messageFactory = new MessageFactory(session);
-		this.pendingCache = CacheBuilder.newBuilder().expireAfterAccess(5, TimeUnit.MINUTES).build();
+		this.pendingCache = CacheBuilder.newBuilder().expireAfterAccess(PENDING_CACHE_TIMEOUT_MINUTES, TimeUnit.MINUTES).build();
 
 		this.resizeRequests = metrics.meter(METRIC_NAME_RESIZE_MESSAGES);
 		this.resizeDuration = metrics.timer(METRIC_NAME_RESIZE_DURATION);
@@ -248,6 +249,12 @@ public class ResizerNode implements MessageHandler {
 		}
 	}
 
+	/**
+	 * Allocate a new message buffer.
+	 * 
+	 * @param messageSize
+	 *            the size of the message
+	 */
 	protected void allocateNewBuffer(int messageSize) {
 		messageBuffer = ByteBuffer.allocateDirect(calcNewBufferSize(messageSize));
 	}
@@ -277,7 +284,7 @@ public class ResizerNode implements MessageHandler {
 				pendingCacheMiss.mark();
 			}
 
-			Path path = Paths.get(pathPropterty);
+
 			checkBufferCapacity(message.getBodySize());
 			messageBuffer.limit(message.getBodySize());
 			imageSize.update(message.getBodySize());
@@ -285,6 +292,7 @@ public class ResizerNode implements MessageHandler {
 			message.getBodyBuffer().readBytes(messageBuffer);
 			messageBuffer.rewind();
 
+			Path path = Paths.get(pathPropterty);
 			Path filename = path.getFileName();
 			InputStream is = new ByteBufferInputstream(messageBuffer);
 
