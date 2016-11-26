@@ -25,30 +25,25 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.google.common.jimfs.Jimfs;
 
 public class ImageFileFilterTest {
 	private ImageFileFilter cut;
-	private static FileSystem fs;
-
-	@BeforeClass
-	public static void beforeClass() {
-		fs = Jimfs.newFileSystem();
-	}
-
-	@AfterClass
-	public static void afterClass() throws Exception {
-		fs.close();
-	}
+	private FileSystem fs;
 
 	@Before
 	public void setUp() throws Exception {
+		fs = Jimfs.newFileSystem();
 		cut = new ImageFileFilter();
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		fs.close();
 	}
 
 	private Path createFile(String fileName) throws IOException {
