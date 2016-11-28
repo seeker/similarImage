@@ -5,6 +5,9 @@
 # Certificates
 fullchain.pem
 
+# Java keystore
+keystore.jks
+
 # Eclipse files
 .project
 .classpath
