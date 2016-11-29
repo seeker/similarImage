@@ -326,6 +326,7 @@ public class ResizerNode implements MessageHandler {
 			}
 		} catch (Exception e) {
 			LOGGER.error("Unhandled exception: {}", e.toString());
+			LOGGER.debug("", e);
 		}
 	}
 

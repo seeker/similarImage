@@ -39,8 +39,8 @@
 
 		<address-settings>
 			<address-setting match="RESIZE_REQUEST">
-				<!-- 1 mb, with large messages this will result in around 2Gb disk usage-->
-				<max-size-bytes>1048576</max-size-bytes>
+				<!-- 100 mb-->
+				<max-size-bytes>104857600</max-size-bytes>
 				<address-full-policy>BLOCK</address-full-policy>
 			</address-setting>
 		</address-settings>

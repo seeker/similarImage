@@ -62,9 +62,9 @@ import com.j256.ormlite.dao.DaoManager;
 public class SimilarImage {
 	private final static Logger logger = LoggerFactory.getLogger(SimilarImage.class);
 
-	private final String PROPERTIES_FILENAME = "similarImage.properties";
-	private final int PRODUCER_QUEUE_SIZE = 400;
-	private static final int LARGE_MESSAGE_SIZE_THRESHOLD = 1024 * 1024;
+	private static final String PROPERTIES_FILENAME = "similarImage.properties";
+	private static final int PRODUCER_QUEUE_SIZE = 400;
+	private static final int LARGE_MESSAGE_SIZE_THRESHOLD = 1024 * 1024 * 100;
 
 	private Statistics statistics;
 	private RepositoryNode rn;

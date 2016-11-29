@@ -298,14 +298,27 @@ public class MessageFactory {
 	 * @param is
 	 *            {@link InputStream} to the image file
 	 * @return configured message
+	 * @throws IOException
+	 *             if there is an error reading the file
 	 */
-	public ClientMessage resizeRequest(Path path, InputStream is) {
+	public ClientMessage resizeRequest(Path path, InputStream is) throws IOException {
 		ClientMessage message = session.createMessage(true);
-
-		message.setBodyInputStream(is);
+		copyInputStreamToMessage(is, message);
 		setTaskType(message, TaskType.hash);
 		setPath(message, path);
 
 		return message;
+	}
+
+	private void copyInputStreamToMessage(InputStream is, ClientMessage message) throws IOException {
+		ActiveMQBuffer buffer = message.getBodyBuffer();
+		
+		int value;
+		do {
+			value = is.read();
+			if (value != -1) {
+				buffer.writeByte((byte) value);
+			}
+		} while (value != -1);
 	}
 }

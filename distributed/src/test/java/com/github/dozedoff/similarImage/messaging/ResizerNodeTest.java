@@ -60,6 +60,9 @@ public class ResizerNodeTest extends MessagingBaseTest {
 	private ImageResizer resizer;
 
 	@Mock
+	private InputStream is;
+
+	@Mock
 	private PendingHashImageRepository pendingRepo;
 
 	@Mock
@@ -76,6 +79,7 @@ public class ResizerNodeTest extends MessagingBaseTest {
 		when(pendingRepo.exists(any(PendingHashImage.class))).thenReturn(false);
 		when(resizer.resize(any(InputStream.class))).thenReturn(new byte[0]);
 		when(queryMessage.pendingImagePaths()).thenReturn(Arrays.asList(PATH));
+		when(is.read()).thenReturn(-1);
 
 		metrics = new MetricRegistry();
 
@@ -213,7 +217,7 @@ public class ResizerNodeTest extends MessagingBaseTest {
 
 	@Test
 	public void testBufferResize() throws Exception {
-		message = new MessageFactory(session).resizeRequest(Paths.get(PATH_NEW), null);
+		message = new MessageFactory(session).resizeRequest(Paths.get(PATH_NEW), is);
 		
 		for (byte i = 0; i < BUFFER_TEST_DATA_SIZE; i++) {
 			message.getBodyBuffer().writeByte(i);
@@ -239,7 +243,7 @@ public class ResizerNodeTest extends MessagingBaseTest {
 
 	@Test
 	public void testImageSizeHistogramCount() throws Exception {
-		message = new MessageFactory(session).resizeRequest(Paths.get(PATH_NEW), null);
+		message = new MessageFactory(session).resizeRequest(Paths.get(PATH_NEW), is);
 
 		for (byte i = 0; i < BUFFER_TEST_DATA_SIZE; i++) {
 			message.getBodyBuffer().writeByte(i);
@@ -252,7 +256,7 @@ public class ResizerNodeTest extends MessagingBaseTest {
 
 	@Test
 	public void testImageSizeHistogramSize() throws Exception {
-		message = new MessageFactory(session).resizeRequest(Paths.get(PATH_NEW), null);
+		message = new MessageFactory(session).resizeRequest(Paths.get(PATH_NEW), is);
 
 		for (byte i = 0; i < BUFFER_TEST_DATA_SIZE; i++) {
 			message.getBodyBuffer().writeByte(i);

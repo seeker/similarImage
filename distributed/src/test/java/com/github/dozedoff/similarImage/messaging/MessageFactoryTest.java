@@ -44,7 +44,7 @@ import com.github.dozedoff.similarImage.messaging.MessageFactory.TaskType;
 @SuppressWarnings("deprecation")
 @RunWith(MockitoJUnitRunner.class)
 public class MessageFactoryTest extends MessagingBaseTest {
-	private static final int TRACKING_ID = 42;
+	private static final int EXPECTED_MESSAGE_SIZE = 54;
 	private static final long HASH = 12L;
 	private static final byte[] IMAGE_DATA = { 0, 1, 2, 3, 4 };
 	private static final Path PATH = Paths.get("foo");
@@ -58,8 +58,9 @@ public class MessageFactoryTest extends MessagingBaseTest {
 	@Before
 	public void setUp() throws Exception {
 		when(session.createMessage(true)).thenReturn(new ClientMessageImpl(ClientMessageImpl.DEFAULT_TYPE, true, 0, 0, (byte) 0, 0));
-
 		when(session.createMessage(false)).thenReturn(new ClientMessageImpl(ClientMessageImpl.DEFAULT_TYPE, false, 0, 0, (byte) 0, 0));
+		
+		when(is.read()).thenReturn(-1);
 
 		cut = new MessageFactory(session);
 	}
@@ -134,7 +135,7 @@ public class MessageFactoryTest extends MessagingBaseTest {
 	public void testPendingImageResponse() throws Exception {
 		ClientMessage result = cut.pendingImageResponse(Arrays.asList(new PendingHashImage(PATH, UUID)));
 
-		assertThat(result.getBodySize(), is(54));
+		assertThat(result.getBodySize(), is(EXPECTED_MESSAGE_SIZE));
 	}
 
 	@Test
