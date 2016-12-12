@@ -42,7 +42,7 @@ import com.google.common.collect.MultimapBuilder;
  */
 public class RecordSearch {
 	private static final Logger logger = LoggerFactory.getLogger(RecordSearch.class);
-	private Multimap<Long, ImageRecord> groups;
+	private Multimap<Long, ImageRecord> imagesGroupedByHash;
 	private BKTree<Long> bkTree;
 
 	/**
@@ -54,7 +54,7 @@ public class RecordSearch {
 	}
 
 	public RecordSearch() {
-		groups = MultimapBuilder.hashKeys().hashSetValues().build();
+		imagesGroupedByHash = MultimapBuilder.hashKeys().hashSetValues().build();
 		bkTree = new BKTree<Long>(new CompareHammingDistance(), 0L);
 	}
 
@@ -73,7 +73,7 @@ public class RecordSearch {
 
 	private void groupRecords(Collection<ImageRecord> dbRecords) {
 		Stopwatch swGroup = Stopwatch.createStarted();
-		this.groups = DuplicateUtil.groupByHash(dbRecords);
+		this.imagesGroupedByHash = DuplicateUtil.groupByHash(dbRecords);
 		swGroup.stop();
 
 		logger.info("Grouped records into {} groups in {}", numberOfHashes(), swGroup);
@@ -83,14 +83,14 @@ public class RecordSearch {
 		logger.info("Building BK-Tree from {} hashes", numberOfHashes());
 
 		Stopwatch swBuildTree = Stopwatch.createStarted();
-		bkTree = BKTree.build(groups.keySet(), new CompareHammingDistance());
+		bkTree = BKTree.build(imagesGroupedByHash.keySet(), new CompareHammingDistance());
 		swBuildTree.stop();
 
 		logger.info("Took {} to build BK-tree with {} hashes", swBuildTree, numberOfHashes());
 	}
 
 	private int numberOfHashes() {
-		return groups.keySet().size();
+		return imagesGroupedByHash.keySet().size();
 	}
 
 	/**
@@ -108,7 +108,7 @@ public class RecordSearch {
 	 * @return distinct list of matches
 	 */
 	public List<Long> exactMatch() {
-		Multimap<Long, ImageRecord> multiImage = removeSingleImageGroups(groups);
+		Multimap<Long, ImageRecord> multiImage = removeSingleImageGroups(imagesGroupedByHash);
 		return new ArrayList<>(multiImage.keySet());
 	}
 
@@ -124,7 +124,7 @@ public class RecordSearch {
 	 */
 	@Deprecated
 	public List<Long> distanceMatch(long hammingDistance) {
-		Set<Long> keySet = removeSingleImageGroups(groups).keySet();
+		Set<Long> keySet = removeSingleImageGroups(imagesGroupedByHash).keySet();
 		Set<Long> resultSet = new HashSet<Long>();
 
 		for (Long key : keySet) {
@@ -149,7 +149,7 @@ public class RecordSearch {
 		Set<Long> resultKeys = bkTree.searchWithin(hash, (double) hammingDistance);
 
 		for (Long key : resultKeys) {
-			searchResult.putAll(key, groups.get(key));
+			searchResult.putAll(key, imagesGroupedByHash.get(key));
 		}
 
 		return searchResult;
