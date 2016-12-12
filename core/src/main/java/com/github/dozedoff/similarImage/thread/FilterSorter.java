@@ -38,6 +38,7 @@ import com.github.dozedoff.similarImage.event.GuiStatusEvent;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
+import com.google.common.collect.Multimaps;
 import com.google.common.eventbus.EventBus;
 
 /**
@@ -117,10 +118,12 @@ public class FilterSorter extends Thread {
 			logger.error("Aborted tag search for {}, reason: {}", tag.getTag(), e.getMessage());
 		}
 
-		for (FilterRecord filter : matchingFilters) {
+		Multimap<Long, ImageRecord> parallelGroups = Multimaps.synchronizedMultimap(uniqueGroups);
+
+		matchingFilters.parallelStream().forEach(filter -> {
 			Multimap<Long, ImageRecord> match = recordSearch.distanceMatch(filter.getpHash(), hammingDistance);
-			uniqueGroups.putAll(filter.getpHash(), match.values());
-		}
+			parallelGroups.putAll(filter.getpHash(), match.values());
+		});
 
 		return uniqueGroups;
 	}
