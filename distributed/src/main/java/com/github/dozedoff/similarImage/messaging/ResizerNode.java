@@ -17,6 +17,7 @@
  */
 package com.github.dozedoff.similarImage.messaging;
 
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,6 +29,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import javax.imageio.IIOException;
+import javax.imageio.ImageIO;
 
 import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.client.ClientConsumer;
@@ -301,7 +303,8 @@ public class ResizerNode implements MessageHandler {
 				is = new ByteArrayInputStream(ImageUtil.imageToBytes(gi.getFrame(0)));
 			}
 
-			byte[] resizedImageData = resizer.resize(is);
+			BufferedImage originalImage = ImageIO.read(is);
+			byte[] resizedImageData = resizer.resize(originalImage);
 
 			UUID uuid = UUID.randomUUID();
 			ClientMessage trackMessage = messageFactory.trackPath(path, uuid);

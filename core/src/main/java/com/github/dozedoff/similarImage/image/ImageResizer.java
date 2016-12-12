@@ -19,7 +19,8 @@ package com.github.dozedoff.similarImage.image;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.io.InputStream;
+
+import javax.imageio.IIOException;
 
 import com.github.dozedoff.commonj.util.ImageUtil;
 
@@ -39,15 +40,16 @@ public class ImageResizer {
 	/**
 	 * Resize an image.
 	 * 
-	 * @param is
-	 *            {@link InputStream} of the image
+	 * @param originalImage
+	 *            the image to resize
 	 * @return resized image as a byte array
 	 * @throws IOException
 	 *             if there is an error processing the image
 	 */
-	public byte[] resize(InputStream is) throws IOException {
-
-		BufferedImage originalImage = ImageUtil.readImage(is);
+	public byte[] resize(BufferedImage originalImage) throws IOException {
+		if (originalImage == null) {
+			throw new IIOException("Image is null. Did ImageIO fail to decode the image?");
+		}
 
 		BufferedImage resized = ImageUtil.resizeImage(originalImage, size, size);
 		originalImage.flush();
