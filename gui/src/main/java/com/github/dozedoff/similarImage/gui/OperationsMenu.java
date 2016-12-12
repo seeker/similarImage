@@ -38,6 +38,9 @@ import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiUserTagChangedEvent;
 import com.google.common.eventbus.Subscribe;
 
+/**
+ * Context menu operations for the {@link DuplicateEntryView}.
+ */
 public class OperationsMenu {
 	private static final Logger LOGGER = LoggerFactory.getLogger(OperationsMenu.class);
 
