@@ -128,7 +128,7 @@ public class ExtendedAttributeHandlerTest {
 	@Test
 	public void testHandleCorruptFileIsHandled() throws Exception {
 		when(eaQuery.isEaSupported(testFile)).thenReturn(true);
-		when(hashAttribute.areAttributesValid(testFile)).thenReturn(true);
+		when(hashAttribute.areAttributesValid(testFile)).thenReturn(false);
 		ExtendedAttribute.setExtendedAttribute(testFile, ExtendedAttributeHandler.CORRUPT_EA_NAMESPACE, "");
 
 		assertThat(cut.handle(testFile), is(true));

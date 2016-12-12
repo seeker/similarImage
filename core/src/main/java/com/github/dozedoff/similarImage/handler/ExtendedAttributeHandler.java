@@ -75,20 +75,27 @@ public class ExtendedAttributeHandler implements HashHandler {
 	public boolean handle(Path file) {
 		LOGGER.trace("Handling {} with {}", file, ExtendedAttributeHandler.class.getSimpleName());
 
-		if (eaQuery.isEaSupported(file) && hashAttribute.areAttributesValid(file)) {
-			LOGGER.trace("{} has valid extended attributes", file);
+		if (eaQuery.isEaSupported(file)) {
 			try {
 				if (ExtendedAttribute.isExtendedAttributeSet(file, CORRUPT_EA_NAMESPACE)) {
+					LOGGER.trace("{} is corrupt", file);
 					return true;
 				}
+			} catch (IOException e1) {
+				LOGGER.error("Failed to read attributes from {}", file);
+			}
 
-				imageRepository.store(new ImageRecord(file.toString(), hashAttribute.readHash(file)));
-				LOGGER.trace("Successfully read and stored the hash for {}", file);
-				return true;
-			} catch (InvalidAttributeValueException | IOException e) {
-				LOGGER.error("Failed to read extended attribute from {} ({})", file, e.toString());
-			} catch (RepositoryException e) {
-				LOGGER.error("Failed to access database for {} ({})", file, e.toString());
+			if (hashAttribute.areAttributesValid(file)) {
+				LOGGER.trace("{} has valid extended attributes", file);
+				try {
+					imageRepository.store(new ImageRecord(file.toString(), hashAttribute.readHash(file)));
+					LOGGER.trace("Successfully read and stored the hash for {}", file);
+					return true;
+				} catch (InvalidAttributeValueException | IOException e) {
+					LOGGER.error("Failed to read extended attribute from {} ({})", file, e.toString());
+				} catch (RepositoryException e) {
+					LOGGER.error("Failed to access database for {} ({})", file, e.toString());
+				}
 			}
 		}
 

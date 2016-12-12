@@ -185,7 +185,13 @@ public class TaskMessageHandler implements MessageHandler {
 				LOGGER.error("Unhandled message: {}", msg);
 			}
 		} catch (RepositoryException e) {
-			LOGGER.warn("Failed to store result message: {}", e.toString());
+			String cause = "unknown";
+			
+			if(e.getCause() != null) {
+				cause = e.getCause().toString();
+			}
+			
+			LOGGER.warn("Failed to store result message: {}, cause:{}", e.toString(), cause);
 		}
 	}
 
