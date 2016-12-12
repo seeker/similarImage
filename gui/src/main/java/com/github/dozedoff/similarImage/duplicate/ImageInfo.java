@@ -30,6 +30,8 @@ import javax.imageio.ImageIO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import at.dhyan.open_imaging.GifDecoder;
+
 public class ImageInfo {
 	private final static Logger logger = LoggerFactory.getLogger(ImageInfo.class);
 	private Path path;
@@ -49,7 +51,16 @@ public class ImageInfo {
 		InputStream is = null;
 		try {
 			is = new BufferedInputStream(Files.newInputStream(path));
-			BufferedImage img = ImageIO.read(is);
+
+			BufferedImage bi;
+
+			BufferedImage img;
+
+			try {
+				img = ImageIO.read(is);
+			} catch (ArrayIndexOutOfBoundsException e) {
+				img = GifDecoder.read(is).getFrame(0);
+			}
 
 			if (img == null) {
 				logger.warn("Failed to process image {}", path);

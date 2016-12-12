@@ -52,6 +52,8 @@ import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
 import com.github.dozedoff.similarImage.util.ImageUtil;
 
+import at.dhyan.open_imaging.GifDecoder;
+
 public class DuplicateOperations {
 	private static final Logger logger = LoggerFactory.getLogger(DuplicateOperations.class);
 
@@ -313,8 +315,14 @@ public class DuplicateOperations {
 			InputStream is = Files.newInputStream(path);
 			MessageDigest md = MessageDigest.getInstance(MESSAGE_DIGEST_ALGORITHM);
 			DigestInputStream dis = new DigestInputStream(is, md);
+			BufferedImage img;
+
+			try {
+				img = ImageIO.read(dis);
+			} catch (ArrayIndexOutOfBoundsException e) {
+				img = GifDecoder.read(is).getFrame(0);
+			}
 			
-			BufferedImage img = ImageIO.read(dis);
 			BufferedImage resized = Scalr.resize(img, Method.QUALITY, Mode.AUTOMATIC, THUMBNAIL_SIZE);
 
 			thumb = new Thumbnail(md.digest(), ImageUtil.imageToBytes(resized));
