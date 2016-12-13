@@ -64,7 +64,7 @@ import at.dhyan.open_imaging.GifDecoder.GifImage;
  * @author Nicholas Wright
  *
  */
-public class ResizerNode implements MessageHandler {
+public class ResizerNode implements MessageHandler, Node {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ResizerNode.class);
 
 	private static final String DUMMY = "";
@@ -86,7 +86,6 @@ public class ResizerNode implements MessageHandler {
 
 	private final ClientConsumer consumer;
 	private final ClientProducer producer;
-	private final ClientSession session;
 	private final ImageResizer resizer;
 	private MessageFactory messageFactory;
 
@@ -202,7 +201,6 @@ public class ResizerNode implements MessageHandler {
 	protected ResizerNode(ClientSession session, ImageResizer resizer, String requestAddress, String resultAddress,
 			QueryMessage queryMessage, MetricRegistry metrics) throws Exception {
 		// TODO replace with list of pending files
-		this.session = session;
 		this.consumer = session.createConsumer(requestAddress);
 		this.producer = session.createProducer(resultAddress);
 		this.resizer = resizer;
@@ -354,12 +352,22 @@ public class ResizerNode implements MessageHandler {
 	}
 
 	/**
-	 * Stop this consumer and clean up resources.
+	 * {@inheritDoc}
 	 */
+	@Override
 	public void stop() {
-		LOGGER.info("Stopping {}...", this.getClass().getSimpleName());
+		LOGGER.info("Stopping {}...", this.toString());
 		MessagingUtil.silentClose(consumer);
 		MessagingUtil.silentClose(producer);
-		MessagingUtil.silentClose(session);
+	}
+
+	/**
+	 * Returns the class name.
+	 * 
+	 * @return the name of this class
+	 */
+	@Override
+	public String toString() {
+		return ResizerNode.class.getSimpleName();
 	}
 }

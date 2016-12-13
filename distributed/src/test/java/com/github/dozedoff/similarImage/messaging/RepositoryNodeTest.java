@@ -17,9 +17,12 @@
  */
 package com.github.dozedoff.similarImage.messaging;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.nio.file.Path;
@@ -74,5 +77,18 @@ public class RepositoryNodeTest extends MessagingBaseTest {
 		cut.onMessage(message);
 		// TODO test actual message contents
 		assertThat(sessionMessage.getBodySize(), greaterThan(0));
+	}
+
+	@Test
+	public void testToString() throws Exception {
+		assertThat(cut.toString(), is("RepositoryNode"));
+	}
+
+	@Test
+	public void testStop() throws Exception {
+		cut.stop();
+
+		verify(consumer, times(2)).close();
+		verify(producer).close();
 	}
 }

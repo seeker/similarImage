@@ -23,13 +23,14 @@ import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.messaging.MessageFactory.MessageProperty;
 import com.github.dozedoff.similarImage.messaging.MessageFactory.TaskType;
+import com.github.dozedoff.similarImage.util.MessagingUtil;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 
 /**
  * Reads files and creates resize requests. Listens to extended attribute update messages.
  */
-public class StorageNode implements MessageHandler {
+public class StorageNode implements MessageHandler, Node {
 	private static final Logger LOGGER = LoggerFactory.getLogger(StorageNode.class);
 
 	private final ExtendedAttributeQuery eaQuery;
@@ -162,5 +163,24 @@ public class StorageNode implements MessageHandler {
 
 	private boolean isAlreadySent(Path path) {
 		return sentRequests.getIfPresent(path) != null;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void stop() {
+		MessagingUtil.silentClose(consumer);
+		MessagingUtil.silentClose(producer);
+	}
+
+	/**
+	 * Returns the class name.
+	 * 
+	 * @return the name of this class
+	 */
+	@Override
+	public String toString() {
+		return StorageNode.class.getSimpleName();
 	}
 }

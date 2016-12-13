@@ -36,11 +36,12 @@ import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.messaging.MessageFactory.MessageProperty;
 import com.github.dozedoff.similarImage.messaging.MessageFactory.QueryType;
+import com.github.dozedoff.similarImage.util.MessagingUtil;
 
 /**
  * This node connects to repositories. Used for storing hash results and answering query messages.
  */
-public class RepositoryNode implements MessageHandler {
+public class RepositoryNode implements MessageHandler, Node {
 	private static final Logger LOGGER = LoggerFactory.getLogger(RepositoryNode.class);
 
 	private static final String REPOSITORY_ERROR_MESSAGE = "Failed to access repository:{}, cause:{}";
@@ -246,4 +247,24 @@ public class RepositoryNode implements MessageHandler {
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void stop() {
+		LOGGER.info("Stopping {}...", this.toString());
+		MessagingUtil.silentClose(consumer);
+		MessagingUtil.silentClose(taskConsumer);
+		MessagingUtil.silentClose(producer);
+	}
+
+	/**
+	 * Returns the class name.
+	 * 
+	 * @return the name of this class
+	 */
+	@Override
+	public String toString() {
+		return RepositoryNode.class.getSimpleName();
+	}
 }

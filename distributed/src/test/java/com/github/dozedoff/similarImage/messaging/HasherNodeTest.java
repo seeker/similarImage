@@ -141,4 +141,17 @@ public class HasherNodeTest extends MessagingBaseTest {
 
 		assertThat(metrics.getTimers().get(HasherNode.METRIC_NAME_HASH_DURATION).getSnapshot().getMean(), is(0.0));
 	}
+
+	@Test
+	public void testToString() throws Exception {
+		assertThat(cut.toString(), is("HasherNode"));
+	}
+
+	@Test
+	public void testStop() throws Exception {
+		cut.stop();
+
+		verify(consumer).close();
+		verify(producer).close();
+	}
 }

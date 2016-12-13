@@ -277,4 +277,17 @@ public class ResizerNodeTest extends MessagingBaseTest {
 
 		assertThat(metrics.getTimers().get(ResizerNode.METRIC_NAME_RESIZE_DURATION).getSnapshot().getMean(), is(not(0.0)));
 	}
+
+	@Test
+	public void testToString() throws Exception {
+		assertThat(cut.toString(), is("ResizerNode"));
+	}
+
+	@Test
+	public void testStop() throws Exception {
+		cut.stop();
+
+		verify(producer).close();
+		verify(consumer).close();
+	}
 }

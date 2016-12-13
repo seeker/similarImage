@@ -1,5 +1,7 @@
 package com.github.dozedoff.similarImage.messaging;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -99,5 +101,18 @@ public class StorageNodeTest extends MessagingBaseTest {
 		cut.processFile(cachedFile);
 
 		verify(producer, never()).send(messageFactory.resizeRequest(testFile, Files.newInputStream(testFile)));
+	}
+
+	@Test
+	public void testToString() throws Exception {
+		assertThat(cut.toString(), is("StorageNode"));
+	}
+
+	@Test
+	public void testStop() throws Exception {
+		cut.stop();
+
+		verify(consumer).close();
+		verify(producer).close();
 	}
 }

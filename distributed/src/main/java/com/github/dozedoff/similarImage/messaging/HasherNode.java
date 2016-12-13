@@ -46,7 +46,7 @@ import com.github.dozedoff.similarImage.util.MessagingUtil;
  * @author Nicholas Wright
  *
  */
-public class HasherNode implements MessageHandler {
+public class HasherNode implements MessageHandler, Node {
 	private static final Logger LOGGER = LoggerFactory.getLogger(HasherNode.class);
 
 	private static final int INITIAL_BUFFER_SIZE = 4096;
@@ -130,13 +130,24 @@ public class HasherNode implements MessageHandler {
 	}
 
 	/**
-	 * Stops this consumer
+	 * {@inheritDoc}
 	 */
+	@Override
 	public void stop() {
-		LOGGER.info("Stopping {}...", this.getClass().getSimpleName());
+		LOGGER.info("Stopping {}...", this.toString());
 		MessagingUtil.silentClose(consumer);
 		MessagingUtil.silentClose(producer);
 		MessagingUtil.silentClose(session);
+	}
+
+	/**
+	 * Returns the class name.
+	 * 
+	 * @return the name of this class
+	 */
+	@Override
+	public String toString() {
+		return HasherNode.class.getSimpleName();
 	}
 
 	/**
