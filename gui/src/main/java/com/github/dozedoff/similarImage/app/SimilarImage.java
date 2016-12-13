@@ -18,6 +18,8 @@
 package com.github.dozedoff.similarImage.app;
 
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import javax.imageio.ImageIO;
@@ -32,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Slf4jReporter;
+import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.db.Database;
 import com.github.dozedoff.similarImage.db.PendingHashImage;
 import com.github.dozedoff.similarImage.db.SQLiteDatabase;
@@ -48,16 +51,27 @@ import com.github.dozedoff.similarImage.gui.SimilarImageController;
 import com.github.dozedoff.similarImage.gui.SimilarImageView;
 import com.github.dozedoff.similarImage.gui.UserTagSettingController;
 import com.github.dozedoff.similarImage.handler.HandlerListFactory;
+import com.github.dozedoff.similarImage.image.ImageResizer;
 import com.github.dozedoff.similarImage.io.ExtendedAttribute;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeDirectoryCache;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
+import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.messaging.ArtemisSession;
+import com.github.dozedoff.similarImage.messaging.HasherNode;
+import com.github.dozedoff.similarImage.messaging.Node;
 import com.github.dozedoff.similarImage.messaging.RepositoryNode;
+import com.github.dozedoff.similarImage.messaging.ResizerNode;
 import com.github.dozedoff.similarImage.messaging.TaskMessageHandler;
 import com.github.dozedoff.similarImage.thread.SorterFactory;
 import com.j256.ormlite.dao.DaoManager;
+
+import net.sourceforge.argparse4j.ArgumentParsers;
+import net.sourceforge.argparse4j.impl.Arguments;
+import net.sourceforge.argparse4j.inf.ArgumentParser;
+import net.sourceforge.argparse4j.inf.ArgumentParserException;
+import net.sourceforge.argparse4j.inf.Namespace;
 
 public class SimilarImage {
 	private final static Logger logger = LoggerFactory.getLogger(SimilarImage.class);
@@ -65,25 +79,66 @@ public class SimilarImage {
 	private static final String PROPERTIES_FILENAME = "similarImage.properties";
 	private static final int PRODUCER_QUEUE_SIZE = 400;
 	private static final int LARGE_MESSAGE_SIZE_THRESHOLD = 1024 * 1024 * 100;
+	private static final int IMAGE_SIZE = 32;
 
 	private Statistics statistics;
-	private RepositoryNode rn;
 
 	private ArtemisEmbeddedServer aes;
 
 	private MetricRegistry metrics;
 	private Slf4jReporter reporter;
 
+	private List<Node> nodes = new LinkedList<Node>();
+
+	/**
+	 * Parses the command line arguments for this program.
+	 * 
+	 * @param args
+	 *            from the command line
+	 * @return the parsed results
+	 * @throws ArgumentParserException
+	 *             if there is an error parsing the arguments
+	 */
+	protected static Namespace parseArgs(String[] args) throws ArgumentParserException {
+		ArgumentParser parser = ArgumentParsers.newArgumentParser("SimilarImage GUI").defaultHelp(true)
+				.description("A similar image finder");
+		parser.addArgument("--no-workers").help("Do not create any hash or resize nodes")
+				.action(Arguments.storeTrue());
+
+		return parser.parseArgs(args);
+	}
+
+	/**
+	 * Check the parsed arguments if the workers are disabled.
+	 * 
+	 * @param args
+	 *            parsed by {@link ArgumentParsers}
+	 * @return true if no worker mode is enabled, else false
+	 */
+	protected static boolean isNoWorkersMode(Namespace args) {
+		return args.getBoolean("no_workers");
+	}
+
 	public static void main(String[] args) {
 		try {
-			new SimilarImage().init();
+			Namespace parsedArgs = parseArgs(args);
+
+			new SimilarImage().init(isNoWorkersMode(parsedArgs));
 		} catch (Exception e) {
 			logger.error("Startup failed: {}", e.toString());
 			e.printStackTrace();
 		}
 	}
 
-	public void init() throws Exception {
+	/**
+	 * Initialize the program.
+	 * 
+	 * @param noWorkers
+	 *            if local nodes should be created
+	 * @throws Exception
+	 *             if there is an error during setup
+	 */
+	public void init(boolean noWorkers) throws Exception {
 		this.metrics = new MetricRegistry();
 		String version = this.getClass().getPackage().getImplementationVersion();
 
@@ -119,7 +174,7 @@ public class SimilarImage {
 		TagRepository tagRepository = repositoryFactory.buildTagRepository();
 
 		TaskMessageHandler tmh = new TaskMessageHandler(pendingRepo, imageRepository, as.getSession(), metrics);
-		rn = new RepositoryNode(as.getSession(), pendingRepo, tmh, metrics);
+		nodes.add(new RepositoryNode(as.getSession(), pendingRepo, tmh, metrics));
 
 		DuplicateOperations dupOps = new DuplicateOperations(filterRepository, tagRepository, imageRepository);
 		SorterFactory sf = new SorterFactory(imageRepository, filterRepository, tagRepository);
@@ -141,6 +196,27 @@ public class SimilarImage {
 		reporter.start(1, TimeUnit.MINUTES);
 
 		logImageReaders();
+
+		if (!noWorkers) {
+			for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
+				nodes.add(new HasherNode(as.getSession(), new ImagePHash(), QueueAddress.HASH_REQUEST.toString(),
+						QueueAddress.RESULT.toString(), metrics));
+				nodes.add(new ResizerNode(as.getSession(), new ImageResizer(IMAGE_SIZE), metrics));
+			}
+
+			Runtime.getRuntime().addShutdownHook(new Thread() {
+				@Override
+				public void run() {
+					logger.info("Stopping worker nodes...");
+
+					nodes.forEach(node -> {
+						node.stop();
+					});
+
+					logger.info("All worker nodes have terminated");
+				}
+			});
+		}
 	}
 
 	private void logImageReaders() {
