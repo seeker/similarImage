@@ -18,6 +18,8 @@
 package com.github.dozedoff.similarImage.learning;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 
 import java.nio.file.Files;
@@ -41,6 +43,7 @@ import org.apache.activemq.artemis.core.remoting.impl.invm.InVMConnectorFactory;
 import org.apache.activemq.artemis.core.remoting.impl.netty.NettyAcceptorFactory;
 import org.apache.activemq.artemis.core.server.embedded.EmbeddedActiveMQ;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -53,14 +56,24 @@ public class ArtemisLearning {
 	private static ClientConsumer consumer;
 	private static ClientSession session;
 
+	private static ClientProducer transactedProducer;
+	private static ClientConsumer transactedConsumer;
+	private static ClientSession transactedSession;
+
 	private static final String ADDRESS = "example";
 	private static final String QUEUE_NAME = ADDRESS;
-	private static final String TEST_MESSAGE = "message";
+	private static final String TRANSACTION_ADDRESS = "transaction";
+
+	private static final int RECEIVE_TIMEOUT = 500;
+
+	private static ClientSessionFactory factory;
+
 
 	private static Path dataDirectory;
+	private double messageTestValue;
 
 	@BeforeClass
-	public static void setUp() throws Exception {
+	public static void setUpClass() throws Exception {
 		// From https://activemq.apache.org/artemis/docs/1.0.0/embedding-activemq.html
 
 		Set<TransportConfiguration> transports = new HashSet<TransportConfiguration>();
@@ -82,31 +95,102 @@ public class ArtemisLearning {
 		ServerLocator locator = ActiveMQClient
 				.createServerLocatorWithoutHA(new TransportConfiguration(InVMConnectorFactory.class.getName()));
 
-		ClientSessionFactory factory = locator.createSessionFactory();
+		factory = locator.createSessionFactory();
 		session = factory.createSession();
+		session.start();
+
+		transactedSession = factory.createTransactedSession();
+		transactedSession.start();
 
 		session.createQueue(ADDRESS, QUEUE_NAME, false);
+		session.createQueue(TRANSACTION_ADDRESS, TRANSACTION_ADDRESS, false);
 
 		producer = session.createProducer(ADDRESS);
 		consumer = session.createConsumer(ADDRESS);
+
+		transactedProducer = transactedSession.createProducer(TRANSACTION_ADDRESS);
+		transactedConsumer = transactedSession.createConsumer(TRANSACTION_ADDRESS);
 
 		session.start();
 	}
 
 	@AfterClass
-	public static void tearDown() throws Exception {
+	public static void tearDownClass() throws Exception {
 		server.stop();
 		TestUtil.deleteAllFiles(dataDirectory);
 	}
 
+	@Before
+	public void setUp() {
+		messageTestValue = Math.random();
+	}
+
+	private ClientMessage createMessage(ClientSession sessionToUse, double randomValue) {
+		ClientMessage message = sessionToUse.createMessage(false);
+		message.getBodyBuffer().writeDouble(randomValue);
+
+		return message;
+	}
+
+	private void verifyMessage(ClientMessage message, double testValue) {
+		assertThat(message, is(notNullValue()));
+		assertThat(message.getBodyBuffer().readDouble(), is(testValue));
+	}
+
 	@Test
 	public void testSendMessage() throws Exception {
-		Message msg = session.createMessage(false);
-		msg.getBodyBuffer().writeString(TEST_MESSAGE);
+		Message msg = createMessage(session, messageTestValue);
+
 		producer.send(msg);
 
-		ClientMessage rMsg = consumer.receive();
+		verifyMessage(consumer.receive(), messageTestValue);
+	}
 
-		assertThat(rMsg.getBodyBuffer().readString(), is(TEST_MESSAGE));
+	@Test
+	public void testTransactedSession() throws Exception {
+		assertThat(transactedSession.isAutoCommitAcks(), is(false));
+		assertThat(transactedSession.isAutoCommitSends(), is(false));
+	}
+
+	@Test
+	public void testTransactedWrite() throws Exception {
+		ClientMessage msg = createMessage(transactedSession, messageTestValue);
+		transactedProducer.send(ADDRESS, msg);
+
+		assertThat(consumer.receive(RECEIVE_TIMEOUT), is(nullValue()));
+
+		transactedSession.commit();
+
+		verifyMessage(consumer.receive(RECEIVE_TIMEOUT), messageTestValue);
+	}
+
+	@Test
+	public void testTransactedRead() throws Exception {
+		ClientMessage msg = createMessage(session, messageTestValue);
+		producer.send(TRANSACTION_ADDRESS, msg);
+
+		ClientMessage rMsg = transactedConsumer.receive(RECEIVE_TIMEOUT);
+		verifyMessage(rMsg, messageTestValue);
+
+		rMsg.acknowledge();
+		transactedSession.commit();
+
+		assertThat(transactedConsumer.receive(RECEIVE_TIMEOUT), is(nullValue()));
+	}
+
+	@Test
+	public void testTransactedReadRollback() throws Exception {
+		ClientMessage msg = createMessage(session, messageTestValue);
+		producer.send(TRANSACTION_ADDRESS, msg);
+
+		verifyMessage(transactedConsumer.receive(RECEIVE_TIMEOUT), messageTestValue);
+
+		transactedSession.rollback();
+
+		ClientMessage rMsg = transactedConsumer.receive(RECEIVE_TIMEOUT);
+		verifyMessage(rMsg, messageTestValue);
+
+		rMsg.acknowledge();
+		transactedSession.commit();
 	}
 }
