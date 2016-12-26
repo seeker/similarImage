@@ -60,12 +60,16 @@ import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.messaging.ArtemisSession;
 import com.github.dozedoff.similarImage.messaging.HasherNode;
+import com.github.dozedoff.similarImage.messaging.MessageCollector;
 import com.github.dozedoff.similarImage.messaging.Node;
+import com.github.dozedoff.similarImage.messaging.QueueToDatabaseTransaction;
 import com.github.dozedoff.similarImage.messaging.RepositoryNode;
 import com.github.dozedoff.similarImage.messaging.ResizerNode;
+import com.github.dozedoff.similarImage.messaging.ResultMessageSink;
 import com.github.dozedoff.similarImage.messaging.TaskMessageHandler;
 import com.github.dozedoff.similarImage.thread.SorterFactory;
 import com.j256.ormlite.dao.DaoManager;
+import com.j256.ormlite.misc.TransactionManager;
 
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
@@ -74,6 +78,12 @@ import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
 
 public class SimilarImage {
+	private static final int COLLECTED_MESSAGE_THRESHOLD = 100;
+	/**
+	 * Time in milliseconds
+	 */
+	private static final long COLLECTED_MESSAGE_DRAIN_INTERVAL = TimeUnit.MILLISECONDS.convert(1, TimeUnit.SECONDS);
+
 	private final static Logger logger = LoggerFactory.getLogger(SimilarImage.class);
 
 	private static final String PROPERTIES_FILENAME = "similarImage.properties";
@@ -119,6 +129,12 @@ public class SimilarImage {
 		return args.getBoolean("no_workers");
 	}
 
+	/**
+	 * Start the program
+	 * 
+	 * @param args
+	 *            command line arguments
+	 */
 	public static void main(String[] args) {
 		try {
 			Namespace parsedArgs = parseArgs(args);
@@ -170,11 +186,21 @@ public class SimilarImage {
 		RepositoryFactory repositoryFactory = new OrmliteRepositoryFactory(database);
 
 		ImageRepository imageRepository = repositoryFactory.buildImageRepository();
-		FilterRepository filterRepository = repositoryFactory.buildFilterRepository();
-		TagRepository tagRepository = repositoryFactory.buildTagRepository();
 
 		TaskMessageHandler tmh = new TaskMessageHandler(pendingRepo, imageRepository, as.getSession(), metrics);
 		nodes.add(new RepositoryNode(as.getSession(), pendingRepo, tmh, metrics));
+
+		TransactionManager tm = new TransactionManager(database.getCs());
+		QueueToDatabaseTransaction qdt = new QueueToDatabaseTransaction(as.getTransactedSession(), tm, pendingRepo,
+				imageRepository, metrics);
+
+		MessageCollector mc = new MessageCollector(COLLECTED_MESSAGE_THRESHOLD, qdt);
+		ResultMessageSink sink = new ResultMessageSink(as.getTransactedSession(), mc, QueueAddress.RESULT.toString(),
+				COLLECTED_MESSAGE_DRAIN_INTERVAL);
+		nodes.add(sink);
+
+		FilterRepository filterRepository = repositoryFactory.buildFilterRepository();
+		TagRepository tagRepository = repositoryFactory.buildTagRepository();
 
 		DuplicateOperations dupOps = new DuplicateOperations(filterRepository, tagRepository, imageRepository);
 		SorterFactory sf = new SorterFactory(imageRepository, filterRepository, tagRepository);
