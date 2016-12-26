@@ -149,7 +149,7 @@ public class QueueToDatabaseTransaction implements CollectedMessageConsumer {
 				}
 			});
 		} catch (SQLException e) {
-			LOGGER.warn("Failed to store {} messages: {}", messages.size(), e.toString());
+			LOGGER.warn("Failed to store {} messages: {}", messages.size(), e.toString(), e.getCause());
 
 			try {
 				session.rollback();

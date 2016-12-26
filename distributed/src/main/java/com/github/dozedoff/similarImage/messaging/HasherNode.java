@@ -176,6 +176,12 @@ public class HasherNode implements MessageHandler, Node {
 			long hash = doHash(ImageIO.read(new ByteBufferInputstream(buffer)));
 			ClientMessage response = messageFactory.resultMessage(hash, most, least);
 			producer.send(response);
+
+			if (LOGGER.isTraceEnabled()) {
+				LOGGER.trace("Sent result for request with UUID {} to {}", new UUID(most, least),
+						producer.getAddress());
+			}
+
 			hashTimeContext.stop();
 		} catch (ActiveMQException e) {
 			LOGGER.error("Failed to process message: {}", e.toString());
