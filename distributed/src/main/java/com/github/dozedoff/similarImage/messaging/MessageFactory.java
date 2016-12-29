@@ -73,10 +73,6 @@ public class MessageFactory {
 		this.session = session;
 	}
 
-	private void setQueryType(ClientMessage message, QueryType type) {
-		message.putStringProperty(MessageProperty.repository_query.toString(), type.toString());
-	}
-
 	private void setTaskType(ClientMessage message, TaskType task) {
 		message.putStringProperty(MessageProperty.task.toString(), task.toString());
 	}
@@ -181,41 +177,6 @@ public class MessageFactory {
 
 			return message;
 		}
-	}
-
-	/**
-	 * Create a query message for a tracking id for the given path.
-	 * 
-	 * @param path
-	 *            to query and track
-	 * @return configured message
-	 * @deprecated Use UUID tracking messages from {@link MessageFactory#trackPath(Path, UUID)} instead.
-	 */
-	@Deprecated
-	public ClientMessage trackPathQuery(Path path) {
-		ClientMessage message = session.createMessage(false);
-		setQueryType(message, QueryType.TRACK);
-
-		message.getBodyBuffer().writeString(path.toString());
-
-		return message;
-	}
-
-	/**
-	 * Create a response message for a tracking id query.
-	 * 
-	 * @param trackingId
-	 *            for the path in the query
-	 * @return configured message
-	 * @deprecated Use UUID tracking messages from {@link MessageFactory#trackPath(Path, UUID)} instead.
-	 */
-	@Deprecated
-	public ClientMessage trackPathResponse(int trackingId) {
-		ClientMessage message = session.createMessage(false);
-
-		message.getBodyBuffer().writeInt(trackingId);
-
-		return message;
 	}
 
 	/**
