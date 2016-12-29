@@ -67,33 +67,6 @@ public class MessageFactory {
 		hash, corr, result, eaupdate, track
 	};
 
-	/**
-	 * @deprecated Use enum {@link MessageProperty}.
-	 */
-	@Deprecated
-	public static final String TRACKING_PROPERTY_NAME = MessageProperty.id.toString();
-	/**
-	 * @deprecated Use enum {@link MessageProperty}.
-	 */
-	@Deprecated
-	public static final String HASH_PROPERTY_NAME = MessageProperty.hashResult.toString();
-	/**
-	 * @deprecated Use enum {@link MessageProperty}.
-	 */
-	@Deprecated
-	public static final String QUERY_PROPERTY_NAME = MessageProperty.repository_query.toString();
-
-	/**
-	 * @deprecated Use enum {@link QueryType}.
-	 */
-	@Deprecated
-	public static final String QUERY_PROPERTY_VALUE_PENDING = QueryType.pending.toString();
-	/**
-	 * @deprecated Use enum {@link QueryType}.
-	 */
-	@Deprecated
-	public static final String QUERY_PROPERTY_VALUE_TRACK = QueryType.TRACK.toString();
-
 	private final ClientSession session;
 
 	/**
@@ -185,7 +158,7 @@ public class MessageFactory {
 	public ClientMessage pendingImageQuery() {
 		ClientMessage message = session.createMessage(false);
 
-		message.putStringProperty(QUERY_PROPERTY_NAME, QUERY_PROPERTY_VALUE_PENDING);
+		message.putStringProperty(MessageProperty.repository_query.toString(), QueryType.pending.toString());
 
 		return message;
 	}

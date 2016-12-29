@@ -24,8 +24,6 @@ import org.apache.activemq.artemis.api.core.ActiveMQBuffer;
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.mockito.Mockito;
 
-import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
-
 public class MockMessageBuilder {
 	private final ClientMessage message;
 
@@ -103,8 +101,8 @@ public class MockMessageBuilder {
 	 * @return {@link MockMessageBuilder} for further configuration
 	 */
 	public MockMessageBuilder configureHashResultMessage() {
-		addProperty(ArtemisHashProducer.MESSAGE_HASH_PROPERTY, DEFAULT_HASH);
-		addProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY, DEFAULT_PATH);
+		addProperty(MessageFactory.MessageProperty.hashResult.toString(), DEFAULT_HASH);
+		addProperty(MessageFactory.MessageProperty.path.toString(), DEFAULT_PATH);
 		addBodyBuffer(mock(ActiveMQBuffer.class));
 		return this;
 	}
@@ -115,8 +113,8 @@ public class MockMessageBuilder {
 	 * @return {@link MockMessageBuilder} for further configuration
 	 */
 	public MockMessageBuilder configureCorruptImageMessage() {
-		addProperty(ArtemisHashProducer.MESSAGE_TASK_PROPERTY, ArtemisHashProducer.MESSAGE_TASK_VALUE_CORRUPT);
-		addProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY, DEFAULT_PATH);
+		addProperty(MessageFactory.MessageProperty.task.toString(), MessageFactory.TaskType.corr.toString());
+		addProperty(MessageFactory.MessageProperty.path.toString(), DEFAULT_PATH);
 		addBodyBuffer(mock(ActiveMQBuffer.class));
 		return this;
 	}
@@ -128,7 +126,7 @@ public class MockMessageBuilder {
 	 */
 	public MockMessageBuilder configureHashRequestMessage() {
 		addBodyBuffer(Mockito.mock(ActiveMQBuffer.class));
-		addProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY, DEFAULT_PATH);
+		addProperty(MessageFactory.MessageProperty.path.toString(), DEFAULT_PATH);
 		addBodyBuffer(mock(ActiveMQBuffer.class));
 		return this;
 	}
@@ -140,7 +138,7 @@ public class MockMessageBuilder {
 	 */
 	public MockMessageBuilder configureResizeMessage() {
 		addBodyBuffer(Mockito.mock(ActiveMQBuffer.class));
-		addProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY, DEFAULT_PATH);
+		addProperty(MessageFactory.MessageProperty.path.toString(), DEFAULT_PATH);
 		return this;
 	}
 

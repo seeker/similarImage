@@ -128,7 +128,7 @@ public class MessageFactoryTest extends MessagingBaseTest {
 	public void testPendingImageQuery() throws Exception {
 		ClientMessage result = cut.pendingImageQuery();
 
-		assertThat(result.getStringProperty(MessageFactory.QUERY_PROPERTY_NAME), is(MessageFactory.QUERY_PROPERTY_VALUE_PENDING));
+		assertThat(result.getStringProperty(MessageFactory.MessageProperty.repository_query.toString()), is(MessageFactory.QueryType.pending.toString()));
 	}
 
 	@Test
