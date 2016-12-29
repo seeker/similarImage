@@ -104,6 +104,8 @@ public class MessagingIT {
 	private MessageCollector mc;
 	private ResultMessageSink sink;
 
+	private MetricRegistry metrics;
+
 	ClientSession queueJanitor;
 
 	@BeforeClass
@@ -142,6 +144,8 @@ public class MessagingIT {
 
 		imageRepository = repositoryFactory.buildImageRepository();
 		pendingRepo = new OrmlitePendingHashImage(DaoManager.createDao(database.getCs(), PendingHashImage.class));
+
+		metrics = new MetricRegistry();
 
 		ServerLocator locator = ActiveMQClient
 				.createServerLocatorWithoutHA(new TransportConfiguration(InVMConnectorFactory.class.getName()))
@@ -203,17 +207,20 @@ public class MessagingIT {
 		noDupe.createTemporaryQueue(eaQueue, eaQueue);
 
 		QueryMessage queryMessage = new QueryMessage(as.getSession(), queryQueue);
-		RepositoryNode queryResponder = new RepositoryNode(as.getSession(), queryQueue, pendingRepo, imageRepository);
+		RepositoryNode queryResponder = new RepositoryNode(as.getSession(), queryQueue, QueueAddress.RESULT.toString(),
+				pendingRepo, imageRepository,
+				new TaskMessageHandler(pendingRepo, imageRepository, as.getSession(), metrics), metrics);
 
-		new HasherNode(as.getSession(), new ImagePHash(), hashQueue, resultQueue);
-		new ResizerNode(as.getSession(), new ImageResizer(RESIZE_SIZE), resizeQueue, hashQueue, queryMessage);
+		new HasherNode(as.getSession(), new ImagePHash(), hashQueue, resultQueue, metrics);
+		new ResizerNode(as.getSession(), new ImageResizer(RESIZE_SIZE), resizeQueue, hashQueue, queryMessage, metrics);
 
 		ExtendedAttributeQuery eaQuery = new ExtendedAttributeDirectoryCache(new ExtendedAttribute(), 1, TimeUnit.MINUTES);
 		StorageNode sn = new StorageNode(as.getSession(), new ExtendedAttributeDirectoryCache(new ExtendedAttribute()),
 				new HashAttribute(HashNames.DEFAULT_DCT_HASH_2), Collections.emptyList(), resizeQueue, eaQueue);
 		ahp = new ArtemisHashProducer(sn);
 
-		RepositoryNode rn = new RepositoryNode(noDupe, queryQueue, resultQueue, pendingRepo, imageRepository);
+		RepositoryNode rn = new RepositoryNode(noDupe, queryQueue, resultQueue, pendingRepo, imageRepository,
+				new TaskMessageHandler(pendingRepo, imageRepository, as.getSession(), metrics), metrics);
 
 		ahp.handle(testImageAutumn);
 
@@ -235,12 +242,15 @@ public class MessagingIT {
 		noDupe.createTemporaryQueue(eaQueue, eaQueue);
 
 		QueryMessage queryMessage = new QueryMessage(as.getSession(), queryQueue);
-		RepositoryNode queryResponder = new RepositoryNode(as.getSession(), queryQueue, pendingRepo, imageRepository);
+		RepositoryNode queryResponder = new RepositoryNode(as.getSession(), queryQueue, QueueAddress.RESULT.toString(),
+				pendingRepo, imageRepository,
+				new TaskMessageHandler(pendingRepo, imageRepository, as.getSession(), metrics), metrics);
 
 		StorageNode sn = new StorageNode(as.getSession(), new ExtendedAttributeDirectoryCache(new ExtendedAttribute()),
 				new HashAttribute(HashNames.DEFAULT_DCT_HASH_2), Collections.emptyList(), resizeQueue, eaQueue);
 		ArtemisHashProducer ahp = new ArtemisHashProducer(sn);
-		ResizerNode arrc = new ResizerNode(as.getSession(), new ImageResizer(RESIZE_SIZE), resizeQueue, hashQueue, queryMessage);
+		ResizerNode arrc = new ResizerNode(as.getSession(), new ImageResizer(RESIZE_SIZE), resizeQueue, hashQueue,
+				queryMessage, metrics);
 
 		ClientConsumer checkConsumer = noDupe.createConsumer(hashQueue, true);
 
@@ -268,7 +278,9 @@ public class MessagingIT {
 		pendingRepo.store(new PendingHashImage(testImageAutumn, UUID.randomUUID()));
 
 		QueryMessage qm = new QueryMessage(noDupe, requestQueue);
-		RepositoryNode qr = new RepositoryNode(noDupe, requestQueue, pendingRepo, imageRepository);
+		RepositoryNode qr = new RepositoryNode(as.getSession(), requestQueue, QueueAddress.RESULT.toString(),
+				pendingRepo, imageRepository,
+				new TaskMessageHandler(pendingRepo, imageRepository, as.getSession(), metrics), metrics);
 
 		await().atMost(messageTimeout).until(new Callable<List<String>>() {
 
@@ -294,10 +306,10 @@ public class MessagingIT {
 
 		QueryMessage queryMessage = new QueryMessage(as.getSession(), queryQueue);
 		RepositoryNode queryResponder = new RepositoryNode(as.getSession(), queryQueue, resultQueue, pendingRepo, imageRepository,
-				new TaskMessageHandler(pendingRepo, imageRepository, as.getSession(), eaQueue));
+				new TaskMessageHandler(pendingRepo, imageRepository, as.getSession(), eaQueue, metrics), metrics);
 
-		new HasherNode(as.getSession(), new ImagePHash(), hashQueue, resultQueue);
-		new ResizerNode(as.getSession(), new ImageResizer(RESIZE_SIZE), resizeQueue, hashQueue, queryMessage);
+		new HasherNode(as.getSession(), new ImagePHash(), hashQueue, resultQueue, metrics);
+		new ResizerNode(as.getSession(), new ImageResizer(RESIZE_SIZE), resizeQueue, hashQueue, queryMessage, metrics);
 
 		HashAttribute ha = new HashAttribute(HashNames.DEFAULT_DCT_HASH_2);
 
@@ -305,7 +317,8 @@ public class MessagingIT {
 		StorageNode sn = new StorageNode(as.getSession(), new ExtendedAttribute(), ha, Collections.emptyList(), resizeQueue, eaQueue);
 		ahp = new ArtemisHashProducer(sn);
 
-		RepositoryNode rn = new RepositoryNode(noDupe, queryQueue, resultQueue, pendingRepo, imageRepository);
+		RepositoryNode rn = new RepositoryNode(noDupe, queryQueue, resultQueue, pendingRepo, imageRepository,
+				new TaskMessageHandler(pendingRepo, imageRepository, as.getSession(), metrics), metrics);
 
 		assertThat(ha.areAttributesValid(testImageAutumn), is(false));// guard assert
 
@@ -329,10 +342,10 @@ public class MessagingIT {
 
 		QueryMessage queryMessage = new QueryMessage(as.getSession(), queryQueue);
 		RepositoryNode queryResponder = new RepositoryNode(as.getSession(), queryQueue, resultQueue, pendingRepo, imageRepository,
-				new TaskMessageHandler(pendingRepo, imageRepository, as.getSession(), eaQueue));
+				new TaskMessageHandler(pendingRepo, imageRepository, as.getSession(), eaQueue, metrics), metrics);
 
-		new HasherNode(as.getSession(), new ImagePHash(), hashQueue, resultQueue);
-		new ResizerNode(as.getSession(), new ImageResizer(RESIZE_SIZE), resizeQueue, hashQueue, queryMessage);
+		new HasherNode(as.getSession(), new ImagePHash(), hashQueue, resultQueue, metrics);
+		new ResizerNode(as.getSession(), new ImageResizer(RESIZE_SIZE), resizeQueue, hashQueue, queryMessage, metrics);
 
 		HashAttribute ha = new HashAttribute(HashNames.DEFAULT_DCT_HASH_2);
 
@@ -340,7 +353,8 @@ public class MessagingIT {
 		StorageNode sn = new StorageNode(as.getSession(), new ExtendedAttribute(), ha, Collections.emptyList(), resizeQueue, eaQueue);
 		ahp = new ArtemisHashProducer(sn);
 
-		RepositoryNode rn = new RepositoryNode(noDupe, queryQueue, resultQueue, pendingRepo, imageRepository);
+		RepositoryNode rn = new RepositoryNode(noDupe, queryQueue, resultQueue, pendingRepo, imageRepository,
+				new TaskMessageHandler(pendingRepo, imageRepository, as.getSession(), metrics), metrics);
 
 		assertThat(ha.isCorrupted(testImageCorrupt), is(false));// guard assert
 

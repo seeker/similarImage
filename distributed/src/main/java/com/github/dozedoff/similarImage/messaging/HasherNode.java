@@ -100,26 +100,6 @@ public class HasherNode implements MessageHandler, Node {
 	}
 
 	/**
-	 * Create a hash consumer that listens and responds on the given addresses.
-	 * 
-	 * @param session
-	 *            of the client
-	 * @param hasher
-	 *            to use for hashing files
-	 * @param requestAddress
-	 *            to listen to
-	 * @param resultAddress
-	 *            where to send the results of hashing
-	 * @throws ActiveMQException
-	 *             if there is an error with the queue
-	 * @deprecated Use the constructor with {@link MetricRegistry}
-	 */
-	@Deprecated
-	public HasherNode(ClientSession session, ImagePHash hasher, String requestAddress, String resultAddress) throws ActiveMQException {
-		this(session, hasher, requestAddress, resultAddress, new MetricRegistry());
-	}
-
-	/**
 	 * Set the {@link MessageFactory} to use. Intended for testing only.
 	 * 
 	 * @param messageFactory
@@ -199,7 +179,9 @@ public class HasherNode implements MessageHandler, Node {
 		}
 	}
 
+	@SuppressWarnings("deprecation")
 	private long doHash(BufferedImage image) throws Exception {
+		// TODO clean up commonj library
 		long hash = hasher.getLongHashScaledImage(image);
 		return hash;
 	}

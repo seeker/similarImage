@@ -44,48 +44,6 @@ public class TaskMessageHandler implements MessageHandler {
 	private final PendingHashImageRepository pendingRepository;
 	private final Counter pendingMessages;
 
-
-
-	/**
-	 * Create a handler for Task messages. Use the default address for extended attribute updates.
-	 * 
-	 * @param pendingRepository
-	 *            repository for pending messages
-	 * @param imageRepository
-	 *            repository for hashed images
-	 * @param session
-	 *            for communicating with the broker
-	 * @throws ActiveMQException
-	 *             if there is an error creating the producer
-	 * @deprecated Use constructor with {@link MetricRegistry}
-	 */
-	@Deprecated
-	public TaskMessageHandler(PendingHashImageRepository pendingRepository, ImageRepository imageRepository, ClientSession session)
-			throws ActiveMQException {
-		this(pendingRepository, imageRepository, session, QueueAddress.EA_UPDATE.toString());
-	}
-
-	/**
-	 * Create a handler for Task messages. Creates an internal {@link MetricRegistry}.
-	 * 
-	 * @param pendingRepository
-	 *            repository for pending messages
-	 * @param imageRepository
-	 *            repository for hashed images
-	 * @param session
-	 *            for communicating with the broker
-	 * @param eaUpdateAddress
-	 *            address for sending extended attribute updates
-	 * @throws ActiveMQException
-	 *             if there is an error creating the producer
-	 * @deprecated Use constructor with {@link MetricRegistry}
-	 */
-	@Deprecated
-	public TaskMessageHandler(PendingHashImageRepository pendingRepository, ImageRepository imageRepository, ClientSession session,
-			String eaUpdateAddress) throws ActiveMQException {
-		this(pendingRepository, imageRepository, session, eaUpdateAddress, new MetricRegistry());
-	}
-
 	/**
 	 * Create a handler for Task messages, using the default address for extended attribute update messages.
 	 * 
