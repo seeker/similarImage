@@ -20,7 +20,6 @@ package com.github.dozedoff.similarImage.messaging;
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
 import java.nio.ByteBuffer;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
@@ -107,26 +106,5 @@ public class QueryMessage {
 		List<String> pending = (List<String>) ois.readObject();
 		LOGGER.debug("Got response for pending images with {} entries", pending.size());
 		return pending;
-	}
-
-	/**
-	 * Request a unique tracking id for the path.
-	 * 
-	 * @param path
-	 *            to track
-	 * @return a unique tracking id for the requested path, or -1 if the path is already tracked
-	 * @throws Exception
-	 *             if there was an error performing the query
-	 */
-	public int trackPath(Path path) throws Exception {
-		LOGGER.trace("Sending path track request for {}", path);
-
-		ClientMessage queryResponse = repositoryQuery.request(messageFactory.trackPathQuery(path), QUERY_TIMEOUT_MILLIS);
-
-		if (queryResponse == null) {
-			throw new TimeoutException(QUERY_TIMEOUT_ERROR_MESSAGE);
-		}
-
-		return queryResponse.getBodyBuffer().readInt();
 	}
 }

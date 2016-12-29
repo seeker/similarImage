@@ -38,10 +38,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.db.PendingHashImage;
 import com.github.dozedoff.similarImage.messaging.MessageFactory.MessageProperty;
-import com.github.dozedoff.similarImage.messaging.MessageFactory.QueryType;
 import com.github.dozedoff.similarImage.messaging.MessageFactory.TaskType;
 
-@SuppressWarnings("deprecation")
 @RunWith(MockitoJUnitRunner.class)
 public class MessageFactoryTest extends MessagingBaseTest {
 	private static final int EXPECTED_MESSAGE_SIZE = 54;
@@ -128,7 +126,7 @@ public class MessageFactoryTest extends MessagingBaseTest {
 	public void testPendingImageQuery() throws Exception {
 		ClientMessage result = cut.pendingImageQuery();
 
-		assertThat(result.getStringProperty(MessageFactory.QUERY_PROPERTY_NAME), is(MessageFactory.QUERY_PROPERTY_VALUE_PENDING));
+		assertThat(result.getStringProperty(MessageFactory.MessageProperty.repository_query.toString()), is(MessageFactory.QueryType.pending.toString()));
 	}
 
 	@Test
@@ -136,20 +134,6 @@ public class MessageFactoryTest extends MessagingBaseTest {
 		ClientMessage result = cut.pendingImageResponse(Arrays.asList(new PendingHashImage(PATH, UUID)));
 
 		assertThat(result.getBodySize(), is(EXPECTED_MESSAGE_SIZE));
-	}
-
-	@Test
-	public void testTrackPathQueryRequestType() throws Exception {
-		ClientMessage result = cut.trackPathQuery(PATH);
-
-		assertThat(result.getStringProperty(MessageProperty.repository_query.toString()), is(QueryType.TRACK.toString()));
-	}
-
-	@Test
-	public void testTrackPathQueryRequestMessage() throws Exception {
-		ClientMessage result = cut.trackPathQuery(PATH);
-
-		assertThat(result.getBodyBuffer().readString(), is(PATH.toString()));
 	}
 
 	@Test

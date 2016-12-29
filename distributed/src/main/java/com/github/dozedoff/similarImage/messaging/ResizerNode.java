@@ -105,24 +105,6 @@ public class ResizerNode implements MessageHandler, Node {
 	 *            to talk to the server
 	 * @param resizer
 	 *            for resizing images
-	 * @throws Exception
-	 *             if the setup for {@link QueryMessage} failed
-	 * @deprecated Use constructor with {@link MetricRegistry}
-	 */
-	@Deprecated
-	public ResizerNode(ClientSession session, ImageResizer resizer) throws Exception {
-
-		this(session, resizer, QueueAddress.RESIZE_REQUEST.toString(), QueueAddress.HASH_REQUEST.toString(),
-				new QueryMessage(session, QueueAddress.REPOSITORY_QUERY));
-	}
-
-	/**
-	 * Create a new consumer for hash messages. Uses the default addresses for queues.
-	 * 
-	 * @param session
-	 *            to talk to the server
-	 * @param resizer
-	 *            for resizing images
 	 * @param metrics
 	 *            registry for tracking metrics
 	 * @throws Exception
@@ -131,52 +113,6 @@ public class ResizerNode implements MessageHandler, Node {
 	public ResizerNode(ClientSession session, ImageResizer resizer, MetricRegistry metrics) throws Exception {
 		this(session, resizer, QueueAddress.RESIZE_REQUEST.toString(), QueueAddress.HASH_REQUEST.toString(),
 				new QueryMessage(session, QueueAddress.REPOSITORY_QUERY), metrics);
-	}
-
-	/**
-	 * Create a new consumer for hash messages. Uses the default address for repository queries.
-	 * 
-	 * @param session
-	 *            to talk to the server
-	 * @param resizer
-	 *            for resizing images
-	 * @param inAddress
-	 *            for hashes
-	 * @param outAddress
-	 *            for result messages
-	 * @throws Exception
-	 *             if the setup for {@link QueryMessage} failed
-	 * @deprecated Use constructor with {@link MetricRegistry}.
-	 */
-	@Deprecated
-	public ResizerNode(ClientSession session, ImageResizer resizer, String inAddress, String outAddress) throws Exception {
-
-		this(session, resizer, inAddress, outAddress, new QueryMessage(session, QueueAddress.REPOSITORY_QUERY));
-	}
-
-	/**
-	 * Create a new consumer for hash messages. Uses the default address for repository queries. <b>For testing
-	 * only!</b>
-	 * 
-	 * @param session
-	 *            to talk to the server
-	 * @param resizer
-	 *            for resizing images
-	 * @param requestAddress
-	 *            for hashes
-	 * @param resultAddress
-	 *            for result messages
-	 * @param queryMessage
-	 *            instance to use for repository queries
-	 * @throws Exception
-	 *             if the setup for {@link QueryMessage} failed
-	 * @deprecated Use constructor with {@link MetricRegistry}
-	 */
-	@Deprecated
-	protected ResizerNode(ClientSession session, ImageResizer resizer, String requestAddress, String resultAddress,
-			QueryMessage queryMessage) throws Exception {
-		this(session, resizer, requestAddress, resultAddress, queryMessage, new MetricRegistry());
-		preLoadCache(queryMessage);
 	}
 
 	/**

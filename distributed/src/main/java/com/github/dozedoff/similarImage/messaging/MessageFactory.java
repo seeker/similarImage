@@ -44,13 +44,7 @@ public class MessageFactory {
 	 * Property name in the message
 	 */
 	public enum MessageProperty {
-		repository_query,
-
-		/**
-		 * @deprecated Use UUIDs messages from {@link MessageFactory#trackPath(Path, UUID)} instead.
-		 */
-		@Deprecated
-		id, hashResult, task, path
+		repository_query, hashResult, task, path
 	}
 
 	/**
@@ -67,33 +61,6 @@ public class MessageFactory {
 		hash, corr, result, eaupdate, track
 	};
 
-	/**
-	 * @deprecated Use enum {@link MessageProperty}.
-	 */
-	@Deprecated
-	public static final String TRACKING_PROPERTY_NAME = MessageProperty.id.toString();
-	/**
-	 * @deprecated Use enum {@link MessageProperty}.
-	 */
-	@Deprecated
-	public static final String HASH_PROPERTY_NAME = MessageProperty.hashResult.toString();
-	/**
-	 * @deprecated Use enum {@link MessageProperty}.
-	 */
-	@Deprecated
-	public static final String QUERY_PROPERTY_NAME = MessageProperty.repository_query.toString();
-
-	/**
-	 * @deprecated Use enum {@link QueryType}.
-	 */
-	@Deprecated
-	public static final String QUERY_PROPERTY_VALUE_PENDING = QueryType.pending.toString();
-	/**
-	 * @deprecated Use enum {@link QueryType}.
-	 */
-	@Deprecated
-	public static final String QUERY_PROPERTY_VALUE_TRACK = QueryType.TRACK.toString();
-
 	private final ClientSession session;
 
 	/**
@@ -104,10 +71,6 @@ public class MessageFactory {
 	 */
 	public MessageFactory(ClientSession session) {
 		this.session = session;
-	}
-
-	private void setQueryType(ClientMessage message, QueryType type) {
-		message.putStringProperty(MessageProperty.repository_query.toString(), type.toString());
 	}
 
 	private void setTaskType(ClientMessage message, TaskType task) {
@@ -185,7 +148,7 @@ public class MessageFactory {
 	public ClientMessage pendingImageQuery() {
 		ClientMessage message = session.createMessage(false);
 
-		message.putStringProperty(QUERY_PROPERTY_NAME, QUERY_PROPERTY_VALUE_PENDING);
+		message.putStringProperty(MessageProperty.repository_query.toString(), QueryType.pending.toString());
 
 		return message;
 	}
@@ -214,41 +177,6 @@ public class MessageFactory {
 
 			return message;
 		}
-	}
-
-	/**
-	 * Create a query message for a tracking id for the given path.
-	 * 
-	 * @param path
-	 *            to query and track
-	 * @return configured message
-	 * @deprecated Use UUID tracking messages from {@link MessageFactory#trackPath(Path, UUID)} instead.
-	 */
-	@Deprecated
-	public ClientMessage trackPathQuery(Path path) {
-		ClientMessage message = session.createMessage(false);
-		setQueryType(message, QueryType.TRACK);
-
-		message.getBodyBuffer().writeString(path.toString());
-
-		return message;
-	}
-
-	/**
-	 * Create a response message for a tracking id query.
-	 * 
-	 * @param trackingId
-	 *            for the path in the query
-	 * @return configured message
-	 * @deprecated Use UUID tracking messages from {@link MessageFactory#trackPath(Path, UUID)} instead.
-	 */
-	@Deprecated
-	public ClientMessage trackPathResponse(int trackingId) {
-		ClientMessage message = session.createMessage(false);
-
-		message.getBodyBuffer().writeInt(trackingId);
-
-		return message;
 	}
 
 	/**

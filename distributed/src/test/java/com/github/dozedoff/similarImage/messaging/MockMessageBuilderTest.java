@@ -27,7 +27,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
+import com.github.dozedoff.similarImage.messaging.MessageFactory.MessageProperty;
+import com.github.dozedoff.similarImage.messaging.MessageFactory.TaskType;
 
 public class MockMessageBuilderTest {
 	private static final String STRING_PROPERTY_NAME = "a string";
@@ -102,36 +103,36 @@ public class MockMessageBuilderTest {
 	public void testConfigureHashResultMessageHashProperty() {
 		ClientMessage message = cut.configureHashResultMessage().build();
 
-		assertThat(message.getLongProperty(ArtemisHashProducer.MESSAGE_HASH_PROPERTY), is(LONG_VALUE));
+		assertThat(message.getLongProperty(MessageFactory.MessageProperty.hashResult.toString()), is(LONG_VALUE));
 	}
 
 	@Test
 	public void testConfigureHashResultMessagePathProperty() {
 		ClientMessage message = cut.configureHashResultMessage().build();
 
-		assertThat(message.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY), is(STRING_VALUE_ONE));
+		assertThat(message.getStringProperty(MessageFactory.MessageProperty.path.toString()), is(STRING_VALUE_ONE));
 	}
 
 	@Test
 	public void testConfigureCorruptImageMessagePathProperty() {
 		ClientMessage message = cut.configureCorruptImageMessage().build();
 
-		assertThat(message.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY), is(STRING_VALUE_ONE));
+		assertThat(message.getStringProperty(MessageFactory.MessageProperty.path.toString()), is(STRING_VALUE_ONE));
 	}
 
 	@Test
 	public void testConfigureCorruptImageMessageTaskProperty() {
 		ClientMessage message = cut.configureCorruptImageMessage().build();
 
-		assertThat(message.getStringProperty(ArtemisHashProducer.MESSAGE_TASK_PROPERTY),
-				is(ArtemisHashProducer.MESSAGE_TASK_VALUE_CORRUPT));
+		assertThat(message.getStringProperty(MessageFactory.MessageProperty.task.toString()),
+				is(MessageFactory.TaskType.corr.toString()));
 	}
 
 	@Test
 	public void testConfigureHashRequestMessagePathProperty() {
 		ClientMessage message = cut.configureHashRequestMessage().build();
 
-		assertThat(message.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY), is(STRING_VALUE_ONE));
+		assertThat(message.getStringProperty(MessageFactory.MessageProperty.path.toString()), is(STRING_VALUE_ONE));
 	}
 
 	@Test
@@ -145,7 +146,7 @@ public class MockMessageBuilderTest {
 	public void testConfigureResizeMessagePathProperty() {
 		ClientMessage message = cut.configureResizeMessage().build();
 
-		assertThat(message.getStringProperty(ArtemisHashProducer.MESSAGE_PATH_PROPERTY), is(STRING_VALUE_ONE));
+		assertThat(message.getStringProperty(MessageFactory.MessageProperty.path.toString()), is(STRING_VALUE_ONE));
 	}
 
 	@Test

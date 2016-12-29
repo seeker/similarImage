@@ -23,6 +23,7 @@ import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
+import com.github.dozedoff.similarImage.event.GuiEventBus;
 
 /**
  * Factory class for creating sorter tasks.
@@ -95,6 +96,6 @@ public class SorterFactory {
 	 * @return Constructed instance of {@link ImageSorter}
 	 */
 	public Thread newImageSorter(int hammingDistance, String path) {
-		return new ImageSorter(hammingDistance, path, imageRepository);
+		return new ImageSorter(hammingDistance, path, imageRepository, GuiEventBus.getInstance());
 	}
 }

@@ -17,15 +17,9 @@
  */
 package com.github.dozedoff.similarImage.messaging;
 
-import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.client.ClientRequestor;
-import org.apache.activemq.artemis.api.core.client.ClientSession;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ArtemisQueue {
-	private static final Logger LOGGER = LoggerFactory.getLogger(ArtemisQueue.class);
-
 	public enum QueueAddress {
 		/**
 		 * Resized images are sent here for hashing
@@ -47,35 +41,5 @@ public class ArtemisQueue {
 		 * Update messages for extended attributes
 		 */
 		EA_UPDATE
-	}
-
-	private final ClientSession session;
-
-	/**
-	 * Create a instance ready for managing queues
-	 * 
-	 * @param session
-	 *            to create queues on
-	 */
-	public ArtemisQueue(ClientSession session) {
-		this.session = session;
-	}
-
-	/**
-	 * Creates all queues. Does not check if they already exist.
-	 */
-	public void createAll() {
-	}
-
-	private void queueHelper(QueueAddress address, boolean durable) {
-		String addr = address.toString();
-
-		LOGGER.info("Creating queue for address {}, durable: {} ...", addr, durable);
-
-		try {
-			this.session.createQueue(addr, addr, durable);
-		} catch (ActiveMQException e) {
-			LOGGER.error("Failed to create queue {}: {}", addr, e.toString());
-		}
 	}
 }
