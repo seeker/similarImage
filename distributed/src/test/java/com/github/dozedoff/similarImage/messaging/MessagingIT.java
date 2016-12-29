@@ -52,6 +52,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.db.Database;
 import com.github.dozedoff.similarImage.db.ImageRecord;
@@ -72,9 +73,11 @@ import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.util.TestUtil;
 import com.j256.ormlite.dao.DaoManager;
+import com.j256.ormlite.misc.TransactionManager;
 
 @RunWith(MockitoJUnitRunner.class)
 public class MessagingIT {
+	private static final int MESSAGE_DRAIN_INTERVAL = 500;
 	private static List<HasherNode> ahrcs = new LinkedList<>();
 	private static List<ResizerNode> arrcs = new LinkedList<>();
 
@@ -98,6 +101,8 @@ public class MessagingIT {
 	private static long testImageAutumnReferenceHash;
 
 	private Duration messageTimeout = new Duration(6, TimeUnit.SECONDS);
+	private MessageCollector mc;
+	private ResultMessageSink sink;
 
 	ClientSession queueJanitor;
 
@@ -146,9 +151,17 @@ public class MessagingIT {
 
 		queueJanitor = as.getSession();
 
-		for (String queue : new String[] { QueueAddress.RESULT.toString(), QueueAddress.EA_UPDATE.toString() }) {
+		for (String queue : new String[] { QueueAddress.RESULT.toString(), QueueAddress.EA_UPDATE.toString(),
+				QueueAddress.RESULT.toString() }) {
 			recreateQueue(queue);
 		}
+
+		QueueToDatabaseTransaction qdt = new QueueToDatabaseTransaction(as.getTransactedSession(),
+				new TransactionManager(database.getCs()), pendingRepo, imageRepository, new MetricRegistry());
+		mc = new MessageCollector(100, qdt);
+
+		sink = new ResultMessageSink(as.getTransactedSession(), mc, QueueAddress.RESULT.toString(), 1000);
+
 	}
 
 	private void recreateQueue(String queueName) {
@@ -171,6 +184,7 @@ public class MessagingIT {
 		Files.delete(testImageAutumn);
 		Files.delete(testImageCorrupt);
 		Files.deleteIfExists(dbFile);
+		sink.stop();
 		as.close();
 	}
 
@@ -178,14 +192,13 @@ public class MessagingIT {
 	public void testHashImage() throws Exception {
 		String hashQueue = "hashImageHash";
 		String resizeQueue = "hashImageResize";
-		String resultQueue = "hashImageResult";
+		String resultQueue = QueueAddress.RESULT.toString();
 		String queryQueue = "hashImageQuery";
 		String eaQueue = "eaqueue";
 
 		ClientSession noDupe = as.getSession();
 		noDupe.createTemporaryQueue(resizeQueue, resizeQueue);
 		noDupe.createTemporaryQueue(hashQueue, hashQueue);
-		noDupe.createTemporaryQueue(resultQueue, resultQueue);
 		noDupe.createTemporaryQueue(queryQueue, queryQueue);
 		noDupe.createTemporaryQueue(eaQueue, eaQueue);
 
@@ -272,7 +285,7 @@ public class MessagingIT {
 		String resizeQueue = "eaResize";
 		String resultQueue = QueueAddress.RESULT.toString();
 		String queryQueue = "eaeaQuery";
-		String eaQueue = "EA_UPDATE";
+		String eaQueue = QueueAddress.EA_UPDATE.toString();
 
 		ClientSession noDupe = as.getSession();
 		noDupe.createTemporaryQueue(resizeQueue, resizeQueue);

@@ -57,8 +57,24 @@ public class ArtemisSession implements AutoCloseable {
 		return createAndConfigureSession();
 	}
 
+	/**
+	 * Get a new configured and running transacted session.
+	 * 
+	 * @return artemis session
+	 * @throws ActiveMQException
+	 *             if the session setup fails
+	 */
+	public ClientSession getTransactedSession() throws ActiveMQException {
+		ClientSession session = factory.createTransactedSession();
+		session.start();
+		return session;
+	}
+
+	/**
+	 * Closes the session factory and all associated sessions.
+	 */
 	@Override
-	public void close() throws Exception {
+	public void close() {
 		LOGGER.info("Closing {}", this.getClass().getSimpleName());
 		factory.close();
 	}

@@ -17,11 +17,8 @@
  */
 package com.github.dozedoff.similarImage.messaging;
 
-import java.nio.file.Path;
-
 import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
-import org.apache.activemq.artemis.api.core.client.ClientProducer;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
 import org.apache.activemq.artemis.api.core.client.MessageHandler;
 import org.jgroups.util.UUID;
@@ -29,9 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
-import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
-import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.PendingHashImage;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
@@ -43,20 +38,11 @@ import com.github.dozedoff.similarImage.messaging.MessageFactory.TaskType;
 public class TaskMessageHandler implements MessageHandler {
 	private static final Logger LOGGER = LoggerFactory.getLogger(TaskMessageHandler.class);
 	
-	public static final String METRIC_NAME_PENDING_MESSAGES_MISSING = MetricRegistry.name(RepositoryNode.class,
-			"pending", "messages", "missing");
 	public static final String METRIC_NAME_PENDING_MESSAGES = MetricRegistry.name(TaskMessageHandler.class, "pending",
 			"messages");
-	public static final String METRIC_NAME_PROCESSED_IMAGES = MetricRegistry.name(TaskMessageHandler.class,
-			"processed", "images");
 
 	private final PendingHashImageRepository pendingRepository;
-	private final ImageRepository imageRepository;
-	private final ClientProducer producer;
-	private final MessageFactory messageFactory;
 	private final Counter pendingMessages;
-	private final Counter pendingMessagesMissing;
-	private final Meter processedImages;
 
 
 
@@ -138,12 +124,7 @@ public class TaskMessageHandler implements MessageHandler {
 	public TaskMessageHandler(PendingHashImageRepository pendingRepository, ImageRepository imageRepository,
 			ClientSession session, String eaUpdateAddress, MetricRegistry metrics) throws ActiveMQException {
 		this.pendingRepository = pendingRepository;
-		this.imageRepository = imageRepository;
-		this.producer = session.createProducer(eaUpdateAddress);
-		this.messageFactory = new MessageFactory(session);
 		this.pendingMessages = metrics.counter(METRIC_NAME_PENDING_MESSAGES);
-		this.pendingMessagesMissing = metrics.counter(METRIC_NAME_PENDING_MESSAGES_MISSING);
-		this.processedImages = metrics.meter(METRIC_NAME_PROCESSED_IMAGES);
 	}
 
 	/**
@@ -152,25 +133,7 @@ public class TaskMessageHandler implements MessageHandler {
 	@Override
 	public void onMessage(ClientMessage msg) {
 		try {
-			if (isTaskType(msg, TaskType.result)) {
-				long most = msg.getBodyBuffer().readLong();
-				long least = msg.getBodyBuffer().readLong();
-				long hash = msg.getBodyBuffer().readLong();
-
-				if (LOGGER.isTraceEnabled()) {
-					LOGGER.trace("Received result message with id {} and hash {}", new UUID(most, least), hash);
-				}
-				PendingHashImage pending = pendingRepository.getByUUID(most, least);
-				if (pending != null) {
-					pendingMessages.dec();
-					processedImages.mark();
-					updateRecords(hash, pending);
-				} else {
-					pendingMessagesMissing.inc();
-					LOGGER.warn("No pending hash record found for {}", new UUID(most, least));
-				}
-
-			} else if (isTaskType(msg, TaskType.track)) {
+			if (isTaskType(msg, TaskType.track)) {
 				String path = msg.getStringProperty(MessageProperty.path.toString());
 				long most = msg.getBodyBuffer().readLong();
 				long least = msg.getBodyBuffer().readLong();
@@ -193,24 +156,6 @@ public class TaskMessageHandler implements MessageHandler {
 			
 			LOGGER.warn("Failed to store result message: {}, cause:{}", e.toString(), cause);
 		}
-	}
-
-	private void updateRecords(long hash, PendingHashImage pending) throws RepositoryException {
-		storeHash(pending.getPathAsPath(), hash);
-		pendingRepository.remove(pending);
-		ClientMessage eaUpdate = messageFactory.eaUpdate(pending.getPathAsPath(), hash);
-
-		try {
-			producer.send(eaUpdate);
-			LOGGER.trace("Sent EA update for {} to address {}", pending.getPath(), producer.getAddress());
-		} catch (ActiveMQException e) {
-			LOGGER.warn("Failed to send ea update message for {}: {}", pending.getPath(), e.toString());
-		}
-	}
-
-	private void storeHash(Path path, long hash) throws RepositoryException {
-		LOGGER.trace("Creating record for {} with hash {}", path, hash);
-		imageRepository.store(new ImageRecord(path.toString(), hash));
 	}
 
 	private boolean isTaskType(ClientMessage message, TaskType task) {

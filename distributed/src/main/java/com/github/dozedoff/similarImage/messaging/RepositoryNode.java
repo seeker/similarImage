@@ -36,6 +36,7 @@ import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.messaging.MessageFactory.MessageProperty;
 import com.github.dozedoff.similarImage.messaging.MessageFactory.QueryType;
+import com.github.dozedoff.similarImage.messaging.MessageFactory.TaskType;
 import com.github.dozedoff.similarImage.util.MessagingUtil;
 
 /**
@@ -104,7 +105,8 @@ public class RepositoryNode implements MessageHandler, Node {
 			ImageRepository imageRepository, TaskMessageHandler taskMessageHandler, MetricRegistry metrics) throws ActiveMQException {
 
 		this.consumer = session.createConsumer(queryAddress);
-		this.taskConsumer = session.createConsumer(taskAddress, MessageProperty.task.toString() + " IS NOT NULL");
+		this.taskConsumer = session.createConsumer(taskAddress, MessageProperty.task.toString() + " IS NOT NULL AND "
+				+ MessageProperty.task.toString() + " NOT IN ('" + TaskType.result.toString() + "')");
 		this.taskConsumer.setMessageHandler(taskMessageHandler);
 		this.producer = session.createProducer();
 		this.pendingRepository = pendingRepository;
