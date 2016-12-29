@@ -55,6 +55,8 @@ import com.github.dozedoff.similarImage.util.ImageUtil;
 import at.dhyan.open_imaging.GifDecoder;
 
 public class DuplicateOperations {
+	private static final Tag TAG_DNW = new Tag(Tags.DNW.toString());
+
 	private static final Logger logger = LoggerFactory.getLogger(DuplicateOperations.class);
 
 	private static final String FILTER_ADD_FAILED_MESSAGE = "Add filter operation failed for {} - {}";
@@ -165,27 +167,6 @@ public class DuplicateOperations {
 	 *            to add filter records for
 	 * @param tag
 	 *            tag to use for filter records
-	 * @deprecated Use {@link DuplicateOperations#markAll(Collection, Tag)} instead.
-	 */
-	@Deprecated
-	public void markAll(Collection<ImageRecord> records, String tag) {
-		for (ImageRecord record : records) {
-			try {
-				markAs(record, getTag(tag));
-				logger.info("Adding pHash {} to filter, tag {}, source file {}", record.getpHash(), tag, record.getPath());
-			} catch (RepositoryException e) {
-				logger.warn("Failed to add tag for {}: {}", record.getPath(), e.toString());
-			}
-		}
-	}
-
-	/**
-	 * Add filter records with the given tag for all records.
-	 * 
-	 * @param records
-	 *            to add filter records for
-	 * @param tag
-	 *            tag to use for filter records
 	 */
 	public void markAll(Collection<ImageRecord> records, Tag tag) {
 		for (ImageRecord record : records) {
@@ -210,38 +191,11 @@ public class DuplicateOperations {
 			Path path = fileSystem.getPath(ir.getPath());
 
 			try {
-				markAs(ir, getTag(Tags.DNW.toString()));
+				markAs(ir, TAG_DNW);
 				deleteFile(path);
 			} catch (RepositoryException e) {
 				logger.warn("Failed to add filter entry for {} - {}", path, e.getMessage());
 			}
-		}
-	}
-
-	/**
-	 * Add a {@link FilterRecord} for the given path.
-	 * 
-	 * @param path
-	 *            to tag
-	 * @param reason
-	 *            reason/tag to use
-	 * @deprecated Do not use plain Strings for tags, use the {@link Tag} class instead
-	 */
-	@Deprecated
-	public void markAs(Path path, String reason) {
-		try {
-			ImageRecord ir = imageRepository.getByPath(path);
-
-			if (ir == null) {
-				logger.warn("No record found for {}", path);
-				return;
-			}
-
-			Tag tag = getTag(reason);
-
-			markAs(ir, tag);
-		} catch (RepositoryException e) {
-			logger.warn(FILTER_ADD_FAILED_MESSAGE, path, e.getMessage());
 		}
 	}
 
@@ -266,22 +220,6 @@ public class DuplicateOperations {
 		} catch (RepositoryException e) {
 			logger.warn(FILTER_ADD_FAILED_MESSAGE, path, e.getMessage());
 		}
-	}
-
-	/**
-	 * @deprecated Do not use String tags, use the {@link Tag} class instead
-	 */
-	@Deprecated
-	private Tag getTag(String reason) throws RepositoryException {
-		Tag tag = tagRepository.getByName(reason);
-
-		if (tag == null) {
-			logger.info("Tag {} does not exist, creating...", reason);
-			tag = new Tag(reason);
-			tagRepository.store(tag);
-		}
-
-		return tag;
 	}
 
 	/**
@@ -334,25 +272,6 @@ public class DuplicateOperations {
 	}
 
 	/**
-	 * Create {@link FilterRecord} with the given tag for all files in the directory. Sub-Directories will <b>not</b> be
-	 * searched.
-	 * 
-	 * @param directory
-	 *            to search for files
-	 * @param reason
-	 *            tag to use for the {@link FilterRecord}
-	 * @deprecated Do not use string tags, use {@link Tag} instead.
-	 */
-	@Deprecated
-	public void markDirectoryAs(Path directory, String reason) {
-		try {
-			markDirectoryAs(directory, getTag(reason));
-		} catch (RepositoryException e) {
-			logger.error("Failed to add images to filter list, {}", e);
-		}
-	}
-
-	/**
 	 * Create {@link FilterRecord} with the given {@link Tag} for all files in the directory. Sub-Directories will
 	 * <b>not</b> be searched.
 	 * 
@@ -382,24 +301,6 @@ public class DuplicateOperations {
 			logger.info("Added {} images from {} to filter list", addCount, directory);
 		} catch (IOException e) {
 			logger.error("Failed to add images to filter list, {}", e);
-		}
-	}
-
-	/**
-	 * Create {@link FilterRecord} with the given {@link Tag} for all files in the directory and Sub-Directories.
-	 * 
-	 * @param rootDirectory
-	 *            to search for files and folders
-	 * @param tag
-	 *            tag to use for the {@link FilterRecord}
-	 * @deprecated Do not use string tags, use {@link Tag} instead.
-	 */
-	@Deprecated
-	public void markDirectoryAndChildrenAs(Path rootDirectory, String tag) {
-		try {
-			markDirectoryAndChildrenAs(rootDirectory, getTag(tag));
-		} catch (RepositoryException e) {
-			logger.error("Failed to mark directory {}", rootDirectory);
 		}
 	}
 

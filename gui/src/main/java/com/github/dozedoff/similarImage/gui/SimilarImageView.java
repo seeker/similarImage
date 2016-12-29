@@ -444,7 +444,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 				menu.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						duplicateOperations.markAll(controller.getGroup(getSelectedGroup()), tag.toString());
+						duplicateOperations.markAll(controller.getGroup(getSelectedGroup()), tag);
 					}
 				});
 

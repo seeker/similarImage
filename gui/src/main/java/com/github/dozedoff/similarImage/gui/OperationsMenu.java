@@ -42,6 +42,9 @@ import com.google.common.eventbus.Subscribe;
  * Context menu operations for the {@link DuplicateEntryView}.
  */
 public class OperationsMenu {
+	private static final Tag TAG_DNW = new Tag(DuplicateOperations.Tags.DNW.toString());
+	private static final Tag TAG_BLOCK = new Tag("BLOCK");
+
 	private static final Logger LOGGER = LoggerFactory.getLogger(OperationsMenu.class);
 
 	private DuplicateOperations duplicateOperations;
@@ -78,7 +81,7 @@ public class OperationsMenu {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				Path path = imageInfo.getPath();
-				duplicateOperations.markAs(path, DuplicateOperations.Tags.DNW.toString());
+				duplicateOperations.markAs(path, TAG_DNW);
 				duplicateOperations.deleteFile(path);
 			}
 		});
@@ -87,7 +90,7 @@ public class OperationsMenu {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				Path path = imageInfo.getPath();
-				duplicateOperations.markAs(path, "BLOCK");
+				duplicateOperations.markAs(path, TAG_BLOCK);
 			}
 		});
 

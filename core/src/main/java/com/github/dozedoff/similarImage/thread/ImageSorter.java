@@ -30,7 +30,6 @@ import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.duplicate.DuplicateUtil;
 import com.github.dozedoff.similarImage.duplicate.RecordSearch;
-import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiGroupEvent;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Multimap;
@@ -46,23 +45,6 @@ public class ImageSorter extends Thread {
 	private String path;
 	private final ImageRepository imageRepository;
 	private final EventBus guiEventBus;
-
-	/**
-	 * Create a instance that will sort all images within the given hamming distance. Only images starting with the given path will be
-	 * considered.
-	 * 
-	 * @param hammingDistance
-	 *            maximum distance to match a hash
-	 * @param path
-	 *            only consider images starting with this path
-	 * @param imageRepository
-	 *            access to the image datasource
-	 * @deprecated the {@link EventBus} should be explicitly set
-	 */
-	@Deprecated
-	public ImageSorter(int hammingDistance, String path, ImageRepository imageRepository) {
-		this(hammingDistance, path, imageRepository, GuiEventBus.getInstance());
-	}
 
 	/**
 	 * Create a instance that will sort all images within the given hamming distance. Only images starting with the given path will be
