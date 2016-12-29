@@ -37,7 +37,7 @@ import com.google.common.collect.MultimapBuilder;
 import com.google.common.eventbus.EventBus;
 
 public class ImageSorter extends Thread {
-	private static final Logger logger = LoggerFactory.getLogger(ImageSorter.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(ImageSorter.class);
 
 	private static final String NULL = "null";
 
@@ -69,7 +69,7 @@ public class ImageSorter extends Thread {
 
 	@Override
 	public void run() {
-		logger.info("Looking for matching images...");
+		LOGGER.info("Looking for matching images...");
 		Stopwatch sw = Stopwatch.createStarted();
 
 		List<ImageRecord> dBrecords = Collections.emptyList();
@@ -80,14 +80,14 @@ public class ImageSorter extends Thread {
 
 		try {
 			if (NULL.equals(path) || path.isEmpty()) {
-				logger.info("Loading all records");
+				LOGGER.info("Loading all records");
 				dBrecords = imageRepository.getAll();
 			} else {
-				logger.info("Loading records for path {}", path);
+				LOGGER.info("Loading records for path {}", path);
 				dBrecords = imageRepository.startsWithPath(Paths.get(path));
 			}
 		} catch (RepositoryException e) {
-			logger.warn("Failed to load records - {}", e.getMessage());
+			LOGGER.warn("Failed to load records - {}", e.getMessage());
 		}
 
 		RecordSearch rs = new RecordSearch();
@@ -98,7 +98,7 @@ public class ImageSorter extends Thread {
 		DuplicateUtil.removeSingleImageGroups(results);
 		DuplicateUtil.removeDuplicateSets(results);
 
-		logger.info("Found {} similar images out of {} in {}", results.keySet().size(), dBrecords.size(), sw);
+		LOGGER.info("Found {} similar images out of {} in {}", results.keySet().size(), dBrecords.size(), sw);
 		this.guiEventBus.post(new GuiGroupEvent(results));
 	}
 
