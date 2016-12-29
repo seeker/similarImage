@@ -44,13 +44,7 @@ public class MessageFactory {
 	 * Property name in the message
 	 */
 	public enum MessageProperty {
-		repository_query,
-
-		/**
-		 * @deprecated Use UUIDs messages from {@link MessageFactory#trackPath(Path, UUID)} instead.
-		 */
-		@Deprecated
-		id, hashResult, task, path
+		repository_query, hashResult, task, path
 	}
 
 	/**
