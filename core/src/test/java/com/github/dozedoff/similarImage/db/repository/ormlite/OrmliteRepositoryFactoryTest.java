@@ -26,10 +26,12 @@ import org.junit.Test;
 
 import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
+import com.github.dozedoff.similarImage.db.PendingHashImage;
 import com.github.dozedoff.similarImage.db.SQLiteDatabase;
 import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
+import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
 
 public class OrmliteRepositoryFactoryTest {
@@ -68,5 +70,11 @@ public class OrmliteRepositoryFactoryTest {
 	public void testBuildTagRepository() throws Exception {
 		TagRepository tr = cut.buildTagRepository();
 		tr.store(new Tag(TEST_STRING));
+	}
+
+	@Test
+	public void testBuildPendingImageRepository() throws Exception {
+		PendingHashImageRepository phir = cut.buildPendingHashImageRepository();
+		phir.store(new PendingHashImage(TEST_STRING, 0, 0));
 	}
 }

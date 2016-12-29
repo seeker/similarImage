@@ -27,10 +27,12 @@ import com.github.dozedoff.similarImage.db.Database;
 import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.IgnoreRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
+import com.github.dozedoff.similarImage.db.PendingHashImage;
 import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.Thumbnail;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
+import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
 import com.j256.ormlite.dao.Dao;
@@ -55,6 +57,7 @@ public class OrmliteRepositoryFactory implements RepositoryFactory {
 	private Dao<IgnoreRecord, Long> ignoreRecordDao;
 	private Dao<Thumbnail, Integer> thumbnailDao;
 	private Dao<Tag, Long> tagDao;
+	private Dao<PendingHashImage, Integer> pendingDao;
 
 	/**
 	 * Create a new Repository Factory using the given database instance.
@@ -79,11 +82,13 @@ public class OrmliteRepositoryFactory implements RepositoryFactory {
 		ignoreRecordDao = DaoManager.createDao(cs, IgnoreRecord.class);
 		thumbnailDao = DaoManager.createDao(cs, Thumbnail.class);
 		tagDao = DaoManager.createDao(cs, Tag.class);
+		pendingDao = DaoManager.createDao(cs, PendingHashImage.class);
 
 		imageRecordDao.setObjectCache(new LruObjectCache(LARGE_CACHE_SIZE));
 		filterRecordDao.setObjectCache(new LruObjectCache(DEFAULT_CACHE_SIZE));
 		badFileRecordDao.setObjectCache(new LruObjectCache(DEFAULT_CACHE_SIZE));
 		ignoreRecordDao.setObjectCache(new LruObjectCache(DEFAULT_CACHE_SIZE));
+		pendingDao.setObjectCache(new LruObjectCache(DEFAULT_CACHE_SIZE));
 	}
 
 	/**
@@ -120,5 +125,17 @@ public class OrmliteRepositoryFactory implements RepositoryFactory {
 	@Override
 	public TagRepository buildTagRepository() throws RepositoryException {
 		return new OrmliteTagRepository(tagDao);
+	}
+
+	/**
+	 * Create a new {@link PendingHashImageRepository}
+	 * 
+	 * @return an initialized {@link PendingHashImage}
+	 * @throws RepositoryException
+	 *             if there was an error with the DAO or database
+	 */
+	@Override
+	public PendingHashImageRepository buildPendingHashImageRepository() throws RepositoryException {
+		return new OrmlitePendingHashImage(pendingDao);
 	}
 }
