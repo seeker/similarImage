@@ -14,6 +14,7 @@ keystore.jks
 .settings/
 /bin/
 .checkstyle
+.factorypath
 
 # Maven generated files
 target/

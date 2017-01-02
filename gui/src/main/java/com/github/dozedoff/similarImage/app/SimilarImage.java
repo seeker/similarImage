@@ -25,10 +25,6 @@ import java.util.concurrent.TimeUnit;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 
-import org.apache.activemq.artemis.api.core.TransportConfiguration;
-import org.apache.activemq.artemis.api.core.client.ActiveMQClient;
-import org.apache.activemq.artemis.api.core.client.ServerLocator;
-import org.apache.activemq.artemis.core.remoting.impl.invm.InVMConnectorFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,7 +84,6 @@ public class SimilarImage {
 
 	private static final String PROPERTIES_FILENAME = "similarImage.properties";
 	private static final int PRODUCER_QUEUE_SIZE = 400;
-	private static final int LARGE_MESSAGE_SIZE_THRESHOLD = 1024 * 1024 * 100;
 	private static final int IMAGE_SIZE = 32;
 
 	private Statistics statistics;
@@ -170,11 +165,6 @@ public class SimilarImage {
 
 		aes = new ArtemisEmbeddedServer();
 		aes.start();
-
-		ServerLocator locator = ActiveMQClient
-				.createServerLocatorWithoutHA(new TransportConfiguration(InVMConnectorFactory.class.getName()))
-				.setCacheLargeMessagesClient(false).setMinLargeMessageSize(LARGE_MESSAGE_SIZE_THRESHOLD)
-				.setBlockOnNonDurableSend(false).setBlockOnDurableSend(false).setPreAcknowledge(true);
 
 		ArtemisSession as = new ArtemisSession(locator);
 

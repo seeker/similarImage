@@ -17,6 +17,8 @@
  */
 package com.github.dozedoff.similarImage.messaging;
 
+import javax.inject.Inject;
+
 import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
 import org.apache.activemq.artemis.api.core.client.ClientSessionFactory;
@@ -36,6 +38,7 @@ public class ArtemisSession implements AutoCloseable {
 	 * @throws Exception
 	 *             if the setup fails
 	 */
+	@Inject
 	public ArtemisSession(ServerLocator serverLocator) throws Exception {
 		factory = serverLocator.createSessionFactory();
 	}
