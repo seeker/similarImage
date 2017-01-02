@@ -22,7 +22,7 @@ import java.util.UUID;
 
 import com.github.dozedoff.similarImage.db.PendingHashImage;
 
-public interface PendingHashImageRepository {
+public interface PendingHashImageRepository extends Repository {
 
 	/**
 	 * Store the {@link PendingHashImage} in the repository, duplicate paths are not allowed.
