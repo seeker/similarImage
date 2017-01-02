@@ -18,6 +18,7 @@
 package com.github.dozedoff.similarImage.messaging;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
@@ -26,8 +27,12 @@ import org.apache.activemq.artemis.api.core.client.ServerLocator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ArtemisSession implements AutoCloseable {
-	private static final Logger LOGGER = LoggerFactory.getLogger(ArtemisSession.class);
+import dagger.Module;
+import dagger.Provides;
+
+@Module
+public class ArtemisSessionModule implements AutoCloseable {
+	private static final Logger LOGGER = LoggerFactory.getLogger(ArtemisSessionModule.class);
 	private final ClientSessionFactory factory;
 
 	/**
@@ -37,7 +42,7 @@ public class ArtemisSession implements AutoCloseable {
 	 *            for creating sessions
 	 */
 	@Inject
-	public ArtemisSession(ClientSessionFactory sessionFactory) {
+	public ArtemisSessionModule(ClientSessionFactory sessionFactory) {
 		this.factory = sessionFactory;
 	}
 
@@ -49,16 +54,22 @@ public class ArtemisSession implements AutoCloseable {
 	 * @throws Exception
 	 *             if the setup fails
 	 * @deprecated inject factories directly
-	 */
+	 * 
+	 **/
 	@Deprecated
-	public ArtemisSession(ServerLocator serverLocator) throws Exception {
-		factory = serverLocator.createSessionFactory();
+	public ArtemisSessionModule(ServerLocator serverLocator) throws Exception {
+		this.factory = serverLocator.createSessionFactory();
 	}
 
-	private ClientSession createAndConfigureSession() throws ActiveMQException {
-		ClientSession session = factory.createSession();
-		session.start();
-		return session;
+	private ClientSession createAndConfigureSession() {
+		ClientSession session;
+		try {
+			session = factory.createSession();
+			session.start();
+			return session;
+		} catch (ActiveMQException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	/**
@@ -68,8 +79,38 @@ public class ArtemisSession implements AutoCloseable {
 	 * @throws ActiveMQException
 	 *             if the session setup fails
 	 */
-	public ClientSession getSession() throws ActiveMQException {
+	@Provides
+	@Named("normal")
+	public ClientSession provideNormalSession() {
 		return createAndConfigureSession();
+	}
+
+	/**
+	 * Get a new configured session instance
+	 * 
+	 * @return artemis session
+	 * @throws ActiveMQException
+	 *             if the session setup fails
+	 * @deprecated use dagger 2 provider
+	 */
+	@Deprecated
+	public ClientSession getSession() throws ActiveMQException {
+		return provideNormalSession();
+	}
+
+	/**
+	 * Get a new configured and running transacted session.
+	 * 
+	 * @return artemis session
+	 * @throws ActiveMQException
+	 *             if the session setup fails
+	 * @deprecated use dagger 2 provider
+	 */
+	@Deprecated
+	public ClientSession getTransactedSession() throws ActiveMQException {
+		ClientSession session = factory.createTransactedSession();
+		session.start();
+		return session;
 	}
 
 	/**
@@ -79,10 +120,17 @@ public class ArtemisSession implements AutoCloseable {
 	 * @throws ActiveMQException
 	 *             if the session setup fails
 	 */
-	public ClientSession getTransactedSession() throws ActiveMQException {
-		ClientSession session = factory.createTransactedSession();
-		session.start();
-		return session;
+	@Provides
+	@Named("transacted")
+	public ClientSession provideTransactedSession() {
+		ClientSession session;
+		try {
+			session = factory.createTransactedSession();
+			session.start();
+			return session;
+		} catch (ActiveMQException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	/**

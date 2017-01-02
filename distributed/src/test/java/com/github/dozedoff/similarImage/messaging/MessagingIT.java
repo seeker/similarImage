@@ -89,7 +89,7 @@ public class MessagingIT {
 	private Database database;
 	private ImageRepository imageRepository;
 	private static ArtemisHashProducer ahp;
-	private static ArtemisSession as;
+	private static ArtemisSessionModule as;
 	private PendingHashImageRepository pendingRepo;
 
 	private Path dbFile;
@@ -151,7 +151,7 @@ public class MessagingIT {
 				.createServerLocatorWithoutHA(new TransportConfiguration(InVMConnectorFactory.class.getName()))
 				.setCacheLargeMessagesClient(false).setMinLargeMessageSize(LARGE_MESSAGE_SIZE_THRESHOLD).setBlockOnNonDurableSend(false);
 
-		as = new ArtemisSession(locator);
+		as = DaggerSimilarImageCore.builder().build().maker();
 
 		queueJanitor = as.getSession();
 

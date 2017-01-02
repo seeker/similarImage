@@ -15,7 +15,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.dozedoff.similarImage.gui;
+package com.github.dozedoff.similarImage.messaging;
 
 import org.apache.activemq.artemis.api.core.TransportConfiguration;
 import org.apache.activemq.artemis.api.core.client.ActiveMQClient;
@@ -27,11 +27,11 @@ import dagger.Module;
 import dagger.Provides;
 
 @Module
-public class LocalConfiguration {
+public class ServerConnectionModule {
 	private static final int LARGE_MESSAGE_SIZE_THRESHOLD = 1024 * 1024 * 100;
 
 	@Provides
-	public static ServerLocator inVmLocator() {
+	public static ServerLocator provideInVmLocator() {
 		return ActiveMQClient
 				.createServerLocatorWithoutHA(new TransportConfiguration(InVMConnectorFactory.class.getName()))
 				.setCacheLargeMessagesClient(false).setMinLargeMessageSize(LARGE_MESSAGE_SIZE_THRESHOLD)
@@ -39,7 +39,7 @@ public class LocalConfiguration {
 	}
 
 	@Provides
-	public static ClientSessionFactory sessionFactory(ServerLocator locator) {
+	public static ClientSessionFactory provideSessionFactory(ServerLocator locator) {
 		try {
 			return locator.createSessionFactory();
 		} catch (Exception e) {

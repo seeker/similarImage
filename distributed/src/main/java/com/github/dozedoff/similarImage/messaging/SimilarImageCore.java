@@ -15,13 +15,11 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.dozedoff.similarImage.gui;
-
-import com.github.dozedoff.similarImage.messaging.ArtemisSession;
+package com.github.dozedoff.similarImage.messaging;
 
 import dagger.Component;
 
-@Component(modules = LocalConfiguration.class)
+@Component(modules = ServerConnectionModule.class)
 public interface SimilarImageCore {
-	ArtemisSession maker();
+	ArtemisSessionModule maker();
 }

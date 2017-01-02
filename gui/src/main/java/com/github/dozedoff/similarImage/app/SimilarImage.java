@@ -42,7 +42,6 @@ import com.github.dozedoff.similarImage.db.repository.ormlite.OrmlitePendingHash
 import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteRepositoryFactory;
 import com.github.dozedoff.similarImage.db.repository.ormlite.RepositoryFactory;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
-import com.github.dozedoff.similarImage.gui.DaggerSimilarImageCore;
 import com.github.dozedoff.similarImage.gui.DisplayGroupView;
 import com.github.dozedoff.similarImage.gui.SimilarImageController;
 import com.github.dozedoff.similarImage.gui.SimilarImageView;
@@ -55,7 +54,8 @@ import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
-import com.github.dozedoff.similarImage.messaging.ArtemisSession;
+import com.github.dozedoff.similarImage.messaging.ArtemisSessionModule;
+import com.github.dozedoff.similarImage.messaging.DaggerSimilarImageCore;
 import com.github.dozedoff.similarImage.messaging.HasherNode;
 import com.github.dozedoff.similarImage.messaging.MessageCollector;
 import com.github.dozedoff.similarImage.messaging.Node;
@@ -167,7 +167,7 @@ public class SimilarImage {
 		aes = new ArtemisEmbeddedServer();
 		aes.start();
 
-		ArtemisSession as = DaggerSimilarImageCore.builder().build().maker();
+		ArtemisSessionModule as = DaggerSimilarImageCore.builder().build().maker();
 
 		Database database = new SQLiteDatabase();
 
