@@ -55,9 +55,10 @@ import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.messaging.ArtemisSessionModule;
-import com.github.dozedoff.similarImage.messaging.DaggerSimilarImageCore;
+import com.github.dozedoff.similarImage.messaging.DaggerMessagingComponent;
 import com.github.dozedoff.similarImage.messaging.HasherNode;
 import com.github.dozedoff.similarImage.messaging.MessageCollector;
+import com.github.dozedoff.similarImage.messaging.MessagingComponent;
 import com.github.dozedoff.similarImage.messaging.Node;
 import com.github.dozedoff.similarImage.messaging.QueueToDatabaseTransaction;
 import com.github.dozedoff.similarImage.messaging.RepositoryNode;
@@ -164,10 +165,12 @@ public class SimilarImage {
 		Settings settings = new Settings(new SettingsValidator());
 		settings.loadPropertiesFromFile(PROPERTIES_FILENAME);
 
-		aes = new ArtemisEmbeddedServer();
+		MessagingComponent messagingComponent = DaggerMessagingComponent.builder().build();
+
+		aes = messagingComponent.getServer();
 		aes.start();
 
-		ArtemisSessionModule as = DaggerSimilarImageCore.builder().build().maker();
+		ArtemisSessionModule as = messagingComponent.getSessionModule();
 
 		Database database = new SQLiteDatabase();
 

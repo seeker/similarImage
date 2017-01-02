@@ -19,7 +19,9 @@ package com.github.dozedoff.similarImage.messaging;
 
 import dagger.Component;
 
-@Component(modules = ServerConnectionModule.class)
-public interface SimilarImageCore {
-	ArtemisSessionModule maker();
+@Component(modules = { ServerConnectionModule.class, ServerConfigurationModule.class })
+public interface MessagingComponent {
+	ArtemisSessionModule getSessionModule();
+
+	ArtemisEmbeddedServer getServer();
 }

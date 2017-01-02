@@ -37,12 +37,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.SimpleString;
-import org.apache.activemq.artemis.api.core.TransportConfiguration;
-import org.apache.activemq.artemis.api.core.client.ActiveMQClient;
 import org.apache.activemq.artemis.api.core.client.ClientConsumer;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
-import org.apache.activemq.artemis.api.core.client.ServerLocator;
-import org.apache.activemq.artemis.core.remoting.impl.invm.InVMConnectorFactory;
 import org.awaitility.Duration;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -108,6 +104,8 @@ public class MessagingIT {
 
 	ClientSession queueJanitor;
 
+	private static MessagingComponent messagingComponent;
+
 	@BeforeClass
 	public static void classSetup() throws Exception {
 		workingdir = Files.createTempDirectory("MessageIntegration");
@@ -119,7 +117,10 @@ public class MessagingIT {
 			testImageAutumnReferenceHash = new ImagePHash().getLongHash(bis);
 		}
 
-		aes = new ArtemisEmbeddedServer(workingdir);
+		messagingComponent = DaggerMessagingComponent.builder()
+				.serverConfigurationModule(new ServerConfigurationModule(workingdir)).build();
+
+		aes = messagingComponent.getServer();
 		aes.start();
 
 	}
@@ -147,11 +148,7 @@ public class MessagingIT {
 
 		metrics = new MetricRegistry();
 
-		ServerLocator locator = ActiveMQClient
-				.createServerLocatorWithoutHA(new TransportConfiguration(InVMConnectorFactory.class.getName()))
-				.setCacheLargeMessagesClient(false).setMinLargeMessageSize(LARGE_MESSAGE_SIZE_THRESHOLD).setBlockOnNonDurableSend(false);
-
-		as = DaggerSimilarImageCore.builder().build().maker();
+		as = messagingComponent.getSessionModule();
 
 		queueJanitor = as.getSession();
 
