@@ -42,6 +42,7 @@ import com.github.dozedoff.similarImage.db.repository.ormlite.OrmlitePendingHash
 import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteRepositoryFactory;
 import com.github.dozedoff.similarImage.db.repository.ormlite.RepositoryFactory;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
+import com.github.dozedoff.similarImage.gui.DaggerSimilarImageCore;
 import com.github.dozedoff.similarImage.gui.DisplayGroupView;
 import com.github.dozedoff.similarImage.gui.SimilarImageController;
 import com.github.dozedoff.similarImage.gui.SimilarImageView;
@@ -166,7 +167,7 @@ public class SimilarImage {
 		aes = new ArtemisEmbeddedServer();
 		aes.start();
 
-		ArtemisSession as = new ArtemisSession(locator);
+		ArtemisSession as = DaggerSimilarImageCore.builder().build().maker();
 
 		Database database = new SQLiteDatabase();
 

@@ -33,12 +33,24 @@ public class ArtemisSession implements AutoCloseable {
 	/**
 	 * Create a session factory
 	 * 
+	 * @param sessionFactory
+	 *            for creating sessions
+	 */
+	@Inject
+	public ArtemisSession(ClientSessionFactory sessionFactory) {
+		this.factory = sessionFactory;
+	}
+
+	/**
+	 * Create a session factory
+	 * 
 	 * @param serverLocator
 	 *            for finding the servers to connect to
 	 * @throws Exception
 	 *             if the setup fails
+	 * @deprecated inject factories directly
 	 */
-	@Inject
+	@Deprecated
 	public ArtemisSession(ServerLocator serverLocator) throws Exception {
 		factory = serverLocator.createSessionFactory();
 	}

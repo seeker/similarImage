@@ -19,6 +19,7 @@ package com.github.dozedoff.similarImage.gui;
 
 import org.apache.activemq.artemis.api.core.TransportConfiguration;
 import org.apache.activemq.artemis.api.core.client.ActiveMQClient;
+import org.apache.activemq.artemis.api.core.client.ClientSessionFactory;
 import org.apache.activemq.artemis.api.core.client.ServerLocator;
 import org.apache.activemq.artemis.core.remoting.impl.invm.InVMConnectorFactory;
 
@@ -35,5 +36,14 @@ public class LocalConfiguration {
 				.createServerLocatorWithoutHA(new TransportConfiguration(InVMConnectorFactory.class.getName()))
 				.setCacheLargeMessagesClient(false).setMinLargeMessageSize(LARGE_MESSAGE_SIZE_THRESHOLD)
 				.setBlockOnNonDurableSend(false).setBlockOnDurableSend(false).setPreAcknowledge(true);
+	}
+
+	@Provides
+	public static ClientSessionFactory sessionFactory(ServerLocator locator) {
+		try {
+			return locator.createSessionFactory();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 }
