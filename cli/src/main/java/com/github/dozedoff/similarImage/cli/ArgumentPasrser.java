@@ -47,7 +47,7 @@ import com.github.dozedoff.similarImage.image.ImageResizer;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
-import com.github.dozedoff.similarImage.messaging.ArtemisSessionModule;
+import com.github.dozedoff.similarImage.module.ArtemisSessionModule;
 import com.github.dozedoff.similarImage.messaging.HasherNode;
 import com.github.dozedoff.similarImage.messaging.ResizerNode;
 

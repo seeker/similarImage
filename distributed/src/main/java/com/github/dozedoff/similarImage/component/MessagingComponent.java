@@ -15,7 +15,12 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.dozedoff.similarImage.messaging;
+package com.github.dozedoff.similarImage.component;
+
+import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
+import com.github.dozedoff.similarImage.module.ArtemisSessionModule;
+import com.github.dozedoff.similarImage.module.ServerConfigurationModule;
+import com.github.dozedoff.similarImage.module.ServerConnectionModule;
 
 import dagger.Component;
 

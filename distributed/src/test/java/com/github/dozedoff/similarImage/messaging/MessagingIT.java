@@ -50,6 +50,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.commonj.hash.ImagePHash;
+import com.github.dozedoff.similarImage.component.DaggerMessagingComponent;
+import com.github.dozedoff.similarImage.component.MessagingComponent;
 import com.github.dozedoff.similarImage.db.Database;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.PendingHashImage;
@@ -67,6 +69,8 @@ import com.github.dozedoff.similarImage.io.ExtendedAttributeDirectoryCache;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
+import com.github.dozedoff.similarImage.module.ArtemisSessionModule;
+import com.github.dozedoff.similarImage.module.ServerConfigurationModule;
 import com.github.dozedoff.similarImage.util.TestUtil;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.misc.TransactionManager;

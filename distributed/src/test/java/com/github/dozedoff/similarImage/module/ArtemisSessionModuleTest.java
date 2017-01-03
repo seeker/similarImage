@@ -15,7 +15,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.dozedoff.similarImage.messaging;
+package com.github.dozedoff.similarImage.module;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -27,6 +27,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+
+import com.github.dozedoff.similarImage.module.ArtemisSessionModule;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ArtemisSessionModuleTest {

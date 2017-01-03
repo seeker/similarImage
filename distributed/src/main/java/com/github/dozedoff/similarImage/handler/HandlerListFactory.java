@@ -27,8 +27,8 @@ import com.github.dozedoff.similarImage.io.ExtendedAttributeDirectoryCache;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.io.Statistics;
-import com.github.dozedoff.similarImage.messaging.ArtemisSessionModule;
 import com.github.dozedoff.similarImage.messaging.StorageNode;
+import com.github.dozedoff.similarImage.module.ArtemisSessionModule;
 
 public class HandlerListFactory {
 	private final ImageRepository imageRepository;
