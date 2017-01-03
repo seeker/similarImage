@@ -24,10 +24,12 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertThat;
 
 import java.io.BufferedInputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -50,17 +52,17 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.commonj.hash.ImagePHash;
+import com.github.dozedoff.similarImage.component.CoreComponent;
+import com.github.dozedoff.similarImage.component.DaggerCoreComponent;
 import com.github.dozedoff.similarImage.component.DaggerMessagingComponent;
 import com.github.dozedoff.similarImage.component.MessagingComponent;
 import com.github.dozedoff.similarImage.db.Database;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.PendingHashImage;
-import com.github.dozedoff.similarImage.db.SQLiteDatabase;
+import com.github.dozedoff.similarImage.db.Tag;
+import com.github.dozedoff.similarImage.db.Thumbnail;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
-import com.github.dozedoff.similarImage.db.repository.ormlite.OrmlitePendingHashImage;
-import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteRepositoryFactory;
-import com.github.dozedoff.similarImage.db.repository.ormlite.RepositoryFactory;
 import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
 import com.github.dozedoff.similarImage.handler.HashNames;
 import com.github.dozedoff.similarImage.image.ImageResizer;
@@ -70,10 +72,12 @@ import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.module.ArtemisSessionModule;
+import com.github.dozedoff.similarImage.module.SQLitePersistenceModule;
 import com.github.dozedoff.similarImage.module.ServerConfigurationModule;
 import com.github.dozedoff.similarImage.util.TestUtil;
-import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.misc.TransactionManager;
+import com.j256.ormlite.support.ConnectionSource;
+import com.j256.ormlite.table.TableUtils;
 
 @RunWith(MockitoJUnitRunner.class)
 public class MessagingIT {
@@ -86,13 +90,14 @@ public class MessagingIT {
 	private static final Path TEST_PATH = Paths.get("foo");
 
 	private static ArtemisEmbeddedServer aes;
-	private Database database;
+
+	private static Database database;
 	private ImageRepository imageRepository;
 	private static ArtemisHashProducer ahp;
 	private static ArtemisSessionModule as;
 	private PendingHashImageRepository pendingRepo;
 
-	private Path dbFile;
+	private static Path dbFile;
 	private static Path workingdir;
 	private static Path testImageAutumnOriginal;
 	private Path testImageAutumn;
@@ -108,11 +113,13 @@ public class MessagingIT {
 
 	ClientSession queueJanitor;
 
-	private static MessagingComponent messagingComponent;
+	private static CoreComponent coreComponent;
+	private static MessagingComponent messageComponent;
 
 	@BeforeClass
 	public static void classSetup() throws Exception {
 		workingdir = Files.createTempDirectory("MessageIntegration");
+		dbFile = Files.createTempFile(workingdir, "database", ".db");
 
 		testImageAutumnOriginal = Paths.get(Thread.currentThread().getContextClassLoader().getResource("images/autumn.jpg").toURI());
 		testImageCorruptOriginal = Paths.get(Thread.currentThread().getContextClassLoader().getResource("images/corrupt.jpg").toURI());
@@ -120,11 +127,16 @@ public class MessagingIT {
 		try (BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(testImageAutumnOriginal))) {
 			testImageAutumnReferenceHash = new ImagePHash().getLongHash(bis);
 		}
+		
 
-		messagingComponent = DaggerMessagingComponent.builder()
+		coreComponent = DaggerCoreComponent.builder().sQLitePersistenceModule(new SQLitePersistenceModule(dbFile))
+				.build();
+		database = coreComponent.getDatabase();
+
+		messageComponent = DaggerMessagingComponent.builder().coreComponent(coreComponent)
 				.serverConfigurationModule(new ServerConfigurationModule(workingdir)).build();
 
-		aes = messagingComponent.getServer();
+		aes = messageComponent.getServer();
 		aes.start();
 
 	}
@@ -137,22 +149,18 @@ public class MessagingIT {
 
 	@Before
 	public void setup() throws Exception {
-		dbFile = Files.createTempFile(workingdir, "database", ".db");
-		database = new SQLiteDatabase(dbFile);
-		RepositoryFactory repositoryFactory = new OrmliteRepositoryFactory(database);
-
 		testImageAutumn = Files.createTempFile(Paths.get(""), "testImage", ".jpg");
 		testImageCorrupt = Files.createTempFile(Paths.get(""), "corrupt", ".jpg");
 
 		Files.copy(testImageAutumnOriginal, testImageAutumn, StandardCopyOption.REPLACE_EXISTING);
 		Files.copy(testImageCorruptOriginal, testImageCorrupt, StandardCopyOption.REPLACE_EXISTING);
 
-		imageRepository = repositoryFactory.buildImageRepository();
-		pendingRepo = new OrmlitePendingHashImage(DaoManager.createDao(database.getCs(), PendingHashImage.class));
+		imageRepository = coreComponent.getImageRepository();
+		pendingRepo = coreComponent.getPendingHashImageRepository();
 
 		metrics = new MetricRegistry();
 
-		as = messagingComponent.getSessionModule();
+		as = messageComponent.getSessionModule();
 
 		queueJanitor = as.getSession();
 
@@ -183,14 +191,29 @@ public class MessagingIT {
 		}
 	}
 
+	private void clearDatabase(ConnectionSource cs) throws SQLException {
+		// TODO add empty interface to tables
+		Class[] tables = {ImageRecord.class, PendingHashImage.class, Tag.class, Thumbnail.class};
+		
+		for(Class table : tables){
+			TableUtils.clearTable(cs, table);
+		}
+		}
+
 	@After
 	public void tearDown() throws Exception {
-		database.close();
+		clearDatabase(database.getCs());
+
 		Files.delete(testImageAutumn);
 		Files.delete(testImageCorrupt);
-		Files.deleteIfExists(dbFile);
 		sink.stop();
 		as.close();
+	}
+
+	@AfterClass
+	public static void tearDownClass() throws IOException {
+		database.close();
+		Files.deleteIfExists(dbFile);
 	}
 
 	@Test

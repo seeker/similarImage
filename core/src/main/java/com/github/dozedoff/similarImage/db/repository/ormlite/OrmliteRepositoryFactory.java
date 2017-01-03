@@ -19,6 +19,8 @@ package com.github.dozedoff.similarImage.db.repository.ormlite;
 
 import java.sql.SQLException;
 
+import javax.inject.Inject;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,6 +67,7 @@ public class OrmliteRepositoryFactory implements RepositoryFactory {
 	 * @param database
 	 *            to use for creating repositories
 	 */
+	@Inject
 	public OrmliteRepositoryFactory(Database database) {
 		try {
 			setupDAO(database.getCs());

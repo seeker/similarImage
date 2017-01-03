@@ -31,17 +31,15 @@ import org.slf4j.LoggerFactory;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Slf4jReporter;
 import com.github.dozedoff.commonj.hash.ImagePHash;
+import com.github.dozedoff.similarImage.component.CoreComponent;
+import com.github.dozedoff.similarImage.component.DaggerCoreComponent;
 import com.github.dozedoff.similarImage.component.DaggerMessagingComponent;
 import com.github.dozedoff.similarImage.component.MessagingComponent;
 import com.github.dozedoff.similarImage.db.Database;
-import com.github.dozedoff.similarImage.db.PendingHashImage;
-import com.github.dozedoff.similarImage.db.SQLiteDatabase;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
-import com.github.dozedoff.similarImage.db.repository.ormlite.OrmlitePendingHashImage;
-import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteRepositoryFactory;
 import com.github.dozedoff.similarImage.db.repository.ormlite.RepositoryFactory;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.gui.DisplayGroupView;
@@ -66,7 +64,6 @@ import com.github.dozedoff.similarImage.messaging.ResultMessageSink;
 import com.github.dozedoff.similarImage.messaging.TaskMessageHandler;
 import com.github.dozedoff.similarImage.module.ArtemisSessionModule;
 import com.github.dozedoff.similarImage.thread.SorterFactory;
-import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.misc.TransactionManager;
 
 import net.sourceforge.argparse4j.ArgumentParsers;
@@ -165,21 +162,19 @@ public class SimilarImage {
 		Settings settings = new Settings(new SettingsValidator());
 		settings.loadPropertiesFromFile(PROPERTIES_FILENAME);
 
-		MessagingComponent messagingComponent = DaggerMessagingComponent.builder().build();
+		CoreComponent coreComponent = DaggerCoreComponent.create();
+		MessagingComponent messagingComponent = DaggerMessagingComponent.builder().coreComponent(coreComponent).build();
 
 		aes = messagingComponent.getServer();
 		aes.start();
 
 		ArtemisSessionModule as = messagingComponent.getSessionModule();
 
-		Database database = new SQLiteDatabase();
+		Database database = coreComponent.getDatabase();
 
-		PendingHashImageRepository pendingRepo = new OrmlitePendingHashImage(
-				DaoManager.createDao(database.getCs(), PendingHashImage.class));
-
-		RepositoryFactory repositoryFactory = new OrmliteRepositoryFactory(database);
-
-		ImageRepository imageRepository = repositoryFactory.buildImageRepository();
+		RepositoryFactory repositoryFactory = coreComponent.getRepositoryFactory();
+		PendingHashImageRepository pendingRepo = coreComponent.getPendingHashImageRepository();
+		ImageRepository imageRepository = coreComponent.getImageRepository();
 
 		TaskMessageHandler tmh = new TaskMessageHandler(pendingRepo, imageRepository, as.getSession(), metrics);
 		nodes.add(new RepositoryNode(as.getSession(), pendingRepo, tmh, metrics));

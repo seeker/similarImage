@@ -1,4 +1,4 @@
-/*  Copyright (C) 2017  Nicholas Wright
+/*  Copyright (C) 2016  Nicholas Wright
     
     This file is part of similarImage - A similar image finder using pHash
     
@@ -17,18 +17,14 @@
  */
 package com.github.dozedoff.similarImage.component;
 
-import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
-import com.github.dozedoff.similarImage.module.ArtemisSessionModule;
-import com.github.dozedoff.similarImage.module.ServerConfigurationModule;
-import com.github.dozedoff.similarImage.module.ServerConnectionModule;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-import dagger.Component;
+import java.lang.annotation.Retention;
 
-@MainScope
-@Component(modules = { ServerConnectionModule.class,
-		ServerConfigurationModule.class }, dependencies = CoreComponent.class)
-public interface MessagingComponent {
-	ArtemisSessionModule getSessionModule();
+import javax.inject.Scope;
 
-	ArtemisEmbeddedServer getServer();
+@Retention(RUNTIME)
+@Scope
+public @interface MainScope {
+
 }
