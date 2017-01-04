@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
@@ -124,8 +125,9 @@ public class QueueToDatabaseTransaction implements CollectedMessageConsumer {
 	 *            for tracking metrics
 	 */
 	@Inject
-	public QueueToDatabaseTransaction(ClientSession transactedSession, TransactionManager transactionManager,
-			PendingHashImageRepository pendingRepository, ImageRepository imageRepository, MetricRegistry metrics) {
+	public QueueToDatabaseTransaction(@Named("transacted") ClientSession transactedSession,
+			TransactionManager transactionManager, PendingHashImageRepository pendingRepository,
+			ImageRepository imageRepository, MetricRegistry metrics) {
 		this(transactedSession, transactionManager, QueueAddress.EA_UPDATE.toString(),
 				pendingRepository, imageRepository, metrics);
 	}

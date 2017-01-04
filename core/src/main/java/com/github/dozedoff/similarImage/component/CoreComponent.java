@@ -26,6 +26,7 @@ import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
 import com.github.dozedoff.similarImage.db.repository.ormlite.RepositoryFactory;
 import com.github.dozedoff.similarImage.module.SQLitePersistenceModule;
+import com.j256.ormlite.misc.TransactionManager;
 
 import dagger.Component;
 
@@ -41,4 +42,6 @@ public interface CoreComponent {
 	PendingHashImageRepository getPendingHashImageRepository();
 	FilterRepository getFilterRepository();
 	TagRepository getTagRepository();
+
+	TransactionManager getTransactionManager();
 }

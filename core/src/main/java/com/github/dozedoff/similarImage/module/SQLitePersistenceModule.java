@@ -33,6 +33,7 @@ import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
 import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteRepositoryFactory;
 import com.github.dozedoff.similarImage.db.repository.ormlite.RepositoryFactory;
+import com.j256.ormlite.misc.TransactionManager;
 import com.j256.ormlite.support.ConnectionSource;
 
 import dagger.Module;
@@ -102,11 +103,16 @@ public class SQLitePersistenceModule {
 	}
 
 	@Provides
-	public TagRepository providetagRepository(RepositoryFactory repositoryFactory) {
+	public TagRepository provideTagRepository(RepositoryFactory repositoryFactory) {
 		try {
 			return repositoryFactory.buildTagRepository();
 		} catch (RepositoryException e) {
 			throw runtimeException(TagRepository.class, e);
 		}
+	}
+
+	@Provides
+	public TransactionManager provideTransactionManager(ConnectionSource cs) {
+		return new TransactionManager(cs);
 	}
 }

@@ -35,10 +35,8 @@ import com.github.dozedoff.similarImage.component.CoreComponent;
 import com.github.dozedoff.similarImage.component.DaggerCoreComponent;
 import com.github.dozedoff.similarImage.component.DaggerMessagingComponent;
 import com.github.dozedoff.similarImage.component.MessagingComponent;
-import com.github.dozedoff.similarImage.db.Database;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
-import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
 import com.github.dozedoff.similarImage.db.repository.ormlite.RepositoryFactory;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
@@ -53,18 +51,12 @@ import com.github.dozedoff.similarImage.io.ExtendedAttributeDirectoryCache;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
-import com.github.dozedoff.similarImage.messaging.ArtemisSession;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
+import com.github.dozedoff.similarImage.messaging.ArtemisSession;
 import com.github.dozedoff.similarImage.messaging.HasherNode;
-import com.github.dozedoff.similarImage.messaging.MessageCollector;
 import com.github.dozedoff.similarImage.messaging.Node;
-import com.github.dozedoff.similarImage.messaging.QueueToDatabaseTransaction;
-import com.github.dozedoff.similarImage.messaging.RepositoryNode;
 import com.github.dozedoff.similarImage.messaging.ResizerNode;
-import com.github.dozedoff.similarImage.messaging.ResultMessageSink;
-import com.github.dozedoff.similarImage.messaging.TaskMessageHandler;
 import com.github.dozedoff.similarImage.thread.SorterFactory;
-import com.j256.ormlite.misc.TransactionManager;
 
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
@@ -149,7 +141,6 @@ public class SimilarImage {
 	 *             if there is an error during setup
 	 */
 	public void init(boolean noWorkers) throws Exception {
-		this.metrics = new MetricRegistry();
 		String version = this.getClass().getPackage().getImplementationVersion();
 
 		if (version == null) {
@@ -165,28 +156,17 @@ public class SimilarImage {
 		CoreComponent coreComponent = DaggerCoreComponent.create();
 		MessagingComponent messagingComponent = DaggerMessagingComponent.builder().coreComponent(coreComponent).build();
 
+		this.metrics = messagingComponent.getMetricRegistry();
+
 		aes = messagingComponent.getServer();
 		aes.start();
 
-		ArtemisSession as = messagingComponent.getSessionModule();
-
-		Database database = coreComponent.getDatabase();
-
 		RepositoryFactory repositoryFactory = coreComponent.getRepositoryFactory();
-		PendingHashImageRepository pendingRepo = coreComponent.getPendingHashImageRepository();
 		ImageRepository imageRepository = coreComponent.getImageRepository();
 
-		TaskMessageHandler tmh = new TaskMessageHandler(pendingRepo, imageRepository, as.getSession(), metrics);
-		nodes.add(new RepositoryNode(as.getSession(), pendingRepo, tmh, metrics));
-
-		TransactionManager tm = new TransactionManager(database.getCs());
-		QueueToDatabaseTransaction qdt = new QueueToDatabaseTransaction(as.getTransactedSession(), tm, pendingRepo,
-				imageRepository, metrics);
-
-		MessageCollector mc = new MessageCollector(COLLECTED_MESSAGE_THRESHOLD, qdt);
-		ResultMessageSink sink = new ResultMessageSink(as.getTransactedSession(), mc, QueueAddress.RESULT.toString(),
-				COLLECTED_MESSAGE_DRAIN_INTERVAL);
-		nodes.add(sink);
+		// TODO module for node setup?
+		nodes.add(messagingComponent.getRepositoryNode());
+		nodes.add(messagingComponent.getResultMessageSink());
 
 		FilterRepository filterRepository = repositoryFactory.buildFilterRepository();
 		TagRepository tagRepository = repositoryFactory.buildTagRepository();
@@ -194,7 +174,8 @@ public class SimilarImage {
 		DuplicateOperations dupOps = new DuplicateOperations(filterRepository, tagRepository, imageRepository);
 		SorterFactory sf = new SorterFactory(imageRepository, filterRepository, tagRepository);
 
-		statistics = new Statistics();
+		statistics = messagingComponent.getStatistics();
+		ArtemisSession as = messagingComponent.getSessionModule();
 		ExtendedAttributeQuery eaQuery = new ExtendedAttributeDirectoryCache(new ExtendedAttribute(), 1, TimeUnit.MINUTES);
 		HandlerListFactory hlf = new HandlerListFactory(imageRepository, statistics, as, eaQuery);
 		UserTagSettingController utsc = new UserTagSettingController(tagRepository);

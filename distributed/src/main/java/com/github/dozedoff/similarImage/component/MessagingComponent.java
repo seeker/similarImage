@@ -21,9 +21,12 @@ import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
 import com.github.dozedoff.similarImage.messaging.ArtemisSession;
+import com.github.dozedoff.similarImage.messaging.RepositoryNode;
+import com.github.dozedoff.similarImage.messaging.ResultMessageSink;
+import com.github.dozedoff.similarImage.module.ArtemisBrokerModule;
 import com.github.dozedoff.similarImage.module.ArtemisSessionModule;
 import com.github.dozedoff.similarImage.module.InVMConnectionModule;
-import com.github.dozedoff.similarImage.module.ArtemisBrokerModule;
+import com.github.dozedoff.similarImage.module.RepositoryNodeModule;
 import com.github.dozedoff.similarImage.module.StatisticsModule;
 
 import dagger.Component;
@@ -31,16 +34,20 @@ import dagger.Component;
 @MainScope
 @Component(modules = { InVMConnectionModule.class,
 		ArtemisBrokerModule.class, StatisticsModule.class,
-		ArtemisSessionModule.class }, dependencies = CoreComponent.class)
+		ArtemisSessionModule.class, RepositoryNodeModule.class }, dependencies = CoreComponent.class)
 public interface MessagingComponent {
 	ArtemisSession getSessionModule();
 
 	ArtemisEmbeddedServer getServer();
+
+	ResultMessageSink getResultMessageSink();
 
 	// TODO remove methods below, temporary for refactoring
 
 	MetricRegistry getMetricRegistry();
 
 	Statistics getStatistics();
+
+	RepositoryNode getRepositoryNode();
 
 }

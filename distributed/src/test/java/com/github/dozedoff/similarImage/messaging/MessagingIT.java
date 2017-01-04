@@ -74,7 +74,6 @@ import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.module.ArtemisBrokerModule;
 import com.github.dozedoff.similarImage.module.SQLitePersistenceModule;
 import com.github.dozedoff.similarImage.util.TestUtil;
-import com.j256.ormlite.misc.TransactionManager;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 
@@ -168,11 +167,7 @@ public class MessagingIT {
 			recreateQueue(queue);
 		}
 
-		QueueToDatabaseTransaction qdt = new QueueToDatabaseTransaction(as.getTransactedSession(),
-				new TransactionManager(database.getCs()), pendingRepo, imageRepository, metrics);
-		mc = new MessageCollector(100, qdt);
-
-		sink = new ResultMessageSink(as.getTransactedSession(), mc, QueueAddress.RESULT.toString(), 1000);
+		sink = messageComponent.getResultMessageSink();
 
 	}
 

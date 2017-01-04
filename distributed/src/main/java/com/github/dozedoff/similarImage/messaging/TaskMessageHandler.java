@@ -17,7 +17,8 @@
  */
 package com.github.dozedoff.similarImage.messaging;
 
-import org.apache.activemq.artemis.api.core.ActiveMQException;
+import javax.inject.Inject;
+
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
 import org.apache.activemq.artemis.api.core.client.MessageHandler;
@@ -51,15 +52,33 @@ public class TaskMessageHandler implements MessageHandler {
 	 *            repository for pending messages
 	 * @param imageRepository
 	 *            repository for hashed images
+	 * @param metrics
+	 *            registry for tracking metrics
+	 */
+	@Inject
+	public TaskMessageHandler(PendingHashImageRepository pendingRepository, ImageRepository imageRepository,
+			MetricRegistry metrics) {
+		this(pendingRepository, imageRepository, null, QueueAddress.EA_UPDATE.toString(), metrics);
+	}
+
+	/**
+	 * Create a handler for Task messages, using the default address for extended attribute update messages.
+	 * 
+	 * @param pendingRepository
+	 *            repository for pending messages
+	 * @param imageRepository
+	 *            repository for hashed images
 	 * @param session
 	 *            for communicating with the broker
 	 * @param metrics
 	 *            registry for tracking metrics
-	 * @throws ActiveMQException
-	 *             if there is an error creating the producer
+	 * @deprecated Use
+	 *             {@link TaskMessageHandler#TaskMessageHandler(PendingHashImageRepository, ImageRepository, MetricRegistry)}
+	 *             instead.
 	 */
+	@Deprecated
 	public TaskMessageHandler(PendingHashImageRepository pendingRepository, ImageRepository imageRepository,
-			ClientSession session, MetricRegistry metrics) throws ActiveMQException {
+			ClientSession session, MetricRegistry metrics) {
 		this(pendingRepository, imageRepository, session, QueueAddress.EA_UPDATE.toString(), metrics);
 	}
 
@@ -76,11 +95,31 @@ public class TaskMessageHandler implements MessageHandler {
 	 *            address for sending extended attribute updates
 	 * @param metrics
 	 *            registry for tracking metrics
-	 * @throws ActiveMQException
-	 *             if there is an error creating the producer
+	 * @deprecated Use
+	 *             {@link TaskMessageHandler#TaskMessageHandler(PendingHashImageRepository, ImageRepository, ClientSession, MetricRegistry)}
+	 *             instead.
+	 */
+	@Deprecated
+	public TaskMessageHandler(PendingHashImageRepository pendingRepository, ImageRepository imageRepository,
+			ClientSession session, String eaUpdateAddress, MetricRegistry metrics) {
+		this.pendingRepository = pendingRepository;
+		this.pendingMessages = metrics.counter(METRIC_NAME_PENDING_MESSAGES);
+	}
+
+	/**
+	 * Create a handler for Task messages.
+	 * 
+	 * @param pendingRepository
+	 *            repository for pending messages
+	 * @param imageRepository
+	 *            repository for hashed images
+	 * @param eaUpdateAddress
+	 *            address for sending extended attribute updates
+	 * @param metrics
+	 *            registry for tracking metrics
 	 */
 	public TaskMessageHandler(PendingHashImageRepository pendingRepository, ImageRepository imageRepository,
-			ClientSession session, String eaUpdateAddress, MetricRegistry metrics) throws ActiveMQException {
+			String eaUpdateAddress, MetricRegistry metrics) {
 		this.pendingRepository = pendingRepository;
 		this.pendingMessages = metrics.counter(METRIC_NAME_PENDING_MESSAGES);
 	}
