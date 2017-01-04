@@ -33,6 +33,7 @@ import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
 import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteRepositoryFactory;
 import com.github.dozedoff.similarImage.db.repository.ormlite.RepositoryFactory;
+import com.j256.ormlite.support.ConnectionSource;
 
 import dagger.Module;
 import dagger.Provides;
@@ -60,6 +61,11 @@ public class SQLitePersistenceModule {
 	@Provides
 	public Database provideDatabase() {
 		return new SQLiteDatabase(databasePath);
+	}
+
+	@Provides
+	public ConnectionSource provideConnectionSource(Database database) {
+		return database.getCs();
 	}
 
 	@Singleton

@@ -21,15 +21,17 @@ import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
 import com.github.dozedoff.similarImage.messaging.ArtemisSession;
-import com.github.dozedoff.similarImage.module.ServerConfigurationModule;
-import com.github.dozedoff.similarImage.module.ServerConnectionModule;
+import com.github.dozedoff.similarImage.module.ArtemisSessionModule;
+import com.github.dozedoff.similarImage.module.InVMConnectionModule;
+import com.github.dozedoff.similarImage.module.ArtemisBrokerModule;
 import com.github.dozedoff.similarImage.module.StatisticsModule;
 
 import dagger.Component;
 
 @MainScope
-@Component(modules = { ServerConnectionModule.class,
-		ServerConfigurationModule.class, StatisticsModule.class }, dependencies = CoreComponent.class)
+@Component(modules = { InVMConnectionModule.class,
+		ArtemisBrokerModule.class, StatisticsModule.class,
+		ArtemisSessionModule.class }, dependencies = CoreComponent.class)
 public interface MessagingComponent {
 	ArtemisSession getSessionModule();
 

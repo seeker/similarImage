@@ -22,6 +22,8 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+import javax.inject.Inject;
+
 import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.apache.activemq.artemis.api.core.client.ClientProducer;
@@ -80,12 +82,10 @@ public class QueueToDatabaseTransaction implements CollectedMessageConsumer {
 	 *            repository for storing results
 	 * @param metrics
 	 *            for tracking metrics
-	 * @throws ActiveMQException
-	 *             if there is an error setting up the {@link ClientProducer}
 	 */
 	public QueueToDatabaseTransaction(ClientSession transactedSession, TransactionManager transactionManager,
 			String eaQueueName, PendingHashImageRepository pendingRepository,
-			ImageRepository imageRepository, MetricRegistry metrics) throws ActiveMQException {
+			ImageRepository imageRepository, MetricRegistry metrics) {
 
 		if (!isTransactedSession(transactedSession)) {
 			throw new IllegalArgumentException("Session must be transactional");
@@ -94,7 +94,12 @@ public class QueueToDatabaseTransaction implements CollectedMessageConsumer {
 		this.pendingRepository = pendingRepository;
 		this.imageRepository = imageRepository;
 		this.session = transactedSession;
-		this.producer = transactedSession.createProducer(eaQueueName);
+		try {
+			this.producer = transactedSession.createProducer(eaQueueName);
+		} catch (ActiveMQException e) {
+			throw new RuntimeException("Failed to create producer", e);
+		}
+
 		this.messageFactory = new MessageFactory(transactedSession);
 
 		this.transactionManager = transactionManager;
@@ -117,12 +122,10 @@ public class QueueToDatabaseTransaction implements CollectedMessageConsumer {
 	 *            repository for storing results
 	 * @param metrics
 	 *            for tracking metrics
-	 * @throws ActiveMQException
-	 *             if there is an error setting up the {@link ClientProducer}
 	 */
+	@Inject
 	public QueueToDatabaseTransaction(ClientSession transactedSession, TransactionManager transactionManager,
-			PendingHashImageRepository pendingRepository, ImageRepository imageRepository, MetricRegistry metrics)
-			throws ActiveMQException {
+			PendingHashImageRepository pendingRepository, ImageRepository imageRepository, MetricRegistry metrics) {
 		this(transactedSession, transactionManager, QueueAddress.EA_UPDATE.toString(),
 				pendingRepository, imageRepository, metrics);
 	}

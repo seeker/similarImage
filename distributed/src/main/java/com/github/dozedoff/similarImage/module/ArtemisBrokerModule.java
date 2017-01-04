@@ -29,15 +29,15 @@ import dagger.Module;
 import dagger.Provides;
 
 @Module
-public class ServerConfigurationModule {
+public class ArtemisBrokerModule {
 	private Path serverWorkingDirectory;
 
 	@Inject
-	public ServerConfigurationModule() {
+	public ArtemisBrokerModule() {
 		serverWorkingDirectory = Paths.get("");
 	}
 
-	public ServerConfigurationModule(Path serverWorkingDirectory) {
+	public ArtemisBrokerModule(Path serverWorkingDirectory) {
 		this.serverWorkingDirectory = serverWorkingDirectory;
 	}
 

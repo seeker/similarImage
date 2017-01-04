@@ -71,8 +71,8 @@ import com.github.dozedoff.similarImage.io.ExtendedAttributeDirectoryCache;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
+import com.github.dozedoff.similarImage.module.ArtemisBrokerModule;
 import com.github.dozedoff.similarImage.module.SQLitePersistenceModule;
-import com.github.dozedoff.similarImage.module.ServerConfigurationModule;
 import com.github.dozedoff.similarImage.util.TestUtil;
 import com.j256.ormlite.misc.TransactionManager;
 import com.j256.ormlite.support.ConnectionSource;
@@ -133,7 +133,7 @@ public class MessagingIT {
 		database = coreComponent.getDatabase();
 
 		messageComponent = DaggerMessagingComponent.builder().coreComponent(coreComponent)
-				.serverConfigurationModule(new ServerConfigurationModule(workingdir)).build();
+				.artemisBrokerModule(new ArtemisBrokerModule(workingdir)).build();
 
 		aes = messageComponent.getServer();
 		aes.start();

@@ -31,16 +31,6 @@ import dagger.Provides;
 
 @Module
 public class ArtemisSessionModule {
-
-	@Provides
-	public ClientSessionFactory provideClientSessionFactory(ServerLocator locator) {
-		try {
-			return locator.createSessionFactory();
-		} catch (Exception e) {
-			throw new RuntimeException("Failed to create session factory", e);
-		}
-	}
-
 	private RuntimeException runtimeException(ActiveMQException e) {
 		return new RuntimeException("Failed to create session", e);
 	}
@@ -62,6 +52,15 @@ public class ArtemisSessionModule {
 			return artemisSession.getTransactedSession();
 		} catch (ActiveMQException e) {
 			throw runtimeException(e);
+		}
+	}
+
+	@Provides
+	public static ClientSessionFactory provideSessionFactory(ServerLocator locator) {
+		try {
+			return locator.createSessionFactory();
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to create session factory", e);
 		}
 	}
 }

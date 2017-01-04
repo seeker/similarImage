@@ -19,7 +19,6 @@ package com.github.dozedoff.similarImage.module;
 
 import org.apache.activemq.artemis.api.core.TransportConfiguration;
 import org.apache.activemq.artemis.api.core.client.ActiveMQClient;
-import org.apache.activemq.artemis.api.core.client.ClientSessionFactory;
 import org.apache.activemq.artemis.api.core.client.ServerLocator;
 import org.apache.activemq.artemis.core.remoting.impl.invm.InVMConnectorFactory;
 
@@ -27,7 +26,7 @@ import dagger.Module;
 import dagger.Provides;
 
 @Module
-public class ServerConnectionModule {
+public class InVMConnectionModule {
 	private static final int LARGE_MESSAGE_SIZE_THRESHOLD = 1024 * 1024 * 100;
 
 	@Provides
@@ -38,12 +37,5 @@ public class ServerConnectionModule {
 				.setBlockOnNonDurableSend(false).setBlockOnDurableSend(false).setPreAcknowledge(true);
 	}
 
-	@Provides
-	public static ClientSessionFactory provideSessionFactory(ServerLocator locator) {
-		try {
-			return locator.createSessionFactory();
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
+
 }
