@@ -46,8 +46,8 @@ import com.github.dozedoff.similarImage.handler.HashNames;
 import com.github.dozedoff.similarImage.image.ImageResizer;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue;
+import com.github.dozedoff.similarImage.messaging.ArtemisSession;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
-import com.github.dozedoff.similarImage.module.ArtemisSessionModule;
 import com.github.dozedoff.similarImage.messaging.HasherNode;
 import com.github.dozedoff.similarImage.messaging.ResizerNode;
 
@@ -203,7 +203,7 @@ public class ArgumentPasrser {
 				.setBlockOnNonDurableSend(false).setBlockOnDurableSend(false).setPreAcknowledge(true)
 				.setReconnectAttempts(3).setConsumerWindowSize(parsedArgs.getInt("window"));
 		
-		try (ArtemisSessionModule session = new ArtemisSessionModule(locator);) {
+		try (ArtemisSession session = new ArtemisSession(locator);) {
 			if (parsedArgs.getBoolean("resize")) {
 				startResizeWorkers(session, parsedArgs.getInt("resize_workers"));
 			}
@@ -239,7 +239,7 @@ public class ArgumentPasrser {
 		}
 	}
 
-	private void startHashWorkers(ArtemisSessionModule session, int workerCount) {
+	private void startHashWorkers(ArtemisSession session, int workerCount) {
 		for (int i = 0; i < workerCount; i++) {
 			LOGGER.info("Starting hash worker {} ...", i);
 			try {
@@ -252,7 +252,7 @@ public class ArgumentPasrser {
 		}
 	}
 
-	private void startResizeWorkers(ArtemisSessionModule session, int workerCount) {
+	private void startResizeWorkers(ArtemisSession session, int workerCount) {
 		for (int i = 0; i < workerCount; i++) {
 			LOGGER.info("Starting resize worker {} ...", i);
 			try {
@@ -265,7 +265,7 @@ public class ArgumentPasrser {
 		}
 	}
 
-	private void logQueueSizes(ArtemisSessionModule aSession) {
+	private void logQueueSizes(ArtemisSession aSession) {
 		try (ClientSession session = aSession.getSession()) {
 			for (QueueAddress qa : QueueAddress.values()) {
 				try {

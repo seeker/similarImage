@@ -27,16 +27,16 @@ import com.github.dozedoff.similarImage.io.ExtendedAttributeDirectoryCache;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.io.Statistics;
+import com.github.dozedoff.similarImage.messaging.ArtemisSession;
 import com.github.dozedoff.similarImage.messaging.StorageNode;
-import com.github.dozedoff.similarImage.module.ArtemisSessionModule;
 
 public class HandlerListFactory {
 	private final ImageRepository imageRepository;
 	private final Statistics statistics;
-	private final ArtemisSessionModule session;
+	private final ArtemisSession session;
 	private final ExtendedAttributeQuery eaQuery;
 
-	public HandlerListFactory(ImageRepository imageRepository, Statistics statistics, ArtemisSessionModule as, ExtendedAttributeQuery eaQuery) {
+	public HandlerListFactory(ImageRepository imageRepository, Statistics statistics, ArtemisSession as, ExtendedAttributeQuery eaQuery) {
 		this.imageRepository = imageRepository;
 		this.statistics = statistics;
 		this.session = as;

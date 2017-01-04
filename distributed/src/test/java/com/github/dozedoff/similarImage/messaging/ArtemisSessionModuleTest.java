@@ -15,7 +15,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.dozedoff.similarImage.module;
+package com.github.dozedoff.similarImage.messaging;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -28,7 +28,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.github.dozedoff.similarImage.module.ArtemisSessionModule;
+import com.github.dozedoff.similarImage.messaging.ArtemisSession;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ArtemisSessionModuleTest {
@@ -38,14 +38,14 @@ public class ArtemisSessionModuleTest {
 	@Mock
 	private ClientSession session;
 
-	private ArtemisSessionModule cut;
+	private ArtemisSession cut;
 
 	@Before
 	public void setUp() throws Exception {
 		when(factory.createSession()).thenReturn(session);
 		when(factory.createTransactedSession()).thenReturn(session);
 
-		cut = new ArtemisSessionModule(factory);
+		cut = new ArtemisSession(factory);
 	}
 
 	@Test

@@ -17,128 +17,51 @@
  */
 package com.github.dozedoff.similarImage.module;
 
-import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
 import org.apache.activemq.artemis.api.core.client.ClientSessionFactory;
 import org.apache.activemq.artemis.api.core.client.ServerLocator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import com.github.dozedoff.similarImage.messaging.ArtemisSession;
 
 import dagger.Module;
 import dagger.Provides;
 
 @Module
-public class ArtemisSessionModule implements AutoCloseable {
-	private static final Logger LOGGER = LoggerFactory.getLogger(ArtemisSessionModule.class);
-	private final ClientSessionFactory factory;
+public class ArtemisSessionModule {
 
-	/**
-	 * Create a session factory
-	 * 
-	 * @param sessionFactory
-	 *            for creating sessions
-	 */
-	@Inject
-	public ArtemisSessionModule(ClientSessionFactory sessionFactory) {
-		this.factory = sessionFactory;
-	}
-
-	/**
-	 * Create a session factory
-	 * 
-	 * @param serverLocator
-	 *            for finding the servers to connect to
-	 * @throws Exception
-	 *             if the setup fails
-	 * @deprecated inject factories directly
-	 * 
-	 **/
-	@Deprecated
-	public ArtemisSessionModule(ServerLocator serverLocator) throws Exception {
-		this.factory = serverLocator.createSessionFactory();
-	}
-
-	private ClientSession createAndConfigureSession() {
-		ClientSession session;
+	@Provides
+	public ClientSessionFactory provideClientSessionFactory(ServerLocator locator) {
 		try {
-			session = factory.createSession();
-			session.start();
-			return session;
-		} catch (ActiveMQException e) {
-			throw new RuntimeException(e);
+			return locator.createSessionFactory();
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to create session factory", e);
 		}
 	}
 
-	/**
-	 * Get a new configured session instance
-	 * 
-	 * @return artemis session
-	 * @throws ActiveMQException
-	 *             if the session setup fails
-	 */
+	private RuntimeException runtimeException(ActiveMQException e) {
+		return new RuntimeException("Failed to create session", e);
+	}
+
 	@Provides
 	@Named("normal")
-	public ClientSession provideNormalSession() {
-		return createAndConfigureSession();
-	}
-
-	/**
-	 * Get a new configured session instance
-	 * 
-	 * @return artemis session
-	 * @throws ActiveMQException
-	 *             if the session setup fails
-	 * @deprecated use dagger 2 provider
-	 */
-	@Deprecated
-	public ClientSession getSession() throws ActiveMQException {
-		return provideNormalSession();
-	}
-
-	/**
-	 * Get a new configured and running transacted session.
-	 * 
-	 * @return artemis session
-	 * @throws ActiveMQException
-	 *             if the session setup fails
-	 * @deprecated use dagger 2 provider
-	 */
-	@Deprecated
-	public ClientSession getTransactedSession() throws ActiveMQException {
-		ClientSession session = factory.createTransactedSession();
-		session.start();
-		return session;
-	}
-
-	/**
-	 * Get a new configured and running transacted session.
-	 * 
-	 * @return artemis session
-	 * @throws ActiveMQException
-	 *             if the session setup fails
-	 */
-	@Provides
-	@Named("transacted")
-	public ClientSession provideTransactedSession() {
-		ClientSession session;
+	public ClientSession provideNormalSession(ArtemisSession artemisSession) {
 		try {
-			session = factory.createTransactedSession();
-			session.start();
-			return session;
+			return artemisSession.getSession();
 		} catch (ActiveMQException e) {
-			throw new RuntimeException(e);
+			throw runtimeException(e);
 		}
 	}
 
-	/**
-	 * Closes the session factory and all associated sessions.
-	 */
-	@Override
-	public void close() {
-		LOGGER.info("Closing {}", this.getClass().getSimpleName());
-		factory.close();
+	@Provides
+	@Named("transacted")
+	public ClientSession provideTransactedSession(ArtemisSession artemisSession) {
+		try {
+			return artemisSession.getTransactedSession();
+		} catch (ActiveMQException e) {
+			throw runtimeException(e);
+		}
 	}
 }

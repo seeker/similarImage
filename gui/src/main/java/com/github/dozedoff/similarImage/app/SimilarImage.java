@@ -53,6 +53,7 @@ import com.github.dozedoff.similarImage.io.ExtendedAttributeDirectoryCache;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
+import com.github.dozedoff.similarImage.messaging.ArtemisSession;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.messaging.HasherNode;
 import com.github.dozedoff.similarImage.messaging.MessageCollector;
@@ -62,7 +63,6 @@ import com.github.dozedoff.similarImage.messaging.RepositoryNode;
 import com.github.dozedoff.similarImage.messaging.ResizerNode;
 import com.github.dozedoff.similarImage.messaging.ResultMessageSink;
 import com.github.dozedoff.similarImage.messaging.TaskMessageHandler;
-import com.github.dozedoff.similarImage.module.ArtemisSessionModule;
 import com.github.dozedoff.similarImage.thread.SorterFactory;
 import com.j256.ormlite.misc.TransactionManager;
 
@@ -168,7 +168,7 @@ public class SimilarImage {
 		aes = messagingComponent.getServer();
 		aes.start();
 
-		ArtemisSessionModule as = messagingComponent.getSessionModule();
+		ArtemisSession as = messagingComponent.getSessionModule();
 
 		Database database = coreComponent.getDatabase();
 

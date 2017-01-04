@@ -71,7 +71,6 @@ import com.github.dozedoff.similarImage.io.ExtendedAttributeDirectoryCache;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
-import com.github.dozedoff.similarImage.module.ArtemisSessionModule;
 import com.github.dozedoff.similarImage.module.SQLitePersistenceModule;
 import com.github.dozedoff.similarImage.module.ServerConfigurationModule;
 import com.github.dozedoff.similarImage.util.TestUtil;
@@ -94,7 +93,7 @@ public class MessagingIT {
 	private static Database database;
 	private ImageRepository imageRepository;
 	private static ArtemisHashProducer ahp;
-	private static ArtemisSessionModule as;
+	private static ArtemisSession as;
 	private PendingHashImageRepository pendingRepo;
 
 	private static Path dbFile;
