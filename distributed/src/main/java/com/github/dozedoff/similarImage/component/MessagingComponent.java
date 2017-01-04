@@ -17,18 +17,28 @@
  */
 package com.github.dozedoff.similarImage.component;
 
+import com.codahale.metrics.MetricRegistry;
+import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
 import com.github.dozedoff.similarImage.module.ArtemisSessionModule;
 import com.github.dozedoff.similarImage.module.ServerConfigurationModule;
 import com.github.dozedoff.similarImage.module.ServerConnectionModule;
+import com.github.dozedoff.similarImage.module.StatisticsModule;
 
 import dagger.Component;
 
 @MainScope
 @Component(modules = { ServerConnectionModule.class,
-		ServerConfigurationModule.class }, dependencies = CoreComponent.class)
+		ServerConfigurationModule.class, StatisticsModule.class }, dependencies = CoreComponent.class)
 public interface MessagingComponent {
 	ArtemisSessionModule getSessionModule();
 
 	ArtemisEmbeddedServer getServer();
+
+	// TODO remove methods below, temporary for refactoring
+
+	MetricRegistry getMetricRegistry();
+
+	Statistics getStatistics();
+
 }

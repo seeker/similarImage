@@ -158,7 +158,7 @@ public class MessagingIT {
 		imageRepository = coreComponent.getImageRepository();
 		pendingRepo = coreComponent.getPendingHashImageRepository();
 
-		metrics = new MetricRegistry();
+		metrics = messageComponent.getMetricRegistry();
 
 		as = messageComponent.getSessionModule();
 
@@ -170,7 +170,7 @@ public class MessagingIT {
 		}
 
 		QueueToDatabaseTransaction qdt = new QueueToDatabaseTransaction(as.getTransactedSession(),
-				new TransactionManager(database.getCs()), pendingRepo, imageRepository, new MetricRegistry());
+				new TransactionManager(database.getCs()), pendingRepo, imageRepository, metrics);
 		mc = new MessageCollector(100, qdt);
 
 		sink = new ResultMessageSink(as.getTransactedSession(), mc, QueueAddress.RESULT.toString(), 1000);
