@@ -18,6 +18,9 @@
 package com.github.dozedoff.similarImage.component;
 
 import com.codahale.metrics.MetricRegistry;
+import com.github.dozedoff.similarImage.db.repository.FilterRepository;
+import com.github.dozedoff.similarImage.db.repository.ImageRepository;
+import com.github.dozedoff.similarImage.db.repository.TagRepository;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
 import com.github.dozedoff.similarImage.messaging.ArtemisSession;
@@ -49,5 +52,11 @@ public interface MessagingComponent {
 	Statistics getStatistics();
 
 	RepositoryNode getRepositoryNode();
+
+	ImageRepository getImageRepository();
+
+	FilterRepository getfilFilterRepository();
+
+	TagRepository gettaTagRepository();
 
 }

@@ -20,6 +20,8 @@ package com.github.dozedoff.similarImage.gui;
 import java.util.Collection;
 import java.util.Collections;
 
+import javax.inject.Inject;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +48,7 @@ public class UserTagSettingController {
 	 * @param tagRepository
 	 *            Access to the datasource
 	 */
+	@Inject
 	public UserTagSettingController(TagRepository tagRepository) {
 		this.tagRepository = tagRepository;
 	}

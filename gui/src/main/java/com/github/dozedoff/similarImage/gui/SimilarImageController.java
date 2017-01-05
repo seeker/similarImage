@@ -26,10 +26,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import javax.inject.Inject;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.filefilter.SimpleImageFilter;
+import com.github.dozedoff.similarImage.component.ApplicationScope;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
@@ -48,6 +51,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.eventbus.Subscribe;
 
+@ApplicationScope
 public class SimilarImageController {
 	private final Logger logger = LoggerFactory.getLogger(SimilarImageController.class);
 
@@ -74,8 +78,10 @@ public class SimilarImageController {
 	 * @param statistics
 	 *            tracking stats
 	 */
-	public SimilarImageController(SorterFactory sorterFactory, HandlerListFactory handlerCollectionFactory, DuplicateOperations dupOps,
-			DisplayGroupView displayGroup, Statistics statistics, UserTagSettingController utsc) {
+	@Inject
+	public SimilarImageController(SorterFactory sorterFactory, HandlerListFactory handlerCollectionFactory,
+			DuplicateOperations dupOps, DisplayGroupView displayGroup, Statistics statistics,
+			UserTagSettingController utsc) {
 
 		results = MultimapBuilder.hashKeys().hashSetValues().build();
 		this.displayGroup = displayGroup;

@@ -21,6 +21,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.inject.Inject;
+
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.io.ExtendedAttribute;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeDirectoryCache;
@@ -36,6 +38,7 @@ public class HandlerListFactory {
 	private final ArtemisSession session;
 	private final ExtendedAttributeQuery eaQuery;
 
+	@Inject
 	public HandlerListFactory(ImageRepository imageRepository, Statistics statistics, ArtemisSession as, ExtendedAttributeQuery eaQuery) {
 		this.imageRepository = imageRepository;
 		this.statistics = statistics;

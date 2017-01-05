@@ -39,6 +39,7 @@ import com.j256.ormlite.support.ConnectionSource;
 import dagger.Module;
 import dagger.Provides;
 
+@Singleton
 @Module
 public class SQLitePersistenceModule {
 	private final static String DEFAULT_DB_PATH = "similarImage.db";

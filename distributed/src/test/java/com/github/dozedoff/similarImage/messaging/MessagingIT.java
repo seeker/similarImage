@@ -147,6 +147,7 @@ public class MessagingIT {
 
 	@Before
 	public void setup() throws Exception {
+		clearDatabase(database.getCs());
 		testImageAutumn = Files.createTempFile(Paths.get(""), "testImage", ".jpg");
 		testImageCorrupt = Files.createTempFile(Paths.get(""), "corrupt", ".jpg");
 

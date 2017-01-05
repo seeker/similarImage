@@ -33,22 +33,15 @@ import com.codahale.metrics.Slf4jReporter;
 import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.component.CoreComponent;
 import com.github.dozedoff.similarImage.component.DaggerCoreComponent;
+import com.github.dozedoff.similarImage.component.DaggerGuiComponent;
 import com.github.dozedoff.similarImage.component.DaggerMessagingComponent;
+import com.github.dozedoff.similarImage.component.GuiComponent;
 import com.github.dozedoff.similarImage.component.MessagingComponent;
-import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
-import com.github.dozedoff.similarImage.db.repository.TagRepository;
 import com.github.dozedoff.similarImage.db.repository.ormlite.RepositoryFactory;
-import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
-import com.github.dozedoff.similarImage.gui.DisplayGroupView;
 import com.github.dozedoff.similarImage.gui.SimilarImageController;
 import com.github.dozedoff.similarImage.gui.SimilarImageView;
-import com.github.dozedoff.similarImage.gui.UserTagSettingController;
-import com.github.dozedoff.similarImage.handler.HandlerListFactory;
 import com.github.dozedoff.similarImage.image.ImageResizer;
-import com.github.dozedoff.similarImage.io.ExtendedAttribute;
-import com.github.dozedoff.similarImage.io.ExtendedAttributeDirectoryCache;
-import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
@@ -56,7 +49,6 @@ import com.github.dozedoff.similarImage.messaging.ArtemisSession;
 import com.github.dozedoff.similarImage.messaging.HasherNode;
 import com.github.dozedoff.similarImage.messaging.Node;
 import com.github.dozedoff.similarImage.messaging.ResizerNode;
-import com.github.dozedoff.similarImage.thread.SorterFactory;
 
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
@@ -168,23 +160,13 @@ public class SimilarImage {
 		nodes.add(messagingComponent.getRepositoryNode());
 		nodes.add(messagingComponent.getResultMessageSink());
 
-		FilterRepository filterRepository = repositoryFactory.buildFilterRepository();
-		TagRepository tagRepository = repositoryFactory.buildTagRepository();
-
-		DuplicateOperations dupOps = new DuplicateOperations(filterRepository, tagRepository, imageRepository);
-		SorterFactory sf = new SorterFactory(imageRepository, filterRepository, tagRepository);
-
 		statistics = messagingComponent.getStatistics();
 		ArtemisSession as = messagingComponent.getSessionModule();
-		ExtendedAttributeQuery eaQuery = new ExtendedAttributeDirectoryCache(new ExtendedAttribute(), 1, TimeUnit.MINUTES);
-		HandlerListFactory hlf = new HandlerListFactory(imageRepository, statistics, as, eaQuery);
-		UserTagSettingController utsc = new UserTagSettingController(tagRepository);
 
-		DisplayGroupView dgv = new DisplayGroupView();
-		SimilarImageController controller = new SimilarImageController(sf, hlf, dupOps, dgv, statistics, utsc);
-		SimilarImageView gui = new SimilarImageView(controller, dupOps, PRODUCER_QUEUE_SIZE, utsc, filterRepository);
+		GuiComponent guiComponent = DaggerGuiComponent.builder().messagingComponent(messagingComponent).build();
 
-		controller.setGui(gui);
+		SimilarImageView gui = guiComponent.getSimilarImageView();
+		SimilarImageController controller = guiComponent.getSimilarImageController();
 
 		logger.info("Starting metrics reporter...");
 		reporter = Slf4jReporter.forRegistry(metrics).outputTo(LoggerFactory.getLogger("similarImage.metrics"))
