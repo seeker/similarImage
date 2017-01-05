@@ -97,6 +97,7 @@ public class ResizerNode implements MessageHandler, Node {
 	private final Histogram imageSize;
 	private final Counter bufferResize;
 	private final Timer resizeDuration;
+	private final UUID identity;
 
 	/**
 	 * Create a new consumer for hash messages. Uses the default addresses for queues.
@@ -152,6 +153,9 @@ public class ResizerNode implements MessageHandler, Node {
 
 		this.consumer.setMessageHandler(this);
 		this.messageBuffer = ByteBuffer.allocate(INITIAL_BUFFER_SIZE);
+		this.identity = UUID.randomUUID();
+
+		LOGGER.debug("Starting {}", this.toString());
 
 		preLoadCache(queryMessage);
 	}
@@ -304,6 +308,10 @@ public class ResizerNode implements MessageHandler, Node {
 	 */
 	@Override
 	public String toString() {
-		return ResizerNode.class.getSimpleName();
+		StringBuilder sb = new StringBuilder();
+
+		sb.append(ResizerNode.class.getSimpleName()).append(" {").append(identity.toString()).append("}");
+
+		return sb.toString();
 	}
 }
