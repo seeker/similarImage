@@ -24,14 +24,17 @@ import org.apache.activemq.artemis.api.core.client.ClientSession;
 
 import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.commonj.hash.ImagePHash;
+import com.github.dozedoff.similarImage.image.ImageResizer;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.messaging.HasherNode;
+import com.github.dozedoff.similarImage.messaging.ResizerNode;
 
 import dagger.Module;
 import dagger.Provides;
 
 @Module
 public class NodeModule {
+	private static final int IMAGE_SIZE = 32;
 
 	@Provides
 	public HasherNode provideHasherNode(MetricRegistry metrics, @Named("normal") ClientSession session) {
@@ -41,5 +44,10 @@ public class NodeModule {
 		} catch (ActiveMQException e) {
 			throw new RuntimeException("Failed to create " + HasherNode.class.getSimpleName(), e);
 		}
+	}
+
+	@Provides
+	public ResizerNode provideResizerNode(@Named("normal")ClientSession session, MetricRegistry metrics) {
+		return new ResizerNode(session, new ImageResizer(IMAGE_SIZE), metrics);
 	}
 }

@@ -40,12 +40,10 @@ import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.ormlite.RepositoryFactory;
 import com.github.dozedoff.similarImage.gui.SimilarImageController;
 import com.github.dozedoff.similarImage.gui.SimilarImageView;
-import com.github.dozedoff.similarImage.image.ImageResizer;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
 import com.github.dozedoff.similarImage.messaging.ArtemisSession;
 import com.github.dozedoff.similarImage.messaging.Node;
-import com.github.dozedoff.similarImage.messaging.ResizerNode;
 
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
@@ -175,7 +173,7 @@ public class SimilarImage {
 		if (!noWorkers) {
 			for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
 				nodes.add(messagingComponent.getHasherNode());
-				nodes.add(new ResizerNode(as.getSession(), new ImageResizer(IMAGE_SIZE), metrics));
+				nodes.add(messagingComponent.getResizerNode());
 			}
 
 			Runtime.getRuntime().addShutdownHook(new Thread() {

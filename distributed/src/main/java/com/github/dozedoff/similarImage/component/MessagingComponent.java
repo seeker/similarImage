@@ -26,6 +26,7 @@ import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
 import com.github.dozedoff.similarImage.messaging.ArtemisSession;
 import com.github.dozedoff.similarImage.messaging.HasherNode;
 import com.github.dozedoff.similarImage.messaging.RepositoryNode;
+import com.github.dozedoff.similarImage.messaging.ResizerNode;
 import com.github.dozedoff.similarImage.messaging.ResultMessageSink;
 import com.github.dozedoff.similarImage.module.ArtemisBrokerModule;
 import com.github.dozedoff.similarImage.module.ArtemisSessionModule;
@@ -48,6 +49,8 @@ public interface MessagingComponent {
 	ResultMessageSink getResultMessageSink();
 
 	HasherNode getHasherNode();
+
+	ResizerNode getResizerNode();
 
 	// TODO remove methods below, temporary for refactoring
 

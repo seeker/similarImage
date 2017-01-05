@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.imageio.IIOException;
 import javax.imageio.ImageIO;
+import javax.inject.Inject;
 
 import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.client.ClientConsumer;
@@ -111,7 +112,8 @@ public class ResizerNode implements MessageHandler, Node {
 	 * @throws Exception
 	 *             if the setup for {@link QueryMessage} failed
 	 */
-	public ResizerNode(ClientSession session, ImageResizer resizer, MetricRegistry metrics) throws Exception {
+	@Inject
+	public ResizerNode(ClientSession session, ImageResizer resizer, MetricRegistry metrics) {
 		this(session, resizer, QueueAddress.RESIZE_REQUEST.toString(), QueueAddress.HASH_REQUEST.toString(),
 				new QueryMessage(session, QueueAddress.REPOSITORY_QUERY), metrics);
 	}
@@ -132,32 +134,35 @@ public class ResizerNode implements MessageHandler, Node {
 	 *            instance to use for repository queries
 	 * @param metrics
 	 *            registry for tracking metrics
-	 * @throws Exception
-	 *             if the setup for {@link QueryMessage} failed
 	 */
 	protected ResizerNode(ClientSession session, ImageResizer resizer, String requestAddress, String resultAddress,
-			QueryMessage queryMessage, MetricRegistry metrics) throws Exception {
+			QueryMessage queryMessage, MetricRegistry metrics) {
 		// TODO replace with list of pending files
-		this.consumer = session.createConsumer(requestAddress);
-		this.producer = session.createProducer(resultAddress);
-		this.resizer = resizer;
-		this.messageFactory = new MessageFactory(session);
-		this.pendingCache = CacheBuilder.newBuilder().expireAfterAccess(PENDING_CACHE_TIMEOUT_MINUTES, TimeUnit.MINUTES).build();
+		try {
+			this.consumer = session.createConsumer(requestAddress);
+			this.producer = session.createProducer(resultAddress);
+			this.resizer = resizer;
+			this.messageFactory = new MessageFactory(session);
+			this.pendingCache = CacheBuilder.newBuilder()
+					.expireAfterAccess(PENDING_CACHE_TIMEOUT_MINUTES, TimeUnit.MINUTES).build();
 
-		this.resizeRequests = metrics.meter(METRIC_NAME_RESIZE_MESSAGES);
-		this.resizeDuration = metrics.timer(METRIC_NAME_RESIZE_DURATION);
-		this.pendingCacheHit = metrics.meter(METRIC_NAME_PENDING_CACHE_HIT);
-		this.pendingCacheMiss = metrics.meter(METRIC_NAME_PENDING_CACHE_MISS);
-		this.imageSize = metrics.histogram(METRIC_NAME_IMAGE_SIZE);
-		this.bufferResize = metrics.counter(METRIC_NAME_BUFFER_RESIZE);
+			this.resizeRequests = metrics.meter(METRIC_NAME_RESIZE_MESSAGES);
+			this.resizeDuration = metrics.timer(METRIC_NAME_RESIZE_DURATION);
+			this.pendingCacheHit = metrics.meter(METRIC_NAME_PENDING_CACHE_HIT);
+			this.pendingCacheMiss = metrics.meter(METRIC_NAME_PENDING_CACHE_MISS);
+			this.imageSize = metrics.histogram(METRIC_NAME_IMAGE_SIZE);
+			this.bufferResize = metrics.counter(METRIC_NAME_BUFFER_RESIZE);
 
-		this.consumer.setMessageHandler(this);
-		this.messageBuffer = ByteBuffer.allocate(INITIAL_BUFFER_SIZE);
-		this.identity = UUID.randomUUID();
+			this.consumer.setMessageHandler(this);
+			this.messageBuffer = ByteBuffer.allocate(INITIAL_BUFFER_SIZE);
+			this.identity = UUID.randomUUID();
 
-		LOGGER.debug("Starting {}", this.toString());
+			LOGGER.debug("Starting {}", this.toString());
 
-		preLoadCache(queryMessage);
+			preLoadCache(queryMessage);
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to create " + ResizerNode.class.getSimpleName(), e);
+		}
 	}
 
 	private void preLoadCache(QueryMessage queryMessage) throws Exception {

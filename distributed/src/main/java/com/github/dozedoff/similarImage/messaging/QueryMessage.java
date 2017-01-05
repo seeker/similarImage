@@ -72,14 +72,16 @@ public class QueryMessage {
 	 *            to use for messaging
 	 * @param queryAddress
 	 *            address where query requests are received and responses sent
-	 * @throws Exception
-	 *             if there was an error setting up the requestors
 	 */
-	public QueryMessage(ClientSession session, QueueAddress queryAddress) throws Exception {
-		this.session = session;
-		LOGGER.info("Preparing to send query requests on {} ...", queryAddress.toString());
-		repositoryQuery = new ClientRequestor(session, queryAddress.toString());
-		messageFactory = new MessageFactory(session);
+	public QueryMessage(ClientSession session, QueueAddress queryAddress) {
+		try {
+			this.session = session;
+			LOGGER.info("Preparing to send query requests on {} ...", queryAddress.toString());
+			repositoryQuery = new ClientRequestor(session, queryAddress.toString());
+			messageFactory = new MessageFactory(session);
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to create " + QueryMessage.class.getSimpleName(), e);
+		}
 	}
 
 	/**
