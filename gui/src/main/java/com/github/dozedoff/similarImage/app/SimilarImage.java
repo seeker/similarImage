@@ -30,7 +30,6 @@ import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Slf4jReporter;
-import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.component.CoreComponent;
 import com.github.dozedoff.similarImage.component.DaggerCoreComponent;
 import com.github.dozedoff.similarImage.component.DaggerGuiComponent;
@@ -44,9 +43,7 @@ import com.github.dozedoff.similarImage.gui.SimilarImageView;
 import com.github.dozedoff.similarImage.image.ImageResizer;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
-import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.messaging.ArtemisSession;
-import com.github.dozedoff.similarImage.messaging.HasherNode;
 import com.github.dozedoff.similarImage.messaging.Node;
 import com.github.dozedoff.similarImage.messaging.ResizerNode;
 
@@ -177,8 +174,7 @@ public class SimilarImage {
 
 		if (!noWorkers) {
 			for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
-				nodes.add(new HasherNode(as.getSession(), new ImagePHash(), QueueAddress.HASH_REQUEST.toString(),
-						QueueAddress.RESULT.toString(), metrics));
+				nodes.add(messagingComponent.getHasherNode());
 				nodes.add(new ResizerNode(as.getSession(), new ImageResizer(IMAGE_SIZE), metrics));
 			}
 
