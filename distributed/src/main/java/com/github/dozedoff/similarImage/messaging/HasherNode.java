@@ -58,6 +58,8 @@ public class HasherNode implements MessageHandler, Node {
 	private ByteBuffer buffer;
 	private MessageFactory messageFactory;
 
+	private final UUID identity;
+
 	private final Meter hashRequests;
 	private final Timer hashDuration;
 	private final Meter bufferResize;
@@ -97,6 +99,10 @@ public class HasherNode implements MessageHandler, Node {
 		this.hashDuration = metrics.timer(METRIC_NAME_HASH_DURATION);
 		this.bufferResize = metrics.meter(METRIC_NAME_BUFFER_RESIZE);
 		this.buffer = ByteBuffer.allocate(INITIAL_BUFFER_SIZE);
+
+		this.identity = UUID.randomUUID();
+
+		LOGGER.debug("Started {}", this.toString());
 	}
 
 	/**
@@ -127,7 +133,11 @@ public class HasherNode implements MessageHandler, Node {
 	 */
 	@Override
 	public String toString() {
-		return HasherNode.class.getSimpleName();
+		StringBuilder sb = new StringBuilder();
+
+		sb.append(HasherNode.class.getSimpleName()).append(" {").append(identity.toString()).append("}");
+
+		return sb.toString();
 	}
 
 	/**
