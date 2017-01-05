@@ -36,13 +36,9 @@ import com.github.dozedoff.similarImage.component.DaggerGuiComponent;
 import com.github.dozedoff.similarImage.component.DaggerMessagingComponent;
 import com.github.dozedoff.similarImage.component.GuiComponent;
 import com.github.dozedoff.similarImage.component.MessagingComponent;
-import com.github.dozedoff.similarImage.db.repository.ImageRepository;
-import com.github.dozedoff.similarImage.db.repository.ormlite.RepositoryFactory;
 import com.github.dozedoff.similarImage.gui.SimilarImageController;
 import com.github.dozedoff.similarImage.gui.SimilarImageView;
-import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
-import com.github.dozedoff.similarImage.messaging.ArtemisSession;
 import com.github.dozedoff.similarImage.messaging.Node;
 
 import net.sourceforge.argparse4j.ArgumentParsers;
@@ -52,19 +48,9 @@ import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
 
 public class SimilarImage {
-	private static final int COLLECTED_MESSAGE_THRESHOLD = 100;
-	/**
-	 * Time in milliseconds
-	 */
-	private static final long COLLECTED_MESSAGE_DRAIN_INTERVAL = TimeUnit.MILLISECONDS.convert(1, TimeUnit.SECONDS);
-
 	private final static Logger logger = LoggerFactory.getLogger(SimilarImage.class);
 
 	private static final String PROPERTIES_FILENAME = "similarImage.properties";
-	private static final int PRODUCER_QUEUE_SIZE = 400;
-	private static final int IMAGE_SIZE = 32;
-
-	private Statistics statistics;
 
 	private ArtemisEmbeddedServer aes;
 
@@ -148,15 +134,8 @@ public class SimilarImage {
 		aes = messagingComponent.getServer();
 		aes.start();
 
-		RepositoryFactory repositoryFactory = coreComponent.getRepositoryFactory();
-		ImageRepository imageRepository = coreComponent.getImageRepository();
-
-		// TODO module for node setup?
 		nodes.add(messagingComponent.getRepositoryNode());
 		nodes.add(messagingComponent.getResultMessageSink());
-
-		statistics = messagingComponent.getStatistics();
-		ArtemisSession as = messagingComponent.getSessionModule();
 
 		GuiComponent guiComponent = DaggerGuiComponent.builder().messagingComponent(messagingComponent).build();
 
