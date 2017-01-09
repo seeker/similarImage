@@ -18,6 +18,7 @@
 package com.github.dozedoff.similarImage.component;
 
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Slf4jReporter;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
@@ -48,6 +49,8 @@ public interface MessagingComponent {
 	HasherNode getHasherNode();
 
 	ResizerNode getResizerNode();
+
+	Slf4jReporter getSlf4jReporter();
 
 	// TODO remove methods below, temporary for refactoring
 

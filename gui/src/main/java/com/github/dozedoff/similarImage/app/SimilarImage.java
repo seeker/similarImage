@@ -28,7 +28,6 @@ import javax.imageio.ImageReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Slf4jReporter;
 import com.github.dozedoff.similarImage.component.DaggerGuiApplicationComponent;
 import com.github.dozedoff.similarImage.component.DaggerMessagingComponent;
@@ -54,7 +53,6 @@ public class SimilarImage {
 
 	private ArtemisEmbeddedServer aes;
 
-	private MetricRegistry metrics;
 	private Slf4jReporter reporter;
 
 	private List<Node> nodes = new LinkedList<Node>();
@@ -130,8 +128,6 @@ public class SimilarImage {
 		MessagingComponent messagingComponent = DaggerMessagingComponent.builder().persistenceComponent(coreComponent)
 				.build();
 
-		this.metrics = messagingComponent.getMetricRegistry();
-
 		aes = messagingComponent.getServer();
 		aes.start();
 
@@ -145,8 +141,7 @@ public class SimilarImage {
 		SimilarImageController controller = guiComponent.getSimilarImageController();
 
 		logger.info("Starting metrics reporter...");
-		reporter = Slf4jReporter.forRegistry(metrics).outputTo(LoggerFactory.getLogger("similarImage.metrics"))
-				.convertRatesTo(TimeUnit.SECONDS).convertDurationsTo(TimeUnit.MILLISECONDS).build();
+		reporter = messagingComponent.getSlf4jReporter();
 		reporter.start(1, TimeUnit.MINUTES);
 
 		logImageReaders();

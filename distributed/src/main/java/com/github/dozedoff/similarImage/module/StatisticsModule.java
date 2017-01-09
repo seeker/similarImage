@@ -17,7 +17,12 @@
  */
 package com.github.dozedoff.similarImage.module;
 
+import java.util.concurrent.TimeUnit;
+
+import org.slf4j.LoggerFactory;
+
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Slf4jReporter;
 import com.github.dozedoff.similarImage.component.MainScope;
 import com.github.dozedoff.similarImage.io.Statistics;
 
@@ -35,7 +40,13 @@ public class StatisticsModule {
 	
 	@MainScope
 	@Provides
-	MetricRegistry providesMetricRegistry() {
+	public MetricRegistry provideMetricRegistry() {
 		return new MetricRegistry();
+	}
+
+	@Provides
+	public Slf4jReporter provideReporter(MetricRegistry metrics) {
+		return Slf4jReporter.forRegistry(metrics).outputTo(LoggerFactory.getLogger("similarImage.metrics"))
+				.convertRatesTo(TimeUnit.SECONDS).convertDurationsTo(TimeUnit.MILLISECONDS).build();
 	}
 }
