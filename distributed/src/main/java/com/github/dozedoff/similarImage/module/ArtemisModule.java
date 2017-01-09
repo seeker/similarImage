@@ -17,12 +17,21 @@
  */
 package com.github.dozedoff.similarImage.module;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.apache.activemq.artemis.api.core.ActiveMQException;
+import org.apache.activemq.artemis.api.core.TransportConfiguration;
+import org.apache.activemq.artemis.api.core.client.ActiveMQClient;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
 import org.apache.activemq.artemis.api.core.client.ClientSessionFactory;
 import org.apache.activemq.artemis.api.core.client.ServerLocator;
+import org.apache.activemq.artemis.core.config.FileDeploymentManager;
+import org.apache.activemq.artemis.core.config.impl.FileConfiguration;
+import org.apache.activemq.artemis.core.remoting.impl.invm.InVMConnectorFactory;
 
 import com.github.dozedoff.similarImage.messaging.ArtemisSession;
 
@@ -30,7 +39,35 @@ import dagger.Module;
 import dagger.Provides;
 
 @Module
-public class ArtemisSessionModule {
+public class ArtemisModule {
+	private static final int LARGE_MESSAGE_SIZE_THRESHOLD = 1024 * 1024 * 100;
+
+	private Path serverWorkingDirectory;
+
+	@Inject
+	public ArtemisModule() {
+		serverWorkingDirectory = Paths.get("");
+	}
+
+	public ArtemisModule(Path serverWorkingDirectory) {
+		this.serverWorkingDirectory = serverWorkingDirectory;
+	}
+
+	@Provides
+	public FileConfiguration provideServerConfiguration() {
+		try {
+			FileConfiguration config = new FileConfiguration();
+			FileDeploymentManager fdm = new FileDeploymentManager("broker.xml");
+			fdm.addDeployable(config);
+			fdm.readConfiguration();
+			config.setBrokerInstance(serverWorkingDirectory.toFile());
+
+			return config;
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to create server configuration");
+		}
+	}
+
 	private RuntimeException runtimeException(ActiveMQException e) {
 		return new RuntimeException("Failed to create session", e);
 	}
@@ -62,5 +99,13 @@ public class ArtemisSessionModule {
 		} catch (Exception e) {
 			throw new RuntimeException("Failed to create session factory", e);
 		}
+	}
+
+	@Provides
+	public static ServerLocator provideInVmLocator() {
+		return ActiveMQClient
+				.createServerLocatorWithoutHA(new TransportConfiguration(InVMConnectorFactory.class.getName()))
+				.setCacheLargeMessagesClient(false).setMinLargeMessageSize(LARGE_MESSAGE_SIZE_THRESHOLD)
+				.setBlockOnNonDurableSend(false).setBlockOnDurableSend(false).setPreAcknowledge(true);
 	}
 }

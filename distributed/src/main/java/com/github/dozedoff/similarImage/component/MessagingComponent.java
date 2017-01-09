@@ -28,9 +28,7 @@ import com.github.dozedoff.similarImage.messaging.HasherNode;
 import com.github.dozedoff.similarImage.messaging.RepositoryNode;
 import com.github.dozedoff.similarImage.messaging.ResizerNode;
 import com.github.dozedoff.similarImage.messaging.ResultMessageSink;
-import com.github.dozedoff.similarImage.module.ArtemisBrokerModule;
-import com.github.dozedoff.similarImage.module.ArtemisSessionModule;
-import com.github.dozedoff.similarImage.module.InVMConnectionModule;
+import com.github.dozedoff.similarImage.module.ArtemisModule;
 import com.github.dozedoff.similarImage.module.NodeModule;
 import com.github.dozedoff.similarImage.module.RepositoryNodeModule;
 import com.github.dozedoff.similarImage.module.StatisticsModule;
@@ -38,9 +36,8 @@ import com.github.dozedoff.similarImage.module.StatisticsModule;
 import dagger.Component;
 
 @MainScope
-@Component(modules = { InVMConnectionModule.class,
-		ArtemisBrokerModule.class, StatisticsModule.class,
-		ArtemisSessionModule.class, RepositoryNodeModule.class, NodeModule.class }, dependencies = PersistenceComponent.class)
+@Component(modules = { ArtemisModule.class, StatisticsModule.class, RepositoryNodeModule.class,
+		NodeModule.class }, dependencies = PersistenceComponent.class)
 public interface MessagingComponent {
 	ArtemisSession getSessionModule();
 
