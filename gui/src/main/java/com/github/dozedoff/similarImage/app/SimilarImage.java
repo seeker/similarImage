@@ -30,10 +30,10 @@ import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Slf4jReporter;
-import com.github.dozedoff.similarImage.component.DaggerGuiComponent;
+import com.github.dozedoff.similarImage.component.DaggerGuiApplicationComponent;
 import com.github.dozedoff.similarImage.component.DaggerMessagingComponent;
 import com.github.dozedoff.similarImage.component.DaggerPersistenceComponent;
-import com.github.dozedoff.similarImage.component.GuiComponent;
+import com.github.dozedoff.similarImage.component.GuiApplicationComponent;
 import com.github.dozedoff.similarImage.component.MessagingComponent;
 import com.github.dozedoff.similarImage.component.PersistenceComponent;
 import com.github.dozedoff.similarImage.gui.SimilarImageController;
@@ -138,7 +138,8 @@ public class SimilarImage {
 		nodes.add(messagingComponent.getRepositoryNode());
 		nodes.add(messagingComponent.getResultMessageSink());
 
-		GuiComponent guiComponent = DaggerGuiComponent.builder().messagingComponent(messagingComponent).build();
+		GuiApplicationComponent guiComponent = DaggerGuiApplicationComponent.builder()
+				.messagingComponent(messagingComponent).build();
 
 		SimilarImageView gui = guiComponent.getSimilarImageView();
 		SimilarImageController controller = guiComponent.getSimilarImageController();

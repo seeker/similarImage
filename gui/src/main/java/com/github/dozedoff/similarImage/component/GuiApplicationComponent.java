@@ -25,7 +25,7 @@ import dagger.Component;
 
 @ApplicationScope
 @Component(modules = GuiModule.class, dependencies = { MessagingComponent.class })
-public interface GuiComponent {
+public interface GuiApplicationComponent {
 	SimilarImageView getSimilarImageView();
 
 	SimilarImageController getSimilarImageController();
