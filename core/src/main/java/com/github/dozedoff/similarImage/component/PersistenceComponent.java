@@ -32,7 +32,7 @@ import dagger.Component;
 
 @Singleton
 @Component(modules = { SQLitePersistenceModule.class })
-public interface CoreComponent {
+public interface PersistenceComponent {
 	Database getDatabase();
 
 	RepositoryFactory getRepositoryFactory();

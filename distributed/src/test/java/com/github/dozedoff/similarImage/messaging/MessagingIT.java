@@ -52,10 +52,10 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.commonj.hash.ImagePHash;
-import com.github.dozedoff.similarImage.component.CoreComponent;
-import com.github.dozedoff.similarImage.component.DaggerCoreComponent;
 import com.github.dozedoff.similarImage.component.DaggerMessagingComponent;
+import com.github.dozedoff.similarImage.component.DaggerPersistenceComponent;
 import com.github.dozedoff.similarImage.component.MessagingComponent;
+import com.github.dozedoff.similarImage.component.PersistenceComponent;
 import com.github.dozedoff.similarImage.db.Database;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.PendingHashImage;
@@ -111,7 +111,7 @@ public class MessagingIT {
 
 	ClientSession queueJanitor;
 
-	private static CoreComponent coreComponent;
+	private static PersistenceComponent persistenceComponent;
 	private static MessagingComponent messageComponent;
 
 	@BeforeClass
@@ -127,11 +127,12 @@ public class MessagingIT {
 		}
 		
 
-		coreComponent = DaggerCoreComponent.builder().sQLitePersistenceModule(new SQLitePersistenceModule(dbFile))
+		persistenceComponent = DaggerPersistenceComponent.builder()
+				.sQLitePersistenceModule(new SQLitePersistenceModule(dbFile))
 				.build();
-		database = coreComponent.getDatabase();
+		database = persistenceComponent.getDatabase();
 
-		messageComponent = DaggerMessagingComponent.builder().coreComponent(coreComponent)
+		messageComponent = DaggerMessagingComponent.builder().persistenceComponent(persistenceComponent)
 				.artemisBrokerModule(new ArtemisBrokerModule(workingdir)).build();
 
 		aes = messageComponent.getServer();
@@ -154,8 +155,8 @@ public class MessagingIT {
 		Files.copy(testImageAutumnOriginal, testImageAutumn, StandardCopyOption.REPLACE_EXISTING);
 		Files.copy(testImageCorruptOriginal, testImageCorrupt, StandardCopyOption.REPLACE_EXISTING);
 
-		imageRepository = coreComponent.getImageRepository();
-		pendingRepo = coreComponent.getPendingHashImageRepository();
+		imageRepository = persistenceComponent.getImageRepository();
+		pendingRepo = persistenceComponent.getPendingHashImageRepository();
 
 		metrics = messageComponent.getMetricRegistry();
 

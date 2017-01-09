@@ -40,7 +40,7 @@ import dagger.Component;
 @MainScope
 @Component(modules = { InVMConnectionModule.class,
 		ArtemisBrokerModule.class, StatisticsModule.class,
-		ArtemisSessionModule.class, RepositoryNodeModule.class, NodeModule.class }, dependencies = CoreComponent.class)
+		ArtemisSessionModule.class, RepositoryNodeModule.class, NodeModule.class }, dependencies = PersistenceComponent.class)
 public interface MessagingComponent {
 	ArtemisSession getSessionModule();
 

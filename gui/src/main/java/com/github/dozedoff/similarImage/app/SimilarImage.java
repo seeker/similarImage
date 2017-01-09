@@ -30,12 +30,12 @@ import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Slf4jReporter;
-import com.github.dozedoff.similarImage.component.CoreComponent;
-import com.github.dozedoff.similarImage.component.DaggerCoreComponent;
 import com.github.dozedoff.similarImage.component.DaggerGuiComponent;
 import com.github.dozedoff.similarImage.component.DaggerMessagingComponent;
+import com.github.dozedoff.similarImage.component.DaggerPersistenceComponent;
 import com.github.dozedoff.similarImage.component.GuiComponent;
 import com.github.dozedoff.similarImage.component.MessagingComponent;
+import com.github.dozedoff.similarImage.component.PersistenceComponent;
 import com.github.dozedoff.similarImage.gui.SimilarImageController;
 import com.github.dozedoff.similarImage.gui.SimilarImageView;
 import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
@@ -126,8 +126,9 @@ public class SimilarImage {
 		Settings settings = new Settings(new SettingsValidator());
 		settings.loadPropertiesFromFile(PROPERTIES_FILENAME);
 
-		CoreComponent coreComponent = DaggerCoreComponent.create();
-		MessagingComponent messagingComponent = DaggerMessagingComponent.builder().coreComponent(coreComponent).build();
+		PersistenceComponent coreComponent = DaggerPersistenceComponent.create();
+		MessagingComponent messagingComponent = DaggerMessagingComponent.builder().persistenceComponent(coreComponent)
+				.build();
 
 		this.metrics = messagingComponent.getMetricRegistry();
 
