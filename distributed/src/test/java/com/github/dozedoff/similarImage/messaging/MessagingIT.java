@@ -30,7 +30,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
@@ -63,8 +62,6 @@ import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 import com.github.dozedoff.similarImage.handler.ArtemisHashProducer;
 import com.github.dozedoff.similarImage.handler.HashNames;
-import com.github.dozedoff.similarImage.io.ExtendedAttribute;
-import com.github.dozedoff.similarImage.io.ExtendedAttributeDirectoryCache;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.module.ArtemisModule;
@@ -204,10 +201,7 @@ public class MessagingIT {
 	public void testHashImage() throws Exception {
 		nodes.add(messageComponent.getRepositoryNode());
 
-		// TODO add storage node to messaging component
-		StorageNode sn = new StorageNode(as.getSession(), new ExtendedAttributeDirectoryCache(new ExtendedAttribute()),
-				new HashAttribute(HashNames.DEFAULT_DCT_HASH_2), Collections.emptyList(),
-				QueueAddress.RESIZE_REQUEST.toString(), QueueAddress.EA_UPDATE.toString());
+		StorageNode sn = messageComponent.getStorageNode();
 
 		nodes.add(sn);
 		nodes.add(messageComponent.getResizerNode());
@@ -229,9 +223,7 @@ public class MessagingIT {
 
 		nodes.add(messageComponent.getRepositoryNode());
 
-		StorageNode sn = new StorageNode(as.getSession(), new ExtendedAttributeDirectoryCache(new ExtendedAttribute()),
-				new HashAttribute(HashNames.DEFAULT_DCT_HASH_2), Collections.emptyList(),
-				QueueAddress.RESIZE_REQUEST.toString(), QueueAddress.EA_UPDATE.toString());
+		StorageNode sn = messageComponent.getStorageNode();
 		nodes.add(sn);
 		ArtemisHashProducer ahp = new ArtemisHashProducer(sn);
 		nodes.add(messageComponent.getResizerNode());
@@ -276,8 +268,7 @@ public class MessagingIT {
 
 		HashAttribute ha = new HashAttribute(HashNames.DEFAULT_DCT_HASH_2);
 
-		StorageNode sn = new StorageNode(as.getSession(), new ExtendedAttribute(), ha, Collections.emptyList(),
-				QueueAddress.RESIZE_REQUEST.toString(), QueueAddress.EA_UPDATE.toString());
+		StorageNode sn = messageComponent.getStorageNode();
 		ArtemisHashProducer ahp = new ArtemisHashProducer(sn);
 
 		assertThat(ha.areAttributesValid(testImageAutumn), is(false));// guard assert
@@ -295,8 +286,7 @@ public class MessagingIT {
 		nodes.add(messageComponent.getResizerNode());
 
 		HashAttribute ha = new HashAttribute(HashNames.DEFAULT_DCT_HASH_2);
-		StorageNode sn = new StorageNode(as.getSession(), new ExtendedAttribute(), ha, Collections.emptyList(),
-				QueueAddress.RESIZE_REQUEST.toString(), QueueAddress.EA_UPDATE.toString());
+		StorageNode sn = messageComponent.getStorageNode();
 		ArtemisHashProducer ahp = new ArtemisHashProducer(sn);
 
 		assertThat(ha.isCorrupted(testImageCorrupt), is(false));// guard assert

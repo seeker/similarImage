@@ -17,16 +17,31 @@
  */
 package com.github.dozedoff.similarImage.module;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.function.Consumer;
+
 import javax.inject.Named;
 
 import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.commonj.hash.ImagePHash;
+import com.github.dozedoff.similarImage.handler.HashNames;
 import com.github.dozedoff.similarImage.image.ImageResizer;
+import com.github.dozedoff.similarImage.io.ExtendedAttribute;
+import com.github.dozedoff.similarImage.io.ExtendedAttributeDirectoryCache;
+import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
+import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.messaging.HasherNode;
+import com.github.dozedoff.similarImage.messaging.QueryMessage;
 import com.github.dozedoff.similarImage.messaging.ResizerNode;
 
 import dagger.Module;
@@ -35,6 +50,7 @@ import dagger.Provides;
 @Module
 public class NodeModule {
 	private static final int IMAGE_SIZE = 32;
+	private static final Logger LOGGER = LoggerFactory.getLogger(NodeModule.class);
 
 	@Provides
 	public HasherNode provideHasherNode(MetricRegistry metrics, @Named("normal") ClientSession session) {
@@ -49,5 +65,37 @@ public class NodeModule {
 	@Provides
 	public ResizerNode provideResizerNode(@Named("normal")ClientSession session, MetricRegistry metrics) {
 		return new ResizerNode(session, new ImageResizer(IMAGE_SIZE), metrics);
+	}
+
+	@Provides
+	public ExtendedAttributeQuery provideExtendedAttributeQuery( ){
+		return new ExtendedAttributeDirectoryCache(new ExtendedAttribute());
+	}
+
+	@Provides
+	@Named("pending")
+	public List<Path> providePendingPaths(QueryMessage queryMessage) {
+		try {
+			List<String> strings = queryMessage.pendingImagePaths();
+			List<Path> paths = new LinkedList<Path>();
+
+			strings.forEach(new Consumer<String>() {
+
+				@Override
+				public void accept(String t) {
+					paths.add(Paths.get(t));
+				}
+			});
+
+			return paths;
+		} catch (Exception e) {
+			LOGGER.warn("Failed to get pending image paths: {}", e.toString());
+			return Collections.emptyList();
+		}
+	}
+
+	@Provides
+	public HashAttribute provideHashAttribute() {
+		return new HashAttribute(HashNames.DEFAULT_DCT_HASH_2);
 	}
 }

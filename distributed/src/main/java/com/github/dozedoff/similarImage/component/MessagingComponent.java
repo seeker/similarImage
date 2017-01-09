@@ -29,6 +29,7 @@ import com.github.dozedoff.similarImage.messaging.HasherNode;
 import com.github.dozedoff.similarImage.messaging.RepositoryNode;
 import com.github.dozedoff.similarImage.messaging.ResizerNode;
 import com.github.dozedoff.similarImage.messaging.ResultMessageSink;
+import com.github.dozedoff.similarImage.messaging.StorageNode;
 import com.github.dozedoff.similarImage.module.ArtemisModule;
 import com.github.dozedoff.similarImage.module.NodeModule;
 import com.github.dozedoff.similarImage.module.RepositoryNodeModule;
@@ -49,6 +50,8 @@ public interface MessagingComponent {
 	HasherNode getHasherNode();
 
 	ResizerNode getResizerNode();
+
+	StorageNode getStorageNode();
 
 	Slf4jReporter getSlf4jReporter();
 
