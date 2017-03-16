@@ -25,51 +25,20 @@ import java.util.concurrent.TimeUnit;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 
-import org.apache.activemq.artemis.api.core.TransportConfiguration;
-import org.apache.activemq.artemis.api.core.client.ActiveMQClient;
-import org.apache.activemq.artemis.api.core.client.ServerLocator;
-import org.apache.activemq.artemis.core.remoting.impl.invm.InVMConnectorFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Slf4jReporter;
-import com.github.dozedoff.commonj.hash.ImagePHash;
-import com.github.dozedoff.similarImage.db.Database;
-import com.github.dozedoff.similarImage.db.PendingHashImage;
-import com.github.dozedoff.similarImage.db.SQLiteDatabase;
-import com.github.dozedoff.similarImage.db.repository.FilterRepository;
-import com.github.dozedoff.similarImage.db.repository.ImageRepository;
-import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
-import com.github.dozedoff.similarImage.db.repository.TagRepository;
-import com.github.dozedoff.similarImage.db.repository.ormlite.OrmlitePendingHashImage;
-import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteRepositoryFactory;
-import com.github.dozedoff.similarImage.db.repository.ormlite.RepositoryFactory;
-import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
-import com.github.dozedoff.similarImage.gui.DisplayGroupView;
+import com.github.dozedoff.similarImage.component.DaggerGuiApplicationComponent;
+import com.github.dozedoff.similarImage.component.DaggerMessagingComponent;
+import com.github.dozedoff.similarImage.component.DaggerPersistenceComponent;
+import com.github.dozedoff.similarImage.component.GuiApplicationComponent;
+import com.github.dozedoff.similarImage.component.MessagingComponent;
+import com.github.dozedoff.similarImage.component.PersistenceComponent;
 import com.github.dozedoff.similarImage.gui.SimilarImageController;
 import com.github.dozedoff.similarImage.gui.SimilarImageView;
-import com.github.dozedoff.similarImage.gui.UserTagSettingController;
-import com.github.dozedoff.similarImage.handler.HandlerListFactory;
-import com.github.dozedoff.similarImage.image.ImageResizer;
-import com.github.dozedoff.similarImage.io.ExtendedAttribute;
-import com.github.dozedoff.similarImage.io.ExtendedAttributeDirectoryCache;
-import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
-import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
-import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
-import com.github.dozedoff.similarImage.messaging.ArtemisSession;
-import com.github.dozedoff.similarImage.messaging.HasherNode;
-import com.github.dozedoff.similarImage.messaging.MessageCollector;
 import com.github.dozedoff.similarImage.messaging.Node;
-import com.github.dozedoff.similarImage.messaging.QueueToDatabaseTransaction;
-import com.github.dozedoff.similarImage.messaging.RepositoryNode;
-import com.github.dozedoff.similarImage.messaging.ResizerNode;
-import com.github.dozedoff.similarImage.messaging.ResultMessageSink;
-import com.github.dozedoff.similarImage.messaging.TaskMessageHandler;
-import com.github.dozedoff.similarImage.thread.SorterFactory;
-import com.j256.ormlite.dao.DaoManager;
-import com.j256.ormlite.misc.TransactionManager;
 
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
@@ -78,24 +47,12 @@ import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
 
 public class SimilarImage {
-	private static final int COLLECTED_MESSAGE_THRESHOLD = 100;
-	/**
-	 * Time in milliseconds
-	 */
-	private static final long COLLECTED_MESSAGE_DRAIN_INTERVAL = TimeUnit.MILLISECONDS.convert(1, TimeUnit.SECONDS);
-
 	private final static Logger logger = LoggerFactory.getLogger(SimilarImage.class);
 
 	private static final String PROPERTIES_FILENAME = "similarImage.properties";
-	private static final int PRODUCER_QUEUE_SIZE = 400;
-	private static final int LARGE_MESSAGE_SIZE_THRESHOLD = 1024 * 1024 * 100;
-	private static final int IMAGE_SIZE = 32;
-
-	private Statistics statistics;
 
 	private ArtemisEmbeddedServer aes;
 
-	private MetricRegistry metrics;
 	private Slf4jReporter reporter;
 
 	private List<Node> nodes = new LinkedList<Node>();
@@ -155,7 +112,6 @@ public class SimilarImage {
 	 *             if there is an error during setup
 	 */
 	public void init(boolean noWorkers) throws Exception {
-		this.metrics = new MetricRegistry();
 		String version = this.getClass().getPackage().getImplementationVersion();
 
 		if (version == null) {
@@ -168,66 +124,32 @@ public class SimilarImage {
 		Settings settings = new Settings(new SettingsValidator());
 		settings.loadPropertiesFromFile(PROPERTIES_FILENAME);
 
-		aes = new ArtemisEmbeddedServer();
+		PersistenceComponent coreComponent = DaggerPersistenceComponent.create();
+		MessagingComponent messagingComponent = DaggerMessagingComponent.builder().persistenceComponent(coreComponent)
+				.build();
+
+		aes = messagingComponent.getServer();
 		aes.start();
 
-		ServerLocator locator = ActiveMQClient
-				.createServerLocatorWithoutHA(new TransportConfiguration(InVMConnectorFactory.class.getName()))
-				.setCacheLargeMessagesClient(false).setMinLargeMessageSize(LARGE_MESSAGE_SIZE_THRESHOLD)
-				.setBlockOnNonDurableSend(false).setBlockOnDurableSend(false).setPreAcknowledge(true);
+		nodes.add(messagingComponent.getRepositoryNode());
+		nodes.add(messagingComponent.getResultMessageSink());
 
-		ArtemisSession as = new ArtemisSession(locator);
+		GuiApplicationComponent guiComponent = DaggerGuiApplicationComponent.builder()
+				.messagingComponent(messagingComponent).build();
 
-		Database database = new SQLiteDatabase();
-
-		PendingHashImageRepository pendingRepo = new OrmlitePendingHashImage(
-				DaoManager.createDao(database.getCs(), PendingHashImage.class));
-
-		RepositoryFactory repositoryFactory = new OrmliteRepositoryFactory(database);
-
-		ImageRepository imageRepository = repositoryFactory.buildImageRepository();
-
-		TaskMessageHandler tmh = new TaskMessageHandler(pendingRepo, imageRepository, as.getSession(), metrics);
-		nodes.add(new RepositoryNode(as.getSession(), pendingRepo, tmh, metrics));
-
-		TransactionManager tm = new TransactionManager(database.getCs());
-		QueueToDatabaseTransaction qdt = new QueueToDatabaseTransaction(as.getTransactedSession(), tm, pendingRepo,
-				imageRepository, metrics);
-
-		MessageCollector mc = new MessageCollector(COLLECTED_MESSAGE_THRESHOLD, qdt);
-		ResultMessageSink sink = new ResultMessageSink(as.getTransactedSession(), mc, QueueAddress.RESULT.toString(),
-				COLLECTED_MESSAGE_DRAIN_INTERVAL);
-		nodes.add(sink);
-
-		FilterRepository filterRepository = repositoryFactory.buildFilterRepository();
-		TagRepository tagRepository = repositoryFactory.buildTagRepository();
-
-		DuplicateOperations dupOps = new DuplicateOperations(filterRepository, tagRepository, imageRepository);
-		SorterFactory sf = new SorterFactory(imageRepository, filterRepository, tagRepository);
-
-		statistics = new Statistics();
-		ExtendedAttributeQuery eaQuery = new ExtendedAttributeDirectoryCache(new ExtendedAttribute(), 1, TimeUnit.MINUTES);
-		HandlerListFactory hlf = new HandlerListFactory(imageRepository, statistics, as, eaQuery);
-		UserTagSettingController utsc = new UserTagSettingController(tagRepository);
-
-		DisplayGroupView dgv = new DisplayGroupView();
-		SimilarImageController controller = new SimilarImageController(sf, hlf, dupOps, dgv, statistics, utsc);
-		SimilarImageView gui = new SimilarImageView(controller, dupOps, PRODUCER_QUEUE_SIZE, utsc, filterRepository);
-
-		controller.setGui(gui);
+		SimilarImageView gui = guiComponent.getSimilarImageView();
+		SimilarImageController controller = guiComponent.getSimilarImageController();
 
 		logger.info("Starting metrics reporter...");
-		reporter = Slf4jReporter.forRegistry(metrics).outputTo(LoggerFactory.getLogger("similarImage.metrics"))
-				.convertRatesTo(TimeUnit.SECONDS).convertDurationsTo(TimeUnit.MILLISECONDS).build();
+		reporter = messagingComponent.getSlf4jReporter();
 		reporter.start(1, TimeUnit.MINUTES);
 
 		logImageReaders();
 
 		if (!noWorkers) {
 			for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
-				nodes.add(new HasherNode(as.getSession(), new ImagePHash(), QueueAddress.HASH_REQUEST.toString(),
-						QueueAddress.RESULT.toString(), metrics));
-				nodes.add(new ResizerNode(as.getSession(), new ImageResizer(IMAGE_SIZE), metrics));
+				nodes.add(messagingComponent.getHasherNode());
+				nodes.add(messagingComponent.getResizerNode());
 			}
 
 			Runtime.getRuntime().addShutdownHook(new Thread() {

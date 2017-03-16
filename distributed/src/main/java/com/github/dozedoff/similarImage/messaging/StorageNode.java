@@ -9,6 +9,9 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.client.ClientConsumer;
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
@@ -55,11 +58,10 @@ public class StorageNode implements MessageHandler, Node {
 	 *            where to send resize requests
 	 * @param eaUpdateAddress
 	 *            where to listen for ea updates
-	 * @throws Exception
-	 *             if there is a error with the queue
 	 */
 	public StorageNode(ClientSession session, ExtendedAttributeQuery eaQuery, HashAttribute hashAttribute, List<Path> pendingPaths,
-			String resizeAddress, String eaUpdateAddress) throws Exception {
+			String resizeAddress, String eaUpdateAddress) {
+		try {
 		this.eaQuery = eaQuery;
 		this.hashAttribute = hashAttribute;
 		this.consumer = session.createConsumer(eaUpdateAddress);
@@ -69,7 +71,10 @@ public class StorageNode implements MessageHandler, Node {
 		sentRequests = CacheBuilder.newBuilder().expireAfterAccess(10, TimeUnit.MINUTES).build();
 
 		this.consumer.setMessageHandler(this);
-		loadSentRequestCache(pendingPaths);
+			loadSentRequestCache(pendingPaths);
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to create " + StorageNode.class.getSimpleName(), e);
+		}
 	}
 
 	private void loadSentRequestCache(List<Path> pendingPaths) {
@@ -89,11 +94,10 @@ public class StorageNode implements MessageHandler, Node {
 	 *            to write extended attributes to files
 	 * @param pendingPaths
 	 *            list of paths that are pending, will be added to the cache
-	 * @throws Exception
-	 *             if there is a error with the queue
 	 */
-	public StorageNode(ClientSession session, ExtendedAttributeQuery eaQuery, HashAttribute hashAttribute, List<Path> pendingPaths)
-			throws Exception {
+	@Inject
+	public StorageNode(@Named("normal") ClientSession session, ExtendedAttributeQuery eaQuery,
+			HashAttribute hashAttribute, @Named("pending") List<Path> pendingPaths) {
 		this(session, eaQuery, hashAttribute, pendingPaths, QueueAddress.RESIZE_REQUEST.toString(), QueueAddress.EA_UPDATE.toString());
 	}
 

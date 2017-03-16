@@ -22,18 +22,16 @@ import static org.mockito.Mockito.when;
 
 import org.apache.activemq.artemis.api.core.client.ClientSession;
 import org.apache.activemq.artemis.api.core.client.ClientSessionFactory;
-import org.apache.activemq.artemis.api.core.client.ServerLocator;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.class)
-public class ArtemisSessionTest {
-	@Mock
-	private ServerLocator serverLocator;
+import com.github.dozedoff.similarImage.messaging.ArtemisSession;
 
+@RunWith(MockitoJUnitRunner.class)
+public class ArtemisSessionModuleTest {
 	@Mock
 	private ClientSessionFactory factory;
 
@@ -46,9 +44,8 @@ public class ArtemisSessionTest {
 	public void setUp() throws Exception {
 		when(factory.createSession()).thenReturn(session);
 		when(factory.createTransactedSession()).thenReturn(session);
-		when(serverLocator.createSessionFactory()).thenReturn(factory);
 
-		cut = new ArtemisSession(serverLocator);
+		cut = new ArtemisSession(factory);
 	}
 
 	@Test

@@ -17,6 +17,8 @@
  */
 package com.github.dozedoff.similarImage.messaging;
 
+import javax.inject.Inject;
+
 import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
 import org.apache.activemq.artemis.api.core.client.ClientSessionFactory;
@@ -31,19 +33,38 @@ public class ArtemisSession implements AutoCloseable {
 	/**
 	 * Create a session factory
 	 * 
+	 * @param sessionFactory
+	 *            for creating sessions
+	 */
+	@Inject
+	public ArtemisSession(ClientSessionFactory sessionFactory) {
+		this.factory = sessionFactory;
+	}
+
+	/**
+	 * Create a session factory
+	 * 
 	 * @param serverLocator
 	 *            for finding the servers to connect to
 	 * @throws Exception
 	 *             if the setup fails
-	 */
+	 * @deprecated inject factories directly
+	 * 
+	 **/
+	@Deprecated
 	public ArtemisSession(ServerLocator serverLocator) throws Exception {
-		factory = serverLocator.createSessionFactory();
+		this.factory = serverLocator.createSessionFactory();
 	}
 
-	private ClientSession createAndConfigureSession() throws ActiveMQException {
-		ClientSession session = factory.createSession();
-		session.start();
-		return session;
+	private ClientSession createAndConfigureSession() {
+		ClientSession session;
+		try {
+			session = factory.createSession();
+			session.start();
+			return session;
+		} catch (ActiveMQException e) {
+			throw new RuntimeException("Failed to create session", e);
+		}
 	}
 
 	/**

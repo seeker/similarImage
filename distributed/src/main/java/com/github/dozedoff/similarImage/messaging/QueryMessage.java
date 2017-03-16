@@ -23,6 +23,9 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.apache.activemq.artemis.api.core.client.ClientRequestor;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
@@ -72,14 +75,35 @@ public class QueryMessage {
 	 *            to use for messaging
 	 * @param queryAddress
 	 *            address where query requests are received and responses sent
-	 * @throws Exception
-	 *             if there was an error setting up the requestors
 	 */
-	public QueryMessage(ClientSession session, QueueAddress queryAddress) throws Exception {
-		this.session = session;
-		LOGGER.info("Preparing to send query requests on {} ...", queryAddress.toString());
-		repositoryQuery = new ClientRequestor(session, queryAddress.toString());
-		messageFactory = new MessageFactory(session);
+	public QueryMessage(ClientSession session, QueueAddress queryAddress) {
+		try {
+			this.session = session;
+			LOGGER.info("Preparing to send query requests on {} ...", queryAddress.toString());
+			repositoryQuery = new ClientRequestor(session, queryAddress.toString());
+			messageFactory = new MessageFactory(session);
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to create " + QueryMessage.class.getSimpleName(), e);
+		}
+	}
+
+	/**
+	 * Create a new {@link QueryMessage} instance using the given session. Query the default address.
+	 * 
+	 * @param session
+	 *            to use for messaging
+	 */
+	@Inject
+	public QueryMessage(@Named("normal") ClientSession session) {
+		try {
+			QueueAddress queryAddress = QueueAddress.REPOSITORY_QUERY;
+			this.session = session;
+			LOGGER.info("Preparing to send query requests on {} ...", queryAddress.toString());
+			repositoryQuery = new ClientRequestor(session, queryAddress.toString());
+			messageFactory = new MessageFactory(session);
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to create " + QueryMessage.class.getSimpleName(), e);
+		}
 	}
 
 	/**

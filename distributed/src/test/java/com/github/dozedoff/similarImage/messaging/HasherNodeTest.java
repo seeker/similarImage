@@ -17,8 +17,10 @@
  */
 package com.github.dozedoff.similarImage.messaging;
 
+import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.startsWith;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
@@ -143,8 +145,13 @@ public class HasherNodeTest extends MessagingBaseTest {
 	}
 
 	@Test
-	public void testToString() throws Exception {
-		assertThat(cut.toString(), is("HasherNode"));
+	public void testToStringStart() throws Exception {
+		assertThat(cut.toString(), startsWith("HasherNode {"));
+	}
+
+	@Test
+	public void testToStringEnd() throws Exception {
+		assertThat(cut.toString(), endsWith("}"));
 	}
 
 	@Test

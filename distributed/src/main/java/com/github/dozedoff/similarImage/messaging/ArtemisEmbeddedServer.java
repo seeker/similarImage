@@ -20,6 +20,8 @@ package com.github.dozedoff.similarImage.messaging;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import javax.inject.Inject;
+
 import org.apache.activemq.artemis.core.config.FileDeploymentManager;
 import org.apache.activemq.artemis.core.config.impl.FileConfiguration;
 import org.apache.activemq.artemis.core.server.embedded.EmbeddedActiveMQ;
@@ -38,25 +40,29 @@ public class ArtemisEmbeddedServer {
 	private final EmbeddedActiveMQ server;
 
 	/**
-	 * Create a new embedded artemis server that listens to network and in VM connections. he data directory will be created in the current
-	 * working directory.
+	 * Create a new embedded artemis server that listens to network and in VM connections. he data directory will be
+	 * created in the current working directory.
 	 * 
 	 * @throws Exception
 	 *             if the server setup failed
+	 * @deprecated Use dagger 2 injection
 	 */
+	@Deprecated
 	public ArtemisEmbeddedServer() throws Exception {
 		this(Paths.get(""));
 	}
 
 	/**
-	 * Create a new embedded artemis server that listens to network and in VM connections. The data directory will be created in the given
-	 * path.
+	 * Create a new embedded artemis server that listens to network and in VM connections. The data directory will be
+	 * created in the given path.
 	 * 
 	 * @param workingDirectory
 	 *            base directory where the data directory will be created
 	 * @throws Exception
 	 *             if the server setup failed
+	 * @deprecated Use dagger 2 injection
 	 */
+	@Deprecated
 	public ArtemisEmbeddedServer(Path workingDirectory) throws Exception {
 
 		FileConfiguration config = new FileConfiguration();
@@ -68,6 +74,18 @@ public class ArtemisEmbeddedServer {
 
 		server = new EmbeddedActiveMQ();
 		server.setConfiguration(config);
+	}
+	
+	/**
+	 * Create a new embedded artemis server based on the passed configuration.
+	 * 
+	 * @param fileConfig
+	 *            the file based server configuration
+	 */
+	@Inject
+	public ArtemisEmbeddedServer(FileConfiguration fileConfig) {
+			server = new EmbeddedActiveMQ();
+			server.setConfiguration(fileConfig);
 	}
 
 	/**

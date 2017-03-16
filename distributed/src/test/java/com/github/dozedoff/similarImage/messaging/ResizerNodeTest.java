@@ -17,7 +17,9 @@
  */
 package com.github.dozedoff.similarImage.messaging;
 
+import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
@@ -279,8 +281,13 @@ public class ResizerNodeTest extends MessagingBaseTest {
 	}
 
 	@Test
-	public void testToString() throws Exception {
-		assertThat(cut.toString(), is("ResizerNode"));
+	public void testToStringStart() throws Exception {
+		assertThat(cut.toString(), startsWith("ResizerNode {"));
+	}
+
+	@Test
+	public void testToStringEnd() throws Exception {
+		assertThat(cut.toString(), endsWith("}"));
 	}
 
 	@Test

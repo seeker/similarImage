@@ -28,7 +28,7 @@ import com.github.dozedoff.similarImage.db.Thumbnail;
  * 
  * @author Nicholas Wright
  */
-public interface FilterRepository {
+public interface FilterRepository extends Repository {
 	/**
 	 * Get a list of {@link FilterRecord} that match the given hash.
 	 * 

@@ -34,6 +34,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import javax.imageio.ImageIO;
+import javax.inject.Inject;
 
 import org.imgscalr.Scalr;
 import org.imgscalr.Scalr.Method;
@@ -83,6 +84,7 @@ public class DuplicateOperations {
 	 *            Data access for {@link ImageRecord}
 	 * 
 	 */
+	@Inject
 	public DuplicateOperations(FilterRepository filterRepository, TagRepository tagRepository, ImageRepository imageRepository) {
 		this(FileSystems.getDefault(), filterRepository, tagRepository, imageRepository);
 	}

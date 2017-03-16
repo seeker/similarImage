@@ -19,6 +19,9 @@ package com.github.dozedoff.similarImage.messaging;
 
 import java.io.IOException;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.client.ClientConsumer;
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
@@ -74,21 +77,26 @@ public class RepositoryNode implements MessageHandler, Node {
 	 *            handler to use for task messages
 	 * @param metrics
 	 *            registry for tracking metrics
-	 * @throws ActiveMQException
-	 *             if there is an error setting up messaging
 	 */
-	public RepositoryNode(ClientSession session, String queryAddress, String taskAddress, PendingHashImageRepository pendingRepository,
-			ImageRepository imageRepository, TaskMessageHandler taskMessageHandler, MetricRegistry metrics) throws ActiveMQException {
+	public RepositoryNode(ClientSession session, String queryAddress, String taskAddress,
+			PendingHashImageRepository pendingRepository, ImageRepository imageRepository,
+			TaskMessageHandler taskMessageHandler, MetricRegistry metrics) {
 
-		this.consumer = session.createConsumer(queryAddress);
-		this.taskConsumer = session.createConsumer(taskAddress, MessageProperty.task.toString() + " IS NOT NULL AND "
-				+ MessageProperty.task.toString() + " NOT IN ('" + TaskType.result.toString() + "')");
-		this.taskConsumer.setMessageHandler(taskMessageHandler);
-		this.producer = session.createProducer();
-		this.pendingRepository = pendingRepository;
-		this.consumer.setMessageHandler(this);
-		messageFactory = new MessageFactory(session);
-		LOGGER.info("Listening to request messages on {} ...", queryAddress);
+		try {
+			this.consumer = session.createConsumer(queryAddress);
+
+			this.taskConsumer = session.createConsumer(taskAddress,
+					MessageProperty.task.toString() + " IS NOT NULL AND " + MessageProperty.task.toString()
+							+ " NOT IN ('" + TaskType.result.toString() + "')");
+			this.taskConsumer.setMessageHandler(taskMessageHandler);
+			this.producer = session.createProducer();
+			this.pendingRepository = pendingRepository;
+			this.consumer.setMessageHandler(this);
+			messageFactory = new MessageFactory(session);
+			LOGGER.info("Listening to request messages on {} ...", queryAddress);
+		} catch (ActiveMQException e) {
+			throw new RuntimeException("Failed to create " + RepositoryNode.class.getSimpleName(), e);
+		}
 	}
 
 	/**
@@ -102,11 +110,10 @@ public class RepositoryNode implements MessageHandler, Node {
 	 *            handler to use for task messages
 	 * @param metrics
 	 *            registry for tracking metrics
-	 * @throws ActiveMQException
-	 *             if there is an error setting up messaging
 	 */
-	public RepositoryNode(ClientSession session, PendingHashImageRepository pendingRepository, TaskMessageHandler taskMessageHandler, MetricRegistry metrics)
-			throws ActiveMQException {
+	@Inject
+	public RepositoryNode(@Named("normal") ClientSession session, PendingHashImageRepository pendingRepository,
+			TaskMessageHandler taskMessageHandler, MetricRegistry metrics) {
 		this(session, QueueAddress.REPOSITORY_QUERY.toString(), QueueAddress.RESULT.toString(), pendingRepository, null,
 				taskMessageHandler, metrics);
 	}

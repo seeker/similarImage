@@ -21,7 +21,7 @@ import java.util.List;
 
 import com.github.dozedoff.similarImage.db.Tag;
 
-public interface TagRepository {
+public interface TagRepository extends Repository {
 	/**
 	 * Get the tag with the matching name.
 	 * 

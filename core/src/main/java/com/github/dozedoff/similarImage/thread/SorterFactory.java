@@ -19,6 +19,8 @@ package com.github.dozedoff.similarImage.thread;
 
 import java.nio.file.Path;
 
+import javax.inject.Inject;
+
 import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
@@ -46,6 +48,7 @@ public class SorterFactory {
 	 * @param tagRepository
 	 *            access to the tag datasource
 	 */
+	@Inject
 	public SorterFactory(ImageRepository imageRepository, FilterRepository filterRepository,
 			TagRepository tagRepository) {
 		this.imageRepository = imageRepository;
