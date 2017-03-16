@@ -94,4 +94,14 @@ public class GroupListTest {
 	public void testGroupCount() throws Exception {
 		assertThat(cut.groupCount(), is(2));
 	}
+
+	@Test
+	public void testEmptyGroupsRemoved() throws Exception {
+		groupA.remove(new Result(groupA, recordC));
+		groupA.remove(new Result(groupA, recordA));
+
+		assertThat(groupA.hasResults(), is(false));
+
+		assertThat(cut.groupCount(), is(1));
+	}
 }

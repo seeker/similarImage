@@ -101,4 +101,13 @@ public class ResultGroup {
 
 		return results.remove(result);
 	}
+
+	/**
+	 * Check if this group has any results.
+	 * 
+	 * @return true if there are results for this group
+	 */
+	public boolean hasResults() {
+		return !results.isEmpty();
+	}
 }

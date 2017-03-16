@@ -76,6 +76,7 @@ public class GroupList {
 
 	/**
 	 * Remove a result from all groups. Will not trigger additional notifications to the {@link GroupList}.
+	 * If the last {@link Result} was removed from a {@link ResultGroup}, the group itself will be removed.
 	 * 
 	 * @param result
 	 *            to be removed
@@ -85,6 +86,13 @@ public class GroupList {
 
 		for (ResultGroup g : groupsToRemoveFrom) {
 			g.remove(result, false);
+			checkAndremoveEmptyGroup(g);
+		}
+	}
+
+	private void checkAndremoveEmptyGroup(ResultGroup groupToCheck) {
+		if (!groupToCheck.hasResults()) {
+			groups.remove(groupToCheck);
 		}
 	}
 }

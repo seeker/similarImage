@@ -116,4 +116,16 @@ public class ResultGroupTest {
 
 		verify(parent, never()).remove(resultA);
 	}
+
+	@Test
+	public void testHasResults() throws Exception {
+		assertThat(cut.hasResults(), is(true));
+	}
+
+	@Test
+	public void testHasResultsWhenEmpty() throws Exception {
+		cut.getResults().clear();
+
+		assertThat(cut.hasResults(), is(false));
+	}
 }
