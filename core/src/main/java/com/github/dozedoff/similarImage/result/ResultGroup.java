@@ -17,9 +17,88 @@
  */
 package com.github.dozedoff.similarImage.result;
 
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+
+import com.github.dozedoff.similarImage.db.ImageRecord;
+
 /**
  * A set of images that are possible duplicates.
  */
 public class ResultGroup {
+	private final GroupList parent;
+	private final long hash;
+	private List<Result> results;
 
+	/**
+	 * Create a new {@link ResultGroup} with the given {@link ImageRecord}s.
+	 * 
+	 * @param parent
+	 *            {@link GroupList} that manages this group
+	 * @param hash
+	 *            this group and the {@link Result} within represent
+	 * @param records
+	 *            to use for the creation of the {@link Result}s
+	 */
+	public ResultGroup(GroupList parent, long hash, Collection<ImageRecord> records) {
+		this.parent = parent;
+		this.hash = hash;
+		this.results = new LinkedList<Result>();
+
+		buildResults(records);
+	}
+
+	private void buildResults(Collection<ImageRecord> records) {
+		for (ImageRecord record : records) {
+			results.add(new Result(this, record));
+		}
+	}
+
+	/**
+	 * Get the hash this group represents.
+	 * 
+	 * @return the hash value
+	 */
+	public long getHash() {
+		return hash;
+	}
+
+	/**
+	 * Get the {@link Result}s of this group.
+	 * 
+	 * @return a list of results
+	 */
+	public List<Result> getResults() {
+		return results;
+	}
+
+	/**
+	 * Remove the result from this group and notify the {@link GroupList} of the removal.
+	 * 
+	 * @param result
+	 *            to remove
+	 * @return true if the result was removed
+	 */
+	public boolean remove(Result result) {
+		return remove(result, true);
+	}
+
+	/**
+	 * Remove the result from this group and notify the {@link GroupList} of the removal if required.
+	 * 
+	 * @param result
+	 *            to remove
+	 * @param notifyParent
+	 *            if the {@link GroupList} should be notified of the removal
+	 * 
+	 * @return true if the result was removed
+	 */
+	public boolean remove(Result result, boolean notifyParent) {
+		if (notifyParent) {
+			parent.remove(result);
+		}
+
+		return results.remove(result);
+	}
 }
