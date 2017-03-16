@@ -103,6 +103,17 @@ public class ResultGroup {
 	}
 
 	/**
+	 * A {@link String} representation of this class.
+	 * 
+	 * @return shortened class state formatted as a {@link String}
+	 */
+	@Override
+	public String toString() {
+		return MoreObjects.toStringHelper(ResultGroup.class).add("parent", parent).add("hash", hash)
+				.add("results", results.size()).toString();
+	}
+
+	/**
 	 * Check if this group has any results.
 	 * 
 	 * @return true if there are results for this group
