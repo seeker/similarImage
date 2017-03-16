@@ -22,6 +22,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertThat;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 
@@ -44,8 +45,6 @@ public class GroupListTest {
 	private Collection<ImageRecord> recordsA;
 	private Collection<ImageRecord> recordsB;
 
-	private ResultGroup[] groups;
-
 	private GroupList cut;
 
 	@Before
@@ -55,9 +54,7 @@ public class GroupListTest {
 		createRecords();
 		createGroups();
 
-		groups = new ResultGroup[] { groupA, groupB };
-
-		cut.populateList(groups);
+		cut.populateList(Arrays.asList(new ResultGroup[] { groupA, groupB }));
 	}
 
 	private void createGroups(){

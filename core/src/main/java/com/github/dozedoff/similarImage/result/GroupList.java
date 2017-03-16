@@ -50,10 +50,10 @@ public class GroupList {
 	 * @param groupsToAdd
 	 *            the {@link ResultGroup}s to add
 	 */
-	public void populateList(ResultGroup... groupsToAdd) {
+	public void populateList(Collection<ResultGroup> groupsToAdd) {
 		clearGroups();
 
-		LOGGER.info("Creating group list with {} groups", groupsToAdd.length);
+		LOGGER.info("Creating group list with {} groups", groupsToAdd.size());
 
 		for (ResultGroup g : groupsToAdd) {
 			groups.add(g);
