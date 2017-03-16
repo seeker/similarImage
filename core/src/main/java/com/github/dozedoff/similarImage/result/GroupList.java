@@ -20,6 +20,9 @@ package com.github.dozedoff.similarImage.result;
 import java.util.Collection;
 import java.util.LinkedList;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 
@@ -27,6 +30,8 @@ import com.google.common.collect.MultimapBuilder;
  * A list of {@link ResultGroup}s
  */
 public class GroupList {
+	private static final Logger LOGGER = LoggerFactory.getLogger(GroupList.class);
+
 	private final Multimap<Result, ResultGroup> resultsToGroups;
 	private final Collection<ResultGroup> groups;
 
@@ -47,6 +52,8 @@ public class GroupList {
 	 */
 	public void populateList(ResultGroup... groupsToAdd) {
 		clearGroups();
+
+		LOGGER.info("Creating group list with {} groups", groupsToAdd.length);
 
 		for (ResultGroup g : groupsToAdd) {
 			groups.add(g);
@@ -84,6 +91,8 @@ public class GroupList {
 	public void remove(Result result) {
 		Collection<ResultGroup> groupsToRemoveFrom = resultsToGroups.removeAll(result);
 
+		LOGGER.debug("Removing {} from {} group(s).", result, groupsToRemoveFrom.size());
+
 		for (ResultGroup g : groupsToRemoveFrom) {
 			g.remove(result, false);
 			checkAndremoveEmptyGroup(g);
@@ -92,6 +101,7 @@ public class GroupList {
 
 	private void checkAndremoveEmptyGroup(ResultGroup groupToCheck) {
 		if (!groupToCheck.hasResults()) {
+			LOGGER.debug("Removing  {} because it has no results.", groupToCheck);
 			groups.remove(groupToCheck);
 		}
 	}

@@ -60,7 +60,7 @@ public class Result {
 	 * Remove this result from the parent {@link ResultGroup}.
 	 */
 	public void remove() {
-		LOGGER.debug("Removing result {}", this.toString());
+		LOGGER.debug("Removing result {}", this);
 		parentGroup.remove(this);
 	}
 

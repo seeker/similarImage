@@ -21,12 +21,18 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.dozedoff.similarImage.db.ImageRecord;
+import com.google.common.base.MoreObjects;
 
 /**
  * A set of images that are possible duplicates.
  */
 public class ResultGroup {
+	private static final Logger LOGGER = LoggerFactory.getLogger(ResultGroup.class);
+
 	private final GroupList parent;
 	private final long hash;
 	private List<Result> results;
@@ -45,6 +51,8 @@ public class ResultGroup {
 		this.parent = parent;
 		this.hash = hash;
 		this.results = new LinkedList<Result>();
+
+		LOGGER.trace("Building group with {} record(s)", records);
 
 		buildResults(records);
 	}
@@ -95,6 +103,8 @@ public class ResultGroup {
 	 * @return true if the result was removed
 	 */
 	public boolean remove(Result result, boolean notifyParent) {
+		LOGGER.debug("Removing {} from {}, notify parent: {}", result, this, notifyParent);
+
 		if (notifyParent) {
 			parent.remove(result);
 		}
