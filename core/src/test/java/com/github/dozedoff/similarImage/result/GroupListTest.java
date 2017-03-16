@@ -101,4 +101,14 @@ public class GroupListTest {
 
 		assertThat(cut.groupCount(), is(1));
 	}
+
+	@Test
+	public void testGetGroup() throws Exception {
+		assertThat(cut.getGroup(HASH_A), is(groupA));
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testGetInvalidHash() throws Exception {
+		cut.getGroup(-1);
+	}
 }

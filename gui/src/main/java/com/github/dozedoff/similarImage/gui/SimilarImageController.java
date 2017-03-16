@@ -21,10 +21,12 @@ import java.awt.Dimension;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
@@ -44,11 +46,13 @@ import com.github.dozedoff.similarImage.handler.HashHandler;
 import com.github.dozedoff.similarImage.handler.HashNames;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.io.Statistics;
+import com.github.dozedoff.similarImage.result.GroupList;
+import com.github.dozedoff.similarImage.result.Result;
+import com.github.dozedoff.similarImage.result.ResultGroup;
 import com.github.dozedoff.similarImage.thread.ImageFindJob;
 import com.github.dozedoff.similarImage.thread.ImageFindJobVisitor;
 import com.github.dozedoff.similarImage.thread.SorterFactory;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.MultimapBuilder;
 import com.google.common.eventbus.Subscribe;
 
 @ApplicationScope
@@ -59,7 +63,7 @@ public class SimilarImageController {
 
 	private final int THUMBNAIL_DIMENSION = 500;
 
-	private Multimap<Long, ImageRecord> results;
+	private GroupList groupList;
 	private DisplayGroupView displayGroup;
 	private SimilarImageView gui;
 	private final Statistics statistics;
@@ -83,7 +87,7 @@ public class SimilarImageController {
 			DuplicateOperations dupOps, DisplayGroupView displayGroup, Statistics statistics,
 			UserTagSettingController utsc) {
 
-		results = MultimapBuilder.hashKeys().hashSetValues().build();
+		groupList = new GroupList();
 		this.displayGroup = displayGroup;
 		this.statistics = statistics;
 		this.sorterFactory = sorterFactory;
@@ -91,6 +95,14 @@ public class SimilarImageController {
 		this.dupOps = dupOps;
 		this.utsc = utsc;
 		GuiEventBus.getInstance().register(this);
+	}
+
+	private void setGroupListToResult(Multimap<Long, ImageRecord> results) {
+		Set<Long> keys = results.keySet();
+		List<ResultGroup> groups = keys.stream().map(key -> new ResultGroup(groupList, key, results.get(key)))
+				.collect(Collectors.toList());
+
+		groupList.populateList(groups);
 	}
 
 	/**
@@ -120,7 +132,13 @@ public class SimilarImageController {
 	 * @return images matched to this group
 	 */
 	public Set<ImageRecord> getGroup(long group) {
-		return new HashSet<ImageRecord>(results.get(group));
+		// TODO pass group directly (or even grouplist?)
+		List<Result> results = groupList.getGroup(group).getResults();
+		return new HashSet<ImageRecord>(resultsToImageRecords(results));
+	}
+
+	private List<ImageRecord> resultsToImageRecords(List<Result> results) {
+		return results.stream().map(result -> result.getImageRecord()).collect(Collectors.toList());
 	}
 
 	/**
@@ -130,7 +148,7 @@ public class SimilarImageController {
 	 *            to use in GUI selections
 	 */
 	public synchronized void setResults(Multimap<Long, ImageRecord> results) {
-		this.results = results;
+		setGroupListToResult(results);
 		updateGUI();
 	}
 
@@ -170,9 +188,15 @@ public class SimilarImageController {
 	}
 
 	private void updateGUI() {
-		setGUIStatus("" + results.keySet().size() + " Groups");
-		gui.populateGroupList(results.keySet());
+		setGUIStatus("" + groupList.groupCount() + " Groups");
+		// TODO pass group directly (or grouplist?)
+		gui.populateGroupList(groupsToLong(groupList.getAllGroups()));
 	}
+
+	private List<Long> groupsToLong(Collection<ResultGroup> groups) {
+		return groups.stream().map(group -> group.getHash()).collect(Collectors.toList());
+	}
+
 
 	private void setGUIStatus(String message) {
 		guiSetCheck();

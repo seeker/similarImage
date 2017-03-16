@@ -18,7 +18,10 @@
 package com.github.dozedoff.similarImage.result;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +36,7 @@ public class GroupList {
 	private static final Logger LOGGER = LoggerFactory.getLogger(GroupList.class);
 
 	private final Multimap<Result, ResultGroup> resultsToGroups;
+	private final Map<Long, ResultGroup> hashToGroup;
 	private final Collection<ResultGroup> groups;
 
 	/**
@@ -40,6 +44,7 @@ public class GroupList {
 	 */
 	public GroupList() {
 		groups = new LinkedList<ResultGroup>();
+		hashToGroup = new HashMap<Long, ResultGroup>();
 		resultsToGroups = MultimapBuilder.hashKeys().linkedListValues().build();
 	}
 
@@ -57,6 +62,7 @@ public class GroupList {
 
 		for (ResultGroup g : groupsToAdd) {
 			groups.add(g);
+			hashToGroup.put(g.getHash(), g);
 			mapResultsToGroups(g);
 		}
 	}
@@ -104,5 +110,33 @@ public class GroupList {
 			LOGGER.debug("Removing  {} because it has no results.", groupToCheck);
 			groups.remove(groupToCheck);
 		}
+	}
+
+	/**
+	 * Get the {@link ResultGroup} for the given hash.
+	 * 
+	 * @param hash
+	 *            for the result group
+	 * @return the {@link ResultGroup} for the hash
+	 * @throws IllegalArgumentException
+	 *             if the hash was not found
+	 */
+	public ResultGroup getGroup(long hash) throws IllegalArgumentException {
+		ResultGroup group = hashToGroup.get(hash);
+
+		if (group == null) {
+			throw new IllegalArgumentException("Query for unknown hash");
+		}
+
+		return group;
+	}
+
+	/**
+	 * Get a list of all groups.
+	 * 
+	 * @return all groups
+	 */
+	public List<ResultGroup> getAllGroups() {
+		return new LinkedList<ResultGroup>(groups);
 	}
 }
