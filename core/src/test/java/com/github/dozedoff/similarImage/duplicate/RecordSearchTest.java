@@ -17,6 +17,7 @@
  */
 package com.github.dozedoff.similarImage.duplicate;
 
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -25,6 +26,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 
 import org.junit.After;
@@ -158,5 +160,12 @@ public class RecordSearchTest {
 		Multimap<Long, ImageRecord> result = cut.distanceMatch(2L, 2L);
 
 		assertThat(result.containsKey(1L), is(true));
+	}
+
+	@Test
+	public void testSortingEmptyCollection() throws Exception {
+		cut.build(Collections.emptyList());
+
+		assertThat(cut.exactMatch(), is(empty()));
 	}
 }
