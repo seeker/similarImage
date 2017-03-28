@@ -28,8 +28,7 @@ import javax.swing.JPanel;
 import net.miginfocom.swing.MigLayout;
 
 /**
- * Displays images and the corresponding information. Displays the full image or a context menu depending on the mouse
- * click.
+ * Displays a image and the corresponding information. Displays the full image or a context menu depending on the mouse click.
  * 
  * @author Nicholas Wright
  *

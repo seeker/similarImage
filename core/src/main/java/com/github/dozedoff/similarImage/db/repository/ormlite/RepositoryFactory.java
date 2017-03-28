@@ -19,6 +19,7 @@ package com.github.dozedoff.similarImage.db.repository.ormlite;
 
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
+import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
 
@@ -56,5 +57,14 @@ public interface RepositoryFactory {
 	 *             if there was an error with the datasource
 	 */
 	TagRepository buildTagRepository() throws RepositoryException;
+
+	/**
+	 * Create a new {@link PendingHashImageRepository}
+	 * 
+	 * @return an initialized {@link PendingHashImageRepository}
+	 * @throws RepositoryException
+	 *             if there was an error with the datasource
+	 */
+	PendingHashImageRepository buildPendingHashImageRepository() throws RepositoryException;
 
 }

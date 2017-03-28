@@ -20,7 +20,6 @@ package com.github.dozedoff.similarImage.duplicate;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -42,19 +41,11 @@ import com.google.common.collect.MultimapBuilder;
  */
 public class RecordSearch {
 	private static final Logger logger = LoggerFactory.getLogger(RecordSearch.class);
-	private Multimap<Long, ImageRecord> groups;
+	private Multimap<Long, ImageRecord> imagesGroupedByHash;
 	private BKTree<Long> bkTree;
 
-	/**
-	 * @deprecated Use {@link RecordSearch#build(Collection)} instead.
-	 */
-	public RecordSearch(Collection<ImageRecord> dbRecords) {
-		this();
-		this.build(dbRecords);
-	}
-
 	public RecordSearch() {
-		groups = MultimapBuilder.hashKeys().hashSetValues().build();
+		imagesGroupedByHash = MultimapBuilder.hashKeys().hashSetValues().build();
 		bkTree = new BKTree<Long>(new CompareHammingDistance(), 0L);
 	}
 
@@ -73,7 +64,7 @@ public class RecordSearch {
 
 	private void groupRecords(Collection<ImageRecord> dbRecords) {
 		Stopwatch swGroup = Stopwatch.createStarted();
-		this.groups = DuplicateUtil.groupByHash(dbRecords);
+		this.imagesGroupedByHash = DuplicateUtil.groupByHash(dbRecords);
 		swGroup.stop();
 
 		logger.info("Grouped records into {} groups in {}", numberOfHashes(), swGroup);
@@ -83,23 +74,14 @@ public class RecordSearch {
 		logger.info("Building BK-Tree from {} hashes", numberOfHashes());
 
 		Stopwatch swBuildTree = Stopwatch.createStarted();
-		bkTree = BKTree.build(groups.keySet(), new CompareHammingDistance());
+		bkTree = BKTree.build(imagesGroupedByHash.keySet(), new CompareHammingDistance());
 		swBuildTree.stop();
 
 		logger.info("Took {} to build BK-tree with {} hashes", swBuildTree, numberOfHashes());
 	}
 
 	private int numberOfHashes() {
-		return groups.keySet().size();
-	}
-
-	/**
-	 * @deprecated Use {@link DuplicateUtil#removeSingleImageGroups(Multimap)}
-	 *             instead.
-	 */
-	public Multimap<Long, ImageRecord> removeSingleImageGroups(Multimap<Long, ImageRecord> sourceGroups) {
-		DuplicateUtil.removeSingleImageGroups(sourceGroups);
-		return sourceGroups;
+		return imagesGroupedByHash.keySet().size();
 	}
 
 	/**
@@ -108,30 +90,8 @@ public class RecordSearch {
 	 * @return distinct list of matches
 	 */
 	public List<Long> exactMatch() {
-		Multimap<Long, ImageRecord> multiImage = removeSingleImageGroups(groups);
-		return new ArrayList<>(multiImage.keySet());
-	}
-
-	/**
-	 * For every hash, find the matches within the distance and add them to the set. Only return matches with more than
-	 * one image.
-	 * 
-	 * @param hammingDistance
-	 *            search for hashes up to and including this distance
-	 * @return a set of matches with more than one image
-	 * 
-	 * @deprecated This method yields incorrect results. Use {@link RecordSearch#distanceMatch(long, long)} instead.
-	 */
-	@Deprecated
-	public List<Long> distanceMatch(long hammingDistance) {
-		Set<Long> keySet = removeSingleImageGroups(groups).keySet();
-		Set<Long> resultSet = new HashSet<Long>();
-
-		for (Long key : keySet) {
-			resultSet.addAll(bkTree.searchWithin(key, (double) hammingDistance));
-		}
-
-		return new ArrayList<>(resultSet);
+		DuplicateUtil.removeSingleImageGroups(imagesGroupedByHash);
+		return new ArrayList<>(imagesGroupedByHash.keySet());
 	}
 
 	/**
@@ -149,7 +109,7 @@ public class RecordSearch {
 		Set<Long> resultKeys = bkTree.searchWithin(hash, (double) hammingDistance);
 
 		for (Long key : resultKeys) {
-			searchResult.putAll(key, groups.get(key));
+			searchResult.putAll(key, imagesGroupedByHash.get(key));
 		}
 
 		return searchResult;

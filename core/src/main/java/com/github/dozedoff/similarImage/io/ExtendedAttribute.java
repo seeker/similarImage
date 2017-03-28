@@ -71,7 +71,7 @@ public class ExtendedAttribute implements ExtendedAttributeQuery {
 		try {
 			return Files.getFileStore(path).supportsFileAttributeView(UserDefinedFileAttributeView.class);
 		} catch (IOException e) {
-			LOGGER.warn("Failed to check extended attributes via FileStore ({}) for {}, falling back to write test...",
+			LOGGER.debug("Failed to check extended attributes via FileStore ({}) for {}, falling back to write test...",
 					e.toString(), path);
 			return checkSupportWithWrite(path);
 		}

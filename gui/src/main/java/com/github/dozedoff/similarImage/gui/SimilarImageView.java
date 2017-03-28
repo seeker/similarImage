@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import javax.inject.Inject;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -51,6 +52,7 @@ import javax.swing.event.ListSelectionListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.dozedoff.similarImage.component.ApplicationScope;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
@@ -64,6 +66,7 @@ import com.google.common.eventbus.Subscribe;
 
 import net.miginfocom.swing.MigLayout;
 
+@ApplicationScope
 public class SimilarImageView implements StatisticsChangedListener {
 	private static final Logger LOGGER = LoggerFactory.getLogger(SimilarImageView.class);
 
@@ -98,9 +101,17 @@ public class SimilarImageView implements StatisticsChangedListener {
 		this(controller, duplicateOperations, maxBufferSize, utsController, null);
 	}
 
+	@Inject
+	public SimilarImageView(SimilarImageController controller, DuplicateOperations duplicateOperations,
+			UserTagSettingController utsController, FilterRepository filterRepository) {
+		this(controller, duplicateOperations, 0, utsController, filterRepository);
+
+	}
+
 	public SimilarImageView(SimilarImageController controller, DuplicateOperations duplicateOperations, int maxBufferSize,
 			UserTagSettingController utsController, FilterRepository filterRepository) {
 		this.controller = controller;
+		this.controller.setGui(this);
 		this.utsController = utsController;
 		this.filterRepository = filterRepository;
 
@@ -444,7 +455,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 				menu.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						duplicateOperations.markAll(controller.getGroup(getSelectedGroup()), tag.toString());
+						duplicateOperations.markAll(controller.getGroup(getSelectedGroup()), tag);
 					}
 				});
 

@@ -17,17 +17,25 @@
  */
 package com.github.dozedoff.similarImage.handler;
 
+import static com.google.common.jimfs.Feature.FILE_CHANNEL;
+import static com.google.common.jimfs.Feature.LINKS;
+import static com.google.common.jimfs.Feature.SYMBOLIC_LINKS;
+import static com.google.common.jimfs.PathNormalization.CASE_FOLD_ASCII;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import javax.management.InvalidAttributeValueException;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,12 +47,20 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
+import com.github.dozedoff.similarImage.io.ExtendedAttribute;
+import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.HashAttribute;
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
+import com.google.common.jimfs.PathType;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ExtendedAttributeHandlerTest {
 	@Mock
 	private HashAttribute hashAttribute;
+
+	@Mock
+	private ExtendedAttributeQuery eaQuery;
 
 	@Mock
 	private ImageRepository imageRepository;
@@ -53,12 +69,27 @@ public class ExtendedAttributeHandlerTest {
 	private ExtendedAttributeHandler cut;
 
 	private Path testFile;
+	private FileSystem fs;
 
 	@Before
 	public void setUp() throws Exception {
-		testFile = Paths.get("foo");
+		Configuration config = Configuration.builder(PathType.windows()).setRoots("C:\\")
+				.setWorkingDirectory("C:\\work").setNameCanonicalNormalization(CASE_FOLD_ASCII)
+				.setPathEqualityUsesCanonicalForm(true).setAttributeViews("basic", "user")
+				.setSupportedFeatures(LINKS, SYMBOLIC_LINKS, FILE_CHANNEL).build();
+
+		fs = Jimfs.newFileSystem(config);
+
+		testFile = fs.getPath(ExtendedAttributeHandlerTest.class.getSimpleName());
+		Files.createFile(testFile);
 
 		when(hashAttribute.areAttributesValid(testFile)).thenReturn(true);
+		when(eaQuery.isEaSupported(any(Path.class))).thenReturn(true);
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		fs.close();
 	}
 
 	@Test
@@ -92,5 +123,23 @@ public class ExtendedAttributeHandlerTest {
 		when(hashAttribute.readHash(testFile)).thenThrow(new InvalidAttributeValueException());
 
 		assertThat(cut.handle(testFile), is(false));
+	}
+
+	@Test
+	public void testHandleCorruptFileIsHandled() throws Exception {
+		when(eaQuery.isEaSupported(testFile)).thenReturn(true);
+		when(hashAttribute.areAttributesValid(testFile)).thenReturn(false);
+		ExtendedAttribute.setExtendedAttribute(testFile, ExtendedAttributeHandler.CORRUPT_EA_NAMESPACE, "");
+
+		assertThat(cut.handle(testFile), is(true));
+	}
+
+	@Test
+	public void testHandleCorruptFileNotStored() throws Exception {
+		when(eaQuery.isEaSupported(testFile)).thenReturn(true);
+		when(hashAttribute.areAttributesValid(testFile)).thenReturn(true);
+		ExtendedAttribute.setExtendedAttribute(testFile, ExtendedAttributeHandler.CORRUPT_EA_NAMESPACE, "");
+
+		verify(imageRepository, never()).store(any(ImageRecord.class));
 	}
 }

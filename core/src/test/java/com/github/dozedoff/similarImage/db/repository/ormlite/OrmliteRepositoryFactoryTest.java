@@ -20,27 +20,38 @@ package com.github.dozedoff.similarImage.db.repository.ormlite;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
+import com.github.dozedoff.similarImage.db.PendingHashImage;
 import com.github.dozedoff.similarImage.db.SQLiteDatabase;
 import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
+import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
 
 public class OrmliteRepositoryFactoryTest {
 	private static final String TEST_STRING = "Foo";
 
 	private static OrmliteRepositoryFactory cut;
+	private static Path testPath;
+	private static SQLiteDatabase db;
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-		Path testPath = Files.createTempFile(OrmliteRepositoryFactoryTest.class.getSimpleName(), ".db");
-		SQLiteDatabase db = new SQLiteDatabase(testPath);
+		testPath = Files.createTempFile(OrmliteRepositoryFactoryTest.class.getSimpleName(), ".db");
+		db = new SQLiteDatabase(testPath);
 		cut = new OrmliteRepositoryFactory(db);
+	}
+
+	@AfterClass
+	public static void tearDownAfterClass() throws Exception {
+		db.close();
+		Files.deleteIfExists(testPath);
 	}
 
 	@Test
@@ -59,5 +70,11 @@ public class OrmliteRepositoryFactoryTest {
 	public void testBuildTagRepository() throws Exception {
 		TagRepository tr = cut.buildTagRepository();
 		tr.store(new Tag(TEST_STRING));
+	}
+
+	@Test
+	public void testBuildPendingImageRepository() throws Exception {
+		PendingHashImageRepository phir = cut.buildPendingHashImageRepository();
+		phir.store(new PendingHashImage(TEST_STRING, 0, 0));
 	}
 }

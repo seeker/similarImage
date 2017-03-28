@@ -38,6 +38,8 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 
+import at.dhyan.open_imaging.GifDecoder;
+
 public class DuplicateEntryController implements View {
 	private static final Logger logger = LoggerFactory.getLogger(DuplicateEntryController.class);
 	private final ImageInfo imageInfo;
@@ -72,7 +74,13 @@ public class DuplicateEntryController implements View {
 
 	private BufferedImage loadImage(Path path) throws IOException {
 		try (InputStream is = new BufferedInputStream(Files.newInputStream(getImagePath()))) {
-			BufferedImage bi = ImageIO.read(is);
+			BufferedImage bi;
+
+			try {
+				bi = ImageIO.read(is);
+			} catch (ArrayIndexOutOfBoundsException e) {
+				bi = GifDecoder.read(is).getFrame(0);
+			}
 
 			return bi;
 		}

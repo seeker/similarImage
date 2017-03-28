@@ -30,11 +30,12 @@ import com.github.dozedoff.similarImage.thread.ImageFindJobVisitor;
 
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
 
-class DummyVisitor extends SimpleFileVisitor<Path> {
-}
 
 @RunWith(MockitoJUnitRunner.class)
 public class ArgumentPasrserTest {
+	private static final String LOCAL_SUBCOMMAND = "local";
+	private static final String NODE_SUBCOMMAND = "node";
+
 	@Mock
 	private ImageFindJobVisitor visitor;
 
@@ -47,11 +48,19 @@ public class ArgumentPasrserTest {
 
 	@Test(expected = ArgumentParserException.class)
 	public void testParseArgsInvalidOption() throws Exception {
-		cut.parseArgs(new String[] { "--foo" });
+		cut.parseArgs(new String[] { LOCAL_SUBCOMMAND, "--foo" });
 	}
 
 	@Test
 	public void testParseArgsUpdateOption() throws Exception {
-		cut.parseArgs(new String[] { "--update", "foo" });
+		cut.parseArgs(new String[] { LOCAL_SUBCOMMAND, "--update", "foo" });
+	}
+
+	@Test
+	public void testParseArgsNodeOption() throws Exception {
+		cut.parseArgs(new String[] { NODE_SUBCOMMAND, "--port", "123" });
+	}
+
+	class DummyVisitor extends SimpleFileVisitor<Path> {
 	}
 }

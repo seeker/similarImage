@@ -2,12 +2,19 @@
 .DS_Store
 *.db
 
+# Certificates
+fullchain.pem
+
+# Java keystore
+keystore.jks
+
 # Eclipse files
 .project
 .classpath
 .settings/
 /bin/
 .checkstyle
+.factorypath
 
 # Maven generated files
 target/

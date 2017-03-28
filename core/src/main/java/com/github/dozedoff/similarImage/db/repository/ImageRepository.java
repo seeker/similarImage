@@ -23,7 +23,7 @@ import java.util.List;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
 
-public interface ImageRepository {
+public interface ImageRepository extends Repository {
 	/**
 	 * Store a {@link ImageRecord} in the repository. If it already exists, it
 	 * will be updated.

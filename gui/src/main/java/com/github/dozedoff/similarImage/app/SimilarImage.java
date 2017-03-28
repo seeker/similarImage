@@ -17,10 +17,10 @@
  */
 package com.github.dozedoff.similarImage.app;
 
-import java.sql.SQLException;
 import java.util.Iterator;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
@@ -28,41 +28,90 @@ import javax.imageio.ImageReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.dozedoff.similarImage.db.Database;
-import com.github.dozedoff.similarImage.db.SQLiteDatabase;
-import com.github.dozedoff.similarImage.db.repository.FilterRepository;
-import com.github.dozedoff.similarImage.db.repository.ImageRepository;
-import com.github.dozedoff.similarImage.db.repository.RepositoryException;
-import com.github.dozedoff.similarImage.db.repository.TagRepository;
-import com.github.dozedoff.similarImage.db.repository.ormlite.OrmliteRepositoryFactory;
-import com.github.dozedoff.similarImage.db.repository.ormlite.RepositoryFactory;
-import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
-import com.github.dozedoff.similarImage.gui.DisplayGroupView;
+import com.codahale.metrics.Slf4jReporter;
+import com.github.dozedoff.similarImage.component.DaggerGuiApplicationComponent;
+import com.github.dozedoff.similarImage.component.DaggerMessagingComponent;
+import com.github.dozedoff.similarImage.component.DaggerPersistenceComponent;
+import com.github.dozedoff.similarImage.component.GuiApplicationComponent;
+import com.github.dozedoff.similarImage.component.MessagingComponent;
+import com.github.dozedoff.similarImage.component.PersistenceComponent;
 import com.github.dozedoff.similarImage.gui.SimilarImageController;
 import com.github.dozedoff.similarImage.gui.SimilarImageView;
-import com.github.dozedoff.similarImage.gui.UserTagSettingController;
-import com.github.dozedoff.similarImage.io.Statistics;
-import com.github.dozedoff.similarImage.thread.NamedThreadFactory;
+import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
+import com.github.dozedoff.similarImage.messaging.Node;
+
+import net.sourceforge.argparse4j.ArgumentParsers;
+import net.sourceforge.argparse4j.impl.Arguments;
+import net.sourceforge.argparse4j.inf.ArgumentParser;
+import net.sourceforge.argparse4j.inf.ArgumentParserException;
+import net.sourceforge.argparse4j.inf.Namespace;
 
 public class SimilarImage {
 	private final static Logger logger = LoggerFactory.getLogger(SimilarImage.class);
 
-	private final String PROPERTIES_FILENAME = "similarImage.properties";
-	private final int PRODUCER_QUEUE_SIZE = 400;
+	private static final String PROPERTIES_FILENAME = "similarImage.properties";
 
-	private ExecutorService threadPool;
-	private Statistics statistics;
+	private ArtemisEmbeddedServer aes;
 
+	private Slf4jReporter reporter;
+
+	private List<Node> nodes = new LinkedList<Node>();
+
+	/**
+	 * Parses the command line arguments for this program.
+	 * 
+	 * @param args
+	 *            from the command line
+	 * @return the parsed results
+	 * @throws ArgumentParserException
+	 *             if there is an error parsing the arguments
+	 */
+	protected static Namespace parseArgs(String[] args) throws ArgumentParserException {
+		ArgumentParser parser = ArgumentParsers.newArgumentParser("SimilarImage GUI").defaultHelp(true)
+				.description("A similar image finder");
+		parser.addArgument("--no-workers").help("Do not create any hash or resize nodes")
+				.action(Arguments.storeTrue());
+
+		return parser.parseArgs(args);
+	}
+
+	/**
+	 * Check the parsed arguments if the workers are disabled.
+	 * 
+	 * @param args
+	 *            parsed by {@link ArgumentParsers}
+	 * @return true if no worker mode is enabled, else false
+	 */
+	protected static boolean isNoWorkersMode(Namespace args) {
+		return args.getBoolean("no_workers");
+	}
+
+	/**
+	 * Start the program
+	 * 
+	 * @param args
+	 *            command line arguments
+	 */
 	public static void main(String[] args) {
 		try {
-			new SimilarImage().init();
-		} catch (SQLException | RepositoryException e) {
+			Namespace parsedArgs = parseArgs(args);
+
+			new SimilarImage().init(isNoWorkersMode(parsedArgs));
+		} catch (Exception e) {
 			logger.error("Startup failed: {}", e.toString());
 			e.printStackTrace();
 		}
 	}
 
-	public void init() throws SQLException, RepositoryException {
+	/**
+	 * Initialize the program.
+	 * 
+	 * @param noWorkers
+	 *            if local nodes should be created
+	 * @throws Exception
+	 *             if there is an error during setup
+	 */
+	public void init(boolean noWorkers) throws Exception {
 		String version = this.getClass().getPackage().getImplementationVersion();
 
 		if (version == null) {
@@ -72,28 +121,50 @@ public class SimilarImage {
 		logger.info("SimilarImage version " + version);
 		logger.info("System has {} processors", Runtime.getRuntime().availableProcessors());
 
-		threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new NamedThreadFactory(SimilarImage.class.getSimpleName()));
 		Settings settings = new Settings(new SettingsValidator());
 		settings.loadPropertiesFromFile(PROPERTIES_FILENAME);
-		
-		Database database = new SQLiteDatabase();
-		RepositoryFactory repositoryFactory = new OrmliteRepositoryFactory(database);
-		
-		FilterRepository filterRepository = repositoryFactory.buildFilterRepository();
-		TagRepository tagRepository = repositoryFactory.buildTagRepository();
-		ImageRepository imageRepository = repositoryFactory.buildImageRepository();
-		
-		statistics = new Statistics();
-		DisplayGroupView dgv = new DisplayGroupView();
-		SimilarImageController controller = new SimilarImageController(filterRepository, tagRepository, imageRepository,
-				dgv, threadPool, statistics);
-		DuplicateOperations dupOp = new DuplicateOperations(filterRepository, tagRepository, imageRepository);
-		UserTagSettingController utsc = new UserTagSettingController(tagRepository);
-		SimilarImageView gui = new SimilarImageView(controller, dupOp, PRODUCER_QUEUE_SIZE, utsc, filterRepository);
 
-		controller.setGui(gui);
+		PersistenceComponent coreComponent = DaggerPersistenceComponent.create();
+		MessagingComponent messagingComponent = DaggerMessagingComponent.builder().persistenceComponent(coreComponent)
+				.build();
+
+		aes = messagingComponent.getServer();
+		aes.start();
+
+		nodes.add(messagingComponent.getRepositoryNode());
+		nodes.add(messagingComponent.getResultMessageSink());
+
+		GuiApplicationComponent guiComponent = DaggerGuiApplicationComponent.builder()
+				.messagingComponent(messagingComponent).build();
+
+		SimilarImageView gui = guiComponent.getSimilarImageView();
+		SimilarImageController controller = guiComponent.getSimilarImageController();
+
+		logger.info("Starting metrics reporter...");
+		reporter = messagingComponent.getSlf4jReporter();
+		reporter.start(1, TimeUnit.MINUTES);
 
 		logImageReaders();
+
+		if (!noWorkers) {
+			for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
+				nodes.add(messagingComponent.getHasherNode());
+				nodes.add(messagingComponent.getResizerNode());
+			}
+
+			Runtime.getRuntime().addShutdownHook(new Thread() {
+				@Override
+				public void run() {
+					logger.info("Stopping worker nodes...");
+
+					nodes.forEach(node -> {
+						node.stop();
+					});
+
+					logger.info("All worker nodes have terminated");
+				}
+			});
+		}
 	}
 
 	private void logImageReaders() {

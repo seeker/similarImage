@@ -20,6 +20,8 @@ package com.github.dozedoff.similarImage.io;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
+import javax.inject.Inject;
+
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -46,6 +48,7 @@ public class ExtendedAttributeDirectoryCache implements ExtendedAttributeQuery {
 	 * @param eaQuery
 	 *            used to query extended attribute support
 	 */
+	@Inject
 	public ExtendedAttributeDirectoryCache(ExtendedAttributeQuery eaQuery) {
 		this(eaQuery, DEAFULT_EXPIRE_TIME, DEAFULT_EXPIRE_UNIT);
 	}

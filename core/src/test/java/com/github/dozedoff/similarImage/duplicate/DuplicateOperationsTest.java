@@ -28,6 +28,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -49,6 +50,7 @@ import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
+import com.google.common.jimfs.Jimfs;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DuplicateOperationsTest {
@@ -61,6 +63,8 @@ public class DuplicateOperationsTest {
 	private static final Tag TAG_BAR = new Tag("bar");
 	private static final Tag TAG_DNW = new Tag("DNW");
 	private static final Tag TAG_ALL = new Tag("all");
+
+	private static final String BASE_DIRECTORY = "DuplicateOperationsTest";
 
 	@Mock
 	private FilterRepository filterRepository;
@@ -76,12 +80,15 @@ public class DuplicateOperationsTest {
 	private Path tempDirectory = null;
 
 	private FilterRecord fooFilter;
+	private FileSystem fs;
 
 	@Before
 	public void setUp() throws Exception {
-		dupOp = new DuplicateOperations(filterRepository, tagRepository, imageRepository);
+		fs = Jimfs.newFileSystem();
+		dupOp = new DuplicateOperations(fs, filterRepository, tagRepository, imageRepository);
 
-		tempDirectory = Files.createTempDirectory("DuplicateOperationsTest");
+		tempDirectory = fs.getPath(BASE_DIRECTORY);
+		Files.createDirectory(tempDirectory);
 		
 		fooFilter = new FilterRecord(TEST_HASH, TAG_FOO);
 	}
@@ -208,7 +215,7 @@ public class DuplicateOperationsTest {
 		List<Path> files = createTempTestFiles(1);
 		Path file = files.get(0);
 
-		dupOp.markAs(file, "foo");
+		dupOp.markAs(file, TAG_FOO);
 
 		verify(imageRepository).getByPath(any(Path.class));
 		verify(filterRepository, never()).store(any(FilterRecord.class));
@@ -221,7 +228,7 @@ public class DuplicateOperationsTest {
 
 		when(imageRepository.getByPath(file)).thenReturn(new ImageRecord(file.toString(), TEST_HASH));
 
-		dupOp.markAs(file, "foo");
+		dupOp.markAs(file, TAG_FOO);
 
 		verify(filterRepository).store(fooFilter);
 	}
@@ -233,7 +240,7 @@ public class DuplicateOperationsTest {
 
 		when(imageRepository.getByPath(file)).thenThrow(new RepositoryException("This is a test"));
 
-		dupOp.markAs(file, "foo");
+		dupOp.markAs(file, TAG_FOO);
 
 		verify(filterRepository, never()).store(any(FilterRecord.class));
 	}
@@ -245,7 +252,7 @@ public class DuplicateOperationsTest {
 
 		when(imageRepository.getByPath(file)).thenReturn(new ImageRecord(file.toString(), 42));
 
-		dupOp.markAs(file, "foo");
+		dupOp.markAs(file, TAG_FOO);
 
 		verify(filterRepository).store(new FilterRecord(42, TAG_FOO));
 	}
@@ -254,7 +261,7 @@ public class DuplicateOperationsTest {
 	public void testMarkDirectory() throws Exception {
 		createTempTestFiles(3);
 
-		dupOp.markDirectoryAs(tempDirectory, "foo");
+		dupOp.markDirectoryAs(tempDirectory, TAG_FOO);
 
 		verify(imageRepository, times(3)).getByPath(any(Path.class));
 		verify(filterRepository, never()).store(any(FilterRecord.class));
@@ -265,7 +272,7 @@ public class DuplicateOperationsTest {
 		List<Path> files = createTempTestFiles(3);
 		Path file = files.get(0);
 
-		dupOp.markDirectoryAs(file, "foo");
+		dupOp.markDirectoryAs(file, TAG_FOO);
 
 		verify(imageRepository, never()).getByPath(any(Path.class));
 		verify(filterRepository, never()).store(any(FilterRecord.class));
@@ -275,7 +282,7 @@ public class DuplicateOperationsTest {
 	public void testMarkDirectoryDirectoryIsNull() throws Exception {
 		createTempTestFiles(3);
 
-		dupOp.markDirectoryAs(null, "foo");
+		dupOp.markDirectoryAs(null, TAG_FOO);
 
 		verify(imageRepository, never()).getByPath(any(Path.class));
 		verify(filterRepository, never()).store(any(FilterRecord.class));
@@ -285,7 +292,7 @@ public class DuplicateOperationsTest {
 	public void testMarkDirectoryDirectoryNonExistantDirectory() throws Exception {
 		createTempTestFiles(3);
 
-		dupOp.markDirectoryAs(tempDirectory.resolve("foobar"), "foo");
+		dupOp.markDirectoryAs(tempDirectory.resolve("foobar"), TAG_FOO);
 
 		verify(imageRepository, never()).getByPath(any(Path.class));
 		verify(filterRepository, never()).store(any(FilterRecord.class));
@@ -297,7 +304,7 @@ public class DuplicateOperationsTest {
 		records.add(new ImageRecord(TAG_FOO.getTag(), 0));
 		records.add(new ImageRecord(TAG_BAR.getTag(), 1));
 
-		dupOp.markAll(records, TAG_ALL.getTag());
+		dupOp.markAll(records, TAG_ALL);
 
 		verify(filterRepository).store(new FilterRecord(0, TAG_ALL));
 		verify(filterRepository).store(new FilterRecord(1, TAG_ALL));
@@ -305,7 +312,6 @@ public class DuplicateOperationsTest {
 
 	private LinkedList<Path> createTempTestFiles(int amount) throws IOException {
 		LinkedList<Path> tempFiles = new LinkedList<>();
-		tempDirectory = Files.createTempDirectory("DuplicateOperationsTest");
 
 		for (int i = 0; i < amount; i++) {
 			Path testFile = Files.createTempFile(tempDirectory, "testFile", null);

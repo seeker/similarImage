@@ -1,4 +1,3 @@
-<!-- gui module logback configuration -->
 <configuration>
 
 	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
@@ -8,15 +7,13 @@
 			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%file:%line] - %msg%n</pattern>
 		</encoder>
 	</appender>
-	
-	<appender name="ASYNC_STDOUT" class="ch.qos.logback.classic.AsyncAppender">
+
+	<root level="TRACE">
 		<appender-ref ref="STDOUT" />
-		<includeCallerData>true</includeCallerData>
-	</appender>
-	
-	<root level="INFO">
-		<appender-ref ref="ASYNC_STDOUT" />
 	</root>
 	
 	<logger name="com.j256.ormlite" level="OFF" />
+	<logger name="org.apache.activemq.artemis" level="INFO" />
+	<logger name="io.netty" level="OFF" />
+	
 </configuration>

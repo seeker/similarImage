@@ -30,24 +30,25 @@ import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.duplicate.DuplicateUtil;
 import com.github.dozedoff.similarImage.duplicate.RecordSearch;
-import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiGroupEvent;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
+import com.google.common.eventbus.EventBus;
 
 public class ImageSorter extends Thread {
-	private static final Logger logger = LoggerFactory.getLogger(ImageSorter.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(ImageSorter.class);
 
 	private static final String NULL = "null";
 
 	private int hammingDistance;
 	private String path;
 	private final ImageRepository imageRepository;
+	private final EventBus guiEventBus;
 
 	/**
-	 * Create a instance that will sort all images within the given hamming distance. Only images starting with the
-	 * given path will be considered.
+	 * Create a instance that will sort all images within the given hamming distance. Only images starting with the given path will be
+	 * considered.
 	 * 
 	 * @param hammingDistance
 	 *            maximum distance to match a hash
@@ -55,17 +56,20 @@ public class ImageSorter extends Thread {
 	 *            only consider images starting with this path
 	 * @param imageRepository
 	 *            access to the image datasource
+	 * @param guiEventBus
+	 *            {@link EventBus} for gui update events
 	 */
-	public ImageSorter(int hammingDistance, String path, ImageRepository imageRepository) {
+	public ImageSorter(int hammingDistance, String path, ImageRepository imageRepository, EventBus guiEventBus) {
 		super();
 		this.hammingDistance = hammingDistance;
 		this.path = path;
 		this.imageRepository = imageRepository;
+		this.guiEventBus = guiEventBus;
 	}
 
 	@Override
 	public void run() {
-		logger.info("Looking for matching images...");
+		LOGGER.info("Looking for matching images...");
 		Stopwatch sw = Stopwatch.createStarted();
 
 		List<ImageRecord> dBrecords = Collections.emptyList();
@@ -76,14 +80,14 @@ public class ImageSorter extends Thread {
 
 		try {
 			if (NULL.equals(path) || path.isEmpty()) {
-				logger.info("Loading all records");
+				LOGGER.info("Loading all records");
 				dBrecords = imageRepository.getAll();
 			} else {
-				logger.info("Loading records for path {}", path);
+				LOGGER.info("Loading records for path {}", path);
 				dBrecords = imageRepository.startsWithPath(Paths.get(path));
 			}
 		} catch (RepositoryException e) {
-			logger.warn("Failed to load records - {}", e.getMessage());
+			LOGGER.warn("Failed to load records - {}", e.getMessage());
 		}
 
 		RecordSearch rs = new RecordSearch();
@@ -94,8 +98,8 @@ public class ImageSorter extends Thread {
 		DuplicateUtil.removeSingleImageGroups(results);
 		DuplicateUtil.removeDuplicateSets(results);
 
-		logger.info("Found {} similar images out of {} in {}", results.keySet().size(), dBrecords.size(), sw);
-		GuiEventBus.getInstance().post(new GuiGroupEvent(results));
+		LOGGER.info("Found {} similar images out of {} in {}", results.keySet().size(), dBrecords.size(), sw);
+		this.guiEventBus.post(new GuiGroupEvent(results));
 	}
 
 	private Multimap<Long, ImageRecord> findAllHashesInRange(RecordSearch rs, Collection<ImageRecord> records) {

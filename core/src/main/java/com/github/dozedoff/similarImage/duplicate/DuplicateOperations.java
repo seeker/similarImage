@@ -20,9 +20,10 @@ package com.github.dozedoff.similarImage.duplicate;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -33,6 +34,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import javax.imageio.ImageIO;
+import javax.inject.Inject;
 
 import org.imgscalr.Scalr;
 import org.imgscalr.Scalr.Method;
@@ -51,7 +53,11 @@ import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
 import com.github.dozedoff.similarImage.util.ImageUtil;
 
+import at.dhyan.open_imaging.GifDecoder;
+
 public class DuplicateOperations {
+	private static final Tag TAG_DNW = new Tag(Tags.DNW.toString());
+
 	private static final Logger logger = LoggerFactory.getLogger(DuplicateOperations.class);
 
 	private static final String FILTER_ADD_FAILED_MESSAGE = "Add filter operation failed for {} - {}";
@@ -61,13 +67,14 @@ public class DuplicateOperations {
 	private final FilterRepository filterRepository;
 	private final TagRepository tagRepository;
 	private final ImageRepository imageRepository;
+	private final FileSystem fileSystem;
 
 	public enum Tags {
 		DNW, BLOCK
 	}
 
 	/**
-	 * Create with the given classes to access the data.
+	 * Create with the given classes to access the data. Use the default {@link FileSystem}.
 	 * 
 	 * @param filterRepository
 	 *            Data access for {@link FilterRecord}
@@ -77,10 +84,30 @@ public class DuplicateOperations {
 	 *            Data access for {@link ImageRecord}
 	 * 
 	 */
+	@Inject
 	public DuplicateOperations(FilterRepository filterRepository, TagRepository tagRepository, ImageRepository imageRepository) {
+		this(FileSystems.getDefault(), filterRepository, tagRepository, imageRepository);
+	}
+
+	/**
+	 * Create with the given classes to access the data.
+	 * 
+	 * @param fileSystem
+	 *            to use for accessing files
+	 * @param filterRepository
+	 *            Data access for {@link FilterRecord}
+	 * @param tagRepository
+	 *            Data access for {@link Tag}
+	 * @param imageRepository
+	 *            Data access for {@link ImageRecord}
+	 * 
+	 */
+	public DuplicateOperations(FileSystem fileSystem, FilterRepository filterRepository, TagRepository tagRepository,
+			ImageRepository imageRepository) {
 		this.filterRepository = filterRepository;
 		this.tagRepository = tagRepository;
 		this.imageRepository = imageRepository;
+		this.fileSystem = fileSystem;
 	}
 
 	public void moveToDnw(Path path) {
@@ -90,7 +117,7 @@ public class DuplicateOperations {
 
 	public void deleteAll(Collection<ImageRecord> records) {
 		for (ImageRecord ir : records) {
-			Path path = Paths.get(ir.getPath());
+			Path path = fileSystem.getPath(ir.getPath());
 			deleteFile(path);
 		}
 	}
@@ -142,27 +169,6 @@ public class DuplicateOperations {
 	 *            to add filter records for
 	 * @param tag
 	 *            tag to use for filter records
-	 * @deprecated Use {@link DuplicateOperations#markAll(Collection, Tag)} instead.
-	 */
-	@Deprecated
-	public void markAll(Collection<ImageRecord> records, String tag) {
-		for (ImageRecord record : records) {
-			try {
-				markAs(record, getTag(tag));
-				logger.info("Adding pHash {} to filter, tag {}, source file {}", record.getpHash(), tag, record.getPath());
-			} catch (RepositoryException e) {
-				logger.warn("Failed to add tag for {}: {}", record.getPath(), e.toString());
-			}
-		}
-	}
-
-	/**
-	 * Add filter records with the given tag for all records.
-	 * 
-	 * @param records
-	 *            to add filter records for
-	 * @param tag
-	 *            tag to use for filter records
 	 */
 	public void markAll(Collection<ImageRecord> records, Tag tag) {
 		for (ImageRecord record : records) {
@@ -184,41 +190,14 @@ public class DuplicateOperations {
 	 */
 	public void markDnwAndDelete(Collection<ImageRecord> records) {
 		for (ImageRecord ir : records) {
-			Path path = Paths.get(ir.getPath());
+			Path path = fileSystem.getPath(ir.getPath());
 
 			try {
-				markAs(ir, getTag(Tags.DNW.toString()));
+				markAs(ir, TAG_DNW);
 				deleteFile(path);
 			} catch (RepositoryException e) {
 				logger.warn("Failed to add filter entry for {} - {}", path, e.getMessage());
 			}
-		}
-	}
-
-	/**
-	 * Add a {@link FilterRecord} for the given path.
-	 * 
-	 * @param path
-	 *            to tag
-	 * @param reason
-	 *            reason/tag to use
-	 * @deprecated Do not use plain Strings for tags, use the {@link Tag} class instead
-	 */
-	@Deprecated
-	public void markAs(Path path, String reason) {
-		try {
-			ImageRecord ir = imageRepository.getByPath(path);
-
-			if (ir == null) {
-				logger.warn("No record found for {}", path);
-				return;
-			}
-
-			Tag tag = getTag(reason);
-
-			markAs(ir, tag);
-		} catch (RepositoryException e) {
-			logger.warn(FILTER_ADD_FAILED_MESSAGE, path, e.getMessage());
 		}
 	}
 
@@ -246,22 +225,6 @@ public class DuplicateOperations {
 	}
 
 	/**
-	 * @deprecated Do not use String tags, use the {@link Tag} class instead
-	 */
-	@Deprecated
-	private Tag getTag(String reason) throws RepositoryException {
-		Tag tag = tagRepository.getByName(reason);
-
-		if (tag == null) {
-			logger.info("Tag {} does not exist, creating...", reason);
-			tag = new Tag(reason);
-			tagRepository.store(tag);
-		}
-
-		return tag;
-	}
-
-	/**
 	 * Add a {@link FilterRecord} for the given {@link ImageRecord} with the specified reason.
 	 * 
 	 * @param image
@@ -275,7 +238,7 @@ public class DuplicateOperations {
 			long pHash = image.getpHash();
 			logger.info("Adding pHash {} to filter, reason {}", pHash, tag);
 
-			Thumbnail thumb = createThumbnail(Paths.get(image.getPath()));
+		Thumbnail thumb = createThumbnail(fileSystem.getPath(image.getPath()));
 
 			filterRepository.store(new FilterRecord(pHash, tag, thumb));
 	}
@@ -292,8 +255,14 @@ public class DuplicateOperations {
 			InputStream is = Files.newInputStream(path);
 			MessageDigest md = MessageDigest.getInstance(MESSAGE_DIGEST_ALGORITHM);
 			DigestInputStream dis = new DigestInputStream(is, md);
+			BufferedImage img;
+
+			try {
+				img = ImageIO.read(dis);
+			} catch (ArrayIndexOutOfBoundsException e) {
+				img = GifDecoder.read(is).getFrame(0);
+			}
 			
-			BufferedImage img = ImageIO.read(dis);
 			BufferedImage resized = Scalr.resize(img, Method.QUALITY, Mode.AUTOMATIC, THUMBNAIL_SIZE);
 
 			thumb = new Thumbnail(md.digest(), ImageUtil.imageToBytes(resized));
@@ -302,25 +271,6 @@ public class DuplicateOperations {
 		}
 
 		return thumb;
-	}
-
-	/**
-	 * Create {@link FilterRecord} with the given tag for all files in the directory. Sub-Directories will <b>not</b> be
-	 * searched.
-	 * 
-	 * @param directory
-	 *            to search for files
-	 * @param reason
-	 *            tag to use for the {@link FilterRecord}
-	 * @deprecated Do not use string tags, use {@link Tag} instead.
-	 */
-	@Deprecated
-	public void markDirectoryAs(Path directory, String reason) {
-		try {
-			markDirectoryAs(directory, getTag(reason));
-		} catch (RepositoryException e) {
-			logger.error("Failed to add images to filter list, {}", e);
-		}
 	}
 
 	/**
@@ -353,24 +303,6 @@ public class DuplicateOperations {
 			logger.info("Added {} images from {} to filter list", addCount, directory);
 		} catch (IOException e) {
 			logger.error("Failed to add images to filter list, {}", e);
-		}
-	}
-
-	/**
-	 * Create {@link FilterRecord} with the given {@link Tag} for all files in the directory and Sub-Directories.
-	 * 
-	 * @param rootDirectory
-	 *            to search for files and folders
-	 * @param tag
-	 *            tag to use for the {@link FilterRecord}
-	 * @deprecated Do not use string tags, use {@link Tag} instead.
-	 */
-	@Deprecated
-	public void markDirectoryAndChildrenAs(Path rootDirectory, String tag) {
-		try {
-			markDirectoryAndChildrenAs(rootDirectory, getTag(tag));
-		} catch (RepositoryException e) {
-			logger.error("Failed to mark directory {}", rootDirectory);
 		}
 	}
 
@@ -430,7 +362,7 @@ public class DuplicateOperations {
 		LinkedList<ImageRecord> toPrune = new LinkedList<>();
 
 		for (ImageRecord ir : records) {
-			Path path = Paths.get(ir.getPath());
+			Path path = fileSystem.getPath(ir.getPath());
 
 			if (!Files.exists(path)) {
 				toPrune.add(ir);

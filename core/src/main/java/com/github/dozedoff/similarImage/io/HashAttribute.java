@@ -41,6 +41,7 @@ public class HashAttribute {
 	private final String hashFQN;
 	private final String timestampFQN;
 	private final String hashName;
+	private final String corruptNameFQN;
 
 	/**
 	 * Create a class that can be used to read and write hashes as extended attributes.
@@ -52,6 +53,7 @@ public class HashAttribute {
 		this.hashName = hashName;
 		hashFQN = ExtendedAttribute.createName("hash", hashName);
 		timestampFQN = ExtendedAttribute.createName("timestamp", hashName);
+		corruptNameFQN = ExtendedAttribute.createName("corrupt");
 	}
 
 	/**
@@ -131,6 +133,30 @@ public class HashAttribute {
 	}
 
 	/**
+	 * Mark the file as corrupted by creating a extended attribute name.
+	 * 
+	 * @param path
+	 *            to mark
+	 * @throws IOException
+	 *             if there is an error accessing the file
+	 */
+	public void markCorrupted(Path path) throws IOException {
+		ExtendedAttribute.setExtendedAttribute(path, corruptNameFQN, "");
+	}
+
+	/**
+	 * Check to see if a file is corrupted by looking for a extended attribute name.
+	 * 
+	 * @param path
+	 *            to check
+	 * @return true if the file has been marked
+	 * @throws IOException
+	 */
+	public boolean isCorrupted(Path path) throws IOException {
+		return ExtendedAttribute.isExtendedAttributeSet(path, corruptNameFQN);
+	}
+
+	/**
 	 * Get the extended attribute name for the hash.
 	 * 
 	 * @return the FQN of the hash
@@ -146,5 +172,14 @@ public class HashAttribute {
 	 */
 	public String getTimestampFQN() {
 		return timestampFQN;
+	}
+
+	/**
+	 * Get the extended attribute name for the corrupt marker.
+	 * 
+	 * @return the FQN of the corrupt marker
+	 */
+	public String getCorruptNameFQN() {
+		return corruptNameFQN;
 	}
 }

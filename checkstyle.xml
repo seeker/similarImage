@@ -71,9 +71,6 @@
     <module name="FallThrough"/>
     <module name="IllegalCatch"/>
     <module name="IllegalThrows"/>
-    <module name="IllegalToken">
-      <property name="tokens" value="POST_INC,POST_DEC,LITERAL_SWITCH"/>
-    </module>
     <module name="IllegalInstantiation"/>
     <module name="HiddenField">
       <property name="ignoreConstructorParameter" value="true"/>
