@@ -71,6 +71,11 @@ public class RecordSearch {
 	}
 
 	private void buildBkTree() {
+		if (imagesGroupedByHash.isEmpty()) {
+			logger.warn("No hashes provided, cannot build BK tree!");
+			return;
+		}
+
 		logger.info("Building BK-Tree from {} hashes", numberOfHashes());
 
 		Stopwatch swBuildTree = Stopwatch.createStarted();
