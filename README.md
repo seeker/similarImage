@@ -1,6 +1,6 @@
 similarImage
 ============
-[![Build Status](https://travis-ci.org/dozedoff/similarImage.png?branch=develop)](https://travis-ci.org/dozedoff/similarImage) [![Coverage Status](https://coveralls.io/repos/dozedoff/similarImage/badge.png?branch=develop)](https://coveralls.io/r/dozedoff/similarImage?branch=develop)
+[![Build Status](https://travis-ci.org/dozedoff/similarImage.png?branch=master)](https://travis-ci.org/dozedoff/similarImage) [![Coverage Status](https://coveralls.io/repos/dozedoff/similarImage/badge.png?branch=master)](https://coveralls.io/r/dozedoff/similarImage?branch=master)
 
 A similar image finder using DCT for image comparison.
 Based on the [Looks Like It](http://www.hackerfactor.com/blog/?/archives/432-Looks-Like-It.html) blog post.
