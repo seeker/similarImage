@@ -180,4 +180,13 @@ public class FilterSorterTest {
 
 		assertThat(result.get(0L), containsInAnyOrder(records.get(0)));
 	}
+
+	@Test
+	public void testFilterWithNullTag() throws Exception {
+		cut = createSorter(SEARCH_DISTANCE, null);
+		runCutAndWaitForFinish();
+
+		assertThat(result.get(0L), containsInAnyOrder(records.get(0)));
+		assertThat(result.get(1L), containsInAnyOrder(records.get(1)));
+	}
 }

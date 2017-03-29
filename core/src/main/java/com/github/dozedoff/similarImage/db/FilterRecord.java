@@ -185,6 +185,7 @@ public final class FilterRecord {
 	 *             on errors during data access
 	 */
 	public static List<FilterRecord> getTags(FilterRepository repository, Tag tag) throws RepositoryException {
+		// TODO move this to FilterRepository.getByTag
 		if (tag.isMatchAll()) {
 			return repository.getAll();
 		} else {

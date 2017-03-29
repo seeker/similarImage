@@ -35,6 +35,7 @@ import com.github.dozedoff.similarImage.duplicate.RecordSearch;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiGroupEvent;
 import com.github.dozedoff.similarImage.event.GuiStatusEvent;
+import com.github.dozedoff.similarImage.util.StringUtil;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
@@ -78,7 +79,13 @@ public class FilterSorter extends Thread {
 	public FilterSorter(int hammingDistance, Tag tag, FilterRepository filterRepository, TagRepository tagRepository,
 			ImageRepository imageRepository, Path scope) {
 		this.hammingDistance = hammingDistance;
-		this.tag = tag;
+
+		if (tag != null) {
+			this.tag = tag;
+		} else {
+			logger.warn("Tag was null, will use {} tag to match all instead", StringUtil.MATCH_ALL_TAGS);
+			this.tag = new Tag(StringUtil.MATCH_ALL_TAGS);
+		}
 		this.filterRepository = filterRepository;
 		this.tagRepository = tagRepository;
 		this.imageRepository = imageRepository;
