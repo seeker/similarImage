@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>com.github.dozedoff</groupId>
+	<artifactId>similarImage-report</artifactId>
+	<version>0.3.0-SNAPSHOT</version>
+	<description>Used to generate an aggregated report</description>
+	<packaging>pom</packaging>
+
+	<name>similarImage-report</name>
+	<url>https://github.com/dozedoff/similarImage</url>
+
+	<parent>
+		<groupId>com.github.dozedoff</groupId>
+		<artifactId>similarImage</artifactId>
+		<version>0.3.0-SNAPSHOT</version>
+	</parent>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.github.dozedoff</groupId>
+			<artifactId>similarImage-core</artifactId>
+			<version>0.3.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.dozedoff</groupId>
+			<artifactId>similarImage-distributed</artifactId>
+			<version>0.3.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.dozedoff</groupId>
+			<artifactId>similarImage-cli</artifactId>
+			<version>0.3.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.dozedoff</groupId>
+			<artifactId>similarImage-gui</artifactId>
+			<version>0.3.0-SNAPSHOT</version>
+		</dependency>
+	</dependencies>
+</project>
