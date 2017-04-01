@@ -80,6 +80,7 @@
 							<exclude>**/learning*</exclude>
 							<exclude>AllUnitTests.java</exclude>
 						</excludes>
+						<argLine>${argLine}</argLine>
 					</configuration>
 				</plugin>
 				<plugin>
@@ -98,24 +99,27 @@
 							</goals>
 						</execution>
 					</executions>
-				</plugin>			
+				</plugin>	
 				<plugin>
 			  <groupId>org.jacoco</groupId>
 			  <artifactId>jacoco-maven-plugin</artifactId>
 			  <version>0.7.9</version>
+			  					<configuration>
+							<excludes>
+								<exclude>**/component/*</exclude>
+								<exclude>**/module/*</exclude>
+								<exclude>**/*_Factory.*</exclude>
+							</excludes>
+						</configuration>
 			      <executions>
 					<execution>
-						<id>prepare-agent</id>
 						<goals>
 							<goal>prepare-agent</goal>
 						</goals>
-						<configuration>
-							<append>true</append>
-							<destFile>${jacoco.reportPath}</destFile>
-						</configuration>
+
 					</execution>
 				</executions>
-			</plugin>
+			</plugin>				
 			</plugins>
 		</pluginManagement>
 
@@ -193,8 +197,8 @@
 				<artifactId>maven-pmd-plugin</artifactId>
 			</plugin>
 			<plugin>
-			  <groupId>org.jacoco</groupId>
-			  <artifactId>jacoco-maven-plugin</artifactId>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
 			</plugin>
 		</plugins>
 	</build>
