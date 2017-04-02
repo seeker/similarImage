@@ -24,6 +24,7 @@
 		<module>gui</module>
 		<module>cli</module>
 		<module>distributed</module>
+		<module>report</module>
 	</modules>
 
 	<reporting>
@@ -50,6 +51,7 @@
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
+	
 	<build>
 		<pluginManagement>
 			<plugins>
@@ -78,6 +80,7 @@
 							<exclude>**/learning*</exclude>
 							<exclude>AllUnitTests.java</exclude>
 						</excludes>
+						<argLine>${argLine}</argLine>
 					</configuration>
 				</plugin>
 				<plugin>
@@ -96,7 +99,26 @@
 							</goals>
 						</execution>
 					</executions>
-				</plugin>
+				</plugin>	
+				<plugin>
+			  <groupId>org.jacoco</groupId>
+			  <artifactId>jacoco-maven-plugin</artifactId>
+			  <version>0.7.9</version>
+			  					<configuration>
+							<excludes>
+								<exclude>**/component/*</exclude>
+								<exclude>**/module/*</exclude>
+								<exclude>**/*_Factory.*</exclude>
+							</excludes>
+						</configuration>
+			      <executions>
+					<execution>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>				
 			</plugins>
 		</pluginManagement>
 
@@ -129,22 +151,14 @@
 				<version>2.9</version>
 			</plugin>
 			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>cobertura-maven-plugin</artifactId>
-				<version>2.7</version>
-				<configuration>
-					<formats>
-						<format>html</format>
-						<format>xml</format>
-					</formats>
-					<aggregate>true</aggregate>
-					<maxmem>256m</maxmem>
-				</configuration>
-			</plugin>
-			<plugin>
 				<groupId>org.eluder.coveralls</groupId>
 				<artifactId>coveralls-maven-plugin</artifactId>
 				<version>4.3.0</version>
+				<configuration>
+					<jacocoReports>
+						<jacocoReport>${project.basedir}/report/target/site/jacoco-aggregate/jacoco.xml</jacocoReport>
+					</jacocoReports>
+				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
@@ -185,6 +199,10 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-pmd-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
 			</plugin>
 		</plugins>
 	</build>
