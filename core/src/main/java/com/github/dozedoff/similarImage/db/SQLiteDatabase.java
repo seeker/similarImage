@@ -20,13 +20,13 @@ package com.github.dozedoff.similarImage.db;
 import java.nio.file.Path;
 import java.sql.SQLException;
 
+import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.support.DatabaseConnection;
-import com.j256.ormlite.table.TableUtils;
 
 /**
  * Create/Open and configure a SQLite database
@@ -67,6 +67,7 @@ public class SQLiteDatabase implements Database {
 		try {
 			String fullDbPath = DB_PREFIX + dbPath;
 			connectionSource = new JdbcConnectionSource(fullDbPath);
+			migrateDatabase(fullDbPath);
 			setupDatabase(connectionSource);
 
 			LOGGER.info("Loaded database");
@@ -85,16 +86,12 @@ public class SQLiteDatabase implements Database {
 		dbConn.executeStatement("PRAGMA synchronous=NORMAL;", DatabaseConnection.DEFAULT_RESULT_FLAGS);
 		dbConn.executeStatement("PRAGMA temp_store = MEMORY;", DatabaseConnection.DEFAULT_RESULT_FLAGS);
 		dbConn.executeStatement("PRAGMA journal_mode=MEMORY;", DatabaseConnection.DEFAULT_RESULT_FLAGS);
+	}
 
-		LOGGER.info("Setting up database tables...");
-		TableUtils.createTableIfNotExists(cs, ImageRecord.class);
-		TableUtils.createTableIfNotExists(cs, Tag.class);
-		TableUtils.createTableIfNotExists(cs, FilterRecord.class);
-		TableUtils.createTableIfNotExists(cs, BadFileRecord.class);
-		TableUtils.createTableIfNotExists(cs, IgnoreRecord.class);
-		TableUtils.createTableIfNotExists(cs, Tag.class);
-		TableUtils.createTableIfNotExists(cs, Thumbnail.class);
-		TableUtils.createTableIfNotExists(cs, PendingHashImage.class);
+	private void migrateDatabase(String fullDbPath) {
+		Flyway flyway = new Flyway();
+		flyway.setDataSource(fullDbPath, "", "");
+		flyway.migrate();
 	}
 
 	/**
