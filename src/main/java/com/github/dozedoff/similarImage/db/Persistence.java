@@ -23,6 +23,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +37,6 @@ import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.SelectArg;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.support.DatabaseConnection;
-import com.j256.ormlite.table.TableUtils;
 
 public class Persistence {
 	private static final Logger logger = LoggerFactory.getLogger(Persistence.class);
@@ -64,6 +64,7 @@ public class Persistence {
 		try {
 			String fullDbPath = dbPrefix + dbPath;
 			ConnectionSource cs = new JdbcConnectionSource(fullDbPath);
+			migrateDatabase(fullDbPath);
 			setupDatabase(cs);
 			setupDAO(cs);
 			createPreparedStatements();
@@ -89,12 +90,12 @@ public class Persistence {
 		dbConn.executeStatement("PRAGMA synchronous=NORMAL;", DatabaseConnection.DEFAULT_RESULT_FLAGS);
 		dbConn.executeStatement("PRAGMA temp_store = MEMORY;", DatabaseConnection.DEFAULT_RESULT_FLAGS);
 		dbConn.executeStatement("PRAGMA journal_mode=MEMORY;", DatabaseConnection.DEFAULT_RESULT_FLAGS);
+	}
 
-		logger.info("Setting up database tables...");
-		TableUtils.createTableIfNotExists(cs, ImageRecord.class);
-		TableUtils.createTableIfNotExists(cs, FilterRecord.class);
-		TableUtils.createTableIfNotExists(cs, BadFileRecord.class);
-		TableUtils.createTableIfNotExists(cs, IgnoreRecord.class);
+	private void migrateDatabase(String fullDbPath) {
+		Flyway flyway = new Flyway();
+		flyway.setDataSource(fullDbPath, "", "");
+		flyway.migrate();
 	}
 
 	private void setupDAO(ConnectionSource cs) throws SQLException {

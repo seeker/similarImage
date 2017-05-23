@@ -6,4 +6,5 @@ A similar image finder using an implementation of pHash
 
 ### Note
 ------
-The pHash generated in 0.0.2 and 0.1.0 are incompatible, due to a faulty implementation.
+- The pHash generated in 0.0.2 and 0.1.0 are incompatible, due to a faulty implementation.
+- If you have a pre 0.1.2 database, you will need to run a flyway baseline
