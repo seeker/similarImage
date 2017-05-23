@@ -1,4 +1,4 @@
-sudo:false
+sudo: false
 language: java
 
 jdk:
@@ -6,5 +6,21 @@ jdk:
   - openjdk7
   - oraclejdk8
 
-after_success:
-  - mvn clean cobertura:cobertura coveralls:cobertura
+jobs:
+  include:
+    - script: mvn test
+      jdk: oraclejdk8
+    - stage: Coveralls code coverage
+      jdk: oraclejdk8
+      script: mvn clean cobertura:cobertura coveralls:cobertura
+    - stage: GitHub Release
+      jdk: oraclejdk8
+      script: mvn package
+      deploy:
+        provider: releases
+        api_key: $GITHUB_OAUTH_TOKEN
+        skip_cleanup: true
+        file_glob: true
+        file: target/similarImage*.jar
+        on:
+          tags: true      
