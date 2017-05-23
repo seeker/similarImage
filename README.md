@@ -10,4 +10,6 @@ Based on the [Looks Like It](http://www.hackerfactor.com/blog/?/archives/432-Loo
 
 ### Note
 ------
-The hash generated in 0.0.2 and 0.1.0 are incompatible, due to a faulty implementation.
+- The hash generated in 0.0.2 and 0.1.0 are incompatible, due to a faulty implementation.
+- If you have a pre 0.1.2 database, you will need to run a flyway baseline for 0.1.2, then migrate to 0.2.1
+- If you have a 0.2.0 database, you will need to run a flyway baseline

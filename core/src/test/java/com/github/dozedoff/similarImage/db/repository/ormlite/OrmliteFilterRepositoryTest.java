@@ -51,6 +51,9 @@ public class OrmliteFilterRepositoryTest extends OrmliteRepositoryBaseTest {
 	private static final byte[] THUMB_HASH_EXISTING = { 1, 2, 3 };
 	private static final byte[] THUMB_HASH_NEW = { 9, 8, 7 };
 
+	private static final byte[] THUMB_IMAGE_EXISTING = { 5, 2, 16, 32 };
+	private static final byte[] THUMB_IMAGE_NEW = { 5, 6, 72, 1 };
+
 	private FilterRepository cut;
 
 	private Dao<FilterRecord, Integer> filterDao;
@@ -92,8 +95,8 @@ public class OrmliteFilterRepositoryTest extends OrmliteRepositoryBaseTest {
 	}
 
 	private void createRecords() throws Exception {
-		exsitingThumbnail = new Thumbnail(THUMB_HASH_EXISTING, new byte[] {});
-		newThumbnail = new Thumbnail(THUMB_HASH_NEW, new byte[] {});
+		exsitingThumbnail = new Thumbnail(THUMB_HASH_EXISTING, THUMB_IMAGE_EXISTING);
+		newThumbnail = new Thumbnail(THUMB_HASH_NEW, THUMB_IMAGE_NEW);
 
 		thumbnailDao.create(exsitingThumbnail);
 
