@@ -22,6 +22,9 @@ import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.Thumbnail;
@@ -37,6 +40,7 @@ import net.miginfocom.swing.MigLayout;
  *
  */
 public class FilterViewRow extends JComponent {
+	private static final Logger LOGGER = LoggerFactory.getLogger(FilterViewRow.class);
 	private static final long serialVersionUID = -7521419392503926391L;
 
 	private static final int HASH_COLUMN_WIDTH = 150;
@@ -76,7 +80,12 @@ public class FilterViewRow extends JComponent {
 	}
 
 	private void createTagLabel(Tag tag) {
-		add(new JLabel(tag.toString()));
+		if (tag == null) {
+			LOGGER.warn("Tag for filter with hash {} was null", filter.getpHash());
+			add(new JLabel("---"));
+		} else {
+			add(new JLabel(tag.toString()));
+		}
 	}
 
 	private void createThumbnail() {
