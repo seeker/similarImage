@@ -16,7 +16,8 @@ jobs:
         api_key: $GITHUB_OAUTH_TOKEN
         skip_cleanup: true
         file_glob: true
-        file: gui/target/similarImage*.jar
-        file: cli/target/similarImage*.jar
+        file:
+          - gui/target/similarImage*.jar
+          - cli/target/similarImage*.jar
         on:
           tags: true
