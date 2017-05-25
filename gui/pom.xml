@@ -46,6 +46,7 @@
 									</manifestEntries>
 								</transformer>
 							</transformers>
+              				<shadedArtifactAttached>false</shadedArtifactAttached>
 						</configuration>
 					</execution>
 				</executions>
