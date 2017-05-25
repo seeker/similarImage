@@ -5,7 +5,7 @@
 
 	<groupId>com.github.dozedoff</groupId>
 	<artifactId>similarImage-core</artifactId>
-	<version>0.2.0</version>
+	<version>0.2.1</version>
 	<description>Classes shared between GUI and CLI</description>
 	<packaging>jar</packaging>
 
@@ -15,7 +15,7 @@
 	<parent>
 		<groupId>com.github.dozedoff</groupId>
 		<artifactId>similarImage</artifactId>
-		<version>0.2.0</version>
+		<version>0.2.1</version>
 	</parent>
 
 	<repositories>
