@@ -10,7 +10,7 @@ jobs:
       script: mvn test jacoco:report-aggregate coveralls:report
     - stage: GitHub Release
       jdk: oraclejdk8
-      script: mvn package
+      script: mvn package -Dmaven.test.skip=true
       deploy:
         provider: releases
         api_key: $GITHUB_OAUTH_TOKEN
