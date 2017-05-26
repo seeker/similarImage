@@ -7,7 +7,7 @@ jobs:
       jdk: oraclejdk8
     - stage: Coveralls code coverage
       jdk: oraclejdk8
-      script: mvn jacoco:report-aggregate coveralls:report
+      script: mvn test jacoco:report-aggregate coveralls:report
     - stage: GitHub Release
       jdk: oraclejdk8
       script: mvn package
