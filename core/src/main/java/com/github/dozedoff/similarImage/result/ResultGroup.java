@@ -25,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
-import com.google.common.base.MoreObjects;
 
 /**
  * A set of images that are possible duplicates.
@@ -119,8 +118,7 @@ public class ResultGroup {
 	 */
 	@Override
 	public String toString() {
-		return MoreObjects.toStringHelper(ResultGroup.class).add("parent", parent).add("hash", hash)
-				.add("results", results.size()).toString();
+		return String.format("%d (%d)", this.hash, results.size());
 	}
 
 	/**

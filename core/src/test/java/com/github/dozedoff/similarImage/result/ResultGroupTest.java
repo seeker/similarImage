@@ -128,4 +128,9 @@ public class ResultGroupTest {
 
 		assertThat(cut.hasResults(), is(false));
 	}
+
+	@Test
+	public void testToString() throws Exception {
+		assertThat(cut.toString(), is("42 (2)"));
+	}
 }
