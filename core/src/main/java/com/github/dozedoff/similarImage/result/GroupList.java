@@ -23,6 +23,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.DefaultListModel;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,11 +40,23 @@ public class GroupList {
 	private final Multimap<Result, ResultGroup> resultsToGroups;
 	private final Map<Long, ResultGroup> hashToGroup;
 	private final Collection<ResultGroup> groups;
+	private DefaultListModel<ResultGroup> mappedListeModel;
+
+	/**
+	 * Create a new {@link GroupList} with a empty {@link DefaultListModel}.
+	 */
+	public GroupList() {
+		this(new DefaultListModel<ResultGroup>());
+	}
 
 	/**
 	 * Create a new {@link GroupList}.
+	 * 
+	 * @param mappedListModel
+	 *            the {@link DefaultListModel} this {@link GroupList} was mapped to.
 	 */
-	public GroupList() {
+	public GroupList(DefaultListModel<ResultGroup> mappedListModel) {
+		this.mappedListeModel = mappedListModel;
 		groups = new LinkedList<ResultGroup>();
 		hashToGroup = new HashMap<Long, ResultGroup>();
 		resultsToGroups = MultimapBuilder.hashKeys().linkedListValues().build();
@@ -109,6 +123,7 @@ public class GroupList {
 		if (!groupToCheck.hasResults()) {
 			LOGGER.debug("Removing  {} because it has no results.", groupToCheck);
 			groups.remove(groupToCheck);
+			mappedListeModel.removeElement(groupToCheck);
 		}
 	}
 
@@ -138,5 +153,15 @@ public class GroupList {
 	 */
 	public List<ResultGroup> getAllGroups() {
 		return new LinkedList<ResultGroup>(groups);
+	}
+
+	/**
+	 * Set the {@link DefaultListModel} that maps this {@link GroupList}.
+	 * 
+	 * @param mappedListeModel
+	 *            {@link DefaultListModel} to set
+	 */
+	public void setMappedListModel(DefaultListModel<ResultGroup> mappedListeModel) {
+		this.mappedListeModel = mappedListeModel;
 	}
 }

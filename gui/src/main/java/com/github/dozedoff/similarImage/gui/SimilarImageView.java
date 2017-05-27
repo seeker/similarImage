@@ -356,6 +356,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 	}
 
 	public void populateGroupList(GroupList groups) {
+		groups.setMappedListModel(groupListModel);
 		SwingUtilities.invokeLater(new GroupListPopulator(groups, groupListModel));
 	}
 

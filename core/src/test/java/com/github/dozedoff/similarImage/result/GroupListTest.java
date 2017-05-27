@@ -26,6 +26,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 
+import javax.swing.DefaultListModel;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -47,10 +49,20 @@ public class GroupListTest {
 
 	private GroupList cut;
 
+	private DefaultListModel<ResultGroup> dlm;
+
 	@Before
 	public void setUp() throws Exception {
 		cut = new GroupList();
 
+		initGroupList();
+
+		dlm = new DefaultListModel<ResultGroup>();
+		dlm.addElement(groupA);
+		dlm.addElement(groupB);
+	}
+
+	private void initGroupList() {
 		createRecords();
 		createGroups();
 
@@ -110,5 +122,22 @@ public class GroupListTest {
 	@Test(expected = IllegalArgumentException.class)
 	public void testGetInvalidHash() throws Exception {
 		cut.getGroup(-1);
+	}
+
+	@Test
+	public void testListModelContainsGroups() throws Exception {
+		assertThat(dlm.contains(groupA), is(true));
+		assertThat(dlm.contains(groupB), is(true));
+	}
+
+	@Test
+	public void testEmptyGroupRemovedFromGui() throws Exception {
+		cut = new GroupList(dlm);
+		initGroupList();
+		
+		groupA.remove(new Result(groupA, recordC));
+		groupA.remove(new Result(groupA, recordA));
+
+		assertThat(dlm.contains(groupA), is(false));
 	}
 }
