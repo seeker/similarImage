@@ -41,6 +41,9 @@ public class ResultTest {
 	@Mock
 	private ResultGroup parentGroup;
 
+	@Mock
+	private ResultGroup parentGroup2;
+
 	private Result cut;
 
 	@Before
@@ -63,6 +66,11 @@ public class ResultTest {
 
 	@Test
 	public void testHashAndEquals() throws Exception {
-		EqualsVerifier.forClass(Result.class).allFieldsShouldBeUsed().verify();
+		EqualsVerifier.forClass(Result.class).allFieldsShouldBeUsedExcept("parentGroup").verify();
+	}
+
+	@Test
+	public void testEqual() throws Exception {
+		assertThat(cut, is(new Result(parentGroup2, new ImageRecord(PATH, HASH))));
 	}
 }

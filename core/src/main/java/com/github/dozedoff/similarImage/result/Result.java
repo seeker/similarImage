@@ -82,7 +82,7 @@ public class Result {
 	 */
 	@Override
 	public final int hashCode() {
-		return Objects.hash(parentGroup, imageRecord);
+		return Objects.hash(imageRecord);
 	}
 
 	/**
@@ -98,8 +98,7 @@ public class Result {
 		if (obj instanceof Result) {
 			final Result other = (Result) obj;
 
-			return Objects.equals(this.parentGroup, other.parentGroup)
-					&& Objects.equals(this.imageRecord, other.imageRecord);
+			return Objects.equals(this.imageRecord, other.imageRecord);
 		}
 
 		return false;
