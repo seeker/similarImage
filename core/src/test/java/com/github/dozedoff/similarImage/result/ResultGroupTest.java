@@ -25,8 +25,10 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -35,6 +37,8 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
+
+import nl.jqno.equalsverifier.EqualsVerifier;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ResultGroupTest {
@@ -132,5 +136,20 @@ public class ResultGroupTest {
 	@Test
 	public void testToString() throws Exception {
 		assertThat(cut.toString(), is("42 (2)"));
+	}
+	
+	@Test
+	public void testGroupsAreEqual() throws Exception {
+		GroupList gl = new GroupList();
+		List<ImageRecord> irs = Arrays
+				.asList(new ImageRecord[] { new ImageRecord(PATH_A, HASH), new ImageRecord(PATH_B, HASH) });
+		ResultGroup b = new ResultGroup(gl, HASH, irs);
+		
+		assertThat(b, is(cut));
+	}
+
+	@Test
+	public void testHashAndEquals() throws Exception {
+		EqualsVerifier.forClass(ResultGroup.class).allFieldsShouldBeUsedExcept("parent", "results").verify();
 	}
 }

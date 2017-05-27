@@ -20,6 +20,7 @@ package com.github.dozedoff.similarImage.result;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +35,7 @@ public class ResultGroup {
 
 	private final GroupList parent;
 	private final long hash;
-	private List<Result> results;
+	private final List<Result> results;
 
 	/**
 	 * Create a new {@link ResultGroup} with the given {@link ImageRecord}s.
@@ -128,5 +129,21 @@ public class ResultGroup {
 	 */
 	public boolean hasResults() {
 		return !results.isEmpty();
+	}
+
+	@Override
+	public final int hashCode() {
+		return Objects.hash(hash);
+	}
+
+	@Override
+	public final boolean equals(Object obj) {
+		if (obj instanceof ResultGroup) {
+			final ResultGroup other = (ResultGroup) obj;
+
+			return Objects.equals(this.hash, other.hash);
+		}
+
+		return false;
 	}
 }
