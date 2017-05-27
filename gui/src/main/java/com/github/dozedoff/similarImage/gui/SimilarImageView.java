@@ -23,9 +23,7 @@ import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -61,6 +59,8 @@ import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiUserTagChangedEvent;
 import com.github.dozedoff.similarImage.io.Statistics.StatisticsEvent;
 import com.github.dozedoff.similarImage.io.StatisticsChangedListener;
+import com.github.dozedoff.similarImage.result.GroupList;
+import com.github.dozedoff.similarImage.result.ResultGroup;
 import com.github.dozedoff.similarImage.thread.GroupListPopulator;
 import com.google.common.eventbus.Subscribe;
 
@@ -81,8 +81,8 @@ public class SimilarImageView implements StatisticsChangedListener {
 	private JLabel status, hammingValue;
 	private JProgressBar progress;
 	private JLabel queueSize;
-	private JList<Long> groups;
-	private DefaultListModel<Long> groupListModel;
+	private JList<ResultGroup> groups;
+	private DefaultListModel<ResultGroup> groupListModel;
 	private JScrollPane groupScrollPane;
 	private JScrollBar hammingDistance;
 
@@ -157,8 +157,8 @@ public class SimilarImageView implements StatisticsChangedListener {
 		sortSimilar = new JButton("Sort similar");
 		sortFilter = new JButton("Sort filter");
 
-		groupListModel = new DefaultListModel<Long>();
-		groups = new JList<Long>(groupListModel);
+		groupListModel = new DefaultListModel<ResultGroup>();
+		groups = new JList<ResultGroup>(groupListModel);
 		groups.setComponentPopupMenu(new OperationsMenu(utsController));
 		groupScrollPane = new JScrollPane(groups);
 		hammingDistance = new JScrollBar(JScrollBar.HORIZONTAL, 0, 2, 0, 64);
@@ -212,7 +212,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 
 				int index = groups.getSelectedIndex();
 				if (index > -1 && index < groupListModel.size()) {
-					long group = groupListModel.get(index);
+					ResultGroup group = groupListModel.get(index);
 					controller.displayGroup(group);
 				}
 
@@ -241,7 +241,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 		view.add(hammingValue);
 	}
 
-	private long getSelectedGroup() {
+	private ResultGroup getSelectedGroup() {
 		return groups.getSelectedValue();
 	}
 
@@ -355,17 +355,16 @@ public class SimilarImageView implements StatisticsChangedListener {
 		progress.setMaximum(numOfFiles);
 	}
 
-	public void populateGroupList(Collection<Long> groups) {
+	public void populateGroupList(GroupList groups) {
 		SwingUtilities.invokeLater(new GroupListPopulator(groups, groupListModel));
 	}
 
-	private void deleteAll(long group) {
-		Set<ImageRecord> set = controller.getGroup(group);
-		duplicateOperations.deleteAll(set);
+	private void deleteAll(ResultGroup group) {
+		duplicateOperations.deleteAll(group.getResults());
 		groupListModel.removeElement(group);
 	}
 
-	private void tagAll(long group) {
+	private void tagAll(ResultGroup group) {
 		JList<Tag> activeTags = buildActiveTagsList();
 
 		Object[] message = { "Active Tags:", new JScrollPane(activeTags) };
@@ -375,7 +374,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 		getTopicDialog.setVisible(true);
 
 		if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION) {
-			duplicateOperations.markAll(controller.getGroup(group), activeTags.getSelectedValue());
+			duplicateOperations.markAll(group.getResults(), activeTags.getSelectedValue());
 		}
 	}
 
@@ -455,7 +454,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 				menu.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						duplicateOperations.markAll(controller.getGroup(getSelectedGroup()), tag);
+						duplicateOperations.markAll(getSelectedGroup().getResults(), tag);
 					}
 				});
 

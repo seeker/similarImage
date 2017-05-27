@@ -23,6 +23,7 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 
 import javax.swing.JMenuItem;
@@ -33,9 +34,9 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
-import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiUserTagChangedEvent;
+import com.github.dozedoff.similarImage.result.Result;
 import com.google.common.eventbus.Subscribe;
 
 /**
@@ -56,11 +57,11 @@ public class OperationsMenu {
 		Delete, MarkAndDeleteDNW, MarkBlocked, Ignore, CopyDirectoryPath
 	};
 
-	private final ImageInfo imageInfo;
+	private final Result result;
 
-	public OperationsMenu(ImageInfo imageInfo, DuplicateOperations dupOps, UserTagSettingController utsController) {
+	public OperationsMenu(Result result, DuplicateOperations dupOps, UserTagSettingController utsController) {
 		this.duplicateOperations = dupOps;
-		this.imageInfo = imageInfo;
+		this.result = result;
 		this.menu = new JPopupMenu();
 		this.utsController = utsController;
 
@@ -68,43 +69,54 @@ public class OperationsMenu {
 		GuiEventBus.getInstance().register(this);
 	}
 
+	private Path getPath() {
+		return Paths.get(result.getImageRecord().getPath());
+	}
+
+	private long getHash() {
+		return result.getImageRecord().getpHash();
+	}
+
+	private void deleteFile() {
+		duplicateOperations.deleteFile(getPath());
+		result.remove();
+	}
+
 	private void setupPopupMenu() {
 		actions.put(Operations.Delete, new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Path path = imageInfo.getPath();
-				duplicateOperations.deleteFile(path);
+				deleteFile();
 			}
 		});
 
 		actions.put(Operations.MarkAndDeleteDNW, new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Path path = imageInfo.getPath();
-				duplicateOperations.markAs(path, TAG_DNW);
-				duplicateOperations.deleteFile(path);
+				duplicateOperations.markAs(getPath(), TAG_DNW);
+				deleteFile();
 			}
 		});
 
 		actions.put(Operations.MarkBlocked, new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Path path = imageInfo.getPath();
-				duplicateOperations.markAs(path, TAG_BLOCK);
+				duplicateOperations.markAs(getPath(), TAG_BLOCK);
 			}
 		});
 
 		actions.put(Operations.Ignore, new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				duplicateOperations.ignore(imageInfo.getpHash());
+				duplicateOperations.ignore(getHash());
+				result.remove();
 			}
 		});
 
 		actions.put(Operations.CopyDirectoryPath, new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Path directory = imageInfo.getPath().getParent();
+				Path directory = getPath().getParent();
 
 				Clipboard clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard();
 				clpbrd.setContents(new StringSelection(directory.toString()), null);
@@ -120,7 +132,7 @@ public class OperationsMenu {
 			menuItem.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent arg0) {
-					duplicateOperations.markAs(imageInfo.getPath(), cut);
+					duplicateOperations.markAs(getPath(), cut);
 				}
 			});
 

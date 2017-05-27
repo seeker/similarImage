@@ -21,7 +21,6 @@ import java.awt.Dimension;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -152,10 +151,10 @@ public class SimilarImageController {
 		updateGUI();
 	}
 
-	public void displayGroup(long group) {
+	public void displayGroup(ResultGroup group) {
 		int maxGroupSize = 30;
 
-		Set<ImageRecord> grouplist = getGroup(group);
+		List<Result> grouplist = group.getResults();
 		LinkedList<View> images = new LinkedList<View>();
 		Dimension imageDim = new Dimension(THUMBNAIL_DIMENSION, THUMBNAIL_DIMENSION);
 
@@ -167,14 +166,15 @@ public class SimilarImageController {
 
 		logger.info("Loading {} thumbnails for group {}", grouplist.size(), group);
 
-		for (ImageRecord rec : grouplist) {
-			Path path = Paths.get(rec.getPath());
+		for (Result rec : grouplist) {
+			ImageRecord ir = rec.getImageRecord();
+			Path path = Paths.get(ir.getPath());
 
 			if (Files.exists(path)) {
-				ImageInfo info = new ImageInfo(path, rec.getpHash());
+				ImageInfo info = new ImageInfo(path, ir.getpHash());
 				OperationsMenu opMenu;
 
-				opMenu = new OperationsMenu(info, dupOps, utsc);
+				opMenu = new OperationsMenu(rec, dupOps, utsc);
 				DuplicateEntryController entry = new DuplicateEntryController(info, imageDim);
 				new DuplicateEntryView(entry, opMenu);
 				images.add(entry);
@@ -184,19 +184,13 @@ public class SimilarImageController {
 			}
 		}
 
-		displayGroup.displayImages(group, images);
+		displayGroup.displayImages(group.toString(), images);
 	}
 
 	private void updateGUI() {
 		setGUIStatus("" + groupList.groupCount() + " Groups");
-		// TODO pass group directly (or grouplist?)
-		gui.populateGroupList(groupsToLong(groupList.getAllGroups()));
+		gui.populateGroupList(groupList);
 	}
-
-	private List<Long> groupsToLong(Collection<ResultGroup> groups) {
-		return groups.stream().map(group -> group.getHash()).collect(Collectors.toList());
-	}
-
 
 	private void setGUIStatus(String message) {
 		guiSetCheck();

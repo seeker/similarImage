@@ -17,44 +17,69 @@
  */
 package com.github.dozedoff.similarImage.thread;
 
-import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.verify;
 
-import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.swing.DefaultListModel;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import com.github.dozedoff.similarImage.result.GroupList;
+import com.github.dozedoff.similarImage.result.ResultGroup;
+import com.google.common.collect.Lists;
+
 @RunWith(MockitoJUnitRunner.class)
 public class GroupListPopulatorTest {
 	GroupListPopulator glp;
-	private final Long[] data = { 5L, 2L, 4L, 3L, 1L };
+	private static final int GROUP_COUNT = 5;
+	private GroupList grouplist;
+	private List<ResultGroup> results;
 
 	@Mock
-	DefaultListModel<Long> dlm;
+	DefaultListModel<ResultGroup> dlm;
 
 	@Before
 	public void setUp() throws Exception {
 		MockitoAnnotations.initMocks(this);
-		glp = new GroupListPopulator(Arrays.asList(data), dlm);
+		grouplist = new GroupList();
+		results = new LinkedList<ResultGroup>();
+
+		for (int i = GROUP_COUNT + 1; i > 0; i--) {
+			results.add(new ResultGroup(grouplist, i, Collections.emptyList()));
+		}
+
+		grouplist.populateList(results);
+
+		glp = new GroupListPopulator(grouplist, dlm);
+	}
+
+	@Ignore("Needs sorter")
+	@Test
+	public void testElementsAddedInOrder() {
+		glp.run();
+
+		List<ResultGroup> testList = Lists.reverse(results);
+
+		for (ResultGroup rg : testList) {
+			verify(dlm).addElement(rg);
+		}
 	}
 
 	@Test
-	public void testRun() {
+	public void testElementsAdded() {
 		glp.run();
 
-		InOrder inOrder = inOrder(dlm);
-
-		inOrder.verify(dlm).addElement(1L);
-		inOrder.verify(dlm).addElement(2L);
-		inOrder.verify(dlm).addElement(3L);
-		inOrder.verify(dlm).addElement(4L);
-		inOrder.verify(dlm).addElement(5L);
+		for (ResultGroup rg : results) {
+			verify(dlm).addElement(rg);
+		}
 	}
 }

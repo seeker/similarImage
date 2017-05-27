@@ -48,10 +48,10 @@ public class DisplayGroupView {
 		view.setFocusableWindowState(true);
 	}
 
-	public void displayImages(long group, List<View> duplicates) {
+	public void displayImages(String title, List<View> duplicates) {
 		view.remove(scroll);
 		view.dispose();
-		view.setTitle("" + group);
+		view.setTitle("" + title);
 		content = new JPanel(new MigLayout("wrap 4"));
 
 		for (View entry : duplicates) {

@@ -51,6 +51,7 @@ import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
+import com.github.dozedoff.similarImage.result.Result;
 import com.github.dozedoff.similarImage.util.ImageUtil;
 
 import at.dhyan.open_imaging.GifDecoder;
@@ -115,10 +116,9 @@ public class DuplicateOperations {
 		// TODO code me
 	}
 
-	public void deleteAll(Collection<ImageRecord> records) {
-		for (ImageRecord ir : records) {
-			Path path = fileSystem.getPath(ir.getPath());
-			deleteFile(path);
+	public void deleteAll(Collection<Result> records) {
+		for (Result result : records) {
+			deleteFile(result);
 		}
 	}
 
@@ -137,6 +137,12 @@ public class DuplicateOperations {
 	}
 
 	// TODO directly delete via Imagerecord
+	public void deleteFile(Result result) {
+		deleteFile(fileSystem.getPath(result.getImageRecord().getPath()));
+		result.remove();
+	}
+
+	// TODO directly delete via Imagerecord
 	public void deleteFile(Path path) {
 		try {
 			if (path == null) {
@@ -151,9 +157,7 @@ public class DuplicateOperations {
 
 			logger.info("Deleting file {}", path);
 
-			ImageRecord ir = new ImageRecord(path.toString(), 0);
-
-			imageRepository.remove(ir);
+			imageRepository.remove(new ImageRecord(path.toString(), 0));
 			Files.delete(path);
 		} catch (IOException e) {
 			logger.warn("Failed to delete {} - {}", path, e.getMessage());
@@ -170,8 +174,9 @@ public class DuplicateOperations {
 	 * @param tag
 	 *            tag to use for filter records
 	 */
-	public void markAll(Collection<ImageRecord> records, Tag tag) {
-		for (ImageRecord record : records) {
+	public void markAll(Collection<Result> records, Tag tag) {
+		for (Result result : records) {
+			ImageRecord record = result.getImageRecord();
 			try {
 				markAs(record, tag);
 				logger.info("Adding pHash {} to filter, tag {}, source file {}", record.getpHash(), tag,
@@ -188,16 +193,33 @@ public class DuplicateOperations {
 	 * @param records
 	 *            to filter and delete
 	 */
-	public void markDnwAndDelete(Collection<ImageRecord> records) {
-		for (ImageRecord ir : records) {
+	public void markDnwAndDelete(Collection<Result> records) {
+		for (Result result : records) {
+			ImageRecord ir = result.getImageRecord();
 			Path path = fileSystem.getPath(ir.getPath());
 
 			try {
 				markAs(ir, TAG_DNW);
-				deleteFile(path);
+				deleteFile(result);
 			} catch (RepositoryException e) {
 				logger.warn("Failed to add filter entry for {} - {}", path, e.getMessage());
 			}
+		}
+	}
+
+	/**
+	 * Add a {@link FilterRecord} for the given result.
+	 * 
+	 * @param result
+	 *            to tag
+	 * @param tag
+	 *            tag to use
+	 */
+	public void markAs(Result result, Tag tag) {
+		try {
+			markAs(result.getImageRecord(), tag);
+		} catch (RepositoryException e) {
+			logger.warn(FILTER_ADD_FAILED_MESSAGE, result.getImageRecord().getPath(), e.getMessage());
 		}
 	}
 
