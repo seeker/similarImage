@@ -43,13 +43,11 @@ import at.dhyan.open_imaging.GifDecoder;
 public class DuplicateEntryController implements View {
 	private static final Logger logger = LoggerFactory.getLogger(DuplicateEntryController.class);
 	private final ImageInfo imageInfo;
-	private Dimension thumbDimension;
 	private DuplicateEntryView view;
 
-	public DuplicateEntryController(ImageInfo imageInfo, Dimension thumbDimension) {
+	public DuplicateEntryController(ImageInfo imageInfo) {
 		super();
 		this.imageInfo = imageInfo;
-		this.thumbDimension = thumbDimension;
 	}
 
 	private void addImageInfo() {

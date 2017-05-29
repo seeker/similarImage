@@ -51,9 +51,6 @@ public class DuplicateEntryControllerTest {
 	private OperationsMenu opMenu;
 
 	@Mock
-	private Dimension thumbDimension;
-
-	@Mock
 	private DuplicateEntryView view;
 
 	private DuplicateEntryController duplicateEntryController;
@@ -78,7 +75,7 @@ public class DuplicateEntryControllerTest {
 		when(imageInfo.getpHash()).thenReturn(42L);
 		when(imageInfo.getSizePerPixel()).thenReturn(10.24);
 
-		duplicateEntryController = new DuplicateEntryController(imageInfo, thumbDimension);
+		duplicateEntryController = new DuplicateEntryController(imageInfo);
 		duplicateEntryController.setView(view);
 
 	}
