@@ -24,10 +24,10 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
-import net.miginfocom.swing.MigLayout;
+import uk.co.timwise.wraplayout.WrapLayout;
 
 /**
- * Display {@link View}s in a grid with width 4.
+ * Display {@link View}s in a wrapped layout.
  * 
  * @author Nicholas Wright
  *
@@ -52,17 +52,17 @@ public class DisplayGroupView {
 		view.remove(scroll);
 		view.dispose();
 		view.setTitle("" + title);
-		content = new JPanel(new MigLayout("wrap 4"));
+		content = new JPanel(new WrapLayout(WrapLayout.LEFT));
 
 		for (View entry : duplicates) {
 			content.add(entry.getView());
 		}
 
 		scroll = new JScrollPane(content);
+		scroll.setPreferredSize(view.getSize());
 		view.add(scroll);
 
 		view.validate();
-		view.pack();
 		view.repaint();
 		view.setVisible(true);
 	}
