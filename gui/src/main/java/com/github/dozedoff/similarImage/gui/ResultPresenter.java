@@ -112,10 +112,6 @@ public class ResultPresenter {
 		return imageInfo.getPath();
 	}
 
-	public ImageInfo getImageInfo() {
-		return imageInfo;
-	}
-
 	public void displayFullImage() {
 		JLabel largeImage = new JLabel("No Image");
 
