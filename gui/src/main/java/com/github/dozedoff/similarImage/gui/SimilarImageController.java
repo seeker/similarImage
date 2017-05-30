@@ -17,7 +17,6 @@
  */
 package com.github.dozedoff.similarImage.gui;
 
-import java.awt.Dimension;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -37,7 +36,6 @@ import com.github.dozedoff.similarImage.component.ApplicationScope;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
-import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiGroupEvent;
 import com.github.dozedoff.similarImage.handler.HandlerListFactory;
@@ -156,7 +154,6 @@ public class SimilarImageController {
 
 		List<Result> grouplist = group.getResults();
 		LinkedList<View> images = new LinkedList<View>();
-		Dimension imageDim = new Dimension(THUMBNAIL_DIMENSION, THUMBNAIL_DIMENSION);
 
 		if (grouplist.size() > maxGroupSize) {
 			if (!gui.okToDisplayLargeGroup(grouplist.size())) {
@@ -171,12 +168,8 @@ public class SimilarImageController {
 			Path path = Paths.get(ir.getPath());
 
 			if (Files.exists(path)) {
-				ImageInfo info = new ImageInfo(path, ir.getpHash());
-				OperationsMenu opMenu;
-
-				opMenu = new OperationsMenu(rec, dupOps, utsc);
-				images.add(new ResultView(new ResultPresenter(info), opMenu));
-
+				OperationsMenu opMenu = new OperationsMenu(rec, dupOps, utsc);
+				images.add(new ResultView(new ResultPresenter(rec), opMenu));
 			} else {
 				logger.warn("Image {} not found, skipping...", path);
 			}
