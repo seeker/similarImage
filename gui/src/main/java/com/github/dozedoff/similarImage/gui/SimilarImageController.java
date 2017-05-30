@@ -25,8 +25,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
+import javax.swing.DefaultListModel;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +48,7 @@ import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.result.GroupList;
 import com.github.dozedoff.similarImage.result.Result;
 import com.github.dozedoff.similarImage.result.ResultGroup;
+import com.github.dozedoff.similarImage.thread.GroupListPopulator;
 import com.github.dozedoff.similarImage.thread.ImageFindJob;
 import com.github.dozedoff.similarImage.thread.ImageFindJobVisitor;
 import com.github.dozedoff.similarImage.thread.SorterFactory;
@@ -71,6 +74,7 @@ public class SimilarImageController {
 	private final HandlerListFactory handlerCollectionFactory;
 	private final UserTagSettingController utsc;
 	private final OperationsMenuFactory omf;
+	private final DefaultListModel<ResultGroup> groupListModel;
 
 	/**
 	 * Performs actions initiated by the user
@@ -93,6 +97,7 @@ public class SimilarImageController {
 		this.utsc = utsc;
 		this.omf = new OperationsMenuFactory(dupOps, utsc);
 		GuiEventBus.getInstance().register(this);
+		groupListModel = new DefaultListModel<ResultGroup>();
 	}
 
 	private void setupResultGroupWindow() {
@@ -122,6 +127,7 @@ public class SimilarImageController {
 
 		this.gui = gui;
 		statistics.addStatisticsListener(gui);
+		gui.setListModel(groupListModel);
 	}
 
 	public void ignoreImage(ImageRecord toIgnore) {
@@ -190,7 +196,8 @@ public class SimilarImageController {
 
 	private void updateGUI() {
 		setGUIStatus("" + groupList.groupCount() + " Groups");
-		gui.populateGroupList(groupList);
+		groupList.setMappedListModel(groupListModel);
+		SwingUtilities.invokeLater(new GroupListPopulator(groupList, groupListModel));
 	}
 
 	private void setGUIStatus(String message) {

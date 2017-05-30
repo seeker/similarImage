@@ -111,10 +111,9 @@ public class SimilarImageView implements StatisticsChangedListener {
 	public SimilarImageView(SimilarImageController controller, DuplicateOperations duplicateOperations, int maxBufferSize,
 			UserTagSettingController utsController, FilterRepository filterRepository) {
 		this.controller = controller;
-		this.controller.setGui(this);
 		this.utsController = utsController;
 		this.filterRepository = filterRepository;
-
+		this.groupListModel = groupListModel;
 		view = new JFrame();
 
 		view.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -136,6 +135,18 @@ public class SimilarImageView implements StatisticsChangedListener {
 		GuiEventBus.getInstance().register(this);
 
 		updateProgress();
+		this.controller.setGui(this);
+	}
+
+	/**
+	 * Set the model for the result used to display a list.
+	 * 
+	 * @param model
+	 *            to use
+	 */
+	public void setListModel(DefaultListModel<ResultGroup> model) {
+		groupListModel = model;
+		groups.setModel(model);
 	}
 
 	public void setStatus(String statusMsg) {
@@ -157,8 +168,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 		sortSimilar = new JButton("Sort similar");
 		sortFilter = new JButton("Sort filter");
 
-		groupListModel = new DefaultListModel<ResultGroup>();
-		groups = new JList<ResultGroup>(groupListModel);
+		groups = new JList<ResultGroup>();
 		groups.setComponentPopupMenu(new OperationsMenu(utsController));
 		groupScrollPane = new JScrollPane(groups);
 		hammingDistance = new JScrollBar(JScrollBar.HORIZONTAL, 0, 2, 0, 64);
@@ -353,11 +363,6 @@ public class SimilarImageView implements StatisticsChangedListener {
 
 	public void setTotalFiles(int numOfFiles) {
 		progress.setMaximum(numOfFiles);
-	}
-
-	public void populateGroupList(GroupList groups) {
-		groups.setMappedListModel(groupListModel);
-		SwingUtilities.invokeLater(new GroupListPopulator(groups, groupListModel));
 	}
 
 	private void deleteAll(ResultGroup group) {
