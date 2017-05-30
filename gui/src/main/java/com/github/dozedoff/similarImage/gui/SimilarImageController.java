@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
+import javax.swing.JFrame;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +62,7 @@ public class SimilarImageController {
 	private final int THUMBNAIL_DIMENSION = 500;
 
 	private GroupList groupList;
-	private DisplayGroupView displayGroup;
+	private JFrame resultGroupWindow;
 	private SimilarImageView gui;
 	private final Statistics statistics;
 	private final LinkedList<Thread> tasks = new LinkedList<>();
@@ -74,18 +75,16 @@ public class SimilarImageController {
 	/**
 	 * Performs actions initiated by the user
 	 * 
-	 * @param displayGroup
-	 *            view for displaying images for groups
 	 * @param statistics
 	 *            tracking stats
 	 */
 	@Inject
 	public SimilarImageController(SorterFactory sorterFactory, HandlerListFactory handlerCollectionFactory,
-			DuplicateOperations dupOps, DisplayGroupView displayGroup, Statistics statistics,
+			DuplicateOperations dupOps, Statistics statistics,
 			UserTagSettingController utsc) {
 
 		groupList = new GroupList();
-		this.displayGroup = displayGroup;
+		this.resultGroupWindow = new JFrame();
 		this.statistics = statistics;
 		this.sorterFactory = sorterFactory;
 		this.handlerCollectionFactory = handlerCollectionFactory;
@@ -175,7 +174,8 @@ public class SimilarImageController {
 			}
 		}
 
-		displayGroup.displayImages(group.toString(), images);
+		// TODO display group
+		// displayGroup.displayImages(group.toString(), images);
 	}
 
 	private void updateGUI() {

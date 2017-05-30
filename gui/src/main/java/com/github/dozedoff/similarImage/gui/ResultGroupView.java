@@ -19,7 +19,6 @@ package com.github.dozedoff.similarImage.gui;
 
 import java.util.List;
 
-import javax.inject.Inject;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -32,7 +31,7 @@ import uk.co.timwise.wraplayout.WrapLayout;
  * @author Nicholas Wright
  *
  */
-public class DisplayGroupView {
+public class ResultGroupView {
 	private JFrame view;
 	private JPanel content = new JPanel();
 	private JScrollPane scroll = new JScrollPane(content);
@@ -40,12 +39,12 @@ public class DisplayGroupView {
 	/**
 	 * Setup for displaying duplicate images.
 	 */
-	@Inject
-	public DisplayGroupView() {
+	public ResultGroupView(ResultGroupPresenter presenter) {
 		view = new JFrame();
 		view.setSize(500, 500);
 		view.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 		view.setFocusableWindowState(true);
+		presenter.setView(this);
 	}
 
 	public void displayImages(String title, List<View> duplicates) {
