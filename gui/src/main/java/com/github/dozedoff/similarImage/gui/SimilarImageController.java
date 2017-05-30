@@ -85,12 +85,19 @@ public class SimilarImageController {
 
 		groupList = new GroupList();
 		this.resultGroupWindow = new JFrame();
+		setupResultGroupWindow();
 		this.statistics = statistics;
 		this.sorterFactory = sorterFactory;
 		this.handlerCollectionFactory = handlerCollectionFactory;
 		this.dupOps = dupOps;
 		this.utsc = utsc;
 		GuiEventBus.getInstance().register(this);
+	}
+
+	private void setupResultGroupWindow() {
+		resultGroupWindow.setSize(500, 500);
+		resultGroupWindow.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+		resultGroupWindow.setFocusableWindowState(true);
 	}
 
 	private void setGroupListToResult(Multimap<Long, ImageRecord> results) {
