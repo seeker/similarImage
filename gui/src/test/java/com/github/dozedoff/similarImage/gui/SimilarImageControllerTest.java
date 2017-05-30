@@ -42,7 +42,7 @@ public class SimilarImageControllerTest {
 	private static final long TEST_KEY = 42L;
 
 	@Mock
-	private DisplayGroupView displayGroup;
+	private ResultGroupView displayGroup;
 
 	@Mock
 	private ImageRepository imageRepository;

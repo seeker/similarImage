@@ -17,10 +17,7 @@
  */
 package com.github.dozedoff.similarImage.gui;
 
-import java.util.List;
-
-import javax.inject.Inject;
-import javax.swing.JFrame;
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
@@ -32,38 +29,26 @@ import uk.co.timwise.wraplayout.WrapLayout;
  * @author Nicholas Wright
  *
  */
-public class DisplayGroupView {
-	private JFrame view;
-	private JPanel content = new JPanel();
-	private JScrollPane scroll = new JScrollPane(content);
+public class ResultGroupView implements View {
+	private JPanel content;
+	private JScrollPane view;
 
 	/**
 	 * Setup for displaying duplicate images.
 	 */
-	@Inject
-	public DisplayGroupView() {
-		view = new JFrame();
-		view.setSize(500, 500);
-		view.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-		view.setFocusableWindowState(true);
+	public ResultGroupView(ResultGroupPresenter presenter) {
+		this.content = new JPanel(new WrapLayout(WrapLayout.LEFT));
+		this.view = new JScrollPane(content);
+
+		presenter.setView(this);
 	}
 
-	public void displayImages(String title, List<View> duplicates) {
-		view.remove(scroll);
-		view.dispose();
-		view.setTitle("" + title);
-		content = new JPanel(new WrapLayout(WrapLayout.LEFT));
+	public void addResultView(ResultView resultView) {
+		content.add(resultView.getView());
+	}
 
-		for (View entry : duplicates) {
-			content.add(entry.getView());
-		}
-
-		scroll = new JScrollPane(content);
-		scroll.setPreferredSize(view.getSize());
-		view.add(scroll);
-
-		view.validate();
-		view.repaint();
-		view.setVisible(true);
+	@Override
+	public JComponent getView() {
+		return view;
 	}
 }

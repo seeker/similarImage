@@ -15,18 +15,25 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.dozedoff.similarImage.component;
+package com.github.dozedoff.similarImage.gui;
 
-import com.github.dozedoff.similarImage.gui.SimilarImageController;
-import com.github.dozedoff.similarImage.gui.SimilarImageView;
-import com.github.dozedoff.similarImage.module.GuiModule;
+import com.github.dozedoff.similarImage.result.Result;
+import com.github.dozedoff.similarImage.result.ResultGroup;
 
-import dagger.Component;
+public class ResultGroupPresenter {
+	private ResultGroup resultGroup;
+	private OperationsMenuFactory menuFactory;
 
-@ApplicationScope
-@Component(modules = GuiModule.class, dependencies = { MessagingComponent.class })
-public interface GuiApplicationComponent {
-	SimilarImageController getSimilarImageController();
+	public ResultGroupPresenter(ResultGroup resultGroup, OperationsMenuFactory menuFactory) {
+		this.resultGroup = resultGroup;
+		this.menuFactory = menuFactory;
+	}
 
-	SimilarImageView getSimilarImageView();
+	public void setView(ResultGroupView view) {
+		for (Result result : resultGroup.getResults()) {
+			ResultPresenter resultPresenter = new ResultPresenter(result);
+			ResultView resultView = new ResultView(resultPresenter, menuFactory.createOperationsMenu(result));
+			view.addResultView(resultView);
+		}
+	}
 }

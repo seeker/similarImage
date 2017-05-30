@@ -17,8 +17,6 @@
  */
 package com.github.dozedoff.similarImage.gui;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -27,6 +25,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +61,7 @@ public class SimilarImageController {
 	private final int THUMBNAIL_DIMENSION = 500;
 
 	private GroupList groupList;
-	private DisplayGroupView displayGroup;
+	private JFrame resultGroupWindow;
 	private SimilarImageView gui;
 	private final Statistics statistics;
 	private final LinkedList<Thread> tasks = new LinkedList<>();
@@ -70,28 +70,35 @@ public class SimilarImageController {
 	private final SorterFactory sorterFactory;
 	private final HandlerListFactory handlerCollectionFactory;
 	private final UserTagSettingController utsc;
+	private final OperationsMenuFactory omf;
 
 	/**
 	 * Performs actions initiated by the user
 	 * 
-	 * @param displayGroup
-	 *            view for displaying images for groups
 	 * @param statistics
 	 *            tracking stats
 	 */
 	@Inject
 	public SimilarImageController(SorterFactory sorterFactory, HandlerListFactory handlerCollectionFactory,
-			DuplicateOperations dupOps, DisplayGroupView displayGroup, Statistics statistics,
+			DuplicateOperations dupOps, Statistics statistics,
 			UserTagSettingController utsc) {
 
 		groupList = new GroupList();
-		this.displayGroup = displayGroup;
+		this.resultGroupWindow = new JFrame();
+		setupResultGroupWindow();
 		this.statistics = statistics;
 		this.sorterFactory = sorterFactory;
 		this.handlerCollectionFactory = handlerCollectionFactory;
 		this.dupOps = dupOps;
 		this.utsc = utsc;
+		this.omf = new OperationsMenuFactory(dupOps, utsc);
 		GuiEventBus.getInstance().register(this);
+	}
+
+	private void setupResultGroupWindow() {
+		resultGroupWindow.setSize(500, 500);
+		resultGroupWindow.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		resultGroupWindow.setFocusableWindowState(true);
 	}
 
 	private void setGroupListToResult(Multimap<Long, ImageRecord> results) {
@@ -153,7 +160,6 @@ public class SimilarImageController {
 		int maxGroupSize = 30;
 
 		List<Result> grouplist = group.getResults();
-		LinkedList<View> images = new LinkedList<View>();
 
 		if (grouplist.size() > maxGroupSize) {
 			if (!gui.okToDisplayLargeGroup(grouplist.size())) {
@@ -163,19 +169,14 @@ public class SimilarImageController {
 
 		logger.info("Loading {} thumbnails for group {}", grouplist.size(), group);
 
-		for (Result rec : grouplist) {
-			ImageRecord ir = rec.getImageRecord();
-			Path path = Paths.get(ir.getPath());
+		resultGroupWindow.getContentPane().removeAll();
 
-			if (Files.exists(path)) {
-				OperationsMenu opMenu = new OperationsMenu(rec, dupOps, utsc);
-				images.add(new ResultView(new ResultPresenter(rec), opMenu));
-			} else {
-				logger.warn("Image {} not found, skipping...", path);
-			}
-		}
-
-		displayGroup.displayImages(group.toString(), images);
+		ResultGroupPresenter rgp = new ResultGroupPresenter(group, omf);
+		this.resultGroupWindow.setTitle(group.toString());
+		JComponent rgv = new ResultGroupView(rgp).getView();
+		rgv.setPreferredSize(resultGroupWindow.getSize());
+		this.resultGroupWindow.add(rgv);
+		this.resultGroupWindow.setVisible(true);
 	}
 
 	private void updateGUI() {
