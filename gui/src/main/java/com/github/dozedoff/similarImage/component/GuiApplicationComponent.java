@@ -18,6 +18,7 @@
 package com.github.dozedoff.similarImage.component;
 
 import com.github.dozedoff.similarImage.gui.SimilarImageController;
+import com.github.dozedoff.similarImage.gui.SimilarImageView;
 import com.github.dozedoff.similarImage.module.GuiModule;
 
 import dagger.Component;
@@ -26,4 +27,6 @@ import dagger.Component;
 @Component(modules = GuiModule.class, dependencies = { MessagingComponent.class })
 public interface GuiApplicationComponent {
 	SimilarImageController getSimilarImageController();
+
+	SimilarImageView getSimilarImageView();
 }

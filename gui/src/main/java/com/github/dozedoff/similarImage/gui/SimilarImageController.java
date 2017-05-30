@@ -17,8 +17,6 @@
  */
 package com.github.dozedoff.similarImage.gui;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -71,6 +69,7 @@ public class SimilarImageController {
 	private final SorterFactory sorterFactory;
 	private final HandlerListFactory handlerCollectionFactory;
 	private final UserTagSettingController utsc;
+	private final OperationsMenuFactory omf;
 
 	/**
 	 * Performs actions initiated by the user
@@ -91,6 +90,7 @@ public class SimilarImageController {
 		this.handlerCollectionFactory = handlerCollectionFactory;
 		this.dupOps = dupOps;
 		this.utsc = utsc;
+		this.omf = new OperationsMenuFactory(dupOps, utsc);
 		GuiEventBus.getInstance().register(this);
 	}
 
@@ -159,7 +159,6 @@ public class SimilarImageController {
 		int maxGroupSize = 30;
 
 		List<Result> grouplist = group.getResults();
-		LinkedList<View> images = new LinkedList<View>();
 
 		if (grouplist.size() > maxGroupSize) {
 			if (!gui.okToDisplayLargeGroup(grouplist.size())) {
@@ -169,20 +168,9 @@ public class SimilarImageController {
 
 		logger.info("Loading {} thumbnails for group {}", grouplist.size(), group);
 
-		for (Result rec : grouplist) {
-			ImageRecord ir = rec.getImageRecord();
-			Path path = Paths.get(ir.getPath());
-
-			if (Files.exists(path)) {
-				OperationsMenu opMenu = new OperationsMenu(rec, dupOps, utsc);
-				images.add(new ResultView(new ResultPresenter(rec), opMenu));
-			} else {
-				logger.warn("Image {} not found, skipping...", path);
-			}
-		}
-
-		// TODO display group
-		// displayGroup.displayImages(group.toString(), images);
+		ResultGroupPresenter rgp = new ResultGroupPresenter(group, omf);
+		this.resultGroupWindow.add(new ResultGroupView(rgp).getView());
+		this.resultGroupWindow.setVisible(true);
 	}
 
 	private void updateGUI() {

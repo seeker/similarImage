@@ -35,7 +35,7 @@ import com.github.dozedoff.similarImage.component.DaggerPersistenceComponent;
 import com.github.dozedoff.similarImage.component.GuiApplicationComponent;
 import com.github.dozedoff.similarImage.component.MessagingComponent;
 import com.github.dozedoff.similarImage.component.PersistenceComponent;
-import com.github.dozedoff.similarImage.gui.SimilarImageController;
+import com.github.dozedoff.similarImage.gui.SimilarImageView;
 import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
 import com.github.dozedoff.similarImage.messaging.Node;
 
@@ -136,7 +136,7 @@ public class SimilarImage {
 		GuiApplicationComponent guiComponent = DaggerGuiApplicationComponent.builder()
 				.messagingComponent(messagingComponent).build();
 
-		SimilarImageController controller = guiComponent.getSimilarImageController();
+		SimilarImageView view = guiComponent.getSimilarImageView();
 
 		logger.info("Starting metrics reporter...");
 		reporter = messagingComponent.getSlf4jReporter();
