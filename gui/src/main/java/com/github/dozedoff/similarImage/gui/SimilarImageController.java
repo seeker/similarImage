@@ -175,9 +175,7 @@ public class SimilarImageController {
 				OperationsMenu opMenu;
 
 				opMenu = new OperationsMenu(rec, dupOps, utsc);
-				ResultPresenter entry = new ResultPresenter(info);
-				new ResultView(entry, opMenu);
-				images.add(entry);
+				images.add(new ResultView(new ResultPresenter(info), opMenu));
 
 			} else {
 				logger.warn("Image {} not found, skipping...", path);

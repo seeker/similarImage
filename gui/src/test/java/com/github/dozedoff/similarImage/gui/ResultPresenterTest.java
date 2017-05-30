@@ -104,11 +104,6 @@ public class ResultPresenterTest {
 	}
 
 	@Test
-	public void testGetView() throws Exception {
-		assertThat(duplicateEntryController.getView(), is(view.getView()));
-	}
-
-	@Test
 	public void testDisplayFullImage() throws Exception {
 		duplicateEntryController.displayFullImage();
 

@@ -29,7 +29,6 @@ import java.nio.file.Paths;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
-import javax.swing.JComponent;
 import javax.swing.JLabel;
 
 import org.imgscalr.Scalr;
@@ -43,7 +42,7 @@ import com.github.dozedoff.similarImage.result.Result;
 
 import at.dhyan.open_imaging.GifDecoder;
 
-public class ResultPresenter implements View {
+public class ResultPresenter {
 	private static final Logger logger = LoggerFactory.getLogger(ResultPresenter.class);
 	private final ImageInfo imageInfo;
 	private ResultView view;
@@ -135,10 +134,5 @@ public class ResultPresenter implements View {
 
 		loadThumbnail();
 		addImageInfo();
-	}
-
-	@Override
-	public JComponent getView() {
-		return view.getView();
 	}
 }
