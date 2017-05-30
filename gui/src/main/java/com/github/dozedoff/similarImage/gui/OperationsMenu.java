@@ -40,7 +40,7 @@ import com.github.dozedoff.similarImage.result.Result;
 import com.google.common.eventbus.Subscribe;
 
 /**
- * Context menu operations for the {@link DuplicateEntryView}.
+ * Context menu operations for the {@link ResultView}.
  */
 public class OperationsMenu {
 	private static final Tag TAG_DNW = new Tag(DuplicateOperations.Tags.DNW.toString());

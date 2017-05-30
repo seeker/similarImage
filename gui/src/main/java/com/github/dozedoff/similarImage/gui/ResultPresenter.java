@@ -40,12 +40,12 @@ import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 
 import at.dhyan.open_imaging.GifDecoder;
 
-public class DuplicateEntryController implements View {
-	private static final Logger logger = LoggerFactory.getLogger(DuplicateEntryController.class);
+public class ResultPresenter implements View {
+	private static final Logger logger = LoggerFactory.getLogger(ResultPresenter.class);
 	private final ImageInfo imageInfo;
-	private DuplicateEntryView view;
+	private ResultView view;
 
-	public DuplicateEntryController(ImageInfo imageInfo) {
+	public ResultPresenter(ImageInfo imageInfo) {
 		super();
 		this.imageInfo = imageInfo;
 	}
@@ -109,7 +109,7 @@ public class DuplicateEntryController implements View {
 		view.displayFullImage(largeImage, getImagePath());
 	}
 
-	public void setView(DuplicateEntryView view) {
+	public void setView(ResultView view) {
 		this.view = view;
 
 		loadThumbnail();

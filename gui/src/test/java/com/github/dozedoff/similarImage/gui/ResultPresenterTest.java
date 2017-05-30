@@ -43,7 +43,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 
 @RunWith(MockitoJUnitRunner.class)
-public class DuplicateEntryControllerTest {
+public class ResultPresenterTest {
 	@Mock
 	private ImageInfo imageInfo;
 
@@ -51,9 +51,9 @@ public class DuplicateEntryControllerTest {
 	private OperationsMenu opMenu;
 
 	@Mock
-	private DuplicateEntryView view;
+	private ResultView view;
 
-	private DuplicateEntryController duplicateEntryController;
+	private ResultPresenter duplicateEntryController;
 	private static Path testImage;
 
 	@BeforeClass
@@ -75,7 +75,7 @@ public class DuplicateEntryControllerTest {
 		when(imageInfo.getpHash()).thenReturn(42L);
 		when(imageInfo.getSizePerPixel()).thenReturn(10.24);
 
-		duplicateEntryController = new DuplicateEntryController(imageInfo);
+		duplicateEntryController = new ResultPresenter(imageInfo);
 		duplicateEntryController.setView(view);
 
 	}

@@ -33,27 +33,27 @@ import net.miginfocom.swing.MigLayout;
  * @author Nicholas Wright
  *
  */
-public class DuplicateEntryView implements View {
+public class ResultView implements View {
 	private JPanel view;
 	private JLabel image;
-	private DuplicateEntryController controller;
+	private ResultPresenter presenter;
 
 	/**
 	 * Creates a default view with no image and no information. A placeholder "NO IMAGE" is displayed.
 	 * 
-	 * @param controller
+	 * @param presenter
 	 *            responsible for handling image requests
 	 * @param opMenu
 	 *            menu containing the possible operations for this image
 	 */
-	public DuplicateEntryView(DuplicateEntryController controller, OperationsMenu opMenu) {
-		this.controller = controller;
+	public ResultView(ResultPresenter presenter, OperationsMenu opMenu) {
+		this.presenter = presenter;
 		view = new JPanel();
 		view.setLayout(new MigLayout("wrap"));
 		image = new JLabel("NO IMAGE");
 		view.addMouseListener(new ClickListener());
 		view.setComponentPopupMenu(opMenu.getMenu());
-		this.controller.setView(this);
+		this.presenter.setView(this);
 	}
 
 	public void createLable(String info) {
@@ -81,7 +81,7 @@ public class DuplicateEntryView implements View {
 		@Override
 		public void mouseClicked(MouseEvent e) {
 			if (e.getButton() == MouseEvent.BUTTON1) {
-				controller.displayFullImage();
+				presenter.displayFullImage();
 			}
 		}
 	}

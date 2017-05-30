@@ -175,8 +175,8 @@ public class SimilarImageController {
 				OperationsMenu opMenu;
 
 				opMenu = new OperationsMenu(rec, dupOps, utsc);
-				DuplicateEntryController entry = new DuplicateEntryController(info);
-				new DuplicateEntryView(entry, opMenu);
+				ResultPresenter entry = new ResultPresenter(info);
+				new ResultView(entry, opMenu);
 				images.add(entry);
 
 			} else {
