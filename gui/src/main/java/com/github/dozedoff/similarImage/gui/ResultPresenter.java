@@ -25,10 +25,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
-import javax.swing.JComponent;
 import javax.swing.JLabel;
 
 import org.imgscalr.Scalr;
@@ -36,18 +36,38 @@ import org.imgscalr.Scalr.Method;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
+import com.github.dozedoff.similarImage.result.Result;
 
 import at.dhyan.open_imaging.GifDecoder;
 
-public class DuplicateEntryController implements View {
-	private static final Logger logger = LoggerFactory.getLogger(DuplicateEntryController.class);
+public class ResultPresenter {
+	private static final Logger logger = LoggerFactory.getLogger(ResultPresenter.class);
 	private final ImageInfo imageInfo;
-	private DuplicateEntryView view;
+	private ResultView view;
 
-	public DuplicateEntryController(ImageInfo imageInfo) {
+	/**
+	 * @param imageInfo
+	 *            representing the image
+	 * 
+	 * @deprecated Use {@link ResultPresenter#ResultPresenter(Result)} instead.
+	 */
+	@Deprecated
+	public ResultPresenter(ImageInfo imageInfo) {
 		super();
 		this.imageInfo = imageInfo;
+	}
+
+	/**
+	 * Creates a new {@link ResultPresenter} to present the given {@link Result}.
+	 * 
+	 * @param result
+	 *            represented by this presenter instance
+	 */
+	public ResultPresenter(Result result) {
+		ImageRecord ir = result.getImageRecord();
+		this.imageInfo = new ImageInfo(Paths.get(ir.getPath()), ir.getpHash());
 	}
 
 	private void addImageInfo() {
@@ -92,10 +112,6 @@ public class DuplicateEntryController implements View {
 		return imageInfo.getPath();
 	}
 
-	public ImageInfo getImageInfo() {
-		return imageInfo;
-	}
-
 	public void displayFullImage() {
 		JLabel largeImage = new JLabel("No Image");
 
@@ -109,15 +125,10 @@ public class DuplicateEntryController implements View {
 		view.displayFullImage(largeImage, getImagePath());
 	}
 
-	public void setView(DuplicateEntryView view) {
+	public void setView(ResultView view) {
 		this.view = view;
 
 		loadThumbnail();
 		addImageInfo();
-	}
-
-	@Override
-	public JComponent getView() {
-		return view.getView();
 	}
 }

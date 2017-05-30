@@ -24,7 +24,6 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.awt.Dimension;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -40,21 +39,26 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.github.dozedoff.similarImage.duplicate.ImageInfo;
+import com.github.dozedoff.similarImage.db.ImageRecord;
+import com.github.dozedoff.similarImage.result.Result;
+import com.github.dozedoff.similarImage.result.ResultGroup;
 
 @RunWith(MockitoJUnitRunner.class)
-public class DuplicateEntryControllerTest {
-	@Mock
-	private ImageInfo imageInfo;
+public class ResultPresenterTest {
+	private static final long HASH = 42L;
 
 	@Mock
 	private OperationsMenu opMenu;
 
 	@Mock
-	private DuplicateEntryView view;
+	private ResultView view;
 
-	private DuplicateEntryController duplicateEntryController;
+	private ResultPresenter duplicateEntryController;
 	private static Path testImage;
+	private Result result;
+
+	@Mock
+	ResultGroup resultGroup;
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
@@ -65,31 +69,21 @@ public class DuplicateEntryControllerTest {
 	public void setUp() throws Exception {
 		MockitoAnnotations.initMocks(this);
 
+		result = new Result(resultGroup, new ImageRecord(testImage.toString(), HASH));
+
 		when(view.getView()).thenReturn(new JPanel());
 
 		when(opMenu.getMenu()).thenReturn(new JPopupMenu());
 
-		when(imageInfo.getDimension()).thenReturn(new Dimension(5, 20));
-		when(imageInfo.getPath()).thenReturn(testImage);
-		when(imageInfo.getSize()).thenReturn(1024L);
-		when(imageInfo.getpHash()).thenReturn(42L);
-		when(imageInfo.getSizePerPixel()).thenReturn(10.24);
 
-		duplicateEntryController = new DuplicateEntryController(imageInfo);
+		duplicateEntryController = new ResultPresenter(result);
 		duplicateEntryController.setView(view);
 
 	}
 
 	@Test
 	public void testGetImagePath() throws Exception {
-		when(imageInfo.getPath()).thenReturn(Paths.get("foo"));
-
-		assertThat(duplicateEntryController.getImagePath(), is(Paths.get("foo")));
-	}
-
-	@Test
-	public void testGetImageInfo() throws Exception {
-		assertThat(duplicateEntryController.getImageInfo(), is(imageInfo));
+		assertThat(duplicateEntryController.getImagePath(), is(Paths.get(testImage.toString())));
 	}
 
 	@Test
@@ -98,14 +92,9 @@ public class DuplicateEntryControllerTest {
 
 		verify(view).createLable(eq("Path: " + testImage.toString()));
 		verify(view).createLable(eq("Size: 1 kb"));
-		verify(view).createLable(eq("Dimension: 5x20"));
+		verify(view).createLable(eq("Dimension: 40x40"));
 		verify(view).createLable(eq("pHash: 42"));
-		verify(view).createLable(eq("Size per Pixel: 10.24"));
-	}
-
-	@Test
-	public void testGetView() throws Exception {
-		assertThat(duplicateEntryController.getView(), is(view.getView()));
+		verify(view).createLable(eq("Size per Pixel: 1.11375"));
 	}
 
 	@Test
