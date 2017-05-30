@@ -25,6 +25,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 
 import org.slf4j.Logger;
@@ -96,7 +97,7 @@ public class SimilarImageController {
 
 	private void setupResultGroupWindow() {
 		resultGroupWindow.setSize(500, 500);
-		resultGroupWindow.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+		resultGroupWindow.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		resultGroupWindow.setFocusableWindowState(true);
 	}
 
@@ -168,8 +169,13 @@ public class SimilarImageController {
 
 		logger.info("Loading {} thumbnails for group {}", grouplist.size(), group);
 
+		resultGroupWindow.getContentPane().removeAll();
+
 		ResultGroupPresenter rgp = new ResultGroupPresenter(group, omf);
-		this.resultGroupWindow.add(new ResultGroupView(rgp).getView());
+		this.resultGroupWindow.setTitle(group.toString());
+		JComponent rgv = new ResultGroupView(rgp).getView();
+		rgv.setPreferredSize(resultGroupWindow.getSize());
+		this.resultGroupWindow.add(rgv);
 		this.resultGroupWindow.setVisible(true);
 	}
 
