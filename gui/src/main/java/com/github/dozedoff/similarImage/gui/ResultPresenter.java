@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -36,7 +37,9 @@ import org.imgscalr.Scalr.Method;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
+import com.github.dozedoff.similarImage.result.Result;
 
 import at.dhyan.open_imaging.GifDecoder;
 
@@ -45,9 +48,27 @@ public class ResultPresenter implements View {
 	private final ImageInfo imageInfo;
 	private ResultView view;
 
+	/**
+	 * @param imageInfo
+	 *            representing the image
+	 * 
+	 * @deprecated Use {@link ResultPresenter#ResultPresenter(Result)} instead.
+	 */
+	@Deprecated
 	public ResultPresenter(ImageInfo imageInfo) {
 		super();
 		this.imageInfo = imageInfo;
+	}
+
+	/**
+	 * Creates a new {@link ResultPresenter} to present the given {@link Result}.
+	 * 
+	 * @param result
+	 *            represented by this presenter instance
+	 */
+	public ResultPresenter(Result result) {
+		ImageRecord ir = result.getImageRecord();
+		this.imageInfo = new ImageInfo(Paths.get(ir.getPath()), ir.getpHash());
 	}
 
 	private void addImageInfo() {
