@@ -17,18 +17,23 @@
  */
 package com.github.dozedoff.similarImage.gui;
 
+import com.github.dozedoff.similarImage.result.Result;
 import com.github.dozedoff.similarImage.result.ResultGroup;
 
 public class ResultGroupPresenter {
 	private ResultGroup resultGroup;
-	private ResultGroupView view;
+	private OperationsMenuFactory menuFactory;
 
-	public ResultGroupPresenter(ResultGroup resultGroup) {
+	public ResultGroupPresenter(ResultGroup resultGroup, OperationsMenuFactory menuFactory) {
 		this.resultGroup = resultGroup;
+		this.menuFactory = menuFactory;
 	}
 
 	public void setView(ResultGroupView view) {
-		this.view = view;
+		for (Result result : resultGroup.getResults()) {
+			ResultPresenter resultPresenter = new ResultPresenter(result);
+			ResultView resultView = new ResultView(resultPresenter, menuFactory.createOperationsMenu(result));
+			view.addResultView(resultView);
+		}
 	}
-
 }
