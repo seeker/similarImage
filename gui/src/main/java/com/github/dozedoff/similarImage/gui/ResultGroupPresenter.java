@@ -23,10 +23,13 @@ import com.github.dozedoff.similarImage.result.ResultGroup;
 public class ResultGroupPresenter {
 	private ResultGroup resultGroup;
 	private OperationsMenuFactory menuFactory;
+	private final SimilarImageController siController;
 
-	public ResultGroupPresenter(ResultGroup resultGroup, OperationsMenuFactory menuFactory) {
+	public ResultGroupPresenter(ResultGroup resultGroup, OperationsMenuFactory menuFactory,
+			SimilarImageController siController) {
 		this.resultGroup = resultGroup;
 		this.menuFactory = menuFactory;
+		this.siController = siController;
 	}
 
 	public void setView(ResultGroupView view) {
@@ -35,5 +38,13 @@ public class ResultGroupPresenter {
 			ResultView resultView = new ResultView(resultPresenter, menuFactory.createOperationsMenu(result));
 			view.addResultView(resultView);
 		}
+	}
+
+	public void previousGroup() {
+		siController.displayPreviousGroup(resultGroup);
+	}
+
+	public void nextGroup() {
+		siController.displayNextGroup(resultGroup);
 	}
 }

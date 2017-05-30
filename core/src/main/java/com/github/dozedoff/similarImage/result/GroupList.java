@@ -39,7 +39,7 @@ public class GroupList {
 
 	private final Multimap<Result, ResultGroup> resultsToGroups;
 	private final Map<Long, ResultGroup> hashToGroup;
-	private final Collection<ResultGroup> groups;
+	private final List<ResultGroup> groups;
 	private DefaultListModel<ResultGroup> mappedListeModel;
 
 	/**
@@ -163,5 +163,45 @@ public class GroupList {
 	 */
 	public void setMappedListModel(DefaultListModel<ResultGroup> mappedListeModel) {
 		this.mappedListeModel = mappedListeModel;
+	}
+
+	private int boundsCheckedIndex(int index) {
+		if (index < 0) {
+			index = 0;
+		}
+
+		if (index > groups.size() - 1) {
+			index = groups.size() - 1;
+		}
+
+		return index;
+	}
+
+	/**
+	 * Returns the next group from the current group if found, or the first group.
+	 * 
+	 * @param currentGroup
+	 *            {@link ResultGroup} to use as a reference
+	 * @return the next group
+	 */
+	public ResultGroup nextGroup(ResultGroup currentGroup) {
+		int index = groups.indexOf(currentGroup);
+		index = boundsCheckedIndex(++index);
+
+		return groups.get(index);
+	}
+
+	/**
+	 * Returns the previous group from the current group if found, or the first group.
+	 * 
+	 * @param currentGroup
+	 *            {@link ResultGroup} to use as a reference
+	 * @return the next group
+	 */
+	public ResultGroup previousGroup(ResultGroup currentGroup) {
+		int index = groups.indexOf(currentGroup);
+		index = boundsCheckedIndex(--index);
+
+		return groups.get(index);
 	}
 }

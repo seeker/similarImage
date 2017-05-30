@@ -171,12 +171,21 @@ public class SimilarImageController {
 
 		resultGroupWindow.getContentPane().removeAll();
 
-		ResultGroupPresenter rgp = new ResultGroupPresenter(group, omf);
+		ResultGroupPresenter rgp = new ResultGroupPresenter(group, omf, this);
 		this.resultGroupWindow.setTitle(group.toString());
 		JComponent rgv = new ResultGroupView(rgp).getView();
 		rgv.setPreferredSize(resultGroupWindow.getSize());
 		this.resultGroupWindow.add(rgv);
 		this.resultGroupWindow.setVisible(true);
+	}
+
+
+	public void displayNextGroup(ResultGroup currentGroup) {
+		displayGroup(groupList.nextGroup(currentGroup));
+	}
+
+	public void displayPreviousGroup(ResultGroup currentGroup) {
+		displayGroup(groupList.previousGroup(currentGroup));
 	}
 
 	private void updateGUI() {

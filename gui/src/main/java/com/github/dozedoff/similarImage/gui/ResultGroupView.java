@@ -17,6 +17,11 @@
  */
 package com.github.dozedoff.similarImage.gui;
 
+import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -31,16 +36,47 @@ import uk.co.timwise.wraplayout.WrapLayout;
  */
 public class ResultGroupView implements View {
 	private JPanel content;
-	private JScrollPane view;
+	private JComponent view;
+	private final ResultGroupPresenter presenter;
 
 	/**
 	 * Setup for displaying duplicate images.
 	 */
 	public ResultGroupView(ResultGroupPresenter presenter) {
 		this.content = new JPanel(new WrapLayout(WrapLayout.LEFT));
-		this.view = new JScrollPane(content);
+		this.view = new JPanel(new BorderLayout());
+		this.presenter = presenter;
 
+		view.add(new JScrollPane(content), BorderLayout.CENTER);
+		addNavigationButtons();
 		presenter.setView(this);
+
+	}
+
+	private void addNavigationButtons() {
+		JPanel buttonPanel = new JPanel();
+
+		JButton next = new JButton("Next");
+		JButton previous = new JButton("Previous");
+
+		next.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				presenter.nextGroup();
+			}
+		});
+
+		previous.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				presenter.previousGroup();
+			}
+		});
+
+		buttonPanel.add(previous);
+		buttonPanel.add(next);
+
+		view.add(buttonPanel, BorderLayout.NORTH);
 	}
 
 	public void addResultView(ResultView resultView) {

@@ -30,9 +30,13 @@ import javax.swing.DefaultListModel;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
 
+@RunWith(MockitoJUnitRunner.class)
 public class GroupListTest {
 	private static final long HASH_A = 42;
 	private static final long HASH_B = 43;
@@ -43,6 +47,9 @@ public class GroupListTest {
 
 	private ResultGroup groupA;
 	private ResultGroup groupB;
+
+	@Mock
+	private ResultGroup groupUnknown;
 
 	private Collection<ImageRecord> recordsA;
 	private Collection<ImageRecord> recordsB;
@@ -139,5 +146,35 @@ public class GroupListTest {
 		groupA.remove(new Result(groupA, recordA));
 
 		assertThat(dlm.contains(groupA), is(false));
+	}
+
+	@Test
+	public void testPreviousGroup() throws Exception {
+		assertThat(cut.previousGroup(groupB), is(groupA));
+	}
+
+	@Test
+	public void testPreviousGroupWithFirstGroup() throws Exception {
+		assertThat(cut.previousGroup(groupA), is(groupA));
+	}
+
+	@Test
+	public void testPreviousGroupWithUnknownGroup() throws Exception {
+		assertThat(cut.previousGroup(groupUnknown), is(groupA));
+	}
+
+	@Test
+	public void testNextGroup() throws Exception {
+		assertThat(cut.nextGroup(groupA), is(groupB));
+	}
+
+	@Test
+	public void testNextGroupWithLastGroup() throws Exception {
+		assertThat(cut.nextGroup(groupB), is(groupB));
+	}
+
+	@Test
+	public void testNextGroupWithUnknownGroup() throws Exception {
+		assertThat(cut.nextGroup(groupUnknown), is(groupA));
 	}
 }
