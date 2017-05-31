@@ -492,6 +492,14 @@ public class SimilarImageView implements StatisticsChangedListener {
 
 	}
 
+	/**
+	 * Set the title for the result group display and update it's view with the backing {@link ResultGroupPresenter}.
+	 * 
+	 * @param title
+	 *            for the result group window
+	 * @param rgp
+	 *            the presenter that will be used to create the {@link ResultGroupView}
+	 */
 	public void displayResultGroup(String title, ResultGroupPresenter rgp) {
 		resultGroupWindow.getContentPane().removeAll();
 
