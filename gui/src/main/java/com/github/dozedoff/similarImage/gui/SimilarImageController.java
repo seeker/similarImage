@@ -26,8 +26,6 @@ import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.swing.DefaultListModel;
-import javax.swing.JComponent;
-import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
 import org.slf4j.Logger;
@@ -64,7 +62,6 @@ public class SimilarImageController {
 	private final int THUMBNAIL_DIMENSION = 500;
 
 	private GroupList groupList;
-	private JFrame resultGroupWindow;
 	private SimilarImageView gui;
 	private final Statistics statistics;
 	private final LinkedList<Thread> tasks = new LinkedList<>();
@@ -88,8 +85,6 @@ public class SimilarImageController {
 			UserTagSettingController utsc) {
 
 		groupList = new GroupList();
-		this.resultGroupWindow = new JFrame();
-		setupResultGroupWindow();
 		this.statistics = statistics;
 		this.sorterFactory = sorterFactory;
 		this.handlerCollectionFactory = handlerCollectionFactory;
@@ -100,11 +95,7 @@ public class SimilarImageController {
 		groupListModel = new DefaultListModel<ResultGroup>();
 	}
 
-	private void setupResultGroupWindow() {
-		resultGroupWindow.setSize(500, 500);
-		resultGroupWindow.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		resultGroupWindow.setFocusableWindowState(true);
-	}
+
 
 	private void setGroupListToResult(Multimap<Long, ImageRecord> results) {
 		Set<Long> keys = results.keySet();
@@ -175,14 +166,8 @@ public class SimilarImageController {
 
 		logger.info("Loading {} thumbnails for group {}", grouplist.size(), group);
 
-		resultGroupWindow.getContentPane().removeAll();
-
 		ResultGroupPresenter rgp = new ResultGroupPresenter(group, omf, this);
-		this.resultGroupWindow.setTitle(group.toString());
-		JComponent rgv = new ResultGroupView(rgp).getView();
-		rgv.setPreferredSize(resultGroupWindow.getSize());
-		this.resultGroupWindow.add(rgv);
-		this.resultGroupWindow.setVisible(true);
+		gui.displayResultGroup(group.toString(), rgp);
 	}
 
 

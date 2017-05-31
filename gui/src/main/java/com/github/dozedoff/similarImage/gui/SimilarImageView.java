@@ -30,6 +30,7 @@ import java.util.TimerTask;
 import javax.inject.Inject;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -43,7 +44,6 @@ import javax.swing.JProgressBar;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -59,9 +59,7 @@ import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiUserTagChangedEvent;
 import com.github.dozedoff.similarImage.io.Statistics.StatisticsEvent;
 import com.github.dozedoff.similarImage.io.StatisticsChangedListener;
-import com.github.dozedoff.similarImage.result.GroupList;
 import com.github.dozedoff.similarImage.result.ResultGroup;
-import com.github.dozedoff.similarImage.thread.GroupListPopulator;
 import com.google.common.eventbus.Subscribe;
 
 import net.miginfocom.swing.MigLayout;
@@ -90,6 +88,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 	final DuplicateOperations duplicateOperations;
 
 	private final FilterRepository filterRepository;
+	private final JFrame resultGroupWindow;
 
 
 	/**
@@ -108,13 +107,20 @@ public class SimilarImageView implements StatisticsChangedListener {
 
 	}
 
+	private void setupResultGroupWindow() {
+		resultGroupWindow.setSize(500, 500);
+		resultGroupWindow.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		resultGroupWindow.setFocusableWindowState(true);
+	}
+
 	public SimilarImageView(SimilarImageController controller, DuplicateOperations duplicateOperations, int maxBufferSize,
 			UserTagSettingController utsController, FilterRepository filterRepository) {
 		this.controller = controller;
 		this.utsController = utsController;
 		this.filterRepository = filterRepository;
-		this.groupListModel = groupListModel;
 		view = new JFrame();
+		this.resultGroupWindow = new JFrame();
+		setupResultGroupWindow();
 
 		view.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		view.setSize(500, 500);
@@ -484,5 +490,15 @@ public class SimilarImageView implements StatisticsChangedListener {
 			break;
 		}
 
+	}
+
+	public void displayResultGroup(String title, ResultGroupPresenter rgp) {
+		resultGroupWindow.getContentPane().removeAll();
+
+		this.resultGroupWindow.setTitle(title);
+		JComponent rgv = new ResultGroupView(rgp).getView();
+		rgv.setPreferredSize(resultGroupWindow.getSize());
+		this.resultGroupWindow.add(rgv);
+		this.resultGroupWindow.setVisible(true);
 	}
 }
