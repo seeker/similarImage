@@ -1,15 +1,30 @@
-/* The MIT License (MIT)
- * Copyright (c) 2017 Nicholas Wright
- * http://opensource.org/licenses/MIT
+/*  Copyright (C) 2017  Nicholas Wright
+    
+    This file is part of similarImage - A similar image finder using pHash
+    
+    similarImage is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.github.dozedoff.similarImage.db;
 
 import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import org.flywaydb.core.Flyway;
@@ -22,10 +37,13 @@ import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.support.ConnectionSource;
 
 public class FlyWayMigrationTest {
+	private static final Path PATH_1 = Paths.get("path1");
+	private static final Path PATH_2 = Paths.get("path2");
+	private static final Path PATH_3 = Paths.get("path3");
+
 	private Flyway flyway;
 	private Path databaseFile;
 	private ConnectionSource cs;
-	
 	
 	@Before
 	public void setUp() throws Exception {
@@ -58,5 +76,17 @@ public class FlyWayMigrationTest {
 		List<FilterRecord> tags = filter.queryForAll();
 
 		assertThat(tags, hasSize(3));
+	}
+
+	@Test
+	public void testMigrationTo3v0() throws Exception
+	{
+		flyway.setTargetAsString("3.0");
+		flyway.migrate();
+
+		Dao<IgnoreRecord, String> ignore = DaoManager.createDao(cs, IgnoreRecord.class);
+		List<IgnoreRecord> ignored = ignore.queryForAll();
+
+		assertThat(ignored, hasItems(new IgnoreRecord(PATH_1), new IgnoreRecord(PATH_2), new IgnoreRecord(PATH_3)));
 	}
 }

@@ -33,6 +33,7 @@ import com.github.dozedoff.similarImage.db.PendingHashImage;
 import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.Thumbnail;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
+import com.github.dozedoff.similarImage.db.repository.IgnoreRepository;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
@@ -60,6 +61,7 @@ public class OrmliteRepositoryFactory implements RepositoryFactory {
 	private Dao<Thumbnail, Integer> thumbnailDao;
 	private Dao<Tag, Long> tagDao;
 	private Dao<PendingHashImage, Integer> pendingDao;
+	private Dao<IgnoreRecord, String> ignoreDao;
 
 	/**
 	 * Create a new Repository Factory using the given database instance.
@@ -86,12 +88,14 @@ public class OrmliteRepositoryFactory implements RepositoryFactory {
 		thumbnailDao = DaoManager.createDao(cs, Thumbnail.class);
 		tagDao = DaoManager.createDao(cs, Tag.class);
 		pendingDao = DaoManager.createDao(cs, PendingHashImage.class);
+		ignoreDao = DaoManager.createDao(cs, IgnoreRecord.class);
 
 		imageRecordDao.setObjectCache(new LruObjectCache(LARGE_CACHE_SIZE));
 		filterRecordDao.setObjectCache(new LruObjectCache(DEFAULT_CACHE_SIZE));
 		badFileRecordDao.setObjectCache(new LruObjectCache(DEFAULT_CACHE_SIZE));
 		ignoreRecordDao.setObjectCache(new LruObjectCache(DEFAULT_CACHE_SIZE));
 		pendingDao.setObjectCache(new LruObjectCache(DEFAULT_CACHE_SIZE));
+		ignoreDao.setObjectCache(new LruObjectCache(DEFAULT_CACHE_SIZE));
 	}
 
 	/**
@@ -140,5 +144,17 @@ public class OrmliteRepositoryFactory implements RepositoryFactory {
 	@Override
 	public PendingHashImageRepository buildPendingHashImageRepository() throws RepositoryException {
 		return new OrmlitePendingHashImage(pendingDao);
+	}
+
+	/**
+	 * Create a new {@link IgnoreRepository}
+	 * 
+	 * @return an initialized {@link IgnoreRepository}
+	 * @throws RepositoryException
+	 *             if there was an error with the DAO or database
+	 */
+	@Override
+	public IgnoreRepository buildIgnoreRepository() throws RepositoryException {
+		return new OrmliteIgnoreRepository(ignoreDao);
 	}
 }
