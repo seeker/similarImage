@@ -8,15 +8,34 @@
 			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%file:%line] - %msg%n</pattern>
 		</encoder>
 	</appender>
+
+	<appender name="METRICS_FILE" class="ch.qos.logback.core.FileAppender">
+		<file>logs/metrics.log</file>
+		<append>true</append>
+		<!-- encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder 
+			by default -->
+		<encoder>
+			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%file:%line] - %msg%n</pattern>
+		</encoder>
+	</appender>
 	
 	<appender name="ASYNC_STDOUT" class="ch.qos.logback.classic.AsyncAppender">
 		<appender-ref ref="STDOUT" />
 		<includeCallerData>true</includeCallerData>
 	</appender>
 	
+	<appender name="ASYNC_METRICS" class="ch.qos.logback.classic.AsyncAppender">
+		<appender-ref ref="METRICS_FILE" />
+	</appender>
+	
 	<root level="INFO">
 		<appender-ref ref="ASYNC_STDOUT" />
 	</root>
+	
+	<logger name="similarImage.metrics" additivity="false">
+        <level value="INFO" />
+        <appender-ref ref="ASYNC_METRICS" />
+	</logger>
 	
 	<logger name="com.j256.ormlite" level="OFF" />
 	<logger name="org.apache.activemq.artemis" level="ERROR" />
