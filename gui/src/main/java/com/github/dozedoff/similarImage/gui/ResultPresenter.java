@@ -1,4 +1,4 @@
-/*  Copyright (C) 2016  Nicholas Wright
+/*  Copyright (C) 2017  Nicholas Wright
     
     This file is part of similarImage - A similar image finder using pHash
     
@@ -20,36 +20,43 @@ package com.github.dozedoff.similarImage.gui;
 import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
-import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
-import javax.swing.JComponent;
 import javax.swing.JLabel;
 
-import org.imgscalr.Scalr;
-import org.imgscalr.Scalr.Method;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
+import com.github.dozedoff.similarImage.result.Result;
+import com.github.dozedoff.similarImage.util.ImageUtil;
+import com.google.common.cache.LoadingCache;
 
-import at.dhyan.open_imaging.GifDecoder;
+public class ResultPresenter {
+	private static final Logger LOGGER = LoggerFactory.getLogger(ResultPresenter.class);
 
-public class DuplicateEntryController implements View {
-	private static final Logger logger = LoggerFactory.getLogger(DuplicateEntryController.class);
+	private final LoadingCache<Result, BufferedImage> thumbnailCache;
+
 	private final ImageInfo imageInfo;
-	private Dimension thumbDimension;
-	private DuplicateEntryView view;
+	private ResultView view;
+	private final Result result;
 
-	public DuplicateEntryController(ImageInfo imageInfo, Dimension thumbDimension) {
-		super();
-		this.imageInfo = imageInfo;
-		this.thumbDimension = thumbDimension;
+	/**
+	 * Creates a new {@link ResultPresenter} to present the given {@link Result}.
+	 * 
+	 * @param result
+	 *            represented by this presenter instance
+	 * @param thumbnailCache
+	 *            cache to speed up loading thumbnails
+	 */
+	public ResultPresenter(Result result, LoadingCache<Result, BufferedImage> thumbnailCache) {
+		this.result = result;
+		ImageRecord ir = result.getImageRecord();
+		this.imageInfo = new ImageInfo(Paths.get(ir.getPath()), ir.getpHash());
+		this.thumbnailCache = thumbnailCache;
 	}
 
 	private void addImageInfo() {
@@ -63,63 +70,55 @@ public class DuplicateEntryController implements View {
 
 	private void loadThumbnail() {
 		try {
-			BufferedImage bi = loadImage(getImagePath());
-			BufferedImage resized = Scalr.resize(bi, Method.QUALITY, 500);
+			LOGGER.debug("{} in cache: {}", imageInfo.getPath(),
+					thumbnailCache.getIfPresent(result));
+			BufferedImage resized = thumbnailCache.get(result);
 			JLabel image = imageAsLabel(resized);
 			view.setImage(image);
 		} catch (Exception e) {
-			logger.warn("Could not load image thumbnail for {} - {}", imageInfo.getPath(), e.getMessage());
+			LOGGER.warn("Could not load image thumbnail for {} - {}", imageInfo.getPath(), e.getMessage());
 		}
 	}
 
-	private BufferedImage loadImage(Path path) throws IOException {
-		try (InputStream is = new BufferedInputStream(Files.newInputStream(getImagePath()))) {
-			BufferedImage bi;
-
-			try {
-				bi = ImageIO.read(is);
-			} catch (ArrayIndexOutOfBoundsException e) {
-				bi = GifDecoder.read(is).getFrame(0);
-			}
-
-			return bi;
-		}
-	}
-
-	private JLabel imageAsLabel(Image image) {
+	private static JLabel imageAsLabel(Image image) {
 		return new JLabel(new ImageIcon(image), JLabel.CENTER);
 	}
 
+	/**
+	 * Get the path of the image represented by this result.
+	 * 
+	 * @return the path of the image
+	 */
 	public Path getImagePath() {
 		return imageInfo.getPath();
 	}
 
-	public ImageInfo getImageInfo() {
-		return imageInfo;
-	}
-
+	/**
+	 * Create a new window and display the original image.
+	 */
 	public void displayFullImage() {
 		JLabel largeImage = new JLabel("No Image");
 
 		try {
-			BufferedImage bi = loadImage(getImagePath());
+			BufferedImage bi = ImageUtil.loadImage(getImagePath());
 			largeImage = imageAsLabel(bi);
 		} catch (Exception e) {
-			logger.warn("Unable to load full image {} - {}", getImagePath(), e.getMessage());
+			LOGGER.warn("Unable to load full image {} - {}", getImagePath(), e.getMessage());
 		}
 
 		view.displayFullImage(largeImage, getImagePath());
 	}
 
-	public void setView(DuplicateEntryView view) {
+	/**
+	 * Bind the view to this presenter.
+	 * 
+	 * @param view
+	 *            to bind
+	 */
+	public void setView(ResultView view) {
 		this.view = view;
 
 		loadThumbnail();
 		addImageInfo();
-	}
-
-	@Override
-	public JComponent getView() {
-		return view.getView();
 	}
 }

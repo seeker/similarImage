@@ -50,6 +50,8 @@ import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
+import com.github.dozedoff.similarImage.result.Result;
+import com.github.dozedoff.similarImage.result.ResultGroup;
 import com.google.common.jimfs.Jimfs;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -74,6 +76,9 @@ public class DuplicateOperationsTest {
 
 	@Mock
 	private ImageRepository imageRepository;
+
+	@Mock
+	private ResultGroup resultGroup;
 
 	private DuplicateOperations dupOp;
 
@@ -110,10 +115,10 @@ public class DuplicateOperationsTest {
 	@Test
 	public void testDeleteAll() throws Exception {
 		List<Path> files = createTempTestFiles(10);
-		LinkedList<ImageRecord> records = new LinkedList<>();
+		LinkedList<Result> records = new LinkedList<>();
 
 		for (Path p : files) {
-			records.add(new ImageRecord(p.toString(), 0));
+			records.add(new Result(resultGroup, new ImageRecord(p.toString(), 0)));
 		}
 
 		dupOp.deleteAll(records);
@@ -137,7 +142,7 @@ public class DuplicateOperationsTest {
 
 	@Test
 	public void testDeleteFileNull() throws Exception {
-		dupOp.deleteFile(null);
+		dupOp.deleteFile((Path) null);
 
 		verify(imageRepository, never()).remove(any(ImageRecord.class));
 	}
@@ -176,10 +181,10 @@ public class DuplicateOperationsTest {
 	@Test
 	public void testMarkDnwAndDelete() throws Exception {
 		List<Path> files = createTempTestFiles(RECORD_NUMBER);
-		LinkedList<ImageRecord> records = new LinkedList<>();
+		LinkedList<Result> records = new LinkedList<>();
 
 		for (Path p : files) {
-			records.add(new ImageRecord(p.toString(), 0));
+			records.add(new Result(resultGroup, new ImageRecord(p.toString(), 0)));
 		}
 
 		dupOp.markDnwAndDelete(records);
@@ -193,13 +198,13 @@ public class DuplicateOperationsTest {
 	@Test
 	public void testMarkDnwAndDeleteDBerror() throws Exception {
 		List<Path> files = createTempTestFiles(RECORD_NUMBER);
-		LinkedList<ImageRecord> records = new LinkedList<>();
+		LinkedList<Result> records = new LinkedList<>();
 
 		Mockito.doThrow(new RepositoryException("This is a test")).when(filterRepository)
 				.store(any(FilterRecord.class));
 
 		for (Path p : files) {
-			records.add(new ImageRecord(p.toString(), 0));
+			records.add(new Result(resultGroup, new ImageRecord(p.toString(), 0)));
 		}
 
 		dupOp.markDnwAndDelete(records);
@@ -300,9 +305,9 @@ public class DuplicateOperationsTest {
 
 	@Test
 	public void testMarkAll() throws Exception {
-		LinkedList<ImageRecord> records = new LinkedList<ImageRecord>();
-		records.add(new ImageRecord(TAG_FOO.getTag(), 0));
-		records.add(new ImageRecord(TAG_BAR.getTag(), 1));
+		LinkedList<Result> records = new LinkedList<>();
+		records.add(new Result(resultGroup, new ImageRecord(TAG_FOO.getTag(), 0)));
+		records.add(new Result(resultGroup, new ImageRecord(TAG_BAR.getTag(), 1)));
 
 		dupOp.markAll(records, TAG_ALL);
 

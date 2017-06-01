@@ -19,6 +19,9 @@ package com.github.dozedoff.similarImage.module;
 
 import java.util.concurrent.TimeUnit;
 
+import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
+import com.github.dozedoff.similarImage.gui.OperationsMenuFactory;
+import com.github.dozedoff.similarImage.gui.UserTagSettingController;
 import com.github.dozedoff.similarImage.io.ExtendedAttribute;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeDirectoryCache;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
@@ -32,5 +35,11 @@ public class GuiModule {
 	@Provides
 	public ExtendedAttributeQuery provideExtendedAttributeQuery() {
 		return new ExtendedAttributeDirectoryCache(new ExtendedAttribute(), 1, TimeUnit.MINUTES);
+	}
+
+	@Provides
+	public OperationsMenuFactory provideOperationsMenuFactory(DuplicateOperations dupOps,
+			UserTagSettingController utsc) {
+		return new OperationsMenuFactory(dupOps, utsc);
 	}
 }

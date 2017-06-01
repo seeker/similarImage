@@ -18,12 +18,17 @@
 package com.github.dozedoff.similarImage.util;
 
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import javax.imageio.ImageIO;
+
+import at.dhyan.open_imaging.GifDecoder;
 
 public abstract class ImageUtil {
 	/**
@@ -55,5 +60,28 @@ public abstract class ImageUtil {
 		ImageIO.write(image, "png", baos);
 		
 		return baos.toByteArray();
+	}
+
+	/**
+	 * Load an image from the given path.
+	 * 
+	 * @param path
+	 *            to the image to load
+	 * @return the loaded image
+	 * @throws IOException
+	 *             if there is an error reading the image
+	 */
+	public static BufferedImage loadImage(Path path) throws IOException {
+		try (InputStream is = new BufferedInputStream(Files.newInputStream(path))) {
+			BufferedImage bi;
+
+			try {
+				bi = ImageIO.read(is);
+			} catch (ArrayIndexOutOfBoundsException e) {
+				bi = GifDecoder.read(is).getFrame(0);
+			}
+
+			return bi;
+		}
 	}
 }

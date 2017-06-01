@@ -23,15 +23,14 @@ import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import javax.inject.Inject;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -45,7 +44,6 @@ import javax.swing.JProgressBar;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -61,7 +59,7 @@ import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiUserTagChangedEvent;
 import com.github.dozedoff.similarImage.io.Statistics.StatisticsEvent;
 import com.github.dozedoff.similarImage.io.StatisticsChangedListener;
-import com.github.dozedoff.similarImage.thread.GroupListPopulator;
+import com.github.dozedoff.similarImage.result.ResultGroup;
 import com.google.common.eventbus.Subscribe;
 
 import net.miginfocom.swing.MigLayout;
@@ -81,8 +79,8 @@ public class SimilarImageView implements StatisticsChangedListener {
 	private JLabel status, hammingValue;
 	private JProgressBar progress;
 	private JLabel queueSize;
-	private JList<Long> groups;
-	private DefaultListModel<Long> groupListModel;
+	private JList<ResultGroup> groups;
+	private DefaultListModel<ResultGroup> groupListModel;
 	private JScrollPane groupScrollPane;
 	private JScrollBar hammingDistance;
 
@@ -90,6 +88,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 	final DuplicateOperations duplicateOperations;
 
 	private final FilterRepository filterRepository;
+	private final JFrame resultGroupWindow;
 
 
 	/**
@@ -108,14 +107,20 @@ public class SimilarImageView implements StatisticsChangedListener {
 
 	}
 
+	private void setupResultGroupWindow() {
+		resultGroupWindow.setSize(500, 500);
+		resultGroupWindow.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		resultGroupWindow.setFocusableWindowState(true);
+	}
+
 	public SimilarImageView(SimilarImageController controller, DuplicateOperations duplicateOperations, int maxBufferSize,
 			UserTagSettingController utsController, FilterRepository filterRepository) {
 		this.controller = controller;
-		this.controller.setGui(this);
 		this.utsController = utsController;
 		this.filterRepository = filterRepository;
-
 		view = new JFrame();
+		this.resultGroupWindow = new JFrame();
+		setupResultGroupWindow();
 
 		view.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		view.setSize(500, 500);
@@ -136,6 +141,18 @@ public class SimilarImageView implements StatisticsChangedListener {
 		GuiEventBus.getInstance().register(this);
 
 		updateProgress();
+		this.controller.setGui(this);
+	}
+
+	/**
+	 * Set the model for the result used to display a list.
+	 * 
+	 * @param model
+	 *            to use
+	 */
+	public void setListModel(DefaultListModel<ResultGroup> model) {
+		groupListModel = model;
+		groups.setModel(model);
 	}
 
 	public void setStatus(String statusMsg) {
@@ -157,8 +174,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 		sortSimilar = new JButton("Sort similar");
 		sortFilter = new JButton("Sort filter");
 
-		groupListModel = new DefaultListModel<Long>();
-		groups = new JList<Long>(groupListModel);
+		groups = new JList<ResultGroup>();
 		groups.setComponentPopupMenu(new OperationsMenu(utsController));
 		groupScrollPane = new JScrollPane(groups);
 		hammingDistance = new JScrollBar(JScrollBar.HORIZONTAL, 0, 2, 0, 64);
@@ -212,7 +228,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 
 				int index = groups.getSelectedIndex();
 				if (index > -1 && index < groupListModel.size()) {
-					long group = groupListModel.get(index);
+					ResultGroup group = groupListModel.get(index);
 					controller.displayGroup(group);
 				}
 
@@ -241,7 +257,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 		view.add(hammingValue);
 	}
 
-	private long getSelectedGroup() {
+	private ResultGroup getSelectedGroup() {
 		return groups.getSelectedValue();
 	}
 
@@ -355,17 +371,12 @@ public class SimilarImageView implements StatisticsChangedListener {
 		progress.setMaximum(numOfFiles);
 	}
 
-	public void populateGroupList(Collection<Long> groups) {
-		SwingUtilities.invokeLater(new GroupListPopulator(groups, groupListModel));
-	}
-
-	private void deleteAll(long group) {
-		Set<ImageRecord> set = controller.getGroup(group);
-		duplicateOperations.deleteAll(set);
+	private void deleteAll(ResultGroup group) {
+		duplicateOperations.deleteAll(group.getResults());
 		groupListModel.removeElement(group);
 	}
 
-	private void tagAll(long group) {
+	private void tagAll(ResultGroup group) {
 		JList<Tag> activeTags = buildActiveTagsList();
 
 		Object[] message = { "Active Tags:", new JScrollPane(activeTags) };
@@ -375,7 +386,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 		getTopicDialog.setVisible(true);
 
 		if (pane.getValue() != null && (Integer) pane.getValue() == JOptionPane.OK_OPTION) {
-			duplicateOperations.markAll(controller.getGroup(group), activeTags.getSelectedValue());
+			duplicateOperations.markAll(group.getResults(), activeTags.getSelectedValue());
 		}
 	}
 
@@ -455,7 +466,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 				menu.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						duplicateOperations.markAll(controller.getGroup(getSelectedGroup()), tag);
+						duplicateOperations.markAll(getSelectedGroup().getResults(), tag);
 					}
 				});
 
@@ -479,5 +490,23 @@ public class SimilarImageView implements StatisticsChangedListener {
 			break;
 		}
 
+	}
+
+	/**
+	 * Set the title for the result group display and update it's view with the backing {@link ResultGroupPresenter}.
+	 * 
+	 * @param title
+	 *            for the result group window
+	 * @param rgp
+	 *            the presenter that will be used to create the {@link ResultGroupView}
+	 */
+	public void displayResultGroup(String title, ResultGroupPresenter rgp) {
+		resultGroupWindow.getContentPane().removeAll();
+
+		this.resultGroupWindow.setTitle(title);
+		JComponent rgv = new ResultGroupView(rgp).getView();
+		rgv.setPreferredSize(resultGroupWindow.getSize());
+		this.resultGroupWindow.add(rgv);
+		this.resultGroupWindow.setVisible(true);
 	}
 }

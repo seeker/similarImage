@@ -17,16 +17,17 @@
  */
 package com.github.dozedoff.similarImage.gui;
 
-import java.awt.Dimension;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.awt.image.BufferedImage;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
+import javax.swing.DefaultListModel;
+import javax.swing.SwingUtilities;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,8 +36,6 @@ import com.github.dozedoff.commonj.filefilter.SimpleImageFilter;
 import com.github.dozedoff.similarImage.component.ApplicationScope;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Tag;
-import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
-import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiGroupEvent;
 import com.github.dozedoff.similarImage.handler.HandlerListFactory;
@@ -44,11 +43,16 @@ import com.github.dozedoff.similarImage.handler.HashHandler;
 import com.github.dozedoff.similarImage.handler.HashNames;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.io.Statistics;
+import com.github.dozedoff.similarImage.result.GroupList;
+import com.github.dozedoff.similarImage.result.Result;
+import com.github.dozedoff.similarImage.result.ResultGroup;
+import com.github.dozedoff.similarImage.thread.GroupListPopulator;
 import com.github.dozedoff.similarImage.thread.ImageFindJob;
 import com.github.dozedoff.similarImage.thread.ImageFindJobVisitor;
 import com.github.dozedoff.similarImage.thread.SorterFactory;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.MultimapBuilder;
 import com.google.common.eventbus.Subscribe;
 
 @ApplicationScope
@@ -56,41 +60,52 @@ public class SimilarImageController {
 	private final Logger logger = LoggerFactory.getLogger(SimilarImageController.class);
 
 	private static final String GUI_MSG_SORTING = "Sorting...";
+	private static final int MAXIMUM_GROUP_SIZE = 50;
 
-	private final int THUMBNAIL_DIMENSION = 500;
-
-	private Multimap<Long, ImageRecord> results;
-	private DisplayGroupView displayGroup;
+	private GroupList groupList;
 	private SimilarImageView gui;
 	private final Statistics statistics;
 	private final LinkedList<Thread> tasks = new LinkedList<>();
 
-	private final DuplicateOperations dupOps;
 	private final SorterFactory sorterFactory;
 	private final HandlerListFactory handlerCollectionFactory;
-	private final UserTagSettingController utsc;
+	private final OperationsMenuFactory omf;
+	private final DefaultListModel<ResultGroup> groupListModel;
+	private final LoadingCache<Result, BufferedImage> thumbnailCache;
 
 	/**
 	 * Performs actions initiated by the user
 	 * 
-	 * @param displayGroup
-	 *            view for displaying images for groups
+	 * @param sorterFactory
+	 *            a factory for creating sorter tasks
+	 * @param handlerCollectionFactory
+	 *            factory for creating handler collection used in processing images
+	 * @param opsMenuFactory
+	 *            factory to create menus with operations that can be performed on images
 	 * @param statistics
-	 *            tracking stats
+	 *            program statistics tracking
 	 */
 	@Inject
 	public SimilarImageController(SorterFactory sorterFactory, HandlerListFactory handlerCollectionFactory,
-			DuplicateOperations dupOps, DisplayGroupView displayGroup, Statistics statistics,
-			UserTagSettingController utsc) {
-
-		results = MultimapBuilder.hashKeys().hashSetValues().build();
-		this.displayGroup = displayGroup;
+			OperationsMenuFactory opsMenuFactory, Statistics statistics) {
+		groupList = new GroupList();
 		this.statistics = statistics;
 		this.sorterFactory = sorterFactory;
 		this.handlerCollectionFactory = handlerCollectionFactory;
-		this.dupOps = dupOps;
-		this.utsc = utsc;
+		this.omf = opsMenuFactory;
 		GuiEventBus.getInstance().register(this);
+		groupListModel = new DefaultListModel<ResultGroup>();
+		this.thumbnailCache = CacheBuilder.newBuilder().softValues().build(new ThumbnailCacheLoader());
+	}
+
+
+
+	private void setGroupListToResult(Multimap<Long, ImageRecord> results) {
+		Set<Long> keys = results.keySet();
+		List<ResultGroup> groups = keys.stream().map(key -> new ResultGroup(groupList, key, results.get(key)))
+				.collect(Collectors.toList());
+
+		groupList.populateList(groups);
 	}
 
 	/**
@@ -106,6 +121,7 @@ public class SimilarImageController {
 
 		this.gui = gui;
 		statistics.addStatisticsListener(gui);
+		gui.setListModel(groupListModel);
 	}
 
 	public void ignoreImage(ImageRecord toIgnore) {
@@ -120,7 +136,13 @@ public class SimilarImageController {
 	 * @return images matched to this group
 	 */
 	public Set<ImageRecord> getGroup(long group) {
-		return new HashSet<ImageRecord>(results.get(group));
+		// TODO pass group directly (or even grouplist?)
+		List<Result> results = groupList.getGroup(group).getResults();
+		return new HashSet<ImageRecord>(resultsToImageRecords(results));
+	}
+
+	private List<ImageRecord> resultsToImageRecords(List<Result> results) {
+		return results.stream().map(result -> result.getImageRecord()).collect(Collectors.toList());
 	}
 
 	/**
@@ -130,18 +152,21 @@ public class SimilarImageController {
 	 *            to use in GUI selections
 	 */
 	public synchronized void setResults(Multimap<Long, ImageRecord> results) {
-		this.results = results;
+		setGroupListToResult(results);
 		updateGUI();
 	}
 
-	public void displayGroup(long group) {
-		int maxGroupSize = 30;
+	/**
+	 * Display the {@link ResultGroup}, generating all necessary UI elements. Will ask the user if a group should be
+	 * loaded if the image count exceeds a set threshold.
+	 * 
+	 * @param group
+	 *            to display
+	 */
+	public void displayGroup(ResultGroup group) {
+		List<Result> grouplist = group.getResults();
 
-		Set<ImageRecord> grouplist = getGroup(group);
-		LinkedList<View> images = new LinkedList<View>();
-		Dimension imageDim = new Dimension(THUMBNAIL_DIMENSION, THUMBNAIL_DIMENSION);
-
-		if (grouplist.size() > maxGroupSize) {
+		if (grouplist.size() > MAXIMUM_GROUP_SIZE) {
 			if (!gui.okToDisplayLargeGroup(grouplist.size())) {
 				return;
 			}
@@ -149,29 +174,34 @@ public class SimilarImageController {
 
 		logger.info("Loading {} thumbnails for group {}", grouplist.size(), group);
 
-		for (ImageRecord rec : grouplist) {
-			Path path = Paths.get(rec.getPath());
+		ResultGroupPresenter rgp = new ResultGroupPresenter(group, omf, this, thumbnailCache);
+		gui.displayResultGroup(group.toString(), rgp);
+	}
 
-			if (Files.exists(path)) {
-				ImageInfo info = new ImageInfo(path, rec.getpHash());
-				OperationsMenu opMenu;
+	/**
+	 * Display the next group in the list.
+	 * 
+	 * @param currentGroup
+	 *            the current displayed group, used as a reference
+	 */
+	public void displayNextGroup(ResultGroup currentGroup) {
+		displayGroup(groupList.nextGroup(currentGroup));
+	}
 
-				opMenu = new OperationsMenu(info, dupOps, utsc);
-				DuplicateEntryController entry = new DuplicateEntryController(info, imageDim);
-				new DuplicateEntryView(entry, opMenu);
-				images.add(entry);
-
-			} else {
-				logger.warn("Image {} not found, skipping...", path);
-			}
-		}
-
-		displayGroup.displayImages(group, images);
+	/**
+	 * Display the previous group in the list.
+	 * 
+	 * @param currentGroup
+	 *            the current displayed group, used as a reference
+	 */
+	public void displayPreviousGroup(ResultGroup currentGroup) {
+		displayGroup(groupList.previousGroup(currentGroup));
 	}
 
 	private void updateGUI() {
-		setGUIStatus("" + results.keySet().size() + " Groups");
-		gui.populateGroupList(results.keySet());
+		setGUIStatus("" + groupList.groupCount() + " Groups");
+		groupList.setMappedListModel(groupListModel);
+		SwingUtilities.invokeLater(new GroupListPopulator(groupList, groupListModel));
 	}
 
 	private void setGUIStatus(String message) {

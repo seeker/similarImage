@@ -17,34 +17,32 @@
  */
 package com.github.dozedoff.similarImage.thread;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
 import javax.swing.DefaultListModel;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.dozedoff.similarImage.result.GroupList;
+import com.github.dozedoff.similarImage.result.ResultGroup;
+
 public class GroupListPopulator implements Runnable {
 	Logger logger = LoggerFactory.getLogger(GroupListPopulator.class);
-	private List<Long> groups;
-	private DefaultListModel<Long> groupListModel;
+	private GroupList groups;
+	private DefaultListModel<ResultGroup> groupListModel;
 
-	public GroupListPopulator(Collection<Long> groups, DefaultListModel<Long> groupListModel) {
-		this.groups = new ArrayList<Long>(groups);
+	public GroupListPopulator(GroupList groups, DefaultListModel<ResultGroup> groupListModel) {
+		this.groups = groups;
 		this.groupListModel = groupListModel;
 	}
 
 	@Override
 	public void run() {
-		this.logger.info("Populating group list with {} groups", groups.size());
+		this.logger.info("Populating group list with {} groups", groups.groupCount());
 		groupListModel.clear();
 
-		Collections.sort(groups);
+		// TODO sort groups
 
-		for (Long g : groups) {
+		for (ResultGroup g : groups.getAllGroups()) {
 			groupListModel.addElement(g);
 		}
 
