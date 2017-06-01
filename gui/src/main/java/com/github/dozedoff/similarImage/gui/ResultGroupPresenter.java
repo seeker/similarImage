@@ -17,10 +17,18 @@
  */
 package com.github.dozedoff.similarImage.gui;
 
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.dozedoff.similarImage.result.Result;
 import com.github.dozedoff.similarImage.result.ResultGroup;
+import com.google.common.base.Stopwatch;
 
 public class ResultGroupPresenter {
+	private static final Logger LOGGER = LoggerFactory.getLogger(ResultGroupPresenter.class);
+
 	private ResultGroup resultGroup;
 	private OperationsMenuFactory menuFactory;
 	private final SimilarImageController siController;
@@ -33,11 +41,16 @@ public class ResultGroupPresenter {
 	}
 
 	public void setView(ResultGroupView view) {
-		for (Result result : resultGroup.getResults()) {
+		List<Result> results = resultGroup.getResults();
+		Stopwatch sw = Stopwatch.createStarted();
+
+		for (Result result : results) {
 			ResultPresenter resultPresenter = new ResultPresenter(result);
 			ResultView resultView = new ResultView(resultPresenter, menuFactory.createOperationsMenu(result));
 			view.addResultView(resultView);
 		}
+
+		LOGGER.info("Loaded {} results in {}", results.size(), sw);
 	}
 
 	public void previousGroup() {
