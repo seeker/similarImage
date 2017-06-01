@@ -17,6 +17,7 @@
  */
 package com.github.dozedoff.similarImage.gui;
 
+import java.awt.image.BufferedImage;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -35,7 +36,6 @@ import com.github.dozedoff.commonj.filefilter.SimpleImageFilter;
 import com.github.dozedoff.similarImage.component.ApplicationScope;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Tag;
-import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiGroupEvent;
 import com.github.dozedoff.similarImage.handler.HandlerListFactory;
@@ -50,6 +50,8 @@ import com.github.dozedoff.similarImage.thread.GroupListPopulator;
 import com.github.dozedoff.similarImage.thread.ImageFindJob;
 import com.github.dozedoff.similarImage.thread.ImageFindJobVisitor;
 import com.github.dozedoff.similarImage.thread.SorterFactory;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Multimap;
 import com.google.common.eventbus.Subscribe;
 
@@ -58,41 +60,42 @@ public class SimilarImageController {
 	private final Logger logger = LoggerFactory.getLogger(SimilarImageController.class);
 
 	private static final String GUI_MSG_SORTING = "Sorting...";
-
-	private final int THUMBNAIL_DIMENSION = 500;
+	private static final int MAXIMUM_GROUP_SIZE = 50;
 
 	private GroupList groupList;
 	private SimilarImageView gui;
 	private final Statistics statistics;
 	private final LinkedList<Thread> tasks = new LinkedList<>();
 
-	private final DuplicateOperations dupOps;
 	private final SorterFactory sorterFactory;
 	private final HandlerListFactory handlerCollectionFactory;
-	private final UserTagSettingController utsc;
 	private final OperationsMenuFactory omf;
 	private final DefaultListModel<ResultGroup> groupListModel;
+	private final LoadingCache<Result, BufferedImage> thumbnailCache;
 
 	/**
 	 * Performs actions initiated by the user
 	 * 
+	 * @param sorterFactory
+	 *            a factory for creating sorter tasks
+	 * @param handlerCollectionFactory
+	 *            factory for creating handler collection used in processing images
+	 * @param opsMenuFactory
+	 *            factory to create menus with operations that can be performed on images
 	 * @param statistics
-	 *            tracking stats
+	 *            program statistics tracking
 	 */
 	@Inject
 	public SimilarImageController(SorterFactory sorterFactory, HandlerListFactory handlerCollectionFactory,
-			DuplicateOperations dupOps, Statistics statistics,
-			UserTagSettingController utsc) {
-
+			OperationsMenuFactory opsMenuFactory, Statistics statistics) {
 		groupList = new GroupList();
 		this.statistics = statistics;
 		this.sorterFactory = sorterFactory;
 		this.handlerCollectionFactory = handlerCollectionFactory;
-		this.dupOps = dupOps;
-		this.utsc = utsc;
-		this.omf = new OperationsMenuFactory(dupOps, utsc);
+		this.omf = opsMenuFactory;
 		GuiEventBus.getInstance().register(this);
 		groupListModel = new DefaultListModel<ResultGroup>();
+		this.thumbnailCache = CacheBuilder.newBuilder().softValues().build(new ThumbnailCacheLoader());
 	}
 
 
@@ -153,12 +156,17 @@ public class SimilarImageController {
 		updateGUI();
 	}
 
+	/**
+	 * Display the {@link ResultGroup}, generating all necessary UI elements. Will ask the user if a group should be
+	 * loaded if the image count exceeds a set threshold.
+	 * 
+	 * @param group
+	 *            to display
+	 */
 	public void displayGroup(ResultGroup group) {
-		int maxGroupSize = 30;
-
 		List<Result> grouplist = group.getResults();
 
-		if (grouplist.size() > maxGroupSize) {
+		if (grouplist.size() > MAXIMUM_GROUP_SIZE) {
 			if (!gui.okToDisplayLargeGroup(grouplist.size())) {
 				return;
 			}
@@ -166,15 +174,26 @@ public class SimilarImageController {
 
 		logger.info("Loading {} thumbnails for group {}", grouplist.size(), group);
 
-		ResultGroupPresenter rgp = new ResultGroupPresenter(group, omf, this);
+		ResultGroupPresenter rgp = new ResultGroupPresenter(group, omf, this, thumbnailCache);
 		gui.displayResultGroup(group.toString(), rgp);
 	}
 
-
+	/**
+	 * Display the next group in the list.
+	 * 
+	 * @param currentGroup
+	 *            the current displayed group, used as a reference
+	 */
 	public void displayNextGroup(ResultGroup currentGroup) {
 		displayGroup(groupList.nextGroup(currentGroup));
 	}
 
+	/**
+	 * Display the previous group in the list.
+	 * 
+	 * @param currentGroup
+	 *            the current displayed group, used as a reference
+	 */
 	public void displayPreviousGroup(ResultGroup currentGroup) {
 		displayGroup(groupList.previousGroup(currentGroup));
 	}
