@@ -24,6 +24,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.awt.image.BufferedImage;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -42,6 +43,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.result.Result;
 import com.github.dozedoff.similarImage.result.ResultGroup;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.LoadingCache;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ResultPresenterTest {
@@ -56,9 +59,10 @@ public class ResultPresenterTest {
 	private ResultPresenter duplicateEntryController;
 	private static Path testImage;
 	private Result result;
+	private LoadingCache<Result, BufferedImage> thumbnailCache;
 
 	@Mock
-	ResultGroup resultGroup;
+	private ResultGroup resultGroup;
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
@@ -75,8 +79,8 @@ public class ResultPresenterTest {
 
 		when(opMenu.getMenu()).thenReturn(new JPopupMenu());
 
-
-		duplicateEntryController = new ResultPresenter(result);
+		thumbnailCache = CacheBuilder.newBuilder().softValues().build(new ThumbnailCacheLoader());
+		duplicateEntryController = new ResultPresenter(result, thumbnailCache);
 		duplicateEntryController.setView(view);
 
 	}

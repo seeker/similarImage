@@ -17,6 +17,7 @@
  */
 package com.github.dozedoff.similarImage.gui;
 
+import java.awt.image.BufferedImage;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -25,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import com.github.dozedoff.similarImage.result.Result;
 import com.github.dozedoff.similarImage.result.ResultGroup;
 import com.google.common.base.Stopwatch;
+import com.google.common.cache.LoadingCache;
 
 public class ResultGroupPresenter {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ResultGroupPresenter.class);
@@ -32,12 +34,14 @@ public class ResultGroupPresenter {
 	private ResultGroup resultGroup;
 	private OperationsMenuFactory menuFactory;
 	private final SimilarImageController siController;
+	private final LoadingCache<Result, BufferedImage> thumbnailCache;
 
 	public ResultGroupPresenter(ResultGroup resultGroup, OperationsMenuFactory menuFactory,
-			SimilarImageController siController) {
+			SimilarImageController siController, LoadingCache<Result, BufferedImage> thumbnailCache) {
 		this.resultGroup = resultGroup;
 		this.menuFactory = menuFactory;
 		this.siController = siController;
+		this.thumbnailCache = thumbnailCache;
 	}
 
 	public void setView(ResultGroupView view) {
@@ -45,7 +49,7 @@ public class ResultGroupPresenter {
 		Stopwatch sw = Stopwatch.createStarted();
 
 		for (Result result : results) {
-			ResultPresenter resultPresenter = new ResultPresenter(result);
+			ResultPresenter resultPresenter = new ResultPresenter(result, thumbnailCache);
 			ResultView resultView = new ResultView(resultPresenter, menuFactory.createOperationsMenu(result));
 			view.addResultView(resultView);
 		}

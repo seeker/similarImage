@@ -33,16 +33,12 @@ import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 import com.github.dozedoff.similarImage.result.Result;
 import com.github.dozedoff.similarImage.util.ImageUtil;
-import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
 
 public class ResultPresenter {
 	private static final Logger logger = LoggerFactory.getLogger(ResultPresenter.class);
 
-	private static final LoadingCache<Result, BufferedImage> thumbnailCache = CacheBuilder.newBuilder()
-			.softValues()
-			.recordStats()
-			.build(new ThumbnailCacheLoader());
+	private final LoadingCache<Result, BufferedImage> thumbnailCache;
 
 	private final ImageInfo imageInfo;
 	private ResultView view;
@@ -53,11 +49,14 @@ public class ResultPresenter {
 	 * 
 	 * @param result
 	 *            represented by this presenter instance
+	 * @param thumbnailCache
+	 *            cache to speed up loading thumbnails
 	 */
-	public ResultPresenter(Result result) {
+	public ResultPresenter(Result result, LoadingCache<Result, BufferedImage> thumbnailCache) {
 		this.result = result;
 		ImageRecord ir = result.getImageRecord();
 		this.imageInfo = new ImageInfo(Paths.get(ir.getPath()), ir.getpHash());
+		this.thumbnailCache = thumbnailCache;
 	}
 
 	private void addImageInfo() {

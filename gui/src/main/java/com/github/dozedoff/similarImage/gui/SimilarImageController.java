@@ -17,6 +17,7 @@
  */
 package com.github.dozedoff.similarImage.gui;
 
+import java.awt.image.BufferedImage;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -50,6 +51,8 @@ import com.github.dozedoff.similarImage.thread.GroupListPopulator;
 import com.github.dozedoff.similarImage.thread.ImageFindJob;
 import com.github.dozedoff.similarImage.thread.ImageFindJobVisitor;
 import com.github.dozedoff.similarImage.thread.SorterFactory;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Multimap;
 import com.google.common.eventbus.Subscribe;
 
@@ -72,6 +75,7 @@ public class SimilarImageController {
 	private final UserTagSettingController utsc;
 	private final OperationsMenuFactory omf;
 	private final DefaultListModel<ResultGroup> groupListModel;
+	private final LoadingCache<Result, BufferedImage> thumbnailCache;
 
 	/**
 	 * Performs actions initiated by the user
@@ -93,6 +97,7 @@ public class SimilarImageController {
 		this.omf = new OperationsMenuFactory(dupOps, utsc);
 		GuiEventBus.getInstance().register(this);
 		groupListModel = new DefaultListModel<ResultGroup>();
+		this.thumbnailCache = CacheBuilder.newBuilder().softValues().build(new ThumbnailCacheLoader());
 	}
 
 
@@ -166,7 +171,7 @@ public class SimilarImageController {
 
 		logger.info("Loading {} thumbnails for group {}", grouplist.size(), group);
 
-		ResultGroupPresenter rgp = new ResultGroupPresenter(group, omf, this);
+		ResultGroupPresenter rgp = new ResultGroupPresenter(group, omf, this, thumbnailCache);
 		gui.displayResultGroup(group.toString(), rgp);
 	}
 
