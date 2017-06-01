@@ -31,7 +31,8 @@ import dagger.Provides;
 
 @Module
 public class StatisticsModule {
-
+	public static final String METRICS_LOGGER_NAME = "similarImage.metrics";
+	
 	@MainScope
 	@Provides
 	public Statistics provideStatistics() {
@@ -46,7 +47,7 @@ public class StatisticsModule {
 
 	@Provides
 	public Slf4jReporter provideReporter(MetricRegistry metrics) {
-		return Slf4jReporter.forRegistry(metrics).outputTo(LoggerFactory.getLogger("similarImage.metrics"))
+		return Slf4jReporter.forRegistry(metrics).outputTo(LoggerFactory.getLogger(METRICS_LOGGER_NAME))
 				.convertRatesTo(TimeUnit.SECONDS).convertDurationsTo(TimeUnit.MILLISECONDS).build();
 	}
 }
