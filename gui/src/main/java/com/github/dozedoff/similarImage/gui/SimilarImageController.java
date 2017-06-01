@@ -61,8 +61,7 @@ public class SimilarImageController {
 	private final Logger logger = LoggerFactory.getLogger(SimilarImageController.class);
 
 	private static final String GUI_MSG_SORTING = "Sorting...";
-
-	private final int THUMBNAIL_DIMENSION = 500;
+	private static final int MAXIMUM_GROUP_SIZE = 50;
 
 	private GroupList groupList;
 	private SimilarImageView gui;
@@ -174,11 +173,9 @@ public class SimilarImageController {
 	 *            to display
 	 */
 	public void displayGroup(ResultGroup group) {
-		int maxGroupSize = 30;
-
 		List<Result> grouplist = group.getResults();
 
-		if (grouplist.size() > maxGroupSize) {
+		if (grouplist.size() > MAXIMUM_GROUP_SIZE) {
 			if (!gui.okToDisplayLargeGroup(grouplist.size())) {
 				return;
 			}
