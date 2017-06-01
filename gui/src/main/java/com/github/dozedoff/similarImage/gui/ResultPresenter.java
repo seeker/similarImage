@@ -39,25 +39,29 @@ import org.slf4j.LoggerFactory;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.duplicate.ImageInfo;
 import com.github.dozedoff.similarImage.result.Result;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 
 import at.dhyan.open_imaging.GifDecoder;
 
 public class ResultPresenter {
 	private static final Logger logger = LoggerFactory.getLogger(ResultPresenter.class);
+
+	private static final LoadingCache<Result, BufferedImage> thumbnailCache = CacheBuilder.newBuilder()
+			.softValues()
+			.recordStats()
+			.build(new CacheLoader<Result, BufferedImage>() {
+				@Override
+				public BufferedImage load(Result key) throws Exception {
+					BufferedImage bi = loadImage(Paths.get(key.getImageRecord().getPath()));
+					return Scalr.resize(bi, Method.AUTOMATIC, 500);
+				}
+			});
+
 	private final ImageInfo imageInfo;
 	private ResultView view;
-
-	/**
-	 * @param imageInfo
-	 *            representing the image
-	 * 
-	 * @deprecated Use {@link ResultPresenter#ResultPresenter(Result)} instead.
-	 */
-	@Deprecated
-	public ResultPresenter(ImageInfo imageInfo) {
-		super();
-		this.imageInfo = imageInfo;
-	}
+	private final Result result;
 
 	/**
 	 * Creates a new {@link ResultPresenter} to present the given {@link Result}.
@@ -66,6 +70,7 @@ public class ResultPresenter {
 	 *            represented by this presenter instance
 	 */
 	public ResultPresenter(Result result) {
+		this.result = result;
 		ImageRecord ir = result.getImageRecord();
 		this.imageInfo = new ImageInfo(Paths.get(ir.getPath()), ir.getpHash());
 	}
@@ -81,8 +86,9 @@ public class ResultPresenter {
 
 	private void loadThumbnail() {
 		try {
-			BufferedImage bi = loadImage(getImagePath());
-			BufferedImage resized = Scalr.resize(bi, Method.QUALITY, 500);
+			logger.info("{} in cache (Hit:{}): {}", imageInfo.getPath(), thumbnailCache.stats(),
+					thumbnailCache.getIfPresent(result));
+			BufferedImage resized = thumbnailCache.get(result);
 			JLabel image = imageAsLabel(resized);
 			view.setImage(image);
 		} catch (Exception e) {
@@ -90,8 +96,8 @@ public class ResultPresenter {
 		}
 	}
 
-	private BufferedImage loadImage(Path path) throws IOException {
-		try (InputStream is = new BufferedInputStream(Files.newInputStream(getImagePath()))) {
+	private static BufferedImage loadImage(Path path) throws IOException {
+		try (InputStream is = new BufferedInputStream(Files.newInputStream(path))) {
 			BufferedImage bi;
 
 			try {
@@ -104,7 +110,7 @@ public class ResultPresenter {
 		}
 	}
 
-	private JLabel imageAsLabel(Image image) {
+	private static JLabel imageAsLabel(Image image) {
 		return new JLabel(new ImageIcon(image), JLabel.CENTER);
 	}
 
