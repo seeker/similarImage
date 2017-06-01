@@ -17,26 +17,67 @@
  */
 package com.github.dozedoff.similarImage.db;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
+/**
+ * Repository record for ignoring images.
+ * 
+ * @author Nicholas Wright
+ *
+ */
 @DatabaseTable
 public class IgnoreRecord {
 	@DatabaseField(id = true, canBeNull = false)
-	private long pHash;
+	private String imagePath;
 
 	/**
 	 * Intended for DAO only
+	 * 
+	 * @deprecated DAO only
 	 */
 	@Deprecated
 	public IgnoreRecord() {
 	}
 
-	public IgnoreRecord(long pHash) {
-		this.pHash = pHash;
+	/**
+	 * Create a new {@link IgnoreRecord} for the given path.
+	 * 
+	 * @param path
+	 *            to ignore
+	 */
+	public IgnoreRecord(String path) {
+		this.imagePath = path;
 	}
 
-	public long getpHash() {
-		return pHash;
+	/**
+	 * Create a new {@link IgnoreRecord} for the given path.
+	 * 
+	 * @param path
+	 *            to ignore
+	 */
+	public IgnoreRecord(Path path) {
+		this(path.toString());
+	}
+
+	/**
+	 * Get the path for the ignored image.
+	 * 
+	 * @return the image path
+	 */
+	public Path getImagePath() {
+		return Paths.get(imagePath);
+	}
+
+	/**
+	 * Get the path for the ignored image.
+	 * 
+	 * @return the image path
+	 */
+	public String getImagePathAsString() {
+		return imagePath;
 	}
 }

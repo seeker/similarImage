@@ -20,19 +20,37 @@ package com.github.dozedoff.similarImage.db;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import org.junit.Before;
 import org.junit.Test;
 
 public class IgnoreRecordTest {
-	private IgnoreRecord ir;
+	private static final String TEST_PATH_STRING = "foo";
+	private static final Path TEST_PATH = Paths.get(TEST_PATH_STRING);
+
+	private IgnoreRecord cut;
 
 	@Before
 	public void setUp() throws Exception {
-		ir = new IgnoreRecord(42);
+		cut = new IgnoreRecord(TEST_PATH_STRING);
 	}
 
 	@Test
-	public void testGetpHash() {
-		assertThat(ir.getpHash(), is(42L));
+	public void testGetPathAsString() throws Exception {
+		assertThat(cut.getImagePathAsString(), is(TEST_PATH_STRING));
+	}
+
+	@Test
+	public void testGetPath() throws Exception {
+		assertThat(cut.getImagePath(), is(TEST_PATH));
+	}
+
+	@Test
+	public void testCreateIgnoreRecordWithPath() throws Exception {
+		IgnoreRecord ir = new IgnoreRecord(TEST_PATH);
+
+		assertThat(ir.getImagePathAsString(), is(TEST_PATH_STRING));
 	}
 }
