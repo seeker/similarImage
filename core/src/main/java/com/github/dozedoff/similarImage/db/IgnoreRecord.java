@@ -19,6 +19,9 @@ package com.github.dozedoff.similarImage.db;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Objects;
+
+import javax.annotation.concurrent.Immutable;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
@@ -29,8 +32,9 @@ import com.j256.ormlite.table.DatabaseTable;
  * @author Nicholas Wright
  *
  */
+@Immutable
 @DatabaseTable
-public class IgnoreRecord {
+public final class IgnoreRecord {
 	@DatabaseField(id = true, canBeNull = false)
 	private String imagePath;
 
@@ -79,5 +83,33 @@ public class IgnoreRecord {
 	 */
 	public String getImagePathAsString() {
 		return imagePath;
+	}
+
+	/**
+	 * Compare if the objects are equal.
+	 * 
+	 * @param obj
+	 *            instance to compare
+	 * @return true if the object is of the type {@link IgnoreRecord} and the image path matches.
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof IgnoreRecord) {
+			IgnoreRecord other = (IgnoreRecord) obj;
+
+			return Objects.equals(this.imagePath, other.imagePath);
+		}
+
+		return false;
+	}
+
+	/**
+	 * Get the hashcode for this object. Based on the image path.
+	 * 
+	 * @return the hashcode
+	 */
+	@Override
+	public int hashCode() {
+		return Objects.hash(imagePath);
 	}
 }

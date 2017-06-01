@@ -26,6 +26,8 @@ import java.nio.file.Paths;
 import org.junit.Before;
 import org.junit.Test;
 
+import nl.jqno.equalsverifier.EqualsVerifier;
+
 public class IgnoreRecordTest {
 	private static final String TEST_PATH_STRING = "foo";
 	private static final Path TEST_PATH = Paths.get(TEST_PATH_STRING);
@@ -52,5 +54,15 @@ public class IgnoreRecordTest {
 		IgnoreRecord ir = new IgnoreRecord(TEST_PATH);
 
 		assertThat(ir.getImagePathAsString(), is(TEST_PATH_STRING));
+	}
+
+	@Test
+	public void testEquals() throws Exception {
+		assertThat(cut.equals(new IgnoreRecord(TEST_PATH)), is(true));
+	}
+
+	@Test
+	public void testWithEqualsVerifier() throws Exception {
+		EqualsVerifier.forClass(IgnoreRecord.class).allFieldsShouldBeUsed().verify();
 	}
 }
