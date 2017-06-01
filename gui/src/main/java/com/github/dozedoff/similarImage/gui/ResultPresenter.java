@@ -1,4 +1,4 @@
-/*  Copyright (C) 2016  Nicholas Wright
+/*  Copyright (C) 2017  Nicholas Wright
     
     This file is part of similarImage - A similar image finder using pHash
     
@@ -36,7 +36,7 @@ import com.github.dozedoff.similarImage.util.ImageUtil;
 import com.google.common.cache.LoadingCache;
 
 public class ResultPresenter {
-	private static final Logger logger = LoggerFactory.getLogger(ResultPresenter.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(ResultPresenter.class);
 
 	private final LoadingCache<Result, BufferedImage> thumbnailCache;
 
@@ -70,13 +70,13 @@ public class ResultPresenter {
 
 	private void loadThumbnail() {
 		try {
-			logger.debug("{} in cache: {}", imageInfo.getPath(),
+			LOGGER.debug("{} in cache: {}", imageInfo.getPath(),
 					thumbnailCache.getIfPresent(result));
 			BufferedImage resized = thumbnailCache.get(result);
 			JLabel image = imageAsLabel(resized);
 			view.setImage(image);
 		} catch (Exception e) {
-			logger.warn("Could not load image thumbnail for {} - {}", imageInfo.getPath(), e.getMessage());
+			LOGGER.warn("Could not load image thumbnail for {} - {}", imageInfo.getPath(), e.getMessage());
 		}
 	}
 
@@ -95,7 +95,7 @@ public class ResultPresenter {
 			BufferedImage bi = ImageUtil.loadImage(getImagePath());
 			largeImage = imageAsLabel(bi);
 		} catch (Exception e) {
-			logger.warn("Unable to load full image {} - {}", getImagePath(), e.getMessage());
+			LOGGER.warn("Unable to load full image {} - {}", getImagePath(), e.getMessage());
 		}
 
 		view.displayFullImage(largeImage, getImagePath());
