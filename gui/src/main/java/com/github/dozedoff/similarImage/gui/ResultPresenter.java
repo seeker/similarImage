@@ -70,7 +70,7 @@ public class ResultPresenter {
 
 	private void loadThumbnail() {
 		try {
-			logger.info("{} in cache (Hit:{}): {}", imageInfo.getPath(), thumbnailCache.stats(),
+			logger.debug("{} in cache: {}", imageInfo.getPath(),
 					thumbnailCache.getIfPresent(result));
 			BufferedImage resized = thumbnailCache.get(result);
 			JLabel image = imageAsLabel(resized);
