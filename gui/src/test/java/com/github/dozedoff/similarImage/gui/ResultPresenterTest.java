@@ -92,7 +92,7 @@ public class ResultPresenterTest {
 
 	@Test
 	public void testSetView() throws Exception {
-		// verify(view).setImage(any(JLabel.class)); // FIXME ImageIO fails for unknown reason
+		verify(view).setImage(any(JLabel.class));
 
 		verify(view).createLable(eq("Path: " + testImage.toString()));
 		verify(view).createLable(eq("Size: 1 kb"));
