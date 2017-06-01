@@ -36,7 +36,6 @@ import com.github.dozedoff.commonj.filefilter.SimpleImageFilter;
 import com.github.dozedoff.similarImage.component.ApplicationScope;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Tag;
-import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiGroupEvent;
 import com.github.dozedoff.similarImage.handler.HandlerListFactory;
@@ -68,10 +67,8 @@ public class SimilarImageController {
 	private final Statistics statistics;
 	private final LinkedList<Thread> tasks = new LinkedList<>();
 
-	private final DuplicateOperations dupOps;
 	private final SorterFactory sorterFactory;
 	private final HandlerListFactory handlerCollectionFactory;
-	private final UserTagSettingController utsc;
 	private final OperationsMenuFactory omf;
 	private final DefaultListModel<ResultGroup> groupListModel;
 	private final LoadingCache<Result, BufferedImage> thumbnailCache;
@@ -83,25 +80,19 @@ public class SimilarImageController {
 	 *            a factory for creating sorter tasks
 	 * @param handlerCollectionFactory
 	 *            factory for creating handler collection used in processing images
-	 * @param dupOps
-	 *            Operations that can be performed on images
+	 * @param opsMenuFactory
+	 *            factory to create menus with operations that can be performed on images
 	 * @param statistics
 	 *            program statistics tracking
-	 * @param utsc
-	 *            controller for user tags
 	 */
 	@Inject
 	public SimilarImageController(SorterFactory sorterFactory, HandlerListFactory handlerCollectionFactory,
-			DuplicateOperations dupOps, Statistics statistics,
-			UserTagSettingController utsc) {
-
+			OperationsMenuFactory opsMenuFactory, Statistics statistics) {
 		groupList = new GroupList();
 		this.statistics = statistics;
 		this.sorterFactory = sorterFactory;
 		this.handlerCollectionFactory = handlerCollectionFactory;
-		this.dupOps = dupOps;
-		this.utsc = utsc;
-		this.omf = new OperationsMenuFactory(dupOps, utsc);
+		this.omf = opsMenuFactory;
 		GuiEventBus.getInstance().register(this);
 		groupListModel = new DefaultListModel<ResultGroup>();
 		this.thumbnailCache = CacheBuilder.newBuilder().softValues().build(new ThumbnailCacheLoader());
