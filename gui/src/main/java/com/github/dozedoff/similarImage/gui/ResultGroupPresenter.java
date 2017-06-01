@@ -39,6 +39,18 @@ public class ResultGroupPresenter {
 	private final SimilarImageController siController;
 	private final LoadingCache<Result, BufferedImage> thumbnailCache;
 
+	/**
+	 * Create a new presenter for a group of {@link Result}s.
+	 * 
+	 * @param resultGroup
+	 *            to present
+	 * @param menuFactory
+	 *            for creating context menus
+	 * @param siController
+	 *            the parent controller for navigation callbacks
+	 * @param thumbnailCache
+	 *            for caching and loading thumbnails
+	 */
 	public ResultGroupPresenter(ResultGroup resultGroup, OperationsMenuFactory menuFactory,
 			SimilarImageController siController, LoadingCache<Result, BufferedImage> thumbnailCache) {
 		this.resultGroup = resultGroup;
@@ -47,6 +59,12 @@ public class ResultGroupPresenter {
 		this.thumbnailCache = thumbnailCache;
 	}
 
+	/**
+	 * Bind a view to this presenter.
+	 * 
+	 * @param view
+	 *            to bind
+	 */
 	public void setView(ResultGroupView view) {
 		List<Result> results = resultGroup.getResults();
 		Stopwatch sw = Stopwatch.createStarted();
@@ -81,10 +99,16 @@ public class ResultGroupPresenter {
 		return new ResultView(resultPresenter, menuFactory.createOperationsMenu(result));
 	}
 
+	/**
+	 * Display the previous group group
+	 */
 	public void previousGroup() {
 		siController.displayPreviousGroup(resultGroup);
 	}
 
+	/**
+	 * Display the next group
+	 */
 	public void nextGroup() {
 		siController.displayNextGroup(resultGroup);
 	}

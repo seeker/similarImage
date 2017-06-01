@@ -80,8 +80,16 @@ public class SimilarImageController {
 	/**
 	 * Performs actions initiated by the user
 	 * 
+	 * @param sorterFactory
+	 *            a factory for creating sorter tasks
+	 * @param handlerCollectionFactory
+	 *            factory for creating handler collection used in processing images
+	 * @param dupOps
+	 *            Operations that can be performed on images
 	 * @param statistics
-	 *            tracking stats
+	 *            program statistics tracking
+	 * @param utsc
+	 *            controller for user tags
 	 */
 	@Inject
 	public SimilarImageController(SorterFactory sorterFactory, HandlerListFactory handlerCollectionFactory,
@@ -158,6 +166,13 @@ public class SimilarImageController {
 		updateGUI();
 	}
 
+	/**
+	 * Display the {@link ResultGroup}, generating all necessary UI elements. Will ask the user if a group should be
+	 * loaded if the image count exceeds a set threshold.
+	 * 
+	 * @param group
+	 *            to display
+	 */
 	public void displayGroup(ResultGroup group) {
 		int maxGroupSize = 30;
 
@@ -175,11 +190,22 @@ public class SimilarImageController {
 		gui.displayResultGroup(group.toString(), rgp);
 	}
 
-
+	/**
+	 * Display the next group in the list.
+	 * 
+	 * @param currentGroup
+	 *            the current displayed group, used as a reference
+	 */
 	public void displayNextGroup(ResultGroup currentGroup) {
 		displayGroup(groupList.nextGroup(currentGroup));
 	}
 
+	/**
+	 * Display the previous group in the list.
+	 * 
+	 * @param currentGroup
+	 *            the current displayed group, used as a reference
+	 */
 	public void displayPreviousGroup(ResultGroup currentGroup) {
 		displayGroup(groupList.previousGroup(currentGroup));
 	}

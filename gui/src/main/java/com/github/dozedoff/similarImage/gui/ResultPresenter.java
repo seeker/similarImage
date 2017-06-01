@@ -84,10 +84,18 @@ public class ResultPresenter {
 		return new JLabel(new ImageIcon(image), JLabel.CENTER);
 	}
 
+	/**
+	 * Get the path of the image represented by this result.
+	 * 
+	 * @return the path of the image
+	 */
 	public Path getImagePath() {
 		return imageInfo.getPath();
 	}
 
+	/**
+	 * Create a new window and display the original image.
+	 */
 	public void displayFullImage() {
 		JLabel largeImage = new JLabel("No Image");
 
@@ -101,6 +109,12 @@ public class ResultPresenter {
 		view.displayFullImage(largeImage, getImagePath());
 	}
 
+	/**
+	 * Bind the view to this presenter.
+	 * 
+	 * @param view
+	 *            to bind
+	 */
 	public void setView(ResultView view) {
 		this.view = view;
 
