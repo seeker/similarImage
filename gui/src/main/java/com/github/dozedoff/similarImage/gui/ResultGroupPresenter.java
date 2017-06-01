@@ -19,6 +19,9 @@ package com.github.dozedoff.similarImage.gui;
 
 import java.awt.image.BufferedImage;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,13 +51,34 @@ public class ResultGroupPresenter {
 		List<Result> results = resultGroup.getResults();
 		Stopwatch sw = Stopwatch.createStarted();
 
-		for (Result result : results) {
-			ResultPresenter resultPresenter = new ResultPresenter(result, thumbnailCache);
-			ResultView resultView = new ResultView(resultPresenter, menuFactory.createOperationsMenu(result));
+		List<ResultView> views;
+
+		try {
+			views = createResultViews(results.parallelStream());
+		} catch (OutOfMemoryError oome) {
+			LOGGER.warn("JVM ran out of memory loading {}, falling back to single threaded mode", resultGroup);
+			views = createResultViews(results.stream());
+		}
+
+		for (ResultView resultView : views) {
 			view.addResultView(resultView);
 		}
 
 		LOGGER.info("Loaded {} results in {}", results.size(), sw);
+	}
+	
+	private List<ResultView> createResultViews(Stream<Result> stream) {
+		return stream.map(new Function<Result, ResultView>() {
+			@Override
+			public ResultView apply(Result t) {
+				return createResultView(t);
+			}
+		}).collect(Collectors.toList());
+	}
+
+	private ResultView createResultView(Result result) {
+		ResultPresenter resultPresenter = new ResultPresenter(result, thumbnailCache);
+		return new ResultView(resultPresenter, menuFactory.createOperationsMenu(result));
 	}
 
 	public void previousGroup() {
