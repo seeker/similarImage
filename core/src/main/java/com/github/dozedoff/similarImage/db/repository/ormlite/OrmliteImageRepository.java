@@ -36,6 +36,7 @@ public class OrmliteImageRepository implements ImageRepository {
 
 	private PreparedQuery<ImageRecord> queryStartsWithPath;
 	private PreparedQuery<ImageRecord> queryNotIgnored;
+	private PreparedQuery<ImageRecord> queryNotIgnoredWithPath;
 	private SelectArg argStartsWithPath;
 
 	/**
@@ -59,6 +60,8 @@ public class OrmliteImageRepository implements ImageRepository {
 			QueryBuilder<IgnoreRecord, String> ignored = ignoreDao.queryBuilder();
 			ignored.where().isNull(IgnoreRecord.IMAGEPATH_FIELD_NAME);
 			queryNotIgnored = imageDao.queryBuilder().leftJoin(ignored).prepare();
+			queryNotIgnoredWithPath = imageDao.queryBuilder().leftJoin(ignored).where()
+					.like(ImageRecord.PATH_COLUMN_NAME, argStartsWithPath).prepare();
 		} catch (SQLException e) {
 			throw new RepositoryException("Failed to setup prepared statements", e);
 		}
@@ -159,6 +162,20 @@ public class OrmliteImageRepository implements ImageRepository {
 			return imageDao.query(queryNotIgnored);
 		} catch (SQLException e) {
 			throw new RepositoryException("Failed to query for non-ignored", e);
+		}
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public List<ImageRecord> getAllWithoutIgnored(Path directory) throws RepositoryException {
+		argStartsWithPath.setValue(directory.toString() + "%");
+
+		try {
+			return imageDao.query(queryNotIgnoredWithPath);
+		} catch (SQLException e) {
+			throw new RepositoryException("Failed to query for non-ignored with path", e);
 		}
 	}
 }

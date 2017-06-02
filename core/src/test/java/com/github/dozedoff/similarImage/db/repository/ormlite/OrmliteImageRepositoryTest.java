@@ -20,6 +20,7 @@ package com.github.dozedoff.similarImage.db.repository.ormlite;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
@@ -149,5 +150,24 @@ public class OrmliteImageRepositoryTest extends OrmliteRepositoryBaseTest {
 
 		assertThat(result, hasItem(imageNew));
 		assertThat(result, hasSize(1));
+	}
+
+	@Test
+	public void testGetAllWithoutIgnoredPath() throws Exception {
+		imageDao.create(imageNew);
+
+		List<ImageRecord> result = cut.getAllWithoutIgnored(Paths.get(pathNew));
+
+		assertThat(result, hasItem(imageNew));
+		assertThat(result, hasSize(1));
+	}
+
+	@Test
+	public void testGetAllWithoutIgnoredPathNoMatch() throws Exception {
+		imageDao.create(imageNew);
+
+		List<ImageRecord> result = cut.getAllWithoutIgnored(Paths.get(pathExisting));
+
+		assertThat(result, is(empty()));
 	}
 }
