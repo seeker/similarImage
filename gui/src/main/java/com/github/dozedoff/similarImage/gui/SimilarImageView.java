@@ -30,6 +30,7 @@ import java.util.TimerTask;
 import javax.inject.Inject;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -345,6 +346,16 @@ public class SimilarImageView implements StatisticsChangedListener {
 			}
 		});
 
+		JMenuItem includeIgnored = new JCheckBoxMenuItem("Include ignored");
+		includeIgnored.setToolTipText("If checked, ignored images will be shown in search results.");
+		includeIgnored.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				controller.setIncludeIgnoredImages(includeIgnored.isSelected());
+				LOGGER.debug("Include ignored in results: {}", includeIgnored.isSelected());
+			}
+		});
+
 		JMenu file = new JMenu("File");
 		file.add(directoryTag);
 		file.add(pruneRecords);
@@ -355,6 +366,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 		JMenu settings = new JMenu("Settings");
 		settings.add(userTags);
 		settings.add(filters);
+		settings.add(includeIgnored);
 
 		JMenuBar menuBar = new JMenuBar();
 		menuBar.add(file);

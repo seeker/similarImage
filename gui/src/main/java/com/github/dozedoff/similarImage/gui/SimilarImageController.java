@@ -66,6 +66,7 @@ public class SimilarImageController {
 	private SimilarImageView gui;
 	private final Statistics statistics;
 	private final LinkedList<Thread> tasks = new LinkedList<>();
+	private boolean includeIgnoredImages;
 
 	private final SorterFactory sorterFactory;
 	private final HandlerListFactory handlerCollectionFactory;
@@ -286,5 +287,15 @@ public class SimilarImageController {
 	@Subscribe
 	public void updateGroup(GuiGroupEvent event) {
 		setResults(event.getGroups());
+	}
+
+	/**
+	 * Set if ignored images should be included in the results.
+	 * 
+	 * @param includeIgnoredImages
+	 *            set to true if ignored images should be used.
+	 */
+	public void setIncludeIgnoredImages(boolean includeIgnoredImages) {
+		this.includeIgnoredImages = includeIgnoredImages;
 	}
 }
