@@ -20,6 +20,7 @@ package com.github.dozedoff.similarImage.db.repository.ormlite;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 
@@ -30,6 +31,7 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.github.dozedoff.similarImage.db.IgnoreRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
@@ -37,6 +39,7 @@ import com.j256.ormlite.table.TableUtils;
 
 public class OrmliteImageRepositoryTest extends OrmliteRepositoryBaseTest {
 	private Dao<ImageRecord, String> imageDao;
+	private Dao<IgnoreRecord, String> ignoreDao;
 
 	private static final long HASH_EXISTING_RECORD = 1;
 	private static final long HASH_NEW_RECORD = 2;
@@ -60,8 +63,10 @@ public class OrmliteImageRepositoryTest extends OrmliteRepositoryBaseTest {
 	@Before
 	public void setUp() throws Exception {
 		imageDao = DaoManager.createDao(getConnectionSource(), ImageRecord.class);
+		ignoreDao = DaoManager.createDao(getConnectionSource(), IgnoreRecord.class);
 
 		TableUtils.createTable(getConnectionSource(), ImageRecord.class);
+		TableUtils.createTable(getConnectionSource(), IgnoreRecord.class);
 
 		pathExisting = "existing";
 		pathNew = "new";
@@ -70,8 +75,9 @@ public class OrmliteImageRepositoryTest extends OrmliteRepositoryBaseTest {
 		imageNew = new ImageRecord(pathNew, HASH_NEW_RECORD);
 
 		imageDao.create(imageExisting);
+		ignoreDao.create(new IgnoreRecord(imageExisting));
 
-		cut = new OrmliteImageRepository(imageDao);
+		cut = new OrmliteImageRepository(imageDao, ignoreDao);
 	}
 
 	@Test
@@ -133,5 +139,15 @@ public class OrmliteImageRepositoryTest extends OrmliteRepositoryBaseTest {
 		imageDao.create(imageNew);
 
 		assertThat(cut.getAll(), containsInAnyOrder(imageExisting, imageNew));
+	}
+
+	@Test
+	public void testGetAllWithoutIgnored() throws Exception {
+		imageDao.create(imageNew);
+
+		List<ImageRecord> result = cut.getAllWithoutIgnored();
+
+		assertThat(result, hasItem(imageNew));
+		assertThat(result, hasSize(1));
 	}
 }

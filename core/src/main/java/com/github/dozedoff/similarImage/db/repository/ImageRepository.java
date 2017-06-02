@@ -95,4 +95,13 @@ public interface ImageRepository extends Repository {
 	 *             if there is a error accessing the datasource
 	 */
 	List<ImageRecord> getAll() throws RepositoryException;
+
+	/**
+	 * Get all {@link ImageRecord} stored in the datasource who are not ignored.
+	 * 
+	 * @return all non-ignored {@link ImageRecord}
+	 * @throws RepositoryException
+	 *             if there is a error accessing the datasource
+	 */
+	List<ImageRecord> getAllWithoutIgnored() throws RepositoryException;
 }

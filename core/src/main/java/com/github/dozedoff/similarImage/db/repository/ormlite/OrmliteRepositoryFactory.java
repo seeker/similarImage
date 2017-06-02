@@ -119,7 +119,7 @@ public class OrmliteRepositoryFactory implements RepositoryFactory {
 	 */
 	@Override
 	public ImageRepository buildImageRepository() throws RepositoryException {
-		return new OrmliteImageRepository(imageRecordDao);
+		return new OrmliteImageRepository(imageRecordDao, ignoreDao);
 	}
 
 	/**

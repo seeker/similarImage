@@ -22,17 +22,20 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 
+import com.github.dozedoff.similarImage.db.IgnoreRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedQuery;
+import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.SelectArg;
 
 public class OrmliteImageRepository implements ImageRepository {
 	private final Dao<ImageRecord, String> imageDao;
 
 	private PreparedQuery<ImageRecord> queryStartsWithPath;
+	private PreparedQuery<ImageRecord> queryNotIgnored;
 	private SelectArg argStartsWithPath;
 
 	/**
@@ -40,10 +43,12 @@ public class OrmliteImageRepository implements ImageRepository {
 	 * 
 	 * @param imageDao
 	 *            for the image table
+	 *            
+	 *      @param ignoreDao for ignored images
 	 * @throws RepositoryException
 	 *             if there is an error setting up prepared queries
 	 */
-	public OrmliteImageRepository(Dao<ImageRecord, String> imageDao) throws RepositoryException {
+	public OrmliteImageRepository(Dao<ImageRecord, String> imageDao, Dao<IgnoreRecord, String> ignoreDao) throws RepositoryException {
 		this.imageDao = imageDao;
 		
 		argStartsWithPath = new SelectArg();
@@ -51,6 +56,9 @@ public class OrmliteImageRepository implements ImageRepository {
 		try {
 			queryStartsWithPath = imageDao.queryBuilder().where().like(ImageRecord.PATH_COLUMN_NAME, argStartsWithPath)
 					.prepare();
+			QueryBuilder<IgnoreRecord, String> ignored = ignoreDao.queryBuilder();
+			ignored.where().isNull(IgnoreRecord.IMAGEPATH_FIELD_NAME);
+			queryNotIgnored = imageDao.queryBuilder().leftJoin(ignored).prepare();
 		} catch (SQLException e) {
 			throw new RepositoryException("Failed to setup prepared statements", e);
 		}
@@ -139,6 +147,18 @@ public class OrmliteImageRepository implements ImageRepository {
 			return imageDao.queryForAll();
 		} catch (SQLException e) {
 			throw new RepositoryException("Failed to query all", e);
+		}
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public List<ImageRecord> getAllWithoutIgnored() throws RepositoryException {
+		try {
+			return imageDao.query(queryNotIgnored);
+		} catch (SQLException e) {
+			throw new RepositoryException("Failed to query for non-ignored", e);
 		}
 	}
 }
