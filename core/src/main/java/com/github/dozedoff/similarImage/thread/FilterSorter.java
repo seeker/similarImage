@@ -107,15 +107,15 @@ public class FilterSorter extends Thread {
 		this(hammingDistance, tag, filterRepository,  imageRepository, null);
 	}
 
-	private Multimap<Long, ImageRecord> getFilterMatches(RecordSearch recordSearch, Tag tag) {
+	private Multimap<Long, ImageRecord> getFilterMatches(RecordSearch recordSearch, Tag tagToMatch) {
 		Multimap<Long, ImageRecord> uniqueGroups = MultimapBuilder.hashKeys().hashSetValues().build();
 		List<FilterRecord> matchingFilters = Collections.emptyList();
 
 		try {
-			matchingFilters = FilterRecord.getTags(filterRepository, tag);
-			logger.info("Found {} filters for tag {}", matchingFilters.size(), tag.getTag());
+			matchingFilters = FilterRecord.getTags(filterRepository, tagToMatch);
+			logger.info("Found {} filters for tag {}", matchingFilters.size(), tagToMatch.getTag());
 		} catch (RepositoryException e) {
-			logger.error("Aborted tag search for {}, reason: {}", tag.getTag(), e.getMessage());
+			logger.error("Aborted tag search for {}, reason: {}", tagToMatch.getTag(), e.getMessage());
 		}
 
 		Multimap<Long, ImageRecord> parallelGroups = Multimaps.synchronizedMultimap(uniqueGroups);
