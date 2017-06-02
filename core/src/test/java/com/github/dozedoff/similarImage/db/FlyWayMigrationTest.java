@@ -41,6 +41,8 @@ public class FlyWayMigrationTest {
 	private static final Path PATH_2 = Paths.get("path2");
 	private static final Path PATH_3 = Paths.get("path3");
 
+	private static final String VERSION_2_2 = "2.2";
+
 	private Flyway flyway;
 	private Path databaseFile;
 	private ConnectionSource cs;
@@ -56,8 +58,8 @@ public class FlyWayMigrationTest {
 	}
 
 	@Test
-	public void testMigrationTo2_2_tags() throws Exception {
-		flyway.setTargetAsString("2.2");
+	public void testMigrationTo2v2tags() throws Exception {
+		flyway.setTargetAsString(VERSION_2_2);
 		flyway.migrate();
 
 		Dao<Tag, Integer> dao = DaoManager.createDao(cs, Tag.class);
@@ -68,14 +70,18 @@ public class FlyWayMigrationTest {
 	}
 
 	@Test
-	public void testMigrationTo2_2_filter() throws Exception {
-		flyway.setTargetAsString("2.2");
+	public void testMigrationTo2v2filter() throws Exception {
+		flyway.setTargetAsString(VERSION_2_2);
 		flyway.migrate();
 
+		Dao<Tag, Integer> tag = DaoManager.createDao(cs, Tag.class);
 		Dao<FilterRecord, Integer> filter = DaoManager.createDao(cs, FilterRecord.class);
 		List<FilterRecord> tags = filter.queryForAll();
 
+		Tag testTag = tag.queryForId(1);
 		assertThat(tags, hasSize(3));
+		assertThat(tags,
+				hasItems(new FilterRecord(1, testTag), new FilterRecord(2, testTag), new FilterRecord(3, testTag)));
 	}
 
 	@Test
