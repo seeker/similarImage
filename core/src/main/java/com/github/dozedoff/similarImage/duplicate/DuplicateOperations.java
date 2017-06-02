@@ -412,7 +412,7 @@ public class DuplicateOperations {
 	public void ignore(Result result) {
 		logger.info("Ignoring {}", result);
 		try {
-			ignoreRepository.store(new IgnoreRecord(result.getImageRecord().getPath()));
+			ignoreRepository.store(new IgnoreRecord(result.getImageRecord()));
 		} catch (RepositoryException e) {
 			logger.error("Failed to store ignored image: {}, cause: {}", e.toString(), e.getCause().toString());
 		}

@@ -34,8 +34,6 @@ import com.j256.ormlite.stmt.SelectArg;
  *
  */
 public class OrmliteIgnoreRepository implements IgnoreRepository {
-	private static final String PATH_COLUMN = "imagePath";
-
 	private final Dao<IgnoreRecord, String> ignoreDao;
 
 	private final PreparedQuery<IgnoreRecord> pathQuery;
@@ -54,7 +52,8 @@ public class OrmliteIgnoreRepository implements IgnoreRepository {
 		pathForQuery = new SelectArg();
 		
 		try {
-			this.pathQuery = this.ignoreDao.queryBuilder().where().eq(PATH_COLUMN, pathForQuery).prepare();
+			this.pathQuery = this.ignoreDao.queryBuilder().where().eq(IgnoreRecord.IMAGEPATH_FIELD_NAME, pathForQuery)
+					.prepare();
 		} catch (SQLException e) {
 			throw new RepositoryException("Failed to setup prepared query", e);
 		}

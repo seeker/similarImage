@@ -1,7 +1,7 @@
 ALTER TABLE `ignorerecord` RENAME TO `ignorerecord_old`;
 CREATE TABLE `ignorerecord` 
 -- Table for ignored images
-(`imagePath` VARCHAR NOT NULL , PRIMARY KEY (`imagePath`) );
+(`id` INTEGER PRIMARY KEY AUTOINCREMENT , `path` VARCHAR NOT NULL );
 
-INSERT INTO `ignorerecord` SELECT DISTINCT `path` FROM `imagerecord` JOIN `ignorerecord_old` ON `imagerecord`.`pHash` = `ignorerecord_old`.`pHash`;
+INSERT INTO `ignorerecord` (`id`, `path`) SELECT DISTINCT NULL, `path` FROM `imagerecord` JOIN `ignorerecord_old` ON `imagerecord`.`pHash` = `ignorerecord_old`.`pHash`;
 DROP TABLE `ignorerecord_old`;

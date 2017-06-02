@@ -84,6 +84,6 @@ public class OrmliteRepositoryFactoryTest {
 	public void testBuildIgnoreRepository() throws Exception {
 		IgnoreRepository ir = cut.buildIgnoreRepository();
 
-		ir.store(new IgnoreRecord("foo"));
+		ir.store(new IgnoreRecord(new ImageRecord(TEST_STRING, 0)));
 	}
 }

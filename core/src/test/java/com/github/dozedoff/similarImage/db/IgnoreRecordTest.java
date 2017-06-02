@@ -20,9 +20,6 @@ package com.github.dozedoff.similarImage.db;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -30,39 +27,27 @@ import nl.jqno.equalsverifier.EqualsVerifier;
 
 public class IgnoreRecordTest {
 	private static final String TEST_PATH_STRING = "foo";
-	private static final Path TEST_PATH = Paths.get(TEST_PATH_STRING);
+	private static final ImageRecord IMAGE = new ImageRecord(TEST_PATH_STRING, 0);
 
 	private IgnoreRecord cut;
 
 	@Before
 	public void setUp() throws Exception {
-		cut = new IgnoreRecord(TEST_PATH_STRING);
+		cut = new IgnoreRecord(IMAGE);
 	}
 
 	@Test
 	public void testGetPathAsString() throws Exception {
-		assertThat(cut.getImagePathAsString(), is(TEST_PATH_STRING));
-	}
-
-	@Test
-	public void testGetPath() throws Exception {
-		assertThat(cut.getImagePath(), is(TEST_PATH));
-	}
-
-	@Test
-	public void testCreateIgnoreRecordWithPath() throws Exception {
-		IgnoreRecord ir = new IgnoreRecord(TEST_PATH);
-
-		assertThat(ir.getImagePathAsString(), is(TEST_PATH_STRING));
+		assertThat(cut.getImage(), is(IMAGE));
 	}
 
 	@Test
 	public void testEquals() throws Exception {
-		assertThat(cut.equals(new IgnoreRecord(TEST_PATH)), is(true));
+		assertThat(cut.equals(new IgnoreRecord(IMAGE)), is(true));
 	}
 
 	@Test
 	public void testWithEqualsVerifier() throws Exception {
-		EqualsVerifier.forClass(IgnoreRecord.class).allFieldsShouldBeUsed().verify();
+		EqualsVerifier.forClass(IgnoreRecord.class).allFieldsShouldBeUsedExcept("id").verify();
 	}
 }

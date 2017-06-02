@@ -24,7 +24,7 @@ import static org.junit.Assert.assertThat;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.sql.SQLException;
 import java.util.List;
 
 import org.flywaydb.core.Flyway;
@@ -37,9 +37,9 @@ import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.support.ConnectionSource;
 
 public class FlyWayMigrationTest {
-	private static final Path PATH_1 = Paths.get("path1");
-	private static final Path PATH_2 = Paths.get("path2");
-	private static final Path PATH_3 = Paths.get("path3");
+	private static final String PATH_1 = "path1";
+	private static final String PATH_2 = "path2";
+	private static final String PATH_3 = "path3";
 
 	private static final String VERSION_2_2 = "2.2";
 
@@ -90,9 +90,19 @@ public class FlyWayMigrationTest {
 		flyway.setTargetAsString("3.0");
 		flyway.migrate();
 
+		Dao<ImageRecord, String> image = DaoManager.createDao(cs, ImageRecord.class);
 		Dao<IgnoreRecord, String> ignore = DaoManager.createDao(cs, IgnoreRecord.class);
 		List<IgnoreRecord> ignored = ignore.queryForAll();
 
-		assertThat(ignored, hasItems(new IgnoreRecord(PATH_1), new IgnoreRecord(PATH_2), new IgnoreRecord(PATH_3)));
+		ignored.stream().forEach(record -> {
+			try {
+				image.refresh(record.getImage());
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		});
+
+		assertThat(ignored, hasItems(new IgnoreRecord(new ImageRecord(PATH_1, 1)),
+				new IgnoreRecord(new ImageRecord(PATH_2, 1)), new IgnoreRecord(new ImageRecord(PATH_3, 2))));
 	}
 }

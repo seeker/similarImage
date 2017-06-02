@@ -364,6 +364,6 @@ public class DuplicateOperationsTest {
 	public void testIgnoreImage() throws Exception {
 		dupOp.ignore(result);
 
-		verify(ignoreRepository).store(new IgnoreRecord(result.getImageRecord().getPath()));
+		verify(ignoreRepository).store(new IgnoreRecord(result.getImageRecord()));
 	}
 }

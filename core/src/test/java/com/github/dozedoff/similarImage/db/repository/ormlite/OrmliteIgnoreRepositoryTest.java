@@ -32,6 +32,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.github.dozedoff.similarImage.db.IgnoreRecord;
+import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.support.ConnectionSource;
@@ -56,8 +57,8 @@ public class OrmliteIgnoreRepositoryTest extends OrmliteRepositoryBaseTest {
 		dao = DaoManager.createDao(cs, IgnoreRecord.class);
 		cut = new OrmliteIgnoreRepository(dao);
 
-		existingIgnore = new IgnoreRecord(PATH_A);
-		newIgnore = new IgnoreRecord(PATH_B);
+		existingIgnore = new IgnoreRecord(new ImageRecord(PATH_A, 0));
+		newIgnore = new IgnoreRecord(new ImageRecord(PATH_B, 0));
 
 		dao.create(existingIgnore);
 	}

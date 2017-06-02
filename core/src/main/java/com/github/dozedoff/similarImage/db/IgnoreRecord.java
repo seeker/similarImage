@@ -17,12 +17,11 @@
  */
 package com.github.dozedoff.similarImage.db;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Objects;
 
 import javax.annotation.concurrent.Immutable;
 
+import com.google.common.base.MoreObjects;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
@@ -35,8 +34,13 @@ import com.j256.ormlite.table.DatabaseTable;
 @Immutable
 @DatabaseTable
 public final class IgnoreRecord {
-	@DatabaseField(id = true, canBeNull = false)
-	private String imagePath;
+	public static final String IMAGEPATH_FIELD_NAME = "path";
+	
+	@DatabaseField(generatedId = true, canBeNull = false)
+	private int id;
+
+	@DatabaseField(canBeNull = false, foreign = true, columnName = IMAGEPATH_FIELD_NAME)
+	private ImageRecord image;
 
 	/**
 	 * Intended for DAO only
@@ -50,39 +54,20 @@ public final class IgnoreRecord {
 	/**
 	 * Create a new {@link IgnoreRecord} for the given path.
 	 * 
-	 * @param path
+	 * @param image
 	 *            to ignore
 	 */
-	public IgnoreRecord(String path) {
-		this.imagePath = path;
+	public IgnoreRecord(ImageRecord image) {
+		this.image = image;
 	}
 
 	/**
-	 * Create a new {@link IgnoreRecord} for the given path.
+	 * Get the ignored image.
 	 * 
-	 * @param path
-	 *            to ignore
+	 * @return image
 	 */
-	public IgnoreRecord(Path path) {
-		this(path.toString());
-	}
-
-	/**
-	 * Get the path for the ignored image.
-	 * 
-	 * @return the image path
-	 */
-	public Path getImagePath() {
-		return Paths.get(imagePath);
-	}
-
-	/**
-	 * Get the path for the ignored image.
-	 * 
-	 * @return the image path
-	 */
-	public String getImagePathAsString() {
-		return imagePath;
+	public ImageRecord getImage() {
+		return image;
 	}
 
 	/**
@@ -97,7 +82,7 @@ public final class IgnoreRecord {
 		if (obj instanceof IgnoreRecord) {
 			IgnoreRecord other = (IgnoreRecord) obj;
 
-			return Objects.equals(this.imagePath, other.imagePath);
+			return Objects.equals(this.image, other.image);
 		}
 
 		return false;
@@ -110,6 +95,16 @@ public final class IgnoreRecord {
 	 */
 	@Override
 	public int hashCode() {
-		return Objects.hash(imagePath);
+		return Objects.hash(image);
+	}
+
+	/**
+	 * Returns information about the ignored {@link ImageRecord}.
+	 * 
+	 * @return image field formatted as a string
+	 */
+	@Override
+	public String toString() {
+		return MoreObjects.toStringHelper(IgnoreRecord.class).add("image", image).toString();
 	}
 }
