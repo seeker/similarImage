@@ -21,6 +21,7 @@ import javax.inject.Singleton;
 
 import com.github.dozedoff.similarImage.db.Database;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
+import com.github.dozedoff.similarImage.db.repository.IgnoreRepository;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
@@ -42,6 +43,8 @@ public interface PersistenceComponent {
 	PendingHashImageRepository getPendingHashImageRepository();
 	FilterRepository getFilterRepository();
 	TagRepository getTagRepository();
+
+	IgnoreRepository getIgnoreRepository();
 
 	TransactionManager getTransactionManager();
 }

@@ -26,6 +26,7 @@ import javax.inject.Singleton;
 import com.github.dozedoff.similarImage.db.Database;
 import com.github.dozedoff.similarImage.db.SQLiteDatabase;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
+import com.github.dozedoff.similarImage.db.repository.IgnoreRepository;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 import com.github.dozedoff.similarImage.db.repository.Repository;
@@ -109,6 +110,15 @@ public class SQLitePersistenceModule {
 			return repositoryFactory.buildTagRepository();
 		} catch (RepositoryException e) {
 			throw runtimeException(TagRepository.class, e);
+		}
+	}
+
+	@Provides
+	public IgnoreRepository provideIgnoreRepository(RepositoryFactory repositoryFactory) {
+		try {
+			return repositoryFactory.buildIgnoreRepository();
+		} catch (RepositoryException e) {
+			throw runtimeException(IgnoreRepository.class, e);
 		}
 	}
 

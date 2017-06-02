@@ -20,6 +20,7 @@ package com.github.dozedoff.similarImage.component;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Slf4jReporter;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
+import com.github.dozedoff.similarImage.db.repository.IgnoreRepository;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
 import com.github.dozedoff.similarImage.io.Statistics;
@@ -68,5 +69,7 @@ public interface MessagingComponent {
 	FilterRepository getfilFilterRepository();
 
 	TagRepository gettaTagRepository();
+
+	IgnoreRepository getIgnoreRepository();
 
 }
