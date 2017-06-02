@@ -24,7 +24,6 @@ import javax.inject.Inject;
 import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
-import com.github.dozedoff.similarImage.db.repository.TagRepository;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
 
 /**
@@ -36,7 +35,6 @@ import com.github.dozedoff.similarImage.event.GuiEventBus;
 public class SorterFactory {
 	private final ImageRepository imageRepository;
 	private final FilterRepository filterRepository;
-	private final TagRepository tagRepository;
 
 	/**
 	 * Create a sorter factory using repositories
@@ -45,15 +43,11 @@ public class SorterFactory {
 	 *            access to the image datasource
 	 * @param filterRepository
 	 *            access to the filter datasource
-	 * @param tagRepository
-	 *            access to the tag datasource
 	 */
 	@Inject
-	public SorterFactory(ImageRepository imageRepository, FilterRepository filterRepository,
-			TagRepository tagRepository) {
+	public SorterFactory(ImageRepository imageRepository, FilterRepository filterRepository) {
 		this.imageRepository = imageRepository;
 		this.filterRepository = filterRepository;
-		this.tagRepository = tagRepository;
 	}
 
 	/**
@@ -69,7 +63,7 @@ public class SorterFactory {
 	 * @return Constructed instance of {@link FilterSorter}
 	 */
 	public Thread newFilterSorterAllImages(int hammingDistance, Tag tag) {
-		return new FilterSorter(hammingDistance, tag, filterRepository, tagRepository, imageRepository);
+		return new FilterSorter(hammingDistance, tag, filterRepository, imageRepository);
 	}
 
 	/**
@@ -85,7 +79,7 @@ public class SorterFactory {
 	 * @return Constructed instance of {@link FilterSorter}
 	 */
 	public Thread newFilterSorterRestrictByPath(int hammingDistance, Tag tag, Path scope) {
-		return new FilterSorter(hammingDistance, tag, filterRepository, tagRepository, imageRepository, scope);
+		return new FilterSorter(hammingDistance, tag, filterRepository, imageRepository, scope);
 	}
 
 	/**

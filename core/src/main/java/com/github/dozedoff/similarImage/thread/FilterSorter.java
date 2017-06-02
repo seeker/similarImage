@@ -30,7 +30,6 @@ import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
-import com.github.dozedoff.similarImage.db.repository.TagRepository;
 import com.github.dozedoff.similarImage.duplicate.RecordSearch;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiGroupEvent;
@@ -55,7 +54,6 @@ public class FilterSorter extends Thread {
 	private Tag tag;
 	private List<ImageRecord> dBrecords;
 	private final FilterRepository filterRepository;
-	private final TagRepository tagRepository; // TODO remove unused repository
 	private final ImageRepository imageRepository;
 	private Path scope;
 
@@ -69,14 +67,12 @@ public class FilterSorter extends Thread {
 	 *            to search for
 	 * @param filterRepository
 	 *            filter datasource access
-	 * @param tagRepository
-	 *            tag datasource access
 	 * @param imageRepository
 	 *            image datasource access
 	 * @param scope
 	 *            limit results to this path
 	 */
-	public FilterSorter(int hammingDistance, Tag tag, FilterRepository filterRepository, TagRepository tagRepository,
+	public FilterSorter(int hammingDistance, Tag tag, FilterRepository filterRepository,
 			ImageRepository imageRepository, Path scope) {
 		this.hammingDistance = hammingDistance;
 
@@ -87,7 +83,6 @@ public class FilterSorter extends Thread {
 			this.tag = new Tag(StringUtil.MATCH_ALL_TAGS);
 		}
 		this.filterRepository = filterRepository;
-		this.tagRepository = tagRepository;
 		this.imageRepository = imageRepository;
 		this.scope = scope;
 
@@ -104,14 +99,12 @@ public class FilterSorter extends Thread {
 	 *            to search for
 	 * @param filterRepository
 	 *            filter datasource access
-	 * @param tagRepository
-	 *            tag datasource access
 	 * @param imageRepository
 	 *            image datasource access
 	 */
-	public FilterSorter(int hammingDistance, Tag tag, FilterRepository filterRepository, TagRepository tagRepository,
+	public FilterSorter(int hammingDistance, Tag tag, FilterRepository filterRepository,
 			ImageRepository imageRepository) {
-		this(hammingDistance, tag, filterRepository, tagRepository, imageRepository, null);
+		this(hammingDistance, tag, filterRepository,  imageRepository, null);
 	}
 
 	private Multimap<Long, ImageRecord> getFilterMatches(RecordSearch recordSearch, Tag tag) {

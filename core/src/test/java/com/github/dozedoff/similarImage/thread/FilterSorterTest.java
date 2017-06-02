@@ -118,11 +118,11 @@ public class FilterSorterTest {
 	}
 
 	private FilterSorter createSorter(int hammingdistance, Tag tag, Path scope) {
-		return new FilterSorter(hammingdistance, tag, filterRepository, tagRepository, imageRepository, scope);
+		return new FilterSorter(hammingdistance, tag, filterRepository, imageRepository, scope);
 	}
 
 	private FilterSorter createSorter(int hammingdistance, Tag tag) {
-		return new FilterSorter(hammingdistance, tag, filterRepository, tagRepository, imageRepository);
+		return new FilterSorter(hammingdistance, tag, filterRepository, imageRepository);
 	}
 
 	private void runCutAndWaitForFinish() throws InterruptedException {
