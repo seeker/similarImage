@@ -17,6 +17,7 @@
  */
 package com.github.dozedoff.similarImage.thread;
 
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 
 import java.util.Collections;
@@ -26,9 +27,9 @@ import java.util.List;
 import javax.swing.DefaultListModel;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -62,15 +63,15 @@ public class GroupListPopulatorTest {
 		glp = new GroupListPopulator(grouplist, dlm);
 	}
 
-	@Ignore("Needs sorter")
 	@Test
 	public void testElementsAddedInOrder() {
 		glp.run();
 
 		List<ResultGroup> testList = Lists.reverse(results);
+		InOrder inOrder = inOrder(dlm);
 
 		for (ResultGroup rg : testList) {
-			verify(dlm).addElement(rg);
+			inOrder.verify(dlm).addElement(rg);
 		}
 	}
 

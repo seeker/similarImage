@@ -17,6 +17,10 @@
  */
 package com.github.dozedoff.similarImage.thread;
 
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
 import javax.swing.DefaultListModel;
 
 import org.slf4j.Logger;
@@ -40,9 +44,15 @@ public class GroupListPopulator implements Runnable {
 		this.logger.info("Populating group list with {} groups", groups.groupCount());
 		groupListModel.clear();
 
-		// TODO sort groups
+		List<ResultGroup> resultGroups = groups.getAllGroups();
+		Collections.sort(resultGroups, new Comparator<ResultGroup>() {
+			@Override
+			public int compare(ResultGroup o1, ResultGroup o2) {
+				return Long.compare(o1.getHash(), o2.getHash());
+			}
+		});
 
-		for (ResultGroup g : groups.getAllGroups()) {
+		for (ResultGroup g : resultGroups) {
 			groupListModel.addElement(g);
 		}
 
