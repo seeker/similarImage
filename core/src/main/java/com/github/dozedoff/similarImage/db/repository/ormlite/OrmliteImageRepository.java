@@ -32,6 +32,7 @@ import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.SelectArg;
 
 public class OrmliteImageRepository implements ImageRepository {
+	private static final String STRING_QUERY_WILDCARD = "%";
 	private final Dao<ImageRecord, String> imageDao;
 
 	private PreparedQuery<ImageRecord> queryStartsWithPath;
@@ -108,7 +109,7 @@ public class OrmliteImageRepository implements ImageRepository {
 	 */
 	@Override
 	public synchronized List<ImageRecord> startsWithPath(Path directory) throws RepositoryException {
-		argStartsWithPath.setValue(directory.toString() + "%");
+		argStartsWithPath.setValue(directory.toString() + STRING_QUERY_WILDCARD);
 
 		try {
 			return imageDao.query(queryStartsWithPath);
@@ -170,7 +171,7 @@ public class OrmliteImageRepository implements ImageRepository {
 	 */
 	@Override
 	public List<ImageRecord> getAllWithoutIgnored(Path directory) throws RepositoryException {
-		argStartsWithPath.setValue(directory.toString() + "%");
+		argStartsWithPath.setValue(directory.toString() + STRING_QUERY_WILDCARD);
 
 		try {
 			return imageDao.query(queryNotIgnoredWithPath);
