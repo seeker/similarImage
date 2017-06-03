@@ -24,7 +24,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
@@ -38,7 +37,6 @@ import com.github.dozedoff.similarImage.util.StringUtil;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
-import com.google.common.collect.Multimaps;
 import com.google.common.eventbus.EventBus;
 
 /**
@@ -107,27 +105,6 @@ public class FilterSorter extends Thread {
 		this(hammingDistance, tag, filterRepository,  imageRepository, null);
 	}
 
-	private Multimap<Long, ImageRecord> getFilterMatches(RecordSearch recordSearch, Tag tagToMatch) {
-		Multimap<Long, ImageRecord> uniqueGroups = MultimapBuilder.hashKeys().hashSetValues().build();
-		List<FilterRecord> matchingFilters = Collections.emptyList();
-
-		try {
-			matchingFilters = FilterRecord.getTags(filterRepository, tagToMatch);
-			logger.info("Found {} filters for tag {}", matchingFilters.size(), tagToMatch.getTag());
-		} catch (RepositoryException e) {
-			logger.error("Aborted tag search for {}, reason: {}", tagToMatch.getTag(), e.getMessage());
-		}
-
-		Multimap<Long, ImageRecord> parallelGroups = Multimaps.synchronizedMultimap(uniqueGroups);
-
-		matchingFilters.parallelStream().forEach(filter -> {
-			Multimap<Long, ImageRecord> match = recordSearch.distanceMatch(filter.getpHash(), hammingDistance);
-			parallelGroups.putAll(filter.getpHash(), match.values());
-		});
-
-		return uniqueGroups;
-	}
-
 	@Override
 	public void run() {
 		EventBus guiEvents = GuiEventBus.getInstance();
@@ -147,7 +124,8 @@ public class FilterSorter extends Thread {
 			}
 
 			rs.build(dBrecords);
-			groups = getFilterMatches(rs, tag);
+			TagFilter tagFilter = new TagFilter(filterRepository);
+			groups = tagFilter.getFilterMatches(rs, tag, hammingDistance);
 
 			guiEvents.post(new GuiStatusEvent("" + groups.size() + " Groups"));
 			logger.info("Found {} groups for tag {} in {}", groups.size(), tag.getTag(), sw.toString());
