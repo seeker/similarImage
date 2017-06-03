@@ -28,11 +28,11 @@ import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
-import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.duplicate.RecordSearch;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiGroupEvent;
 import com.github.dozedoff.similarImage.event.GuiStatusEvent;
+import com.github.dozedoff.similarImage.thread.pipeline.ImageQueryStage;
 import com.github.dozedoff.similarImage.util.StringUtil;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Multimap;
@@ -116,23 +116,15 @@ public class FilterSorter extends Thread {
 		RecordSearch rs = new RecordSearch();
 		Multimap<Long, ImageRecord> groups = MultimapBuilder.hashKeys().hashSetValues().build();
 
-		try {
-			if (scope == null) {
-				dBrecords = imageRepository.getAll();
-			} else {
-				dBrecords = imageRepository.startsWithPath(scope);
-			}
+		ImageQueryStage iqs = new ImageQueryStage(imageRepository);
+		dBrecords = iqs.apply(scope);
 
-			rs.build(dBrecords);
-			TagFilter tagFilter = new TagFilter(filterRepository);
-			groups = tagFilter.getFilterMatches(rs, tag, hammingDistance);
+		rs.build(dBrecords);
+		TagFilter tagFilter = new TagFilter(filterRepository);
+		groups = tagFilter.getFilterMatches(rs, tag, hammingDistance);
 
-			guiEvents.post(new GuiStatusEvent("" + groups.size() + " Groups"));
-			logger.info("Found {} groups for tag {} in {}", groups.size(), tag.getTag(), sw.toString());
-		} catch (RepositoryException e) {
-			guiEvents.post(new GuiStatusEvent("Database error"));
-			logger.warn("Failed to load from database - {}", e.getMessage());
-		}
+		guiEvents.post(new GuiStatusEvent("" + groups.size() + " Groups"));
+		logger.info("Found {} groups for tag {} in {}", groups.size(), tag.getTag(), sw.toString());
 
 		guiEvents.post(new GuiGroupEvent(groups));
 	}
