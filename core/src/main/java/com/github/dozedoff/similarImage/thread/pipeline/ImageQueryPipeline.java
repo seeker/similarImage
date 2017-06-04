@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.function.Function;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimap;
 
 /**
@@ -77,5 +78,14 @@ public class ImageQueryPipeline implements Function<Path, Multimap<Long, ImageRe
 		}
 
 		return step;
+	}
+
+	/**
+	 * Returns the post-processing stages of this pipeline. The
+	 * 
+	 * @return an immutable list of the post-processing stages
+	 */
+	public Collection<Function<Multimap<Long, ImageRecord>, Multimap<Long, ImageRecord>>> getPostProcessingStages() {
+		return ImmutableList.copyOf(postProcessingStages);
 	}
 }
