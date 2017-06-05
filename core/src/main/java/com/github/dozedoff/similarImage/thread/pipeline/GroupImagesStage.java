@@ -18,11 +18,17 @@
 package com.github.dozedoff.similarImage.thread.pipeline;
 
 import java.util.Collection;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.dozedoff.similarImage.db.ImageRecord;
-import com.github.dozedoff.similarImage.duplicate.DuplicateUtil;
+import com.github.dozedoff.similarImage.duplicate.RecordSearch;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
 
 /**
  * Stage to group images by hash.
@@ -31,6 +37,19 @@ import com.google.common.collect.Multimap;
  *
  */
 public class GroupImagesStage implements Function<Collection<ImageRecord>, Multimap<Long, ImageRecord>> {
+	private static final Logger LOGGER = LoggerFactory.getLogger(GroupImagesStage.class);
+
+	private final RecordSearch rs;
+	private int hammingDistance;
+
+	/**
+	 * Groups images by hashes that are a exact match, i.e. have a hamming distance of 0;
+	 */
+	public GroupImagesStage() {
+		rs = new RecordSearch();
+		hammingDistance = 0;
+	}
+
 	/**
 	 * Group images by hash. The group will contain a distinct set of images.
 	 * 
@@ -40,6 +59,20 @@ public class GroupImagesStage implements Function<Collection<ImageRecord>, Multi
 	 */
 	@Override
 	public Multimap<Long, ImageRecord> apply(Collection<ImageRecord> toGroup) {
-		return DuplicateUtil.groupByHash(toGroup);
+		Multimap<Long, ImageRecord> resultMap = MultimapBuilder.hashKeys().hashSetValues().build();
+		rs.build(toGroup);
+
+		Stopwatch sw = Stopwatch.createStarted();
+		toGroup.forEach(new Consumer<ImageRecord>() {
+			@Override
+			public void accept(ImageRecord t) {
+				resultMap.putAll(rs.distanceMatch(t.getpHash(), hammingDistance));
+			}
+		});
+
+		LOGGER.info("Built result map with {} pairs in {}, using hamming distance {}", resultMap.size(), sw,
+				hammingDistance);
+
+		return resultMap;
 	}
 }
