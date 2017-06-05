@@ -46,8 +46,18 @@ public class GroupImagesStage implements Function<Collection<ImageRecord>, Multi
 	 * Groups images by hashes that are a exact match, i.e. have a hamming distance of 0;
 	 */
 	public GroupImagesStage() {
-		rs = new RecordSearch();
-		hammingDistance = 0;
+		this(0);
+	}
+
+	/**
+	 * Groups images by hashes that are within the given hamming distance;
+	 * 
+	 * @param hammingDistance
+	 *            group all images within this distance
+	 */
+	public GroupImagesStage(int hammingDistance) {
+		this.hammingDistance = hammingDistance;
+		this.rs = new RecordSearch();
 	}
 
 	/**
@@ -66,7 +76,7 @@ public class GroupImagesStage implements Function<Collection<ImageRecord>, Multi
 		toGroup.forEach(new Consumer<ImageRecord>() {
 			@Override
 			public void accept(ImageRecord t) {
-				resultMap.putAll(rs.distanceMatch(t.getpHash(), hammingDistance));
+				resultMap.putAll(t.getpHash(), rs.distanceMatch(t.getpHash(), hammingDistance).values());
 			}
 		});
 
