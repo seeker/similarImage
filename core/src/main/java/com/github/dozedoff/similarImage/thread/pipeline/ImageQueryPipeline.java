@@ -28,6 +28,12 @@ import com.google.common.collect.Multimap;
 
 /**
  * Pipeline for modular image queries.
+ * Processing follows these steps:
+ * <ol>
+ * <li>Query a datasource for images</li>
+ * <li>Group images into groups (hash, list of images)</li>
+ * <li>Perform post processing stages</li>
+ * </ol>
  * 
  * @author Nicholas Wright
  *
@@ -81,7 +87,7 @@ public class ImageQueryPipeline implements Function<Path, Multimap<Long, ImageRe
 	}
 
 	/**
-	 * Returns the post-processing stages of this pipeline. The
+	 * Returns the post-processing stages of this pipeline.
 	 * 
 	 * @return an immutable list of the post-processing stages
 	 */
