@@ -18,6 +18,7 @@
 package com.github.dozedoff.similarImage.thread.pipeline;
 
 import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.verify;
@@ -70,5 +71,11 @@ public class ImageQueryPipelineBuilderTest {
 	public void testRemoveDuplicateGroups() throws Exception {
 		assertThat(cut.removeDuplicateGroups().build().getPostProcessingStages(),
 				hasItem(instanceOf(RemoveDuplicateSetStage.class)));
+	}
+
+	@Test
+	public void testNewBuilder() throws Exception {
+		assertThat(ImageQueryPipelineBuilder.newBuilder(imageRepository),
+				is(instanceOf(ImageQueryPipelineBuilder.class)));
 	}
 }

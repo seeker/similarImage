@@ -90,4 +90,15 @@ public class ImageQueryPipelineBuilder {
 	public ImageQueryPipeline build() {
 		return new ImageQueryPipeline(imageQuery, grouper, postProcessing);
 	}
+
+	/**
+	 * Create a new {@link ImageQueryPipeline}.
+	 * 
+	 * @param imageRepository
+	 *            to use for image queries
+	 * @return a new {@link ImageQueryPipelineBuilder} instance
+	 */
+	public static ImageQueryPipelineBuilder newBuilder(ImageRepository imageRepository) {
+		return new ImageQueryPipelineBuilder(imageRepository);
+	}
 }
