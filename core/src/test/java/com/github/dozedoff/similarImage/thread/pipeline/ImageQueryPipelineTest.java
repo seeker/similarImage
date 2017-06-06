@@ -17,6 +17,7 @@
  */
 package com.github.dozedoff.similarImage.thread.pipeline;
 
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
@@ -25,7 +26,6 @@ import static org.mockito.Mockito.when;
 
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
@@ -44,7 +44,7 @@ public class ImageQueryPipelineTest {
 	private Function<Path, List<ImageRecord>> imageQueryStage;
 
 	@Mock
-	private Function<Collection<ImageRecord>, Multimap<Long, ImageRecord>> grouper;
+	private GroupImagesStage grouper;
 
 	@Mock
 	private Function<Multimap<Long, ImageRecord>, Multimap<Long, ImageRecord>> postProcessingStageA;
@@ -95,5 +95,10 @@ public class ImageQueryPipelineTest {
 	@Test
 	public void testPipelineReturnsGroups() throws Exception {
 		assertThat(cut.apply(null), is(groups));
+	}
+
+	@Test
+	public void testGrouperInstance() throws Exception {
+		assertThat(cut.getImageGrouper(), is(instanceOf(GroupImagesStage.class)));
 	}
 }

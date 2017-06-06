@@ -94,4 +94,13 @@ public class ImageQueryPipeline implements Function<Path, Multimap<Long, ImageRe
 	public Collection<Function<Multimap<Long, ImageRecord>, Multimap<Long, ImageRecord>>> getPostProcessingStages() {
 		return ImmutableList.copyOf(postProcessingStages);
 	}
+
+	/**
+	 * Returns the image grouping stage function
+	 * 
+	 * @return image grouper for this instance
+	 */
+	public Function<Collection<ImageRecord>, Multimap<Long, ImageRecord>> getImageGrouper() {
+		return imageGrouper;
+	}
 }
