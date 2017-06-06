@@ -56,7 +56,11 @@ public class FilterSorterTest {
 	private static final Tag TAG_EXCEPTION = new Tag("exception");
 
 	private static final String PATH_ZERO = "foo";
+	private static final String PATH_ONE = "bar";
+	private static final String PATH_THREE = "foobar";
 
+	private static final long HASH_ONE = 1;
+	private static final long HASH_ZERO = 0;
 	private static final long HASH_THREE = 3;
 
 	private static final int SEARCH_DISTANCE = 0;
@@ -112,9 +116,9 @@ public class FilterSorterTest {
 	private void createRecords() {
 		records = new LinkedList<>();
 
-		records.add(new ImageRecord(PATH_ZERO, 0));
-		records.add(new ImageRecord("bar", 1));
-		records.add(new ImageRecord("foobar", HASH_THREE));
+		records.add(new ImageRecord(PATH_ZERO, HASH_ZERO));
+		records.add(new ImageRecord(PATH_ONE, HASH_ONE));
+		records.add(new ImageRecord(PATH_THREE, HASH_THREE));
 	}
 
 	private FilterSorter createSorter(int hammingdistance, Tag tag, Path scope) {
@@ -135,7 +139,7 @@ public class FilterSorterTest {
 		cut = createSorter(SEARCH_DISTANCE, TAG_LANDSCAPE);
 		runCutAndWaitForFinish();
 
-		assertThat(result.get(0L), containsInAnyOrder(records.get(0)));
+		assertThat(result.get(HASH_ZERO), containsInAnyOrder(records.get(0)));
 	}
 
 	@Test
@@ -143,8 +147,8 @@ public class FilterSorterTest {
 		cut = createSorter(SEARCH_DISTANCE, new Tag(StringUtil.MATCH_ALL_TAGS));
 		runCutAndWaitForFinish();
 
-		assertThat(result.get(0L), containsInAnyOrder(records.get(0)));
-		assertThat(result.get(1L), containsInAnyOrder(records.get(1)));
+		assertThat(result.get(HASH_ZERO), containsInAnyOrder(records.get(0)));
+		assertThat(result.get(HASH_ONE), containsInAnyOrder(records.get(1)));
 	}
 
 	@Test
@@ -167,7 +171,7 @@ public class FilterSorterTest {
 
 	@Test
 	public void testFilterByPathNoMatch() throws Exception {
-		cut = createSorter(SEARCH_DISTANCE, TAG_LANDSCAPE, Paths.get("bar"));
+		cut = createSorter(SEARCH_DISTANCE, TAG_LANDSCAPE, Paths.get(PATH_ONE));
 		runCutAndWaitForFinish();
 
 		assertThat(result, is(emptyMultiMap));
@@ -178,7 +182,7 @@ public class FilterSorterTest {
 		cut = createSorter(SEARCH_DISTANCE, TAG_LANDSCAPE, Paths.get(PATH_ZERO));
 		runCutAndWaitForFinish();
 
-		assertThat(result.get(0L), containsInAnyOrder(records.get(0)));
+		assertThat(result.get(HASH_ZERO), containsInAnyOrder(records.get(0)));
 	}
 
 	@Test
@@ -186,7 +190,7 @@ public class FilterSorterTest {
 		cut = createSorter(SEARCH_DISTANCE, null);
 		runCutAndWaitForFinish();
 
-		assertThat(result.get(0L), containsInAnyOrder(records.get(0)));
-		assertThat(result.get(1L), containsInAnyOrder(records.get(1)));
+		assertThat(result.get(HASH_ZERO), containsInAnyOrder(records.get(0)));
+		assertThat(result.get(HASH_ONE), containsInAnyOrder(records.get(1)));
 	}
 }

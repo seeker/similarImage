@@ -32,6 +32,8 @@ import com.github.dozedoff.similarImage.duplicate.RecordSearch;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiGroupEvent;
 import com.github.dozedoff.similarImage.event.GuiStatusEvent;
+import com.github.dozedoff.similarImage.thread.pipeline.ImageQueryPipeline;
+import com.github.dozedoff.similarImage.thread.pipeline.ImageQueryPipelineBuilder;
 import com.github.dozedoff.similarImage.thread.pipeline.ImageQueryStage;
 import com.github.dozedoff.similarImage.util.StringUtil;
 import com.google.common.base.Stopwatch;
@@ -113,15 +115,10 @@ public class FilterSorter extends Thread {
 		logger.info("Searching for hashes that match given filter");
 		Stopwatch sw = Stopwatch.createStarted();
 
-		RecordSearch rs = new RecordSearch();
-		Multimap<Long, ImageRecord> groups = MultimapBuilder.hashKeys().hashSetValues().build();
+		ImageQueryPipeline pipeline = ImageQueryPipelineBuilder.newBuilder(imageRepository).distance(hammingDistance)
+				.groupByTag(filterRepository, tag).build();
 
-		ImageQueryStage iqs = new ImageQueryStage(imageRepository);
-		dBrecords = iqs.apply(scope);
-
-		rs.build(dBrecords);
-		TagFilter tagFilter = new TagFilter(filterRepository);
-		groups = tagFilter.getFilterMatches(rs, tag, hammingDistance);
+		Multimap<Long, ImageRecord> groups = pipeline.apply(scope);
 
 		guiEvents.post(new GuiStatusEvent("" + groups.size() + " Groups"));
 		logger.info("Found {} groups for tag {} in {}", groups.size(), tag.getTag(), sw.toString());
