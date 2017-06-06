@@ -231,7 +231,8 @@ public class SimilarImageController {
 	 */
 	public void sortDuplicates(int hammingDistance, String path) {
 		setGUIStatus(GUI_MSG_SORTING);
-		ImageQueryPipeline pipeline = imagePipelineBuilder.distance(hammingDistance).groupAll()
+		ImageQueryPipeline pipeline = imagePipelineBuilder.excludeIgnored(!includeIgnoredImages)
+				.distance(hammingDistance).groupAll()
 				.removeSingleImageGroups().removeDuplicateGroups().build();
 		Thread t = createPipelineThread(pipeline, checkPath(path));
 		startTask(t);
@@ -249,7 +250,8 @@ public class SimilarImageController {
 	 */
 	public void sortFilter(int hammingDistance, Tag tag, String path) {
 
-		ImageQueryPipeline pipeline = imagePipelineBuilder.distance(hammingDistance).groupByTag(tag).build();
+		ImageQueryPipeline pipeline = imagePipelineBuilder.excludeIgnored(!includeIgnoredImages)
+				.distance(hammingDistance).groupByTag(tag).build();
 		Thread t = createPipelineThread(pipeline, checkPath(path));
 
 		startTask(t);
