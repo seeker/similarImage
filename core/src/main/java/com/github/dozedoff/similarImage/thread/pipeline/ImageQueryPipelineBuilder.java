@@ -42,6 +42,7 @@ public class ImageQueryPipelineBuilder {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ImageQueryPipelineBuilder.class);
 
 	private final ImageRepository imageRepository;
+	private final FilterRepository filterRepository;
 
 	private Function<Path, List<ImageRecord>> imageQuery;
 	private List<Function<Multimap<Long, ImageRecord>, Multimap<Long, ImageRecord>>> postProcessing;
@@ -53,9 +54,12 @@ public class ImageQueryPipelineBuilder {
 	 * 
 	 * @param imageRepository
 	 *            access to the datasource for image queries
+	 * @param filterRepository
+	 *            access to the datasource for filter queries
 	 */
-	public ImageQueryPipelineBuilder(ImageRepository imageRepository) {
+	public ImageQueryPipelineBuilder(ImageRepository imageRepository, FilterRepository filterRepository) {
 		this.imageRepository = imageRepository;
+		this.filterRepository = filterRepository;
 		this.imageQuery = new ImageQueryStage(imageRepository);
 		this.postProcessing = new LinkedList<>();
 		this.hammingDistance = 0;
@@ -113,13 +117,11 @@ public class ImageQueryPipelineBuilder {
 	/**
 	 * Group images by hashes that are tagged with the given tag.
 	 * 
-	 * @param filterRepository
-	 *            to query for the tagged hashes
 	 * @param tag
 	 *            to query for
 	 * @return instance of this builder for method chaining
 	 */
-	public ImageQueryPipelineBuilder groupByTag(FilterRepository filterRepository, Tag tag) {
+	public ImageQueryPipelineBuilder groupByTag(Tag tag) {
 		this.imageGrouper = new GroupByTagStage(filterRepository, tag, hammingDistance);
 		return this;
 	}
@@ -153,9 +155,12 @@ public class ImageQueryPipelineBuilder {
 	 * 
 	 * @param imageRepository
 	 *            to use for image queries
+	 * @param filterRepository
+	 *            to use for filter queries
 	 * @return a new {@link ImageQueryPipelineBuilder} instance
 	 */
-	public static ImageQueryPipelineBuilder newBuilder(ImageRepository imageRepository) {
-		return new ImageQueryPipelineBuilder(imageRepository);
+	public static ImageQueryPipelineBuilder newBuilder(ImageRepository imageRepository,
+			FilterRepository filterRepository) {
+		return new ImageQueryPipelineBuilder(imageRepository, filterRepository);
 	}
 }

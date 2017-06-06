@@ -69,7 +69,8 @@ public class ImageSorter extends Thread {
 			path = "";
 		}
 
-		ImageQueryPipeline pipeline = ImageQueryPipelineBuilder.newBuilder(imageRepository).distance(hammingDistance)
+		ImageQueryPipeline pipeline = ImageQueryPipelineBuilder.newBuilder(imageRepository, null)
+				.distance(hammingDistance)
 				.removeSingleImageGroups()
 				.removeDuplicateGroups().build();
 

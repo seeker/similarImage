@@ -51,7 +51,7 @@ public class ImageQueryPipelineBuilderTest {
 
 	@Before
 	public void setUp() throws Exception {
-		cut = new ImageQueryPipelineBuilder(imageRepository);
+		cut = new ImageQueryPipelineBuilder(imageRepository, filterRepository);
 	}
 
 	@Test
@@ -82,7 +82,7 @@ public class ImageQueryPipelineBuilderTest {
 
 	@Test
 	public void testNewBuilder() throws Exception {
-		assertThat(ImageQueryPipelineBuilder.newBuilder(imageRepository),
+		assertThat(ImageQueryPipelineBuilder.newBuilder(imageRepository, filterRepository),
 				is(instanceOf(ImageQueryPipelineBuilder.class)));
 	}
 
@@ -101,7 +101,7 @@ public class ImageQueryPipelineBuilderTest {
 
 	@Test
 	public void testGroupByTagGrouper() throws Exception {
-		ImageQueryPipeline pipeline = cut.groupByTag(filterRepository, new Tag("")).build();
+		ImageQueryPipeline pipeline = cut.groupByTag(new Tag("")).build();
 
 		assertThat(pipeline.getImageGrouper(), is(instanceOf(GroupByTagStage.class)));
 	}

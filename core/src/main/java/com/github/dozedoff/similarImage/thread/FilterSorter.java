@@ -28,17 +28,14 @@ import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
-import com.github.dozedoff.similarImage.duplicate.RecordSearch;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiGroupEvent;
 import com.github.dozedoff.similarImage.event.GuiStatusEvent;
 import com.github.dozedoff.similarImage.thread.pipeline.ImageQueryPipeline;
 import com.github.dozedoff.similarImage.thread.pipeline.ImageQueryPipelineBuilder;
-import com.github.dozedoff.similarImage.thread.pipeline.ImageQueryStage;
 import com.github.dozedoff.similarImage.util.StringUtil;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.MultimapBuilder;
 import com.google.common.eventbus.EventBus;
 
 /**
@@ -115,8 +112,9 @@ public class FilterSorter extends Thread {
 		logger.info("Searching for hashes that match given filter");
 		Stopwatch sw = Stopwatch.createStarted();
 
-		ImageQueryPipeline pipeline = ImageQueryPipelineBuilder.newBuilder(imageRepository).distance(hammingDistance)
-				.groupByTag(filterRepository, tag).build();
+		ImageQueryPipeline pipeline = ImageQueryPipelineBuilder.newBuilder(imageRepository, filterRepository)
+				.distance(hammingDistance)
+				.groupByTag(tag).build();
 
 		Multimap<Long, ImageRecord> groups = pipeline.apply(scope);
 
