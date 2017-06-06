@@ -125,10 +125,6 @@ public class SimilarImageController {
 		gui.setListModel(groupListModel);
 	}
 
-	public void ignoreImage(ImageRecord toIgnore) {
-		throw new RuntimeException("Not implemented yet");
-	}
-
 	/**
 	 * Get the images associated with this group.
 	 * 
