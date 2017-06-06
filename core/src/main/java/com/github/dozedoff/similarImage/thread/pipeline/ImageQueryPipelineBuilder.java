@@ -18,11 +18,14 @@
 package com.github.dozedoff.similarImage.thread.pipeline;
 
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
+import com.github.dozedoff.similarImage.db.Tag;
+import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.google.common.collect.Multimap;
 
@@ -38,6 +41,7 @@ public class ImageQueryPipelineBuilder {
 	private Function<Path, List<ImageRecord>> imageQuery;
 	private List<Function<Multimap<Long, ImageRecord>, Multimap<Long, ImageRecord>>> postProcessing;
 	private int hammingDistance;
+	private Function<Collection<ImageRecord>, Multimap<Long, ImageRecord>> imageGrouper;
 
 	/**
 	 * Create a new builder that can be used to create {@link ImageQueryPipeline}.
@@ -102,12 +106,30 @@ public class ImageQueryPipelineBuilder {
 	}
 
 	/**
+	 * Group images by hashes that are tagged with the given tag.
+	 * 
+	 * @param filterRepository
+	 *            to query for the tagged hashes
+	 * @param tag
+	 *            to query for
+	 * @return a configured {@link GroupByTagStage}
+	 */
+	public ImageQueryPipelineBuilder groupByTag(FilterRepository filterRepository, Tag tag) {
+		this.imageGrouper = new GroupByTagStage(filterRepository, tag, hammingDistance);
+		return this;
+	}
+
+	/**
 	 * Build the {@link ImageQueryPipeline} with the configuration of this builder.
 	 * 
 	 * @return the configured {@link ImageQueryPipeline}
 	 */
 	public ImageQueryPipeline build() {
-		return new ImageQueryPipeline(imageQuery, new GroupImagesStage(hammingDistance), postProcessing);
+		if (imageGrouper == null) {
+			imageGrouper = new GroupImagesStage(hammingDistance);
+		}
+
+		return new ImageQueryPipeline(imageQuery, imageGrouper, postProcessing);
 	}
 
 	/**

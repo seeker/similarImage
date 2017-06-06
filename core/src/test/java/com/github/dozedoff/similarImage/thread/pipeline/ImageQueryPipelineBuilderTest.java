@@ -30,6 +30,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import com.github.dozedoff.similarImage.db.Tag;
+import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -38,6 +40,9 @@ public class ImageQueryPipelineBuilderTest {
 
 	@Mock
 	private ImageRepository imageRepository;
+
+	@Mock
+	private FilterRepository filterRepository;
 
 	@InjectMocks
 	private ImageQueryPipelineBuilder imageQueryPipelineBuilder;
@@ -92,5 +97,12 @@ public class ImageQueryPipelineBuilderTest {
 		GroupImagesStage grouper = (GroupImagesStage) pipeline.getImageGrouper();
 
 		assertThat(grouper.getHammingDistance(), is(DISTANCE));
+	}
+
+	@Test
+	public void testGroupByTagGrouper() throws Exception {
+		ImageQueryPipeline pipeline = cut.groupByTag(filterRepository, new Tag("")).build();
+
+		assertThat(pipeline.getImageGrouper(), is(instanceOf(GroupByTagStage.class)));
 	}
 }
