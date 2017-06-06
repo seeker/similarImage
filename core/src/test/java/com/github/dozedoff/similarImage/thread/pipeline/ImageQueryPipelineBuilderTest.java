@@ -112,4 +112,18 @@ public class ImageQueryPipelineBuilderTest {
 
 		assertThat(pipeline.getImageGrouper(), is(instanceOf(GroupImagesStage.class)));
 	}
+
+	@Test
+	public void testExcludeIgnoredBooleanSetToFalse() throws Exception {
+		cut.excludeIgnored(false).build().apply(null);
+
+		verify(imageRepository).getAll();
+	}
+
+	@Test
+	public void testExcludeIgnoredBooleanSetToTrue() throws Exception {
+		cut.excludeIgnored(true).build().apply(null);
+
+		verify(imageRepository).getAllWithoutIgnored();
+	}
 }

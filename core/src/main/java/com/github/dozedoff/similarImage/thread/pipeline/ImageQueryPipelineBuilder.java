@@ -71,7 +71,25 @@ public class ImageQueryPipelineBuilder {
 	 * @return instance of this builder for method chaining
 	 */
 	public ImageQueryPipelineBuilder excludeIgnored() {
-		this.imageQuery = new IgnoredImageQueryStage(imageRepository);
+		excludeIgnored(true);
+		return this;
+	}
+
+	/**
+	 * Do not include ignored images in the result.
+	 * 
+	 * @param exclude
+	 *            if true, ignored images will not be included in the result
+	 * 
+	 * @return instance of this builder for method chaining
+	 */
+	public ImageQueryPipelineBuilder excludeIgnored(boolean exclude) {
+		if (exclude) {
+			this.imageQuery = new IgnoredImageQueryStage(imageRepository);
+		} else {
+			this.imageQuery = new ImageQueryStage(imageRepository);
+		}
+
 		return this;
 	}
 
