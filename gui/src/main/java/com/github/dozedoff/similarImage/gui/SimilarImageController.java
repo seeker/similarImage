@@ -19,7 +19,6 @@ package com.github.dozedoff.similarImage.gui;
 
 import java.awt.image.BufferedImage;
 import java.nio.file.Paths;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -123,23 +122,6 @@ public class SimilarImageController {
 		this.gui = gui;
 		statistics.addStatisticsListener(gui);
 		gui.setListModel(groupListModel);
-	}
-
-	/**
-	 * Get the images associated with this group.
-	 * 
-	 * @param group
-	 *            to query
-	 * @return images matched to this group
-	 */
-	public Set<ImageRecord> getGroup(long group) {
-		// TODO pass group directly (or even grouplist?)
-		List<Result> results = groupList.getGroup(group).getResults();
-		return new HashSet<ImageRecord>(resultsToImageRecords(results));
-	}
-
-	private List<ImageRecord> resultsToImageRecords(List<Result> results) {
-		return results.stream().map(result -> result.getImageRecord()).collect(Collectors.toList());
 	}
 
 	/**
