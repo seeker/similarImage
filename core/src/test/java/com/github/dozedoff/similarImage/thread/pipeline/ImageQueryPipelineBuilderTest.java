@@ -105,4 +105,11 @@ public class ImageQueryPipelineBuilderTest {
 
 		assertThat(pipeline.getImageGrouper(), is(instanceOf(GroupByTagStage.class)));
 	}
+
+	@Test
+	public void testGroupAll() throws Exception {
+		ImageQueryPipeline pipeline = cut.groupAll().build();
+
+		assertThat(pipeline.getImageGrouper(), is(instanceOf(GroupImagesStage.class)));
+	}
 }

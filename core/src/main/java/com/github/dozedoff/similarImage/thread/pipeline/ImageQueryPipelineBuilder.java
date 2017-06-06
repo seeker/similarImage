@@ -23,6 +23,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
@@ -36,6 +39,8 @@ import com.google.common.collect.Multimap;
  *
  */
 public class ImageQueryPipelineBuilder {
+	private static final Logger LOGGER = LoggerFactory.getLogger(ImageQueryPipelineBuilder.class);
+
 	private final ImageRepository imageRepository;
 
 	private Function<Path, List<ImageRecord>> imageQuery;
@@ -112,10 +117,20 @@ public class ImageQueryPipelineBuilder {
 	 *            to query for the tagged hashes
 	 * @param tag
 	 *            to query for
-	 * @return a configured {@link GroupByTagStage}
+	 * @return instance of this builder for method chaining
 	 */
 	public ImageQueryPipelineBuilder groupByTag(FilterRepository filterRepository, Tag tag) {
 		this.imageGrouper = new GroupByTagStage(filterRepository, tag, hammingDistance);
+		return this;
+	}
+
+	/**
+	 * Group matches for every image.
+	 * 
+	 * @return instance of this builder for method chaining
+	 */
+	public ImageQueryPipelineBuilder groupAll() {
+		this.imageGrouper = new GroupImagesStage(hammingDistance);
 		return this;
 	}
 
@@ -127,6 +142,7 @@ public class ImageQueryPipelineBuilder {
 	public ImageQueryPipeline build() {
 		if (imageGrouper == null) {
 			imageGrouper = new GroupImagesStage(hammingDistance);
+			LOGGER.warn("No image group stage set, using {}", imageGrouper.getClass().getSimpleName());
 		}
 
 		return new ImageQueryPipeline(imageQuery, imageGrouper, postProcessing);
