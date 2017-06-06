@@ -18,6 +18,7 @@
 package com.github.dozedoff.similarImage.gui;
 
 import java.awt.image.BufferedImage;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
@@ -48,7 +49,8 @@ import com.github.dozedoff.similarImage.result.ResultGroup;
 import com.github.dozedoff.similarImage.thread.GroupListPopulator;
 import com.github.dozedoff.similarImage.thread.ImageFindJob;
 import com.github.dozedoff.similarImage.thread.ImageFindJobVisitor;
-import com.github.dozedoff.similarImage.thread.SorterFactory;
+import com.github.dozedoff.similarImage.thread.pipeline.ImageQueryPipeline;
+import com.github.dozedoff.similarImage.thread.pipeline.ImageQueryPipelineBuilder;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Multimap;
@@ -67,17 +69,17 @@ public class SimilarImageController {
 	private final LinkedList<Thread> tasks = new LinkedList<>();
 	private boolean includeIgnoredImages;
 
-	private final SorterFactory sorterFactory;
 	private final HandlerListFactory handlerCollectionFactory;
 	private final OperationsMenuFactory omf;
 	private final DefaultListModel<ResultGroup> groupListModel;
 	private final LoadingCache<Result, BufferedImage> thumbnailCache;
+	private final ImageQueryPipelineBuilder imagePipelineBuilder;
 
 	/**
 	 * Performs actions initiated by the user
 	 * 
-	 * @param sorterFactory
-	 *            a factory for creating sorter tasks
+	 * @param pipelineBuilder
+	 *            builder for image queries
 	 * @param handlerCollectionFactory
 	 *            factory for creating handler collection used in processing images
 	 * @param opsMenuFactory
@@ -86,16 +88,16 @@ public class SimilarImageController {
 	 *            program statistics tracking
 	 */
 	@Inject
-	public SimilarImageController(SorterFactory sorterFactory, HandlerListFactory handlerCollectionFactory,
+	public SimilarImageController(ImageQueryPipelineBuilder pipelineBuilder, HandlerListFactory handlerCollectionFactory,
 			OperationsMenuFactory opsMenuFactory, Statistics statistics) {
 		groupList = new GroupList();
 		this.statistics = statistics;
-		this.sorterFactory = sorterFactory;
 		this.handlerCollectionFactory = handlerCollectionFactory;
 		this.omf = opsMenuFactory;
 		GuiEventBus.getInstance().register(this);
 		groupListModel = new DefaultListModel<ResultGroup>();
 		this.thumbnailCache = CacheBuilder.newBuilder().softValues().build(new ThumbnailCacheLoader());
+		this.imagePipelineBuilder = pipelineBuilder;
 	}
 
 
@@ -219,19 +221,36 @@ public class SimilarImageController {
 		}
 	}
 
+	/**
+	 * For every image, find other images that have a matching hash.
+	 * 
+	 * @param hammingDistance
+	 *            distance to consider a hash a match
+	 * @param path
+	 *            limit images to this path, if empty or null, all images are considered
+	 */
 	public void sortDuplicates(int hammingDistance, String path) {
 		setGUIStatus(GUI_MSG_SORTING);
-		Thread t = sorterFactory.newImageSorter(hammingDistance, path);
+		ImageQueryPipeline pipeline = imagePipelineBuilder.distance(hammingDistance).groupAll()
+				.removeSingleImageGroups().removeDuplicateGroups().build();
+		Thread t = createPipelineThread(pipeline, checkPath(path));
 		startTask(t);
 	}
 
+	/**
+	 * Match images against tagged hashes.
+	 * 
+	 * @param hammingDistance
+	 *            distance to consider a hash a match
+	 * @param tag
+	 *            tag to match a against.
+	 * @param path
+	 *            limit images to this path, if empty or null, all images are considered
+	 */
 	public void sortFilter(int hammingDistance, Tag tag, String path) {
-		Thread t;
-		if (path.isEmpty()) {
-			t = sorterFactory.newFilterSorterAllImages(hammingDistance, tag);
-		} else {
-			t = sorterFactory.newFilterSorterRestrictByPath(hammingDistance, tag, Paths.get(path));
-		}
+
+		ImageQueryPipeline pipeline = imagePipelineBuilder.distance(hammingDistance).groupByTag(tag).build();
+		Thread t = createPipelineThread(pipeline, checkPath(path));
 
 		startTask(t);
 	}
@@ -262,6 +281,12 @@ public class SimilarImageController {
 		return 0;
 	}
 
+	/**
+	 * This event is triggered whenever the group list should be repopulated.
+	 * 
+	 * @param event
+	 *            data associated with this event
+	 */
 	@Subscribe
 	public void updateGroup(GuiGroupEvent event) {
 		setResults(event.getGroups());
@@ -275,5 +300,23 @@ public class SimilarImageController {
 	 */
 	public void setIncludeIgnoredImages(boolean includeIgnoredImages) {
 		this.includeIgnoredImages = includeIgnoredImages;
+	}
+
+	private Thread createPipelineThread(ImageQueryPipeline pipeline, Path scope) {
+		return new Thread() {
+			@Override
+			public void run() {
+				setResults(pipeline.apply(scope));
+			}
+		};
+	}
+
+	private Path checkPath(String path) {
+		String checkedPath = path;
+		if (path == null) {
+			checkedPath = "";
+		}
+
+		return Paths.get(checkedPath);
 	}
 }
