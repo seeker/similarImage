@@ -19,12 +19,15 @@ package com.github.dozedoff.similarImage.module;
 
 import java.util.concurrent.TimeUnit;
 
+import com.github.dozedoff.similarImage.db.repository.FilterRepository;
+import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.gui.OperationsMenuFactory;
 import com.github.dozedoff.similarImage.gui.UserTagSettingController;
 import com.github.dozedoff.similarImage.io.ExtendedAttribute;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeDirectoryCache;
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
+import com.github.dozedoff.similarImage.thread.pipeline.ImageQueryPipelineBuilder;
 
 import dagger.Module;
 import dagger.Provides;
@@ -41,5 +44,11 @@ public class GuiModule {
 	public OperationsMenuFactory provideOperationsMenuFactory(DuplicateOperations dupOps,
 			UserTagSettingController utsc) {
 		return new OperationsMenuFactory(dupOps, utsc);
+	}
+
+	@Provides
+	public ImageQueryPipelineBuilder provideImageQueryPipelineBuilder(ImageRepository imageRepository,
+			FilterRepository filterRepository) {
+		return ImageQueryPipelineBuilder.newBuilder(imageRepository, filterRepository);
 	}
 }
