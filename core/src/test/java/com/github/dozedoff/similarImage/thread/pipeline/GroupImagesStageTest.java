@@ -19,6 +19,7 @@ package com.github.dozedoff.similarImage.thread.pipeline;
 
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 
@@ -33,6 +34,7 @@ import com.github.dozedoff.similarImage.db.ImageRecord;
 public class GroupImagesStageTest {
 	private static final long HASH_A = 0;
 	private static final long HASH_B = 1;
+	private static final int DISTANCE = 42;
 
 	private GroupImagesStage cut;
 
@@ -72,5 +74,17 @@ public class GroupImagesStageTest {
 		cut = new GroupImagesStage(1);
 
 		assertThat(cut.apply(images).get(HASH_B), hasItems(imageA, imageB));
+	}
+
+	@Test
+	public void testGetHammingDistance() throws Exception {
+		cut = new GroupImagesStage(DISTANCE);
+
+		assertThat(cut.getHammingDistance(), is(DISTANCE));
+	}
+
+	@Test
+	public void testDefaultDistance() throws Exception {
+		assertThat(cut.getHammingDistance(), is(0));
 	}
 }

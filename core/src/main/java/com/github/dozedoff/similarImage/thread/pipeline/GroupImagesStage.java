@@ -40,7 +40,7 @@ public class GroupImagesStage implements Function<Collection<ImageRecord>, Multi
 	private static final Logger LOGGER = LoggerFactory.getLogger(GroupImagesStage.class);
 
 	private final RecordSearch rs;
-	private int hammingDistance;
+	private final int hammingDistance;
 
 	/**
 	 * Groups images by hashes that are a exact match, i.e. have a hamming distance of 0;
@@ -84,5 +84,14 @@ public class GroupImagesStage implements Function<Collection<ImageRecord>, Multi
 				hammingDistance);
 
 		return resultMap;
+	}
+
+	/**
+	 * Get the hamming distance set for this grouping function.
+	 * 
+	 * @return the set hamming distance
+	 */
+	public int getHammingDistance() {
+		return hammingDistance;
 	}
 }
