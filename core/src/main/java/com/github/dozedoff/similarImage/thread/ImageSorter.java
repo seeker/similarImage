@@ -18,28 +18,21 @@
 package com.github.dozedoff.similarImage.thread;
 
 import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
-import com.github.dozedoff.similarImage.db.repository.RepositoryException;
-import com.github.dozedoff.similarImage.duplicate.DuplicateUtil;
-import com.github.dozedoff.similarImage.duplicate.RecordSearch;
 import com.github.dozedoff.similarImage.event.GuiGroupEvent;
+import com.github.dozedoff.similarImage.thread.pipeline.ImageQueryPipeline;
+import com.github.dozedoff.similarImage.thread.pipeline.ImageQueryPipelineBuilder;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.MultimapBuilder;
 import com.google.common.eventbus.EventBus;
 
 public class ImageSorter extends Thread {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ImageSorter.class);
-
-	private static final String NULL = "null";
 
 	private int hammingDistance;
 	private String path;
@@ -72,44 +65,17 @@ public class ImageSorter extends Thread {
 		LOGGER.info("Looking for matching images...");
 		Stopwatch sw = Stopwatch.createStarted();
 
-		List<ImageRecord> dBrecords = Collections.emptyList();
-
 		if (path == null) {
-			path = NULL;
+			path = "";
 		}
 
-		try {
-			if (NULL.equals(path) || path.isEmpty()) {
-				LOGGER.info("Loading all records");
-				dBrecords = imageRepository.getAll();
-			} else {
-				LOGGER.info("Loading records for path {}", path);
-				dBrecords = imageRepository.startsWithPath(Paths.get(path));
-			}
-		} catch (RepositoryException e) {
-			LOGGER.warn("Failed to load records - {}", e.getMessage());
-		}
+		ImageQueryPipeline pipeline = ImageQueryPipelineBuilder.newBuilder(imageRepository).distance(hammingDistance)
+				.removeSingleImageGroups()
+				.removeDuplicateGroups().build();
 
-		RecordSearch rs = new RecordSearch();
-		rs.build(dBrecords);
+		Multimap<Long, ImageRecord> results = pipeline.apply(Paths.get(path));
 
-		Multimap<Long, ImageRecord> results = findAllHashesInRange(rs, dBrecords);
-
-		DuplicateUtil.removeSingleImageGroups(results);
-		DuplicateUtil.removeDuplicateSets(results);
-
-		LOGGER.info("Found {} similar images out of {} in {}", results.keySet().size(), dBrecords.size(), sw);
+		LOGGER.info("Found {} similar images in {}", results.keySet().size(), sw);
 		this.guiEventBus.post(new GuiGroupEvent(results));
-	}
-
-	private Multimap<Long, ImageRecord> findAllHashesInRange(RecordSearch rs, Collection<ImageRecord> records) {
-		Multimap<Long, ImageRecord> results = MultimapBuilder.hashKeys().hashSetValues().build();
-
-		for (ImageRecord record : records) {
-			long key = record.getpHash();
-			results.putAll(key, rs.distanceMatch(key, hammingDistance).values());
-		}
-
-		return results;
 	}
 }
