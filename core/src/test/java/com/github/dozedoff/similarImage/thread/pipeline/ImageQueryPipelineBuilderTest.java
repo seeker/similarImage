@@ -34,6 +34,8 @@ import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ImageQueryPipelineBuilderTest {
+	private static final int DISTANCE = 42;
+
 	@Mock
 	private ImageRepository imageRepository;
 
@@ -77,5 +79,18 @@ public class ImageQueryPipelineBuilderTest {
 	public void testNewBuilder() throws Exception {
 		assertThat(ImageQueryPipelineBuilder.newBuilder(imageRepository),
 				is(instanceOf(ImageQueryPipelineBuilder.class)));
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testDistanceNegative() throws Exception {
+		cut.distance(-1).build();
+	}
+
+	@Test
+	public void testDistanceSet() throws Exception {
+		ImageQueryPipeline pipeline = cut.distance(DISTANCE).build();
+		GroupImagesStage grouper = (GroupImagesStage) pipeline.getImageGrouper();
+
+		assertThat(grouper.getHammingDistance(), is(DISTANCE));
 	}
 }

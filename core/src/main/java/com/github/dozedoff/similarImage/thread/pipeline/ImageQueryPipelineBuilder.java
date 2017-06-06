@@ -34,10 +34,10 @@ import com.google.common.collect.Multimap;
  */
 public class ImageQueryPipelineBuilder {
 	private final ImageRepository imageRepository;
-	private final GroupImagesStage grouper;
 
 	private Function<Path, List<ImageRecord>> imageQuery;
 	private List<Function<Multimap<Long, ImageRecord>, Multimap<Long, ImageRecord>>> postProcessing;
+	private int hammingDistance;
 
 	/**
 	 * Create a new builder that can be used to create {@link ImageQueryPipeline}.
@@ -47,15 +47,15 @@ public class ImageQueryPipelineBuilder {
 	 */
 	public ImageQueryPipelineBuilder(ImageRepository imageRepository) {
 		this.imageRepository = imageRepository;
-		this.grouper = new GroupImagesStage();
 		this.imageQuery = new ImageQueryStage(imageRepository);
 		this.postProcessing = new LinkedList<>();
+		this.hammingDistance = 0;
 	}
 
 	/**
 	 * Do not include ignored images in the result.
 	 * 
-	 * @return instance of this builder for method chaining.
+	 * @return instance of this builder for method chaining
 	 */
 	public ImageQueryPipelineBuilder excludeIgnored() {
 		this.imageQuery = new IgnoredImageQueryStage(imageRepository);
@@ -65,7 +65,7 @@ public class ImageQueryPipelineBuilder {
 	/**
 	 * Remove single image groups during post processing.
 	 * 
-	 * @return instance of this builder for method chaining.
+	 * @return instance of this builder for method chaining
 	 */
 	public ImageQueryPipelineBuilder removeSingleImageGroups() {
 		this.postProcessing.add(new RemoveSingleImageSetStage());
@@ -75,10 +75,29 @@ public class ImageQueryPipelineBuilder {
 	/**
 	 * Remove duplicate image groups during post processing.
 	 * 
-	 * @return instance of this builder for method chaining.
+	 * @return instance of this builder for method chaining
 	 */
 	public ImageQueryPipelineBuilder removeDuplicateGroups() {
 		this.postProcessing.add(new RemoveDuplicateSetStage());
+		return this;
+	}
+
+	/**
+	 * Set the hamming distance for the query.
+	 * 
+	 * @param distance
+	 *            hashes within this distance count as a match
+	 * 
+	 * @return instance of this builder for method chaining
+	 * @throws IllegalArgumentException
+	 *             if the distance is negative
+	 */
+	public ImageQueryPipelineBuilder distance(int distance) throws IllegalArgumentException {
+		if (distance < 0) {
+			throw new IllegalArgumentException("Distance must be 0 or greater");
+		}
+
+		this.hammingDistance = distance;
 		return this;
 	}
 
@@ -88,7 +107,7 @@ public class ImageQueryPipelineBuilder {
 	 * @return the configured {@link ImageQueryPipeline}
 	 */
 	public ImageQueryPipeline build() {
-		return new ImageQueryPipeline(imageQuery, grouper, postProcessing);
+		return new ImageQueryPipeline(imageQuery, new GroupImagesStage(hammingDistance), postProcessing);
 	}
 
 	/**
