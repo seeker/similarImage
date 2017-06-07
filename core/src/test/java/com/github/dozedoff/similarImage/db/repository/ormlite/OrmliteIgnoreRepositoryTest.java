@@ -23,6 +23,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertThat;
 
 import java.nio.file.Path;
@@ -135,5 +136,12 @@ public class OrmliteIgnoreRepositoryTest extends OrmliteRepositoryBaseTest {
 	@Test
 	public void testIsPathIgnoredPath() throws Exception {
 		assertThat(cut.isPathIgnored(toPath(PATH_A)), is(true));
+	}
+
+	@Test
+	public void testGetAll() throws Exception {
+		dao.create(newIgnore);
+
+		assertThat(cut.getAll(), containsInAnyOrder(newIgnore, existingIgnore));
 	}
 }

@@ -18,6 +18,7 @@
 package com.github.dozedoff.similarImage.db.repository;
 
 import java.nio.file.Path;
+import java.util.List;
 
 import com.github.dozedoff.similarImage.db.IgnoreRecord;
 
@@ -92,4 +93,13 @@ public interface IgnoreRepository extends Repository {
 	 *             if there is an error accessing the repository
 	 */
 	boolean isPathIgnored(Path path) throws RepositoryException;
+
+	/**
+	 * Get all ignored images.
+	 * 
+	 * @return a list of ignored images
+	 * @throws RepositoryException
+	 *             if there is an error accessing the repository
+	 */
+	List<IgnoreRecord> getAll() throws RepositoryException;
 }
