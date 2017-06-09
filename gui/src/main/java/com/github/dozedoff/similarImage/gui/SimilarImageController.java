@@ -76,6 +76,7 @@ public class SimilarImageController {
 	private final DefaultListModel<ResultGroup> groupListModel;
 	private final LoadingCache<Result, BufferedImage> thumbnailCache;
 	private final ImageQueryPipelineBuilder imagePipelineBuilder;
+	private Tag searchTag;
 
 	/**
 	 * Performs actions initiated by the user
@@ -241,6 +242,7 @@ public class SimilarImageController {
 				.distance(hammingDistance).groupAll()
 				.removeSingleImageGroups().removeDuplicateGroups().build();
 		Thread t = createPipelineThread(pipeline, checkPath(path));
+		this.searchTag = null;
 		startTask(t);
 	}
 
@@ -259,7 +261,7 @@ public class SimilarImageController {
 		ImageQueryPipeline pipeline = imagePipelineBuilder.excludeIgnored(!includeIgnoredImages)
 				.distance(hammingDistance).groupByTag(tag).build();
 		Thread t = createPipelineThread(pipeline, checkPath(path));
-
+		this.searchTag = tag;
 		startTask(t);
 	}
 
