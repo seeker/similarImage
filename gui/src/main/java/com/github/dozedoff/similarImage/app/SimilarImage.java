@@ -32,9 +32,11 @@ import com.codahale.metrics.Slf4jReporter;
 import com.github.dozedoff.similarImage.component.DaggerGuiApplicationComponent;
 import com.github.dozedoff.similarImage.component.DaggerMessagingComponent;
 import com.github.dozedoff.similarImage.component.DaggerPersistenceComponent;
+import com.github.dozedoff.similarImage.component.DaggerSettingComponent;
 import com.github.dozedoff.similarImage.component.GuiApplicationComponent;
 import com.github.dozedoff.similarImage.component.MessagingComponent;
 import com.github.dozedoff.similarImage.component.PersistenceComponent;
+import com.github.dozedoff.similarImage.component.SettingComponent;
 import com.github.dozedoff.similarImage.gui.SimilarImageView;
 import com.github.dozedoff.similarImage.messaging.ArtemisEmbeddedServer;
 import com.github.dozedoff.similarImage.messaging.Node;
@@ -47,8 +49,6 @@ import net.sourceforge.argparse4j.inf.Namespace;
 
 public class SimilarImage {
 	private final static Logger logger = LoggerFactory.getLogger(SimilarImage.class);
-
-	private static final String PROPERTIES_FILENAME = "similarImage.properties";
 
 	private ArtemisEmbeddedServer aes;
 
@@ -120,9 +120,6 @@ public class SimilarImage {
 		logger.info("SimilarImage version " + version);
 		logger.info("System has {} processors", Runtime.getRuntime().availableProcessors());
 
-		Settings settings = new Settings(new SettingsValidator());
-		settings.loadPropertiesFromFile(PROPERTIES_FILENAME);
-
 		PersistenceComponent coreComponent = DaggerPersistenceComponent.create();
 		MessagingComponent messagingComponent = DaggerMessagingComponent.builder().persistenceComponent(coreComponent)
 				.build();
@@ -144,8 +141,15 @@ public class SimilarImage {
 
 		logImageReaders();
 
+		logger.info("Loading settings...");
+		SettingComponent settingComponent = DaggerSettingComponent.create();
+		MainSetting settings = settingComponent.getMainSetting();
+
+		int threads = settings.threads();
+		logger.info("Using {} threads", threads);
+
 		if (!noWorkers) {
-			for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
+			for (int i = 0; i < threads; i++) {
 				nodes.add(messagingComponent.getHasherNode());
 				nodes.add(messagingComponent.getResizerNode());
 			}

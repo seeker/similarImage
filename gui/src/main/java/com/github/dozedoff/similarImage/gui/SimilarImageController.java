@@ -33,7 +33,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.filefilter.SimpleImageFilter;
+import com.github.dozedoff.similarImage.app.MainSetting;
 import com.github.dozedoff.similarImage.component.ApplicationScope;
+import com.github.dozedoff.similarImage.component.DaggerSettingComponent;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
@@ -98,6 +100,10 @@ public class SimilarImageController {
 		groupListModel = new DefaultListModel<ResultGroup>();
 		this.thumbnailCache = CacheBuilder.newBuilder().softValues().build(new ThumbnailCacheLoader());
 		this.imagePipelineBuilder = pipelineBuilder;
+
+		MainSetting settings = DaggerSettingComponent.create().getMainSetting();
+
+		includeIgnoredImages = settings.includeIgnoredImages();
 	}
 
 
