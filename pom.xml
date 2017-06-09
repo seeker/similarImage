@@ -55,6 +55,12 @@
 				<artifactId>sqlite-jdbc</artifactId>
 				<version>${sqlite-driver-version}</version>
 			</dependency>
+			<dependency>
+				<groupId>com.google.jimfs</groupId>
+				<artifactId>jimfs</artifactId>
+				<version>1.1</version>
+				<scope>test</scope>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 	
