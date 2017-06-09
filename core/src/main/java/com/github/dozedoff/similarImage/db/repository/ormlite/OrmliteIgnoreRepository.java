@@ -19,6 +19,7 @@ package com.github.dozedoff.similarImage.db.repository.ormlite;
 
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.List;
 
 import com.github.dozedoff.similarImage.db.IgnoreRecord;
 import com.github.dozedoff.similarImage.db.repository.IgnoreRepository;
@@ -119,5 +120,17 @@ public class OrmliteIgnoreRepository implements IgnoreRepository {
 	@Override
 	public boolean isPathIgnored(Path path) throws RepositoryException {
 		return isPathIgnored(path.toString());
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public List<IgnoreRecord> getAll() throws RepositoryException {
+		try {
+			return ignoreDao.queryForAll();
+		} catch (SQLException e) {
+			throw new RepositoryException("Failed to query for all ingored images: " + e.toString(), e);
+		}
 	}
 }

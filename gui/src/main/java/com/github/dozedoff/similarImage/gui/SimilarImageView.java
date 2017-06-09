@@ -55,6 +55,7 @@ import com.github.dozedoff.similarImage.component.ApplicationScope;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
+import com.github.dozedoff.similarImage.db.repository.IgnoreRepository;
 import com.github.dozedoff.similarImage.duplicate.DuplicateOperations;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiUserTagChangedEvent;
@@ -90,6 +91,8 @@ public class SimilarImageView implements StatisticsChangedListener {
 
 	private final FilterRepository filterRepository;
 	private final JFrame resultGroupWindow;
+	private final IgnoredImageView ignoredImageView;
+	private final IgnoredImagePresenter ignoredImagePresenter;
 
 
 	/**
@@ -98,13 +101,14 @@ public class SimilarImageView implements StatisticsChangedListener {
 	@Deprecated
 	public SimilarImageView(SimilarImageController controller, DuplicateOperations duplicateOperations,
 			int maxBufferSize, UserTagSettingController utsController) {
-		this(controller, duplicateOperations, maxBufferSize, utsController, null);
+		this(controller, duplicateOperations, maxBufferSize, utsController, null, null);
 	}
 
 	@Inject
 	public SimilarImageView(SimilarImageController controller, DuplicateOperations duplicateOperations,
-			UserTagSettingController utsController, FilterRepository filterRepository) {
-		this(controller, duplicateOperations, 0, utsController, filterRepository);
+			UserTagSettingController utsController, FilterRepository filterRepository,
+			IgnoreRepository ignoreRepository) {
+		this(controller, duplicateOperations, 0, utsController, filterRepository, ignoreRepository);
 
 	}
 
@@ -114,8 +118,11 @@ public class SimilarImageView implements StatisticsChangedListener {
 		resultGroupWindow.setFocusableWindowState(true);
 	}
 
+	// TODO this constructor is getting too big, is there a better way to do this? inject repository factory directly?
+
 	public SimilarImageView(SimilarImageController controller, DuplicateOperations duplicateOperations, int maxBufferSize,
-			UserTagSettingController utsController, FilterRepository filterRepository) {
+			UserTagSettingController utsController, FilterRepository filterRepository,
+			IgnoreRepository ignoreRepository) {
 		this.controller = controller;
 		this.utsController = utsController;
 		this.filterRepository = filterRepository;
@@ -143,6 +150,8 @@ public class SimilarImageView implements StatisticsChangedListener {
 
 		updateProgress();
 		this.controller.setGui(this);
+		ignoredImagePresenter = new IgnoredImagePresenter(ignoreRepository);
+		ignoredImageView = new IgnoredImageView(ignoredImagePresenter);
 	}
 
 	/**
@@ -346,6 +355,15 @@ public class SimilarImageView implements StatisticsChangedListener {
 			}
 		});
 
+		JMenuItem ignoredImages = new JMenuItem("Ignored Images");
+		ignoredImages.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				ignoredImagePresenter.refreshList();
+				ignoredImageView.setVisible(true);
+			}
+		});
+
 		JMenuItem includeIgnored = new JCheckBoxMenuItem("Include ignored");
 		includeIgnored.setToolTipText("If checked, ignored images will be shown in search results.");
 		includeIgnored.addActionListener(new ActionListener() {
@@ -366,6 +384,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 		JMenu settings = new JMenu("Settings");
 		settings.add(userTags);
 		settings.add(filters);
+		settings.add(ignoredImages);
 		settings.add(includeIgnored);
 
 		JMenuBar menuBar = new JMenuBar();
