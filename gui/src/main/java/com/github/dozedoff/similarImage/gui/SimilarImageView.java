@@ -52,6 +52,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.similarImage.component.ApplicationScope;
+import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
@@ -537,6 +538,24 @@ public class SimilarImageView implements StatisticsChangedListener {
 
 		this.resultGroupWindow.setTitle(title);
 		JComponent rgv = new ResultGroupView(rgp).getView();
+		rgv.setPreferredSize(resultGroupWindow.getSize());
+		this.resultGroupWindow.add(rgv);
+		this.resultGroupWindow.setVisible(true);
+	}
+
+	/**
+	 * Set the title for the result group display and update it's view with the backing {@link ResultGroupPresenter}.
+	 * 
+	 * @param title
+	 *            for the result group window
+	 * @param rgp
+	 *            the presenter that will be used to create the {@link ResultGroupView}
+	 */
+	public void displayResultGroup(String title, ResultGroupPresenter rgp, List<FilterRecord> thumbnails) {
+		resultGroupWindow.getContentPane().removeAll();
+
+		this.resultGroupWindow.setTitle(title);
+		JComponent rgv = new ThumbnailDecarator(new ResultGroupView(rgp), thumbnails).getView();
 		rgv.setPreferredSize(resultGroupWindow.getSize());
 		this.resultGroupWindow.add(rgv);
 		this.resultGroupWindow.setVisible(true);

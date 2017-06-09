@@ -23,6 +23,7 @@ import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -36,8 +37,11 @@ import com.github.dozedoff.commonj.filefilter.SimpleImageFilter;
 import com.github.dozedoff.similarImage.app.MainSetting;
 import com.github.dozedoff.similarImage.component.ApplicationScope;
 import com.github.dozedoff.similarImage.component.DaggerSettingComponent;
+import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Tag;
+import com.github.dozedoff.similarImage.db.repository.FilterRepository;
+import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.event.GuiEventBus;
 import com.github.dozedoff.similarImage.event.GuiGroupEvent;
 import com.github.dozedoff.similarImage.handler.HandlerListFactory;
@@ -76,6 +80,8 @@ public class SimilarImageController {
 	private final DefaultListModel<ResultGroup> groupListModel;
 	private final LoadingCache<Result, BufferedImage> thumbnailCache;
 	private final ImageQueryPipelineBuilder imagePipelineBuilder;
+	private final FilterRepository filterRepository;
+	private Tag searchTag;
 
 	/**
 	 * Performs actions initiated by the user
@@ -91,7 +97,7 @@ public class SimilarImageController {
 	 */
 	@Inject
 	public SimilarImageController(ImageQueryPipelineBuilder pipelineBuilder, HandlerListFactory handlerCollectionFactory,
-			OperationsMenuFactory opsMenuFactory, Statistics statistics) {
+			OperationsMenuFactory opsMenuFactory, Statistics statistics, FilterRepository filterRepository) {
 		groupList = new GroupList();
 		this.statistics = statistics;
 		this.handlerCollectionFactory = handlerCollectionFactory;
@@ -100,6 +106,7 @@ public class SimilarImageController {
 		groupListModel = new DefaultListModel<ResultGroup>();
 		this.thumbnailCache = CacheBuilder.newBuilder().softValues().build(new ThumbnailCacheLoader());
 		this.imagePipelineBuilder = pipelineBuilder;
+		this.filterRepository = filterRepository;
 
 		MainSetting settings = DaggerSettingComponent.create().getMainSetting();
 
@@ -162,7 +169,27 @@ public class SimilarImageController {
 		logger.info("Loading {} thumbnails for group {}", grouplist.size(), group);
 
 		ResultGroupPresenter rgp = new ResultGroupPresenter(group, omf, this, thumbnailCache);
-		gui.displayResultGroup(group.toString(), rgp);
+
+		if (searchTag == null) {
+			gui.displayResultGroup(group.toString(), rgp);
+		} else {
+			try {
+				List<FilterRecord> tagThumbs = filterRepository.getByTag(searchTag);
+				List<FilterRecord> thumbs = filterByHash(tagThumbs, group.getHash());
+				gui.displayResultGroup(group.toString(), rgp, thumbs);
+			} catch (RepositoryException e) {
+				logger.error("Failed to load thumbnails: {} cause: {}", e.toString(), e.getCause());
+			}
+		}
+	}
+
+	private List<FilterRecord> filterByHash(List<FilterRecord> toFilter, long hash) {
+		return toFilter.stream().filter(new Predicate<FilterRecord>() {
+			@Override
+			public boolean test(FilterRecord t) {
+				return t.getpHash() == hash;
+			}
+		}).collect(Collectors.toList());
 	}
 
 	/**
@@ -241,6 +268,7 @@ public class SimilarImageController {
 				.distance(hammingDistance).groupAll()
 				.removeSingleImageGroups().removeDuplicateGroups().build();
 		Thread t = createPipelineThread(pipeline, checkPath(path));
+		this.searchTag = null;
 		startTask(t);
 	}
 
@@ -259,7 +287,7 @@ public class SimilarImageController {
 		ImageQueryPipeline pipeline = imagePipelineBuilder.excludeIgnored(!includeIgnoredImages)
 				.distance(hammingDistance).groupByTag(tag).build();
 		Thread t = createPipelineThread(pipeline, checkPath(path));
-
+		this.searchTag = tag;
 		startTask(t);
 	}
 
