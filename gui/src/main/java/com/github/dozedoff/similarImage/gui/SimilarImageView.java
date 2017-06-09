@@ -366,6 +366,7 @@ public class SimilarImageView implements StatisticsChangedListener {
 
 		JMenuItem includeIgnored = new JCheckBoxMenuItem("Include ignored");
 		includeIgnored.setToolTipText("If checked, ignored images will be shown in search results.");
+		includeIgnored.setSelected(controller.getIncludeIgnoredImages());
 		includeIgnored.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
