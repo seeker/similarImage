@@ -108,7 +108,7 @@ public class OperationsMenu {
 		actions.put(Operations.Ignore, new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				duplicateOperations.ignore(getHash());
+				duplicateOperations.ignore(result);
 				result.remove();
 			}
 		});

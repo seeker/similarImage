@@ -23,16 +23,31 @@ import static org.junit.Assert.assertThat;
 import org.junit.Before;
 import org.junit.Test;
 
+import nl.jqno.equalsverifier.EqualsVerifier;
+
 public class IgnoreRecordTest {
-	private IgnoreRecord ir;
+	private static final String TEST_PATH_STRING = "foo";
+	private static final ImageRecord IMAGE = new ImageRecord(TEST_PATH_STRING, 0);
+
+	private IgnoreRecord cut;
 
 	@Before
 	public void setUp() throws Exception {
-		ir = new IgnoreRecord(42);
+		cut = new IgnoreRecord(IMAGE);
 	}
 
 	@Test
-	public void testGetpHash() {
-		assertThat(ir.getpHash(), is(42L));
+	public void testGetPathAsString() throws Exception {
+		assertThat(cut.getImage(), is(IMAGE));
+	}
+
+	@Test
+	public void testEquals() throws Exception {
+		assertThat(cut.equals(new IgnoreRecord(IMAGE)), is(true));
+	}
+
+	@Test
+	public void testWithEqualsVerifier() throws Exception {
+		EqualsVerifier.forClass(IgnoreRecord.class).allFieldsShouldBeUsedExcept("id").verify();
 	}
 }

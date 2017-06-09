@@ -44,10 +44,12 @@ import org.slf4j.LoggerFactory;
 
 import com.github.dozedoff.commonj.file.DirectoryVisitor;
 import com.github.dozedoff.similarImage.db.FilterRecord;
+import com.github.dozedoff.similarImage.db.IgnoreRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.Thumbnail;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
+import com.github.dozedoff.similarImage.db.repository.IgnoreRepository;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
@@ -68,6 +70,7 @@ public class DuplicateOperations {
 	private final FilterRepository filterRepository;
 	private final TagRepository tagRepository;
 	private final ImageRepository imageRepository;
+	private final IgnoreRepository ignoreRepository;
 	private final FileSystem fileSystem;
 
 	public enum Tags {
@@ -83,11 +86,14 @@ public class DuplicateOperations {
 	 *            Data access for {@link Tag}
 	 * @param imageRepository
 	 *            Data access for {@link ImageRecord}
+	 * @param ignoreRepository
+	 *            Data access for {@link IgnoreRecord}
 	 * 
 	 */
 	@Inject
-	public DuplicateOperations(FilterRepository filterRepository, TagRepository tagRepository, ImageRepository imageRepository) {
-		this(FileSystems.getDefault(), filterRepository, tagRepository, imageRepository);
+	public DuplicateOperations(FilterRepository filterRepository, TagRepository tagRepository,
+			ImageRepository imageRepository, IgnoreRepository ignoreRepository) {
+		this(FileSystems.getDefault(), filterRepository, tagRepository, imageRepository, ignoreRepository);
 	}
 
 	/**
@@ -104,11 +110,12 @@ public class DuplicateOperations {
 	 * 
 	 */
 	public DuplicateOperations(FileSystem fileSystem, FilterRepository filterRepository, TagRepository tagRepository,
-			ImageRepository imageRepository) {
+			ImageRepository imageRepository, IgnoreRepository ignoreRepository) {
 		this.filterRepository = filterRepository;
 		this.tagRepository = tagRepository;
 		this.imageRepository = imageRepository;
 		this.fileSystem = fileSystem;
+		this.ignoreRepository = ignoreRepository;
 	}
 
 	public void moveToDnw(Path path) {
@@ -396,8 +403,19 @@ public class DuplicateOperations {
 		return toPrune;
 	}
 
-	public void ignore(long pHash) {
-			throw new RuntimeException("Not implemented");
+	/**
+	 * Add the given result to the ignored list.
+	 * 
+	 * @param result
+	 *            to ignore
+	 */
+	public void ignore(Result result) {
+		logger.info("Ignoring {}", result);
+		try {
+			ignoreRepository.store(new IgnoreRecord(result.getImageRecord()));
+		} catch (RepositoryException e) {
+			logger.error("Failed to store ignored image: {}, cause: {}", e.toString(), e.getCause().toString());
+		}
 	}
 
 	/**

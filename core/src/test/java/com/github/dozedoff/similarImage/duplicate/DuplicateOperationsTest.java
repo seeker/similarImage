@@ -44,9 +44,11 @@ import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.db.FilterRecord;
+import com.github.dozedoff.similarImage.db.IgnoreRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
+import com.github.dozedoff.similarImage.db.repository.IgnoreRepository;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.db.repository.TagRepository;
@@ -78,6 +80,9 @@ public class DuplicateOperationsTest {
 	private ImageRepository imageRepository;
 
 	@Mock
+	private IgnoreRepository ignoreRepository;
+
+	@Mock
 	private ResultGroup resultGroup;
 
 	private DuplicateOperations dupOp;
@@ -87,15 +92,19 @@ public class DuplicateOperationsTest {
 	private FilterRecord fooFilter;
 	private FileSystem fs;
 
+	private Result result;
+
 	@Before
 	public void setUp() throws Exception {
 		fs = Jimfs.newFileSystem();
-		dupOp = new DuplicateOperations(fs, filterRepository, tagRepository, imageRepository);
+		dupOp = new DuplicateOperations(fs, filterRepository, tagRepository, imageRepository, ignoreRepository);
 
 		tempDirectory = fs.getPath(BASE_DIRECTORY);
 		Files.createDirectory(tempDirectory);
 		
 		fooFilter = new FilterRecord(TEST_HASH, TAG_FOO);
+
+		result = new Result(resultGroup, new ImageRecord("foo", 1));
 	}
 
 	@Ignore("Not implemented yet")
@@ -349,5 +358,12 @@ public class DuplicateOperationsTest {
 		List<ImageRecord> missing = dupOp.findMissingFiles(tempDirectory);
 
 		assertThat(missing, containsInAnyOrder(missingRecord));
+	}
+
+	@Test
+	public void testIgnoreImage() throws Exception {
+		dupOp.ignore(result);
+
+		verify(ignoreRepository).store(new IgnoreRecord(result.getImageRecord()));
 	}
 }
