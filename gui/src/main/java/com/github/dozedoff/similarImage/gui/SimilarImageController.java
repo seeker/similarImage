@@ -310,6 +310,15 @@ public class SimilarImageController {
 		this.includeIgnoredImages = includeIgnoredImages;
 	}
 
+	/**
+	 * Get if ignored images should be included in the results
+	 * 
+	 * @return if true, ignored images should be included in the results
+	 */
+	public boolean getIncludeIgnoredImages() {
+		return includeIgnoredImages;
+	}
+
 	private Thread createPipelineThread(ImageQueryPipeline pipeline, Path scope) {
 		return new Thread() {
 			@Override
