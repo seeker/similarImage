@@ -1,6 +1,6 @@
 similarImage
 ============
-[![Build Status](https://travis-ci.org/seeker/similarImage.png?branch=develop)](https://travis-ci.org/seeker/similarImage) [![Coverage Status](https://coveralls.io/repos/seeker/similarImage/badge.png?branch=develop)](https://coveralls.io/r/seeker/similarImage?branch=develop) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/9443ff2c55da47329ed354e7a3d15f29)](https://www.codacy.com/app/seekeragain/similarImage?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=seeker/similarImage&amp;utm_campaign=Badge_Grade)
+[![Build Status](https://travis-ci.org/seeker/similarImage.png?branch=develop)](https://travis-ci.org/seeker/similarImage) [![Coverage Status](https://coveralls.io/repos/seeker/similarImage/badge.png?branch=develop)](https://coveralls.io/r/seeker/similarImage?branch=develop) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/9443ff2c55da47329ed354e7a3d15f29)](https://www.codacy.com/app/seeker/similarImage?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=seeker/similarImage&amp;utm_campaign=Badge_Grade)
 
 A similar image finder using DCT for image comparison.
 Based on the [Looks Like It](http://www.hackerfactor.com/blog/?/archives/432-Looks-Like-It.html) blog post.
