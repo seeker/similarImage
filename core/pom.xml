@@ -30,7 +30,7 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<imageio-version>3.3.2</imageio-version>
 	</properties>
-	
+
 	<build>
 		<plugins>
 			<plugin>
@@ -101,6 +101,16 @@
 			<groupId>org.cfg4j</groupId>
 			<artifactId>cfg4j-core</artifactId>
 			<version>4.4.1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.aparapi</groupId>
+			<artifactId>aparapi</artifactId>
+			<version>1.4.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.aparapi</groupId>
+			<artifactId>aparapi-jni</artifactId>
+			<version>1.1.2</version>
 		</dependency>
 	</dependencies>
 </project>
