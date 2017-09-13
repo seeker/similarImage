@@ -77,12 +77,7 @@ public class DCTKernelTest {
 
 	@Test
 	public void testTransformDCT() throws Exception {
-		double[][] result = cut.transformDCT(testMatrix);
-
-		assertThat(result[0][0], is(259.99999999999994));
-		assertThat(result[0][7], is(-0.14340782498104815));
-		assertThat(result[7][0], is(-1.1472625998482104));
-		assertThat(result[7][7], is(-3.3306690738754696E-15));
+		double[] result = cut.transformDCT(Doubles.concat(testMatrix));
 
 		assertArrayEquals(EXPECTED, Doubles.concat(result), 0.1);
 	}

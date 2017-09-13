@@ -17,9 +17,12 @@
  */
 package com.github.dozedoff.similarImage.image.kernel;
 
+import com.google.common.primitives.Doubles;
+
 public class DCTKernel {
 	public static final int DEFAULT_MATRIX_SIZE = 8;
 	private final int N; // matrix size
+	private final int matrixArea;
 	private final double[] dctCoefficients;
 
 	/**
@@ -37,6 +40,7 @@ public class DCTKernel {
 	 */
 	public DCTKernel(int matrixSize) {
 		this.N = matrixSize;
+		this.matrixArea = N*N;
 		dctCoefficients = new double[N];
 		initCoefficients();
 	}
@@ -56,22 +60,23 @@ public class DCTKernel {
 	 * 
 	 * @see DCT function from http://stackoverflow.com/questions/4240490/problems-with-dct-and-idct-algorithm-in-java
 	 */
-	public double[][] transformDCT(double[][] matrix) {
-		double[][] F = new double[N][N];
+	public double[] transformDCT(double[] matrix) {
+		double[] F = new double[matrixArea];
 		for (int u = 0; u < N; u++) {
 			for (int v = 0; v < N; v++) {
 				double sum = 0.0;
 				for (int i = 0; i < N; i++) {
 					for (int j = 0; j < N; j++) {
 						sum += Math.cos(((2 * i + 1) / (2.0 * N)) * u * Math.PI)
-								* Math.cos(((2 * j + 1) / (2.0 * N)) * v * Math.PI) * (matrix[i][j]);
+								* Math.cos(((2 * j + 1) / (2.0 * N)) * v * Math.PI) * (matrix[i*N + j]);
 					}
 				}
+				
 				sum *= ((dctCoefficients[u] * dctCoefficients[v]) / 4.0);
-				F[u][v] = sum;
+				F[u*N + v] = sum;
 			}
 		}
 
-		return F;
+		return Doubles.concat(F);
 	}
 }
