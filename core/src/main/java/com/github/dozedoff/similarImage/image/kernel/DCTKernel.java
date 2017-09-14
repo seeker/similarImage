@@ -62,14 +62,13 @@ public class DCTKernel {
 	 */
 	public double[] transformDCT(double[] matrix) {
 		double[] F = new double[matrixArea];
+
 		for (int u = 0; u < N; u++) {
 			for (int v = 0; v < N; v++) {
 				double sum = 0.0;
-				for (int i = 0; i < N; i++) {
-					for (int j = 0; j < N; j++) {
-						sum += Math.cos(((2 * i + 1) / (2.0 * N)) * u * Math.PI)
-								* Math.cos(((2 * j + 1) / (2.0 * N)) * v * Math.PI) * (matrix[i*N + j]);
-					}
+				for (int g = 0; g < matrixArea; g++) {
+					sum += Math.cos(((2 * (g / N) + 1) / (2.0 * N)) * u * Math.PI)
+							* Math.cos(((2 * (g % N) + 1) / (2.0 * N)) * v * Math.PI) * (matrix[g]);
 				}
 				
 				sum *= ((dctCoefficients[u] * dctCoefficients[v]) / 4.0);
