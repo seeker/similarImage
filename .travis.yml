@@ -6,6 +6,7 @@ jobs:
     - script: mvn test
       after_success:
         - mvn jacoco:report-aggregate coveralls:report
+        - bash <(curl -s https://codecov.io/bash) 
       jdk: oraclejdk8
     - stage: GitHub Release
       jdk: oraclejdk8
