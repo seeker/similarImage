@@ -2,6 +2,7 @@ similarImage
 ============
 [![Build Status](https://travis-ci.org/seeker/similarImage.png?branch=develop)](https://travis-ci.org/seeker/similarImage)
 [![Coverage Status](https://coveralls.io/repos/seeker/similarImage/badge.png?branch=develop)](https://coveralls.io/r/seeker/similarImage?branch=develop)
+[![codecov](https://codecov.io/gh/seeker/similarImage/branch/master/graph/badge.svg)](https://codecov.io/gh/seeker/similarImage)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/9443ff2c55da47329ed354e7a3d15f29)](https://www.codacy.com/app/seeker/similarImage?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=seeker/similarImage&amp;utm_campaign=Badge_Grade)
 
 A similar image finder using DCT for image comparison.
