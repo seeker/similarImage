@@ -19,6 +19,7 @@
 		<dagger-version>2.12</dagger-version>
 		<sqlite-driver-version>3.7.15-M1</sqlite-driver-version>
 		<logback-version>1.2.3</logback-version>
+		<ormlite-version>4.47</ormlite-version>
 	</properties>
 
 	<modules>
@@ -38,6 +39,7 @@
 			</plugin>
 		</plugins>
 	</reporting>
+	
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
@@ -61,6 +63,16 @@
 				<artifactId>jimfs</artifactId>
 				<version>1.1</version>
 				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.j256.ormlite</groupId>
+				<artifactId>ormlite-core</artifactId>
+				<version>${ormlite-version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.j256.ormlite</groupId>
+				<artifactId>ormlite-jdbc</artifactId>
+				<version>${ormlite-version}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
