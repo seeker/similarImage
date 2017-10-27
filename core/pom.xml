@@ -99,7 +99,7 @@
 		<dependency>
 			<groupId>org.cfg4j</groupId>
 			<artifactId>cfg4j-core</artifactId>
-			<version>4.4.0</version>
+			<version>4.4.1</version>
 		</dependency>
 	</dependencies>
 </project>
