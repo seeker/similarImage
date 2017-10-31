@@ -30,6 +30,8 @@ import org.junit.Test;
 import com.j256.ormlite.support.ConnectionSource;
 
 public class SQLiteDatabaseTest {
+	private static final String EMPTY_STRING = "";
+
 	private Path databaseFile;
 	private SQLiteDatabase cut;
 
@@ -56,7 +58,7 @@ public class SQLiteDatabaseTest {
 
 	@Test
 	public void testGetCs() throws Exception {
-		assertThat(cut.getCs().isOpen(), is(true));
+		assertThat(cut.getCs().isOpen(EMPTY_STRING), is(true));
 
 	}
 
@@ -64,11 +66,11 @@ public class SQLiteDatabaseTest {
 	public void testClose() throws Exception {
 		ConnectionSource cs = cut.getCs();
 
-		assertThat(cs.isOpen(), is(true)); // guard assert
+		assertThat(cs.isOpen(EMPTY_STRING), is(true)); // guard assert
 
 		cut.close();
 
-		assertThat(cs.isOpen(), is(false));
+		assertThat(cs.isOpen(EMPTY_STRING), is(false));
 
 	}
 }

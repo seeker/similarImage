@@ -79,7 +79,7 @@ public class SQLiteDatabase implements Database {
 
 	private void setupDatabase(ConnectionSource cs) throws SQLException {
 		LOGGER.info("Setting database config...");
-		DatabaseConnection dbConn = cs.getReadWriteConnection();
+		DatabaseConnection dbConn = cs.getReadWriteConnection("");
 		// FIXME Tests fail if journal_mode PRAGMA is set
 		dbConn.executeStatement("PRAGMA page_size = 4096;", DatabaseConnection.DEFAULT_RESULT_FLAGS);
 		dbConn.executeStatement("PRAGMA cache_size=10000;", DatabaseConnection.DEFAULT_RESULT_FLAGS);
