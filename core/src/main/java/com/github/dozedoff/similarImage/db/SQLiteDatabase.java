@@ -80,12 +80,12 @@ public class SQLiteDatabase implements Database {
 	private void setupDatabase(ConnectionSource cs) throws SQLException {
 		LOGGER.info("Setting database config...");
 		DatabaseConnection dbConn = cs.getReadWriteConnection();
+		// FIXME Tests fail if journal_mode PRAGMA is set
 		dbConn.executeStatement("PRAGMA page_size = 4096;", DatabaseConnection.DEFAULT_RESULT_FLAGS);
 		dbConn.executeStatement("PRAGMA cache_size=10000;", DatabaseConnection.DEFAULT_RESULT_FLAGS);
 		dbConn.executeStatement("PRAGMA locking_mode=EXCLUSIVE;", DatabaseConnection.DEFAULT_RESULT_FLAGS);
 		dbConn.executeStatement("PRAGMA synchronous=NORMAL;", DatabaseConnection.DEFAULT_RESULT_FLAGS);
 		dbConn.executeStatement("PRAGMA temp_store = MEMORY;", DatabaseConnection.DEFAULT_RESULT_FLAGS);
-		dbConn.executeStatement("PRAGMA journal_mode=MEMORY;", DatabaseConnection.DEFAULT_RESULT_FLAGS);
 	}
 
 	private void migrateDatabase(String fullDbPath) {
