@@ -30,7 +30,7 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		
 		<imageio-version>3.3.2</imageio-version>
-		<artemis-version>2.3.0</artemis-version>
+		<artemis-version>2.4.0</artemis-version>
 	</properties>
 
 	<build>
