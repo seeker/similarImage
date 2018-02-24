@@ -27,6 +27,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.List;
@@ -43,7 +44,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.commonj.hash.ImagePHash;
 
-@SuppressWarnings("deprecation")
 @RunWith(MockitoJUnitRunner.class)
 public class HasherNodeTest extends MessagingBaseTest {
 	private static final String TEST_ADDRESS_REQUEST = "test_request";
@@ -63,7 +63,7 @@ public class HasherNodeTest extends MessagingBaseTest {
 
 	@Before
 	public void setUp() throws Exception {
-		when(hasher.getLongHashScaledImage(any(BufferedImage.class))).thenReturn(TEST_HASH);
+		when(hasher.getLongHash(any(BufferedImage.class))).thenReturn(TEST_HASH);
 		messageFactory = new MessageFactory(session);
 		message = messageFactory.hashRequestMessage(TEST_DATA, TEST_UUID);
 		metrics = new MetricRegistry();
@@ -137,7 +137,7 @@ public class HasherNodeTest extends MessagingBaseTest {
 
 	@Test
 	public void testHashDurationOnFailure() throws Exception {
-		when(hasher.getLongHashScaledImage(any(BufferedImage.class))).thenThrow(new Exception("Testing"));
+		when(hasher.getLongHash(any(BufferedImage.class))).thenThrow(new IOException("Testing"));
 
 		cut.onMessage(message);
 

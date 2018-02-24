@@ -189,10 +189,8 @@ public class HasherNode implements MessageHandler, Node {
 		}
 	}
 
-	@SuppressWarnings("deprecation")
 	private long doHash(BufferedImage image) throws Exception {
-		// TODO clean up commonj library
-		long hash = hasher.getLongHashScaledImage(image);
+		long hash = hasher.getLongHash(image);
 		return hash;
 	}
 }

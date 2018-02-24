@@ -20,7 +20,7 @@
 		<sqlite-driver-version>3.20.1</sqlite-driver-version>
 		<logback-version>1.2.3</logback-version>
 		<ormlite-version>5.0</ormlite-version>
-		<commonj-version>v0.2.0</commonj-version>
+		<commonj-version>0.3.0</commonj-version>
 	</properties>
 
 	<modules>
