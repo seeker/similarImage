@@ -28,6 +28,9 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		
+		<imageio-version>3.3.2</imageio-version>
+		<artemis-version>2.4.0</artemis-version>
 	</properties>
 
 	<build>
@@ -48,18 +51,16 @@
 		<dependency>
 			<groupId>com.github.dozedoff</groupId>
 			<artifactId>commonj</artifactId>
-			<version>v0.2.0</version>
+			<version>${commonj-version}</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.j256.ormlite</groupId>
 			<artifactId>ormlite-core</artifactId>
-			<version>4.47</version>
 		</dependency>
 		<dependency>
 			<groupId>com.j256.ormlite</groupId>
 			<artifactId>ormlite-jdbc</artifactId>
-			<version>4.47</version>
 		</dependency>
 		<dependency>
 			<!-- Required for integration tests to run -->
@@ -79,12 +80,12 @@
 		<dependency>
 			<groupId>com.twelvemonkeys.imageio</groupId>
 			<artifactId>imageio-core</artifactId>
-			<version>3.2.1</version>
+			<version>${imageio-version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.twelvemonkeys.imageio</groupId>
 			<artifactId>imageio-jpeg</artifactId>
-			<version>3.2.1</version>
+			<version>${imageio-version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.dozedoff</groupId>
@@ -94,17 +95,17 @@
 		<dependency>
 			<groupId>org.apache.activemq</groupId>
 			<artifactId>artemis-server</artifactId>
-			<version>1.4.0</version>
+			<version>${artemis-version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.activemq</groupId>
 			<artifactId>artemis-core-client</artifactId>
-			<version>1.4.0</version>
+			<version>${artemis-version}</version>
 		</dependency>
 		<dependency>
 			<groupId>io.dropwizard.metrics</groupId>
 			<artifactId>metrics-core</artifactId>
-			<version>3.1.0</version>
+			<version>3.2.5</version>
 		</dependency>
 	</dependencies>
 </project>

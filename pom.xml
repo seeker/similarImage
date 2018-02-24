@@ -16,8 +16,11 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<dagger-version>2.8</dagger-version>
-		<sqlite-driver-version>3.7.15-M1</sqlite-driver-version>
+		<dagger-version>2.12</dagger-version>
+		<sqlite-driver-version>3.20.1</sqlite-driver-version>
+		<logback-version>1.2.3</logback-version>
+		<ormlite-version>5.0</ormlite-version>
+		<commonj-version>0.3.0</commonj-version>
 	</properties>
 
 	<modules>
@@ -37,12 +40,13 @@
 			</plugin>
 		</plugins>
 	</reporting>
+	
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
 				<groupId>com.google.guava</groupId>
 				<artifactId>guava</artifactId>
-				<version>21.0-rc1</version>
+				<version>23.2-jre</version>
 			</dependency>
 			<dependency>
 				<groupId>com.google.dagger</groupId>
@@ -61,6 +65,16 @@
 				<version>1.1</version>
 				<scope>test</scope>
 			</dependency>
+			<dependency>
+				<groupId>com.j256.ormlite</groupId>
+				<artifactId>ormlite-core</artifactId>
+				<version>${ormlite-version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.j256.ormlite</groupId>
+				<artifactId>ormlite-jdbc</artifactId>
+				<version>${ormlite-version}</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 	
@@ -70,7 +84,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-failsafe-plugin</artifactId>
-					<version>2.19.1</version>
+					<version>2.20.1</version>
 					<executions>
 						<execution>
 							<id>integration-test</id>
@@ -84,7 +98,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-surefire-plugin</artifactId>
-					<version>2.19.1</version>
+					<version>2.20.1</version>
 					<configuration>
 						<parallel>methods</parallel>
 						<threadCount>10</threadCount>
@@ -137,7 +151,7 @@
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.1</version>
+				<version>3.7.0</version>
 				<dependencies>
 					<dependency>
 						<groupId>com.google.dagger</groupId>
@@ -154,13 +168,8 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
-				<version>2.4</version>
+				<version>3.0.2</version>
 				<!-- nothing here -->
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-eclipse-plugin</artifactId>
-				<version>2.9</version>
 			</plugin>
 			<plugin>
 				<groupId>org.eluder.coveralls</groupId>
@@ -175,7 +184,7 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>findbugs-maven-plugin</artifactId>
-				<version>3.0.1</version>
+				<version>3.0.5</version>
 				<configuration>
 					<effort>Max</effort>
 					<threshold>Normal</threshold>
@@ -200,7 +209,7 @@
 					<dependency>
 						<groupId>com.puppycrawl.tools</groupId>
 						<artifactId>checkstyle</artifactId>
-						<version>7.3</version>
+						<version>8.3</version>
 					</dependency>
 				</dependencies>
 			</plugin>
@@ -219,7 +228,7 @@
 			<plugin>
 				<groupId>org.flywaydb</groupId>
 				<artifactId>flyway-maven-plugin</artifactId>
-				<version>4.2.0</version>
+				<version>5.0.3</version>
 				<configuration>
 					<url>jdbc:sqlite:similarImage.db</url>
 				</configuration>
@@ -238,7 +247,7 @@
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.11</version>
+			<version>4.12</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -256,13 +265,13 @@
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
-			<version>1.1.7</version>
+			<version>${logback-version}</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-core</artifactId>
-			<version>1.1.7</version>
+			<version>${logback-version}</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
@@ -274,7 +283,7 @@
 		<dependency>
 			<groupId>com.googlecode.junit-toolbox</groupId>
 			<artifactId>junit-toolbox</artifactId>
-			<version>2.2</version>
+			<version>2.4</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -286,7 +295,7 @@
 		<dependency>
 			<groupId>com.google.dagger</groupId>
 			<artifactId>dagger</artifactId>
-			<version>2.8</version>
+			<version>${dagger-version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.dagger</groupId>
