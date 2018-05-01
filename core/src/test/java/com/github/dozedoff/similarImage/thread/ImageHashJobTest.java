@@ -17,10 +17,12 @@
  */
 package com.github.dozedoff.similarImage.thread;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -33,7 +35,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.db.ImageRecord;
@@ -79,7 +81,8 @@ public class ImageHashJobTest {
 
 	@Test
 	public void testRunIIOException() throws Exception {
-		Mockito.doThrow(IIOException.class).when(imageRepository).store(any(ImageRecord.class));
+		when(phw.getLongHash(any(InputStream.class))).thenThrow(IIOException.class);
+
 		imageLoadJob.run();
 
 		verify(statistics).incrementFailedFiles();
