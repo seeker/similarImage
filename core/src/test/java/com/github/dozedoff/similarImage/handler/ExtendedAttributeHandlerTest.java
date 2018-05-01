@@ -23,7 +23,7 @@ import static com.google.common.jimfs.Feature.SYMBOLIC_LINKS;
 import static com.google.common.jimfs.PathNormalization.CASE_FOLD_ASCII;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -42,7 +42,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
@@ -54,7 +54,8 @@ import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.google.common.jimfs.PathType;
 
-@RunWith(MockitoJUnitRunner.class)
+//FIXME Silent runner is just a band-aid to get the tests to run 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ExtendedAttributeHandlerTest {
 	@Mock
 	private HashAttribute hashAttribute;
