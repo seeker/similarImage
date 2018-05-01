@@ -40,6 +40,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
+import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.io.Statistics;
 
@@ -98,7 +99,7 @@ public class ImageHashJobTest {
 
 	@Test
 	public void testDoNotWriteExtendedAttributes() throws Exception {
-		Mockito.doThrow(IIOException.class).when(imageRepository).store(any(ImageRecord.class));
+		Mockito.doThrow(RepositoryException.class).when(imageRepository).store(any(ImageRecord.class));
 		imageLoadJob.setHashAttribute(hashAttributeMock);
 		imageLoadJob.run();
 
