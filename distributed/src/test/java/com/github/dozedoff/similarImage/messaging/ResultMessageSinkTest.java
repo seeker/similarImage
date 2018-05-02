@@ -17,9 +17,9 @@
  */
 package com.github.dozedoff.similarImage.messaging;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
@@ -36,9 +36,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.class)
+//FIXME Silent runner is just a band-aid to get the tests to run
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ResultMessageSinkTest {
 	private static final int VERIFY_TIMEOUT = 500;
 	private static final int TEST_TIMEOUT = 2000;

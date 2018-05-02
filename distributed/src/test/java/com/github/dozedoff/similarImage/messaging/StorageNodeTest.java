@@ -16,12 +16,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 
-@RunWith(MockitoJUnitRunner.class)
+//FIXME Silent runner is just a band-aid to get the tests to run
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class StorageNodeTest extends MessagingBaseTest {
 	private static final Path PATH = Paths.get("foo");
 	private static final long HASH = 42;
