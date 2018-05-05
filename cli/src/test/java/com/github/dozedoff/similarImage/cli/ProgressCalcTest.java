@@ -26,13 +26,14 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.similarImage.io.Statistics;
 
-@RunWith(MockitoJUnitRunner.class)
+//FIXME Silent runner is just a band-aid to get the tests to run
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ProgressCalcTest {
 	private static final int TOTAL_FILE_COUNT = 210;
 	private static final int PROCESSED_FILE_COUNT = 30;

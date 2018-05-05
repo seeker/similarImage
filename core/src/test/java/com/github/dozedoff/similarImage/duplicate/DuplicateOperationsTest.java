@@ -20,8 +20,8 @@ package com.github.dozedoff.similarImage.duplicate;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyLong;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -39,9 +39,10 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.IgnoreRecord;
@@ -200,14 +201,22 @@ public class DuplicateOperationsTest {
 
 		assertFilesDoNotExist(files);
 
-		verify(filterRepository, times(RECORD_NUMBER)).store(new FilterRecord(anyLong(), TAG_DNW));
+		ArgumentCaptor<FilterRecord> capture = ArgumentCaptor.forClass(FilterRecord.class);
+		
+		verify(filterRepository, times(RECORD_NUMBER)).store(capture.capture());
 		verify(imageRepository, times(RECORD_NUMBER)).remove(any(ImageRecord.class));
+
+		for (FilterRecord record : capture.getAllValues()) {
+			assertThat(record.getTag(), is(TAG_DNW));
+		}
 	}
 
 	@Test
 	public void testMarkDnwAndDeleteDBerror() throws Exception {
 		List<Path> files = createTempTestFiles(RECORD_NUMBER);
 		LinkedList<Result> records = new LinkedList<>();
+
+		ArgumentCaptor<FilterRecord> capture = ArgumentCaptor.forClass(FilterRecord.class);
 
 		Mockito.doThrow(new RepositoryException("This is a test")).when(filterRepository)
 				.store(any(FilterRecord.class));
@@ -220,8 +229,12 @@ public class DuplicateOperationsTest {
 
 		guardFilesExist(files);
 
-		verify(filterRepository, times(RECORD_NUMBER)).store(new FilterRecord(anyLong(), TAG_DNW));
+		verify(filterRepository, times(RECORD_NUMBER)).store(capture.capture());
 		verify(imageRepository, never()).remove(any(ImageRecord.class));
+
+		for (FilterRecord record : capture.getAllValues()) {
+			assertThat(record.getTag(), is(TAG_DNW));
+		}
 	}
 
 	@Test
