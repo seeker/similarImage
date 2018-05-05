@@ -22,8 +22,9 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -80,7 +81,7 @@ public class ResizerNodeTest extends MessagingBaseTest {
 	public void setUp() throws Exception {
 		when(pendingRepo.store(any(PendingHashImage.class))).thenReturn(true);
 		when(pendingRepo.exists(any(PendingHashImage.class))).thenReturn(false);
-		when(resizer.resize(any(BufferedImage.class))).thenReturn(new byte[0]);
+		when(resizer.resize(nullable(BufferedImage.class))).thenReturn(new byte[0]);
 		when(queryMessage.pendingImagePaths()).thenReturn(Arrays.asList(PATH));
 		when(is.read()).thenReturn(-1);
 
@@ -141,7 +142,7 @@ public class ResizerNodeTest extends MessagingBaseTest {
 	@Test
 	public void testCorruptImageDataTaskProperty() throws Exception {
 		message = messageBuilder.configureResizeMessage().build();
-		when(resizer.resize(any(BufferedImage.class))).thenThrow(new IIOException(""));
+		when(resizer.resize(nullable(BufferedImage.class))).thenThrow(new IIOException(""));
 
 		cut.onMessage(message);
 
@@ -162,7 +163,7 @@ public class ResizerNodeTest extends MessagingBaseTest {
 	@Test
 	public void testImageReadError() throws Exception {
 		message = messageBuilder.configureResizeMessage().build();
-		when(resizer.resize(any(BufferedImage.class))).thenThrow(new IOException("testing"));
+		when(resizer.resize(nullable(BufferedImage.class))).thenThrow(new IOException("testing"));
 
 		cut.onMessage(message);
 
@@ -172,7 +173,7 @@ public class ResizerNodeTest extends MessagingBaseTest {
 	@Test
 	public void testGIFerrorUnknownBlock() throws Exception {
 		message = messageBuilder.configureResizeMessage().build();
-		when(resizer.resize(any(BufferedImage.class))).thenThrow(new IOException("Unknown block"));
+		when(resizer.resize(nullable(BufferedImage.class))).thenThrow(new IOException("Unknown block"));
 
 		cut.onMessage(message);
 
@@ -183,7 +184,7 @@ public class ResizerNodeTest extends MessagingBaseTest {
 	@Test
 	public void testGIFerrorInvalidHeader() throws Exception {
 		message = messageBuilder.configureResizeMessage().build();
-		when(resizer.resize(any(BufferedImage.class))).thenThrow(new IOException("Invalid GIF header"));
+		when(resizer.resize(nullable(BufferedImage.class))).thenThrow(new IOException("Invalid GIF header"));
 
 		cut.onMessage(message);
 
