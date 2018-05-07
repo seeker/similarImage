@@ -9,6 +9,7 @@ jobs:
         - bash <(curl -s https://codecov.io/bash) 
       jdk: oraclejdk8
     - stage: GitHub Release
+      if: tag IS present
       jdk: oraclejdk8
       script: mvn package -Dmaven.test.skip=true
       deploy:
