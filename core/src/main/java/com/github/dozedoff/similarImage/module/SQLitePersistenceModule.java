@@ -40,7 +40,6 @@ import com.j256.ormlite.support.ConnectionSource;
 import dagger.Module;
 import dagger.Provides;
 
-@Singleton
 @Module
 public class SQLitePersistenceModule {
 	private final static String DEFAULT_DB_PATH = "similarImage.db";
@@ -66,6 +65,7 @@ public class SQLitePersistenceModule {
 		return new SQLiteDatabase(databasePath);
 	}
 
+	@Singleton
 	@Provides
 	public ConnectionSource provideConnectionSource(Database database) {
 		return database.getCs();
@@ -77,6 +77,7 @@ public class SQLitePersistenceModule {
 		return new OrmliteRepositoryFactory(database);
 	}
 
+	@Singleton
 	@Provides
 	public ImageRepository provideImageRepository(RepositoryFactory repositoryFactory) {
 		try {
@@ -86,6 +87,7 @@ public class SQLitePersistenceModule {
 		}
 	}
 
+	@Singleton
 	@Provides
 	public PendingHashImageRepository providePendingHashImageRepository(RepositoryFactory repositoryFactory) {
 		try {
@@ -95,6 +97,7 @@ public class SQLitePersistenceModule {
 		}
 	}
 
+	@Singleton
 	@Provides
 	public FilterRepository provideFilterRepository(RepositoryFactory repositoryFactory) {
 		try {
@@ -104,6 +107,7 @@ public class SQLitePersistenceModule {
 		}
 	}
 
+	@Singleton
 	@Provides
 	public TagRepository provideTagRepository(RepositoryFactory repositoryFactory) {
 		try {
@@ -113,6 +117,7 @@ public class SQLitePersistenceModule {
 		}
 	}
 
+	@Singleton
 	@Provides
 	public IgnoreRepository provideIgnoreRepository(RepositoryFactory repositoryFactory) {
 		try {
@@ -122,6 +127,7 @@ public class SQLitePersistenceModule {
 		}
 	}
 
+	@Singleton
 	@Provides
 	public TransactionManager provideTransactionManager(ConnectionSource cs) {
 		return new TransactionManager(cs);

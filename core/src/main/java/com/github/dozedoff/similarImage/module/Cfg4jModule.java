@@ -37,7 +37,6 @@ import com.github.dozedoff.similarImage.app.MainSetting;
 import dagger.Module;
 import dagger.Provides;
 
-@Singleton
 @Module
 public class Cfg4jModule {
 	/**
@@ -45,6 +44,7 @@ public class Cfg4jModule {
 	 * 
 	 * @return a list of configuration files
 	 */
+	@Singleton
 	@Provides
 	public ConfigFilesProvider provideConfigFilesProvider() {
 		return () -> Arrays.asList(Paths.get("").toAbsolutePath().resolve("similarImage.yml"));
@@ -55,6 +55,7 @@ public class Cfg4jModule {
 	 * 
 	 * @return default configuration property
 	 */
+	@Singleton
 	@Provides
 	public Properties providesDefaultConfiguration() {
 		Properties props = new Properties();
@@ -74,6 +75,7 @@ public class Cfg4jModule {
 	 *            default configuration
 	 * @return a classpath based configuration provider
 	 */
+	@Singleton
 	@Provides
 	public ConfigurationSource provideConfigurationSource(ConfigFilesProvider configFilesProvider,
 			Properties defaultConfig) {
