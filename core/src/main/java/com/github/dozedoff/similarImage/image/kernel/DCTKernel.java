@@ -17,6 +17,9 @@
  */
 package com.github.dozedoff.similarImage.image.kernel;
 
+import com.aparapi.Kernel;
+import com.aparapi.Range;
+import com.aparapi.device.Device;
 import com.google.common.primitives.Doubles;
 
 public class DCTKernel {
@@ -61,20 +64,35 @@ public class DCTKernel {
 	 * @see DCT function from http://stackoverflow.com/questions/4240490/problems-with-dct-and-idct-algorithm-in-java
 	 */
 	public double[] transformDCT(double[] matrix) {
-		double[] F = new double[matrixArea];
+		final double[] F = new double[matrixArea];
+		final int size = N;
+		final int area = matrixArea;
 
-		for (int u = 0; u < N; u++) {
-			for (int v = 0; v < N; v++) {
+		final double[] dctCoef = dctCoefficients;
+
+		Device device = Device.firstCPU();
+		Range range = Range.create2D(device, N, N);
+
+		Kernel kernel = new Kernel() {
+			@Override
+			public void run() {
+				int u = getGlobalId(0);
+				int v = getGlobalId(1);
+
 				double sum = 0.0;
-				for (int g = 0; g < matrixArea; g++) {
-					sum += Math.cos(((2 * (g / N) + 1) / (2.0 * N)) * u * Math.PI)
-							* Math.cos(((2 * (g % N) + 1) / (2.0 * N)) * v * Math.PI) * (matrix[g]);
+
+				for (int g = 0; g < area; g++) {
+					sum += cos(((2 * (g / size) + 1) / (2.0 * size)) * u * Math.PI)
+							* cos(((2 * (g % size) + 1) / (2.0 * size)) * v * Math.PI) * (matrix[g]);
 				}
-				
-				sum *= ((dctCoefficients[u] * dctCoefficients[v]) / 4.0);
-				F[u*N + v] = sum;
+
+				sum *= ((dctCoef[u] * dctCoef[v]) / 4.0);
+
+				F[u * size + v] = sum;
 			}
-		}
+		};
+
+		kernel.execute(range);
 
 		return Doubles.concat(F);
 	}
