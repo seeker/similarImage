@@ -20,6 +20,7 @@ package com.github.dozedoff.similarImage.image.kernel;
 import com.aparapi.Kernel;
 import com.aparapi.Range;
 import com.aparapi.device.Device;
+import com.aparapi.internal.kernel.KernelManager;
 import com.google.common.primitives.Doubles;
 
 public class DCTKernel {
@@ -27,6 +28,9 @@ public class DCTKernel {
 	private final int N; // matrix size
 	private final int matrixArea;
 	private final double[] dctCoefficients;
+
+	private Device device;
+	private Range range;
 
 	/**
 	 * Create a new DCT kernel for a 8x8 matrix;
@@ -46,6 +50,12 @@ public class DCTKernel {
 		this.matrixArea = N*N;
 		dctCoefficients = new double[N];
 		initCoefficients();
+
+		setDevice(KernelManager.instance().bestDevice());
+	}
+
+	public void setDevice(Device device) {
+		range = Range.create2D(device, N, N);
 	}
 
 	private void initCoefficients() {
@@ -69,9 +79,6 @@ public class DCTKernel {
 		final int area = matrixArea;
 
 		final double[] dctCoef = dctCoefficients;
-
-		Device device = Device.firstCPU();
-		Range range = Range.create2D(device, N, N);
 
 		Kernel kernel = new Kernel() {
 			@Override
