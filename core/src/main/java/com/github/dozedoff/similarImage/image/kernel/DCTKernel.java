@@ -23,11 +23,13 @@ import com.aparapi.device.Device;
 import com.aparapi.internal.kernel.KernelManager;
 import com.google.common.primitives.Doubles;
 
-public class DCTKernel {
+public class DCTKernel extends Kernel {
 	public static final int DEFAULT_MATRIX_SIZE = 8;
 	private final int N; // matrix size
 	private final int matrixArea;
 	private final double[] dctCoefficients;
+	private final double[] matrix;
+	private final double[] result;
 
 	private Device device;
 	private Range range;
@@ -48,7 +50,9 @@ public class DCTKernel {
 	public DCTKernel(int matrixSize) {
 		this.N = matrixSize;
 		this.matrixArea = N*N;
-		dctCoefficients = new double[N];
+		this.matrix = new double[matrixArea];
+		this.result = new double[matrixArea];
+		this.dctCoefficients = new double[N];
 		initCoefficients();
 
 		setDevice(KernelManager.instance().bestDevice());
@@ -66,6 +70,23 @@ public class DCTKernel {
 		dctCoefficients[0] = 1 / Math.sqrt(2.0);
 	}
 
+	@Override
+	public void run() {
+		int u = getGlobalId(0);
+		int v = getGlobalId(1);
+
+		double sum = 0.0;
+
+		for (int g = 0; g < matrixArea; g++) {
+			sum += cos(((2 * (g / N) + 1) / (2.0 * N)) * u * Math.PI)
+					* cos(((2 * (g % N) + 1) / (2.0 * N)) * v * Math.PI) * (matrix[g]);
+		}
+
+		sum *= ((dctCoefficients[u] * dctCoefficients[v]) / 4.0);
+
+		result[u * N + v] = sum;
+	}
+
 	/**
 	 * 
 	 * @param matrix
@@ -73,34 +94,13 @@ public class DCTKernel {
 	 * 
 	 * @see DCT function from http://stackoverflow.com/questions/4240490/problems-with-dct-and-idct-algorithm-in-java
 	 */
-	public double[] transformDCT(double[] matrix) {
-		final double[] F = new double[matrixArea];
-		final int size = N;
-		final int area = matrixArea;
+	public synchronized double[] transformDCT(double[] matrix) {
+		for (int i = 0; i < matrixArea; i++) {
+			this.matrix[i] = matrix[i];
+		}
 
-		final double[] dctCoef = dctCoefficients;
+		execute(range);
 
-		Kernel kernel = new Kernel() {
-			@Override
-			public void run() {
-				int u = getGlobalId(0);
-				int v = getGlobalId(1);
-
-				double sum = 0.0;
-
-				for (int g = 0; g < area; g++) {
-					sum += cos(((2 * (g / size) + 1) / (2.0 * size)) * u * Math.PI)
-							* cos(((2 * (g % size) + 1) / (2.0 * size)) * v * Math.PI) * (matrix[g]);
-				}
-
-				sum *= ((dctCoef[u] * dctCoef[v]) / 4.0);
-
-				F[u * size + v] = sum;
-			}
-		};
-
-		kernel.execute(range);
-
-		return Doubles.concat(F);
+		return Doubles.concat(result);
 	}
 }
