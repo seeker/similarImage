@@ -26,7 +26,7 @@ import com.github.dozedoff.commonj.time.StopWatch;
 import com.google.common.base.Stopwatch;
 
 public class DCTKernelBenchmark {
-	private static final int SAMPLE_SIZE = 20;
+	private static final int SAMPLE_SIZE = 1000;
 	private static double[][] samples;
 	private static double[][] resultCpu;
 	private static double[][] resultJtp;
