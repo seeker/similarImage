@@ -1,5 +1,9 @@
 sudo: false
 language: java
+jdk:
+  - oraclejdk11
+  - openjdk11
+  - openjdk8
 
 jobs:
   include:
@@ -7,11 +11,6 @@ jobs:
       after_success:
         - mvn jacoco:report-aggregate coveralls:report
         - bash <(curl -s https://codecov.io/bash) 
-      jdk:
-        - oraclejdk9
-        - oraclejdk11
-        - openjdk9
-        - openjdk11
 
     - stage: GitHub Release
       if: tag IS present
