@@ -115,7 +115,7 @@
 				</plugin>
 				<plugin>
 					<artifactId>maven-pmd-plugin</artifactId>
-					<version>3.12.0</version>
+					<version>3.13.0</version>
 					<configuration>
 						<includeTests>true</includeTests>
 						<minimumTokens>50</minimumTokens>
