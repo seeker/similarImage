@@ -7,10 +7,15 @@ jobs:
       after_success:
         - mvn jacoco:report-aggregate coveralls:report
         - bash <(curl -s https://codecov.io/bash) 
-      jdk: oraclejdk8
+      jdk:
+        - oraclejdk9
+        - oraclejdk11
+        - openjdk9
+        - openjdk11
+
     - stage: GitHub Release
       if: tag IS present
-      jdk: oraclejdk8
+      jdk: openjdk11
       script: mvn package -Dmaven.test.skip=true
       deploy:
         provider: releases
