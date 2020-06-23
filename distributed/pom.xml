@@ -50,7 +50,6 @@
 		<dependency>
 			<groupId>com.github.dozedoff</groupId>
 			<artifactId>commonj</artifactId>
-			<version>${commonj-version}</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
