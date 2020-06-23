@@ -51,10 +51,15 @@ public class ResultGroupTest {
 	private ImageRecord recordB;
 
 	private Result resultA;
+	private Result resultB;
 
 	@Mock
 	private GroupList parent;
-
+	@Mock
+	private GroupList parentBlue;
+	@Mock
+	private GroupList parentGreen;
+	
 	private ResultGroup cut;
 
 	@Before
@@ -64,6 +69,7 @@ public class ResultGroupTest {
 		cut = new ResultGroup(parent, HASH, records);
 
 		resultA = new Result(cut, recordA);
+		resultB = new Result(cut, recordB);
 	}
 
 	private void buildRecords() {
@@ -150,6 +156,6 @@ public class ResultGroupTest {
 
 	@Test
 	public void testHashAndEquals() throws Exception {
-		EqualsVerifier.forClass(ResultGroup.class).allFieldsShouldBeUsedExcept("parent", "results").verify();
+		EqualsVerifier.forClass(ResultGroup.class).withIgnoredFields("parent", "results").withPrefabValues(GroupList.class, parentGreen, parentBlue).withPrefabValues(Result.class, resultA, resultB).verify();
 	}
 }

@@ -88,7 +88,7 @@ public class FilterRecordTest {
 
 	@Test
 	public void testEquals() throws Exception {
-		EqualsVerifier.forClass(FilterRecord.class).suppress(Warning.NONFINAL_FIELDS).verify();
+		EqualsVerifier.forClass(FilterRecord.class).withIgnoredFields("id").suppress(Warning.NONFINAL_FIELDS).verify();
 	}
 
 	@Test

@@ -48,6 +48,6 @@ public class IgnoreRecordTest {
 
 	@Test
 	public void testWithEqualsVerifier() throws Exception {
-		EqualsVerifier.forClass(IgnoreRecord.class).allFieldsShouldBeUsedExcept("id").verify();
+		EqualsVerifier.forClass(IgnoreRecord.class).withIgnoredFields("id").verify();
 	}
 }
