@@ -28,7 +28,6 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<imageio-version>3.3.2</imageio-version>
 	</properties>
 
 	<build>
@@ -81,12 +80,10 @@
 		<dependency>
 			<groupId>com.twelvemonkeys.imageio</groupId>
 			<artifactId>imageio-core</artifactId>
-			<version>${imageio-version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.twelvemonkeys.imageio</groupId>
 			<artifactId>imageio-jpeg</artifactId>
-			<version>${imageio-version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.dozedoff</groupId>

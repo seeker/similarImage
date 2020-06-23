@@ -25,6 +25,7 @@
 		<logback-version>1.2.3</logback-version>
 		<ormlite-version>5.1</ormlite-version>
 		<commonj-version>0.3.0</commonj-version>
+		<imageio-version>3.3.2</imageio-version>
 	</properties>
 
 	<modules>
@@ -83,6 +84,16 @@
 				<groupId>net.sourceforge.argparse4j</groupId>
 				<artifactId>argparse4j</artifactId>
 				<version>0.8.1</version>
+			</dependency>
+			<dependency>
+				<groupId>com.twelvemonkeys.imageio</groupId>
+				<artifactId>imageio-core</artifactId>
+				<version>${imageio-version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.twelvemonkeys.imageio</groupId>
+				<artifactId>imageio-jpeg</artifactId>
+				<version>${imageio-version}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
