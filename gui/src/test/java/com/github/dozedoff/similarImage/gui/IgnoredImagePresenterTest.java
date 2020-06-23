@@ -17,7 +17,6 @@
  */
 package com.github.dozedoff.similarImage.gui;
 
-import static org.awaitility.Awaitility.to;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -87,7 +86,7 @@ public class IgnoredImagePresenterTest {
 		cut.setView(ignoredImageView);
 		cut.refreshList();
 
-		Awaitility.await().atMost(CONCURRENT_TIMEOUT, TimeUnit.MILLISECONDS).untilCall(to(cut.getModel()).getSize(),
+		Awaitility.await().atMost(CONCURRENT_TIMEOUT, TimeUnit.MILLISECONDS).until(() -> cut.getModel().getSize(),
 				is(2));
 	}
 
