@@ -20,7 +20,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<dagger-version>2.16</dagger-version>
+		<dagger-version>2.28.1</dagger-version>
 		<sqlite-driver-version>3.32.3</sqlite-driver-version>
 		<logback-version>1.2.3</logback-version>
 		<ormlite-version>5.1</ormlite-version>
