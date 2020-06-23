@@ -53,7 +53,6 @@ public class OrmliteRepositoryFactoryTest {
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		db.close();
-		Files.deleteIfExists(testPath);
 	}
 
 	@Test

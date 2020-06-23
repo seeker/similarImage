@@ -194,7 +194,6 @@ public class MessagingIT {
 	@AfterClass
 	public static void tearDownClass() throws IOException {
 		database.close();
-		Files.deleteIfExists(dbFile);
 	}
 
 	@Test

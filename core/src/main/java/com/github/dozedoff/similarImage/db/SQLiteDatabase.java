@@ -24,7 +24,7 @@ import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.j256.ormlite.jdbc.JdbcConnectionSource;
+import com.j256.ormlite.jdbc.JdbcPooledConnectionSource;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.support.DatabaseConnection;
 
@@ -66,7 +66,7 @@ public class SQLiteDatabase implements Database {
 	public SQLiteDatabase(String dbPath) {
 		try {
 			String fullDbPath = DB_PREFIX + dbPath;
-			connectionSource = new JdbcConnectionSource(fullDbPath);
+			connectionSource = new JdbcPooledConnectionSource(fullDbPath);
 			migrateDatabase(fullDbPath);
 			setupDatabase(connectionSource);
 
@@ -83,7 +83,7 @@ public class SQLiteDatabase implements Database {
 		// FIXME Tests fail if journal_mode PRAGMA is set
 		dbConn.executeStatement("PRAGMA page_size = 4096;", DatabaseConnection.DEFAULT_RESULT_FLAGS);
 		dbConn.executeStatement("PRAGMA cache_size=10000;", DatabaseConnection.DEFAULT_RESULT_FLAGS);
-		dbConn.executeStatement("PRAGMA locking_mode=EXCLUSIVE;", DatabaseConnection.DEFAULT_RESULT_FLAGS);
+		dbConn.executeStatement("PRAGMA locking_mode=NORMAL;", DatabaseConnection.DEFAULT_RESULT_FLAGS);
 		dbConn.executeStatement("PRAGMA synchronous=NORMAL;", DatabaseConnection.DEFAULT_RESULT_FLAGS);
 		dbConn.executeStatement("PRAGMA temp_store = MEMORY;", DatabaseConnection.DEFAULT_RESULT_FLAGS);
 	}
