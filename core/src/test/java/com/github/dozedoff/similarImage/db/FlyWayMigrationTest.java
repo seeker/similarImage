@@ -28,6 +28,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import org.flywaydb.core.Flyway;
+import org.flywaydb.core.api.configuration.FluentConfiguration;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -44,6 +45,7 @@ public class FlyWayMigrationTest {
 	private static final String VERSION_2_2 = "2.2";
 
 	private Flyway flyway;
+	private FluentConfiguration flywayConfig;
 	private Path databaseFile;
 	private ConnectionSource cs;
 	
@@ -51,15 +53,14 @@ public class FlyWayMigrationTest {
 	public void setUp() throws Exception {
 		databaseFile = Files.createTempFile(SQLiteDatabaseTest.class.getSimpleName(), ".db");
 		String fulldbPath = "jdbc:sqlite:" + databaseFile;
-		flyway = new Flyway();
-		flyway.setDataSource(fulldbPath, "", "");
-
+		flywayConfig = Flyway.configure().dataSource(fulldbPath, "", "").target(VERSION_2_2);
+		flyway = flywayConfig.load();
+		
 		cs = new JdbcConnectionSource(fulldbPath);
 	}
 
 	@Test
 	public void testMigrationTo2v2tags() throws Exception {
-		flyway.setTargetAsString(VERSION_2_2);
 		flyway.migrate();
 
 		Dao<Tag, Integer> dao = DaoManager.createDao(cs, Tag.class);
@@ -71,7 +72,6 @@ public class FlyWayMigrationTest {
 
 	@Test
 	public void testMigrationTo2v2filter() throws Exception {
-		flyway.setTargetAsString(VERSION_2_2);
 		flyway.migrate();
 
 		Dao<Tag, Integer> tag = DaoManager.createDao(cs, Tag.class);
@@ -87,8 +87,7 @@ public class FlyWayMigrationTest {
 	@Test
 	public void testMigrationTo3v0() throws Exception
 	{
-		flyway.setTargetAsString("3.0");
-		flyway.migrate();
+		flywayConfig.target("3.0").load().migrate();
 
 		Dao<ImageRecord, String> image = DaoManager.createDao(cs, ImageRecord.class);
 		Dao<IgnoreRecord, String> ignore = DaoManager.createDao(cs, IgnoreRecord.class);

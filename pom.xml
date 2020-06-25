@@ -13,14 +13,19 @@
 	<description>Programm for finding visually similar images</description>
 	<url>https://github.com/dozedoff/similarImage</url>
 
+	<prerequisites>
+		<maven>3.6.0</maven>
+	</prerequisites>
+
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<dagger-version>2.16</dagger-version>
-		<sqlite-driver-version>3.20.1</sqlite-driver-version>
+		<dagger-version>2.28.1</dagger-version>
+		<sqlite-driver-version>3.32.3</sqlite-driver-version>
 		<logback-version>1.2.3</logback-version>
-		<ormlite-version>5.0</ormlite-version>
-		<commonj-version>0.3.0</commonj-version>
+		<ormlite-version>5.1</ormlite-version>
+		<imageio-version>3.5</imageio-version>
+		<flyway-version>6.4.4</flyway-version>
 	</properties>
 
 	<modules>
@@ -36,7 +41,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jxr-plugin</artifactId>
-				<version>2.5</version>
+				<version>3.0.0</version>
 			</plugin>
 		</plugins>
 	</reporting>
@@ -46,7 +51,7 @@
 			<dependency>
 				<groupId>com.google.guava</groupId>
 				<artifactId>guava</artifactId>
-				<version>25.0-jre</version>
+				<version>29.0-jre</version>
 			</dependency>
 			<dependency>
 				<groupId>com.google.dagger</groupId>
@@ -75,6 +80,31 @@
 				<artifactId>ormlite-jdbc</artifactId>
 				<version>${ormlite-version}</version>
 			</dependency>
+			<dependency>
+				<groupId>net.sourceforge.argparse4j</groupId>
+				<artifactId>argparse4j</artifactId>
+				<version>0.8.1</version>
+			</dependency>
+			<dependency>
+				<groupId>com.twelvemonkeys.imageio</groupId>
+				<artifactId>imageio-core</artifactId>
+				<version>${imageio-version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.twelvemonkeys.imageio</groupId>
+				<artifactId>imageio-jpeg</artifactId>
+				<version>${imageio-version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.github.dozedoff</groupId>
+				<artifactId>commonj</artifactId>
+				<version>0.3.3</version>
+			</dependency>
+			<dependency>
+				<groupId>org.flywaydb</groupId>
+				<artifactId>flyway-core</artifactId>
+				<version>${flyway-version}</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 	
@@ -84,7 +114,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-failsafe-plugin</artifactId>
-					<version>2.20.1</version>
+					<version>3.0.0-M3</version>
 					<executions>
 						<execution>
 							<id>integration-test</id>
@@ -98,7 +128,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-surefire-plugin</artifactId>
-					<version>2.20.1</version>
+					<version>3.0.0-M3</version>
 					<configuration>
 						<parallel>methods</parallel>
 						<threadCount>10</threadCount>
@@ -111,7 +141,7 @@
 				</plugin>
 				<plugin>
 					<artifactId>maven-pmd-plugin</artifactId>
-					<version>3.7</version>
+					<version>3.13.0</version>
 					<configuration>
 						<includeTests>true</includeTests>
 						<minimumTokens>50</minimumTokens>
@@ -129,7 +159,7 @@
 				<plugin>
 			  <groupId>org.jacoco</groupId>
 			  <artifactId>jacoco-maven-plugin</artifactId>
-			  <version>0.7.9</version>
+			  <version>0.8.4</version>
 			  					<configuration>
 							<excludes>
 								<exclude>**/component/*</exclude>
@@ -151,7 +181,7 @@
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.7.0</version>
+				<version>3.8.1</version>
 				<dependencies>
 					<dependency>
 						<groupId>com.google.dagger</groupId>
@@ -168,7 +198,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
-				<version>3.0.2</version>
+				<version>3.1.2</version>
 				<!-- nothing here -->
 			</plugin>
 			<plugin>
@@ -198,7 +228,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-checkstyle-plugin</artifactId>
-				<version>2.17</version>
+				<version>3.1.0</version>
 				<configuration>
 					<configLocation>checkstyle.xml</configLocation>
 					<propertiesLocation>checkstyle_maven.properties</propertiesLocation>
@@ -209,7 +239,7 @@
 					<dependency>
 						<groupId>com.puppycrawl.tools</groupId>
 						<artifactId>checkstyle</artifactId>
-						<version>8.19</version>
+						<version>8.33</version>
 					</dependency>
 				</dependencies>
 			</plugin>
@@ -228,7 +258,7 @@
 			<plugin>
 				<groupId>org.flywaydb</groupId>
 				<artifactId>flyway-maven-plugin</artifactId>
-				<version>5.0.3</version>
+				<version>${flyway-version}</version>
 				<configuration>
 					<url>jdbc:sqlite:similarImage.db</url>
 				</configuration>
@@ -247,13 +277,13 @@
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.12</version>
+			<version>4.13</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-core</artifactId>
-			<version>2.15.0</version>
+			<version>3.3.3</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -277,7 +307,7 @@
 		<dependency>
 			<groupId>nl.jqno.equalsverifier</groupId>
 			<artifactId>equalsverifier</artifactId>
-			<version>1.7.5</version>
+			<version>3.4.1</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -288,8 +318,8 @@
 		</dependency>
 		<dependency>
 			<groupId>org.awaitility</groupId>
-			<artifactId>awaitility-groovy</artifactId>
-			<version>2.0.0</version>
+			<artifactId>awaitility</artifactId>
+			<version>4.0.3</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>

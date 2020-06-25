@@ -24,8 +24,6 @@ import java.awt.image.BufferedImage;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.MessageDigest;
-import java.util.Arrays;
 
 import javax.imageio.ImageIO;
 
@@ -34,7 +32,6 @@ import org.junit.Test;
 
 public class ImageUtilTest {
 	private static final int IMAGE_SIZE = 40;
-	private static final int IMAGE_DATA_LENGTH = 333;
 
 	private BufferedImage jpgImage;
 	private BufferedImage gifImage;
@@ -62,17 +59,13 @@ public class ImageUtilTest {
 	@Test
 	public void testImageToBytesArraySize() throws Exception {
 		byte[] data = ImageUtil.imageToBytes(jpgImage);
+		BufferedImage decodedImage = ImageUtil.bytesToImage(data);
 
-		assertThat(data.length, is(IMAGE_DATA_LENGTH));
-	}
-
-	@Test
-	public void testImageToBytesHash() throws Exception {
-		byte[] data = ImageUtil.imageToBytes(jpgImage);
-
-		MessageDigest md = MessageDigest.getInstance("SHA");
-		assertThat(Arrays.toString(md.digest(data)),
-				is("[8, -11, -62, -80, -39, 126, -72, 17, -110, 2, -24, -86, 56, 4, -73, 6, -54, -47, 85, 100]"));
+		assertThat(jpgImage.getData().getDataBuffer().getSize(), is(decodedImage.getData().getDataBuffer().getSize()));
+		
+		for (int i = 0; i < jpgImage.getData().getDataBuffer().getSize(); i++) {
+			assertThat(jpgImage.getData().getDataBuffer().getElem(i), is(decodedImage.getData().getDataBuffer().getElem(i)));
+		}
 	}
 
 	@Test

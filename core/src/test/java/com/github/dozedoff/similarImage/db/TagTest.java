@@ -40,10 +40,8 @@ public class TagTest {
 
 	@Test
 	public void testEquals() throws Exception {
-		EqualsVerifier<Tag> ev = EqualsVerifier.forClass(Tag.class).allFieldsShouldBeUsedExcept("userTagId")
-				.suppress(Warning.NONFINAL_FIELDS);
-
-		ev.verify();
+		EqualsVerifier.forClass(Tag.class).withIgnoredFields("userTagId")
+				.suppress(Warning.NONFINAL_FIELDS).verify();;
 	}
 
 	@Test

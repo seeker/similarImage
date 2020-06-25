@@ -28,7 +28,6 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<imageio-version>3.3.2</imageio-version>
 	</properties>
 
 	<build>
@@ -44,7 +43,6 @@
 		<dependency>
 			<groupId>com.github.dozedoff</groupId>
 			<artifactId>commonj</artifactId>
-			<version>${commonj-version}</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
@@ -62,7 +60,6 @@
 		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-core</artifactId>
-			<version>5.0.3</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.everpeace</groupId>
@@ -81,12 +78,10 @@
 		<dependency>
 			<groupId>com.twelvemonkeys.imageio</groupId>
 			<artifactId>imageio-core</artifactId>
-			<version>${imageio-version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.twelvemonkeys.imageio</groupId>
 			<artifactId>imageio-jpeg</artifactId>
-			<version>${imageio-version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.dozedoff</groupId>
@@ -105,12 +100,12 @@
 		<dependency>
 			<groupId>com.aparapi</groupId>
 			<artifactId>aparapi</artifactId>
-			<version>1.9.0</version>
+			<version>2.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.aparapi</groupId>
 			<artifactId>aparapi-jni</artifactId>
-			<version>1.4.1</version>
+			<version>1.4.2</version>
 		</dependency>
 	</dependencies>
 </project>

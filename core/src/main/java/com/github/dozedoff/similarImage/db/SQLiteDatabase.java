@@ -89,8 +89,7 @@ public class SQLiteDatabase implements Database {
 	}
 
 	private void migrateDatabase(String fullDbPath) {
-		Flyway flyway = new Flyway();
-		flyway.setDataSource(fullDbPath, "", "");
+		Flyway flyway = Flyway.configure().dataSource(fullDbPath, "", "").load();
 		flyway.migrate();
 	}
 

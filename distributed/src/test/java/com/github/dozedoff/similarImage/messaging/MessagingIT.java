@@ -18,7 +18,6 @@
 package com.github.dozedoff.similarImage.messaging;
 
 import static org.awaitility.Awaitility.await;
-import static org.awaitility.Awaitility.to;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertThat;
@@ -30,6 +29,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
@@ -39,7 +39,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.SimpleString;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
-import org.awaitility.Duration;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -87,7 +86,7 @@ public class MessagingIT {
 	private Path testImageCorrupt;
 	private static long testImageAutumnReferenceHash;
 
-	private Duration messageTimeout = new Duration(6, TimeUnit.SECONDS);
+	private Duration messageTimeout = Duration.ofSeconds(6);
 	private ResultMessageSink sink;
 	private List<Node> nodes;
 
@@ -212,7 +211,7 @@ public class MessagingIT {
 
 		ahp.handle(testImageAutumn);
 
-		await().atMost(messageTimeout).untilCall(to(imageRepository).getByHash(testImageAutumnReferenceHash),
+		await().atMost(messageTimeout).until(() -> imageRepository.getByHash(testImageAutumnReferenceHash),
 				containsInAnyOrder(new ImageRecord(testImageAutumn.toString(), testImageAutumnReferenceHash)));
 	}
 
@@ -274,7 +273,7 @@ public class MessagingIT {
 
 		ahp.handle(testImageAutumn);
 
-		await().atMost(messageTimeout).untilCall(to(ha).areAttributesValid(testImageAutumn), is(true));
+		await().atMost(messageTimeout).until(() -> ha.areAttributesValid(testImageAutumn), is(true));
 	}
 
 	@Test
@@ -292,6 +291,6 @@ public class MessagingIT {
 
 		ahp.handle(testImageCorrupt);
 
-		await().atMost(messageTimeout).untilCall(to(ha).isCorrupted(testImageCorrupt), is(true));
+		await().atMost(messageTimeout).until(() -> ha.isCorrupted(testImageCorrupt), is(true));
 	}
 }

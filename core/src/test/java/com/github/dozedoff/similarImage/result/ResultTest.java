@@ -21,6 +21,9 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.verify;
 
+import java.util.HashMap;
+import java.util.LinkedList;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,6 +46,9 @@ public class ResultTest {
 
 	@Mock
 	private ResultGroup parentGroup2;
+	
+	@Mock
+	private GroupList parentGroupList;
 
 	private Result cut;
 
@@ -66,7 +72,8 @@ public class ResultTest {
 
 	@Test
 	public void testHashAndEquals() throws Exception {
-		EqualsVerifier.forClass(Result.class).allFieldsShouldBeUsedExcept("parentGroup").verify();
+		EqualsVerifier.forClass(Result.class).withIgnoredFields("parentGroup")
+		.withPrefabValues(ResultGroup.class, new ResultGroup(parentGroupList, 0, new LinkedList<ImageRecord>()), new ResultGroup(parentGroupList, 1, new LinkedList<ImageRecord>())).verify();
 	}
 
 	@Test
