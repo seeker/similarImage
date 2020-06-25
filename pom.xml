@@ -25,6 +25,7 @@
 		<logback-version>1.2.3</logback-version>
 		<ormlite-version>5.1</ormlite-version>
 		<imageio-version>3.5</imageio-version>
+		<flyway-version>6.4.4</flyway-version>
 	</properties>
 
 	<modules>
@@ -98,6 +99,11 @@
 				<groupId>com.github.dozedoff</groupId>
 				<artifactId>commonj</artifactId>
 				<version>0.3.3</version>
+			</dependency>
+			<dependency>
+				<groupId>org.flywaydb</groupId>
+				<artifactId>flyway-core</artifactId>
+				<version>${flyway-version}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
@@ -252,7 +258,7 @@
 			<plugin>
 				<groupId>org.flywaydb</groupId>
 				<artifactId>flyway-maven-plugin</artifactId>
-				<version>6.2.1</version>
+				<version>${flyway-version}</version>
 				<configuration>
 					<url>jdbc:sqlite:similarImage.db</url>
 				</configuration>
