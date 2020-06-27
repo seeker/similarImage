@@ -25,7 +25,7 @@
 		<logback-version>1.2.3</logback-version>
 		<ormlite-version>5.1</ormlite-version>
 		<imageio-version>3.5</imageio-version>
-		<flyway-version>6.4.4</flyway-version>
+		<flyway-version>6.5.0</flyway-version>
 	</properties>
 
 	<modules>
