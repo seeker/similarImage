@@ -56,6 +56,7 @@ public abstract class MessagingBaseTest {
 	@Before
 	public void messagingSetup() throws Exception {
 		session = messagingComponent.getSessionModule().getSession();
+		session.start();
 	}
 	
 	private static void createQueues(ClientSession setupSession) throws ActiveMQException {
