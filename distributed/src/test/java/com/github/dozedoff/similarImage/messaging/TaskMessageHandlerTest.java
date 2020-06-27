@@ -18,11 +18,12 @@
 package com.github.dozedoff.similarImage.messaging;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.nio.file.Paths;
 import java.util.UUID;
 
+import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,8 +34,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 
-//FIXME Silent runner is just a band-aid to get the tests to run
-@RunWith(MockitoJUnitRunner.Silent.class)
+@RunWith(MockitoJUnitRunner.class)
 public class TaskMessageHandlerTest extends MessagingBaseTest {
 	private static final String TEST_PATH = "foo";
 	private static final UUID UUID = new UUID(99, 100);
@@ -54,12 +54,12 @@ public class TaskMessageHandlerTest extends MessagingBaseTest {
 	public void setUp() throws Exception {
 		messageFactory = new MessageFactory(session);
 		metrics = new MetricRegistry();
-		cut = new TaskMessageHandler(pendingRepository, imageRepository, session, metrics);
+		cut = new TaskMessageHandler(pendingRepository, imageRepository, TEST_PATH, metrics);
 	}
 
 	@Test
 	public void testMetricPendingMessagesTrack() throws Exception {
-		message = messageFactory.trackPath(Paths.get(TEST_PATH), UUID);
+		ClientMessage message = messageFactory.trackPath(Paths.get(TEST_PATH), UUID);
 
 		cut.onMessage(message);
 

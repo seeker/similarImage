@@ -19,7 +19,7 @@ package com.github.dozedoff.similarImage.messaging;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
 
 import java.io.InputStream;
@@ -29,7 +29,6 @@ import java.util.Arrays;
 import java.util.UUID;
 
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
-import org.apache.activemq.artemis.core.client.impl.ClientMessageImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,8 +39,7 @@ import com.github.dozedoff.similarImage.db.PendingHashImage;
 import com.github.dozedoff.similarImage.messaging.MessageFactory.MessageProperty;
 import com.github.dozedoff.similarImage.messaging.MessageFactory.TaskType;
 
-//FIXME Silent runner is just a band-aid to get the tests to run
-@RunWith(MockitoJUnitRunner.Silent.class)
+@RunWith(MockitoJUnitRunner.class)
 public class MessageFactoryTest extends MessagingBaseTest {
 	private static final int EXPECTED_MESSAGE_SIZE = 54;
 	private static final long HASH = 12L;
@@ -56,9 +54,6 @@ public class MessageFactoryTest extends MessagingBaseTest {
 
 	@Before
 	public void setUp() throws Exception {
-		when(session.createMessage(true)).thenReturn(new ClientMessageImpl(ClientMessageImpl.DEFAULT_TYPE, true, 0, 0, (byte) 0, 0));
-		when(session.createMessage(false)).thenReturn(new ClientMessageImpl(ClientMessageImpl.DEFAULT_TYPE, false, 0, 0, (byte) 0, 0));
-		
 		when(is.read()).thenReturn(-1);
 
 		cut = new MessageFactory(session);

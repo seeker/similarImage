@@ -17,53 +17,61 @@
  */
 package com.github.dozedoff.similarImage.messaging;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 
-import org.apache.activemq.artemis.api.core.ActiveMQBuffer;
 import org.apache.activemq.artemis.api.core.ActiveMQException;
-import org.apache.activemq.artemis.api.core.client.ClientConsumer;
-import org.apache.activemq.artemis.api.core.client.ClientMessage;
-import org.apache.activemq.artemis.api.core.client.ClientProducer;
+import org.apache.activemq.artemis.api.core.RoutingType;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
-import org.apache.activemq.artemis.core.client.impl.ClientMessageImpl;
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.BeforeClass;
 
-//FIXME Silent runner is just a band-aid to get the tests to run
-@RunWith(MockitoJUnitRunner.Silent.class)
+import com.github.dozedoff.similarImage.component.DaggerMessagingComponent;
+import com.github.dozedoff.similarImage.component.DaggerPersistenceComponent;
+import com.github.dozedoff.similarImage.component.MessagingComponent;
+import com.github.dozedoff.similarImage.component.PersistenceComponent;
+import com.github.dozedoff.similarImage.module.ArtemisModule;
+
 public abstract class MessagingBaseTest {
-	@Mock
 	protected ClientSession session;
-	@Mock
-	protected ClientProducer producer;
-	@Mock
-	protected ClientConsumer consumer;
-	/**
-	 * Message that arrived at the consumer
-	 */
-	@Mock
-	protected ClientMessage message;
-	/**
-	 * Message created by the session
-	 */
-	@Mock
-	protected ClientMessage sessionMessage;
-	@Mock
-	protected ActiveMQBuffer bodyBuffer;
-
-	@Mock
-	protected ActiveMQBuffer sessionBodyBuffer;
-
+	private static ArtemisEmbeddedServer artemisServer;
+	private static MessagingComponent messagingComponent;
+	private static final List<String> queues = Arrays.asList("test_request", "test_result");
+	
+	@BeforeClass
+	public static void setupMessagingForClass() throws Exception {
+		PersistenceComponent coreComponent = DaggerPersistenceComponent.create();
+		messagingComponent = DaggerMessagingComponent.builder().artemisModule(new ArtemisModule(Paths.get("testing"))).persistenceComponent(coreComponent)
+				.build();
+		artemisServer = messagingComponent.getServer();
+		artemisServer.start();
+		
+		ClientSession setupSession = messagingComponent.getSessionModule().getSession();
+		createQueues(setupSession);
+	}
+	
 	@Before
-	public void messagingSetup() throws ActiveMQException {
-		sessionMessage = new ClientMessageImpl(ClientMessageImpl.DEFAULT_TYPE, false, 0, 0, (byte) 0, 0);
+	public void messagingSetup() throws Exception {
+		session = messagingComponent.getSessionModule().getSession();
+		session.start();
+	}
+	
+	private static void createQueues(ClientSession setupSession) throws ActiveMQException {
+		for(String queueName : queues) {
+			setupSession.createQueue(queueName, RoutingType.ANYCAST, queueName);
+		}
+	}
+	
+	@After
+	public void messagingTearDown() throws ActiveMQException {
+		session.close();
+	}
 
-		when(session.createConsumer(any(String.class))).thenReturn(consumer);
-		when(session.createProducer(any(String.class))).thenReturn(producer);
-		when(session.createProducer()).thenReturn(producer);
-		when(session.createMessage(any(Boolean.class))).thenReturn(sessionMessage);
+	@AfterClass
+	public static void tearDownMessagingForClass() throws Exception {
+		artemisServer.stop();
 	}
 }

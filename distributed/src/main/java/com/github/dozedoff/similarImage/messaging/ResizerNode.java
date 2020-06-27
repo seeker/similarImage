@@ -247,6 +247,7 @@ public class ResizerNode implements MessageHandler, Node {
 			}
 
 			BufferedImage originalImage = ImageIO.read(is);
+			//FIXME nullcheck if image read failed
 			byte[] resizedImageData = resizer.resize(originalImage);
 
 			UUID uuid = UUID.randomUUID();
