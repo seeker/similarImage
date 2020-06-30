@@ -24,6 +24,10 @@ import org.apache.activemq.artemis.api.core.ActiveMQBuffer;
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.mockito.Mockito;
 
+@Deprecated
+/**
+ * Use actual messages from Artemis for testing instead.
+ */
 public class MockMessageBuilder {
 	private final ClientMessage message;
 
@@ -31,8 +35,10 @@ public class MockMessageBuilder {
 	private static final long DEFAULT_HASH = 42L;
 
 	/**
-	 * Prepare a mock message builder
+	 * Prepare a mock message builder.
+	 * Use actual messages from Artemis for testing instead.
 	 */
+	@Deprecated
 	public MockMessageBuilder() {
 		message = mock(ClientMessage.class);
 	}
