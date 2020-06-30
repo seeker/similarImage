@@ -13,7 +13,6 @@
 	</root>
 	
 	<logger name="com.j256.ormlite" level="OFF" />
-	<logger name="org.apache.activemq.artemis" level="INFO" />
+	<logger name="org.apache.activemq.artemis" level="WARN" />
 	<logger name="io.netty" level="OFF" />
-	
 </configuration>
