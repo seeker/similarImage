@@ -13,10 +13,6 @@
 	<description>Programm for finding visually similar images</description>
 	<url>https://github.com/dozedoff/similarImage</url>
 
-	<prerequisites>
-		<maven>3.6.0</maven>
-	</prerequisites>
-
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -196,7 +192,7 @@
 		                  <message>Please consider using the maven-invoker-plugin (http://maven.apache.org/plugins/maven-invoker-plugin/)!</message>
 		                </bannedPlugins>
 		                <requireMavenVersion>
-		                  <version>3.3.9</version>
+		                  <version>3.6.0</version>
 		                </requireMavenVersion>
 		                <requireJavaVersion>
 		                  <version>11</version>
