@@ -85,7 +85,7 @@ public class MessageFactoryTest extends MessagingBaseTest {
 		result.getBodyBuffer().readLong();
 		result.getBodyBuffer().readLong();
 
-		byte[] data = new byte[result.getBodySize()];
+		byte[] data = new byte[result.getBodyBuffer().readableBytes()];
 		result.getBodyBuffer().readBytes(data);
 
 		assertArrayEquals(data, IMAGE_DATA);

@@ -157,7 +157,7 @@ public class HasherNode implements MessageHandler, Node {
 			}
 
 			checkBufferCapacity(message.getBodySize());
-			buffer.limit(message.getBodySize());
+			buffer.limit(message.getBodyBuffer().readableBytes());
 			LOGGER.trace("Reading resized image with size {}", message.getBodySize());
 			buffer.rewind();
 			message.getBodyBuffer().readBytes(buffer);
