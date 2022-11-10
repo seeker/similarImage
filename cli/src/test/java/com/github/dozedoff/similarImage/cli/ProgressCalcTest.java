@@ -22,6 +22,8 @@ import static org.hamcrest.Matchers.closeTo;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 
+import java.util.Locale;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -101,6 +103,7 @@ public class ProgressCalcTest {
 
 	@Test
 	public void testToString() throws Exception {
+		Locale.setDefault(Locale.US);
 		assertThat(cut.toString(), is("Total progress: 23.81%, corrupt images: 9.52%, files per second processed: 0.00"));
 	}
 }
