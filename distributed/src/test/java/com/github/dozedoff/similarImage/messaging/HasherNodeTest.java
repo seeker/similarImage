@@ -160,12 +160,16 @@ public class HasherNodeTest extends MessagingBaseTest {
 
 		cut.onMessage(hashRequestMessage);
 
+		await().until(messages::size, is(1));
+
 		assertThat(metrics.getMeters().get(HasherNode.METRIC_NAME_BUFFER_RESIZE).getCount(), is(1L));
 	}
 
 	@Test
 	public void testHashDuration() throws Exception {
 		cut.onMessage(hashRequestMessage);
+
+		await().until(messages::size, is(1));
 
 		assertThat(metrics.getTimers().get(HasherNode.METRIC_NAME_HASH_DURATION).getSnapshot().getMean(), is(not(0.0)));
 	}
