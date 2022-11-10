@@ -22,6 +22,7 @@
 		<ormlite-version>5.1</ormlite-version>
 		<imageio-version>3.5</imageio-version>
 		<flyway-version>9.7.0</flyway-version>
+		<java-version>11</java-version>
 	</properties>
 
 	<modules>
@@ -142,7 +143,7 @@
 						<includeTests>true</includeTests>
 						<minimumTokens>50</minimumTokens>
 						<linkXref>true</linkXref>
-						<targetJdk>1.8</targetJdk>
+						<targetJdk>${java-version}</targetJdk>
 					</configuration>
 					<executions>
 						<execution>
@@ -195,7 +196,7 @@
 		                  <version>3.6.0</version>
 		                </requireMavenVersion>
 		                <requireJavaVersion>
-		                  <version>11</version>
+		                  <version>${java-version}</version>
 		                </requireJavaVersion>
 		              </rules>
 		            </configuration>
@@ -268,8 +269,8 @@
 					</dependency>
 				</dependencies>
 				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
+					<source>${java-version}</source>
+					<target>${java-version}</target>
 					<forceJavacCompilerUse>true</forceJavacCompilerUse>
 				</configuration>
 			</plugin>
