@@ -42,7 +42,7 @@ public class FlyWayMigrationTest {
 	private static final String PATH_2 = "path2";
 	private static final String PATH_3 = "path3";
 
-	private static final String VERSION_2_2 = "2.2";
+	private static final String VERSION_2_1 = "2.1";
 
 	private Flyway flyway;
 	private FluentConfiguration flywayConfig;
@@ -53,7 +53,7 @@ public class FlyWayMigrationTest {
 	public void setUp() throws Exception {
 		databaseFile = Files.createTempFile(SQLiteDatabaseTest.class.getSimpleName(), ".db");
 		String fulldbPath = "jdbc:sqlite:" + databaseFile;
-		flywayConfig = Flyway.configure().dataSource(fulldbPath, "", "").target(VERSION_2_2);
+		flywayConfig = Flyway.configure().dataSource(fulldbPath, "", "").target(VERSION_2_1);
 		flyway = flywayConfig.load();
 		
 		cs = new JdbcConnectionSource(fulldbPath);
