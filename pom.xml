@@ -21,7 +21,7 @@
 		<logback-version>1.2.3</logback-version>
 		<ormlite-version>5.1</ormlite-version>
 		<imageio-version>3.5</imageio-version>
-		<flyway-version>6.5.0</flyway-version>
+		<flyway-version>9.7.0</flyway-version>
 	</properties>
 
 	<modules>
@@ -37,7 +37,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jxr-plugin</artifactId>
-				<version>3.0.0</version>
+				<version>3.3.0</version>
 			</plugin>
 		</plugins>
 	</reporting>
@@ -110,7 +110,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-failsafe-plugin</artifactId>
-					<version>3.0.0-M3</version>
+					<version>3.0.0-M7</version>
 					<executions>
 						<execution>
 							<id>integration-test</id>
@@ -124,7 +124,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-surefire-plugin</artifactId>
-					<version>3.0.0-M3</version>
+					<version>3.0.0-M7</version>
 					<configuration>
 						<parallel>methods</parallel>
 						<threadCount>10</threadCount>
@@ -137,7 +137,7 @@
 				</plugin>
 				<plugin>
 					<artifactId>maven-pmd-plugin</artifactId>
-					<version>3.13.0</version>
+					<version>3.19.0</version>
 					<configuration>
 						<includeTests>true</includeTests>
 						<minimumTokens>50</minimumTokens>
@@ -155,7 +155,7 @@
 				<plugin>
 			  <groupId>org.jacoco</groupId>
 			  <artifactId>jacoco-maven-plugin</artifactId>
-			  <version>0.8.4</version>
+			  <version>0.8.8</version>
 			  					<configuration>
 							<excludes>
 								<exclude>**/component/*</exclude>
@@ -174,7 +174,7 @@
 			 <plugin>
 		        <groupId>org.apache.maven.plugins</groupId>
 		        <artifactId>maven-enforcer-plugin</artifactId>
-		        <version>3.0.0-M3</version>
+		        <version>3.1.0</version>
 		        <executions>
 		          <execution>
 		            <id>enforce-versions</id>
@@ -205,7 +205,7 @@
 		      <plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
-				<version>3.2.4</version>
+				<version>3.3.0</version>
 				<executions>
 					<execution>
 						<phase>package</phase>
@@ -222,37 +222,37 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-clean-plugin</artifactId>
-				<version>3.1.0</version>
+				<version>3.2.0</version>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.8.1</version>
+				<version>3.10.1</version>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-deploy-plugin</artifactId>
-				<version>3.0.0-M1</version>
+				<version>3.0.0</version>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-install-plugin</artifactId>
-				<version>3.0.0-M1</version>
+				<version>3.0.1</version>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
-				<version>3.2.0</version>
+				<version>3.2.2</version>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-resources-plugin</artifactId>
-				<version>3.2.0</version>
+				<version>3.3.0</version>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-site-plugin</artifactId>
-				<version>3.9.1</version>
+				<version>4.0.0-M3</version>
 			</plugin>
 			</plugins>
 		</pluginManagement>
@@ -300,7 +300,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-checkstyle-plugin</artifactId>
-				<version>3.1.0</version>
+				<version>3.2.0</version>
 				<configuration>
 					<configLocation>checkstyle.xml</configLocation>
 					<propertiesLocation>checkstyle_maven.properties</propertiesLocation>
