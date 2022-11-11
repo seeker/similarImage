@@ -19,7 +19,7 @@ package com.github.dozedoff.similarImage.messaging;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.anyListOf;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -33,7 +33,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class MessageCollectorTest {
@@ -68,14 +68,14 @@ public class MessageCollectorTest {
 	public void testAddMessageBelowThreshold() throws Exception {
 		cut.addMessage(message);
 
-		verify(collector, never()).onDrain(anyListOf(ClientMessage.class));
+		verify(collector, never()).onDrain(anyList());
 	}
 
 	@Test
 	public void testAddMessageAboveThreshold() throws Exception {
 		addNumberOfMessages(MESSAGE_THRESHOLD);
 
-		verify(collector).onDrain(anyListOf(ClientMessage.class));
+		verify(collector).onDrain(anyList());
 	}
 
 	@Test
@@ -92,21 +92,21 @@ public class MessageCollectorTest {
 	public void testAddMessageReTrigger() throws Exception {
 		addNumberOfMessages(2 * MESSAGE_THRESHOLD);
 
-		verify(collector, times(2)).onDrain(anyListOf(ClientMessage.class));
+		verify(collector, times(2)).onDrain(anyList());
 	}
 
 	@Test
 	public void testDrainToCollector() throws Exception {
 		cut.drain();
 
-		verify(collector).onDrain(anyListOf(ClientMessage.class));
+		verify(collector).onDrain(anyList());
 	}
 
 	@Test
 	public void testDrainToCollector2() throws Exception {
 		cut.drain();
 
-		verify(collector2).onDrain(anyListOf(ClientMessage.class));
+		verify(collector2).onDrain(anyList());
 	}
 
 	@Test
