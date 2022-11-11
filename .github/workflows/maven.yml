@@ -4,15 +4,18 @@ on: [push, pull_request]
 
 jobs:
   build:
+    strategy:
+      matrix:
+        jdk: [11, 17]
 
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
-    - name: Set up JDK 11
+    - name: Set up JDK ${{ matrix.jdk }}
       uses: actions/setup-java@v2
       with:
-        java-version: '11'
+        java-version: '${{ matrix.jdk }}'
         distribution: 'adopt'
     - uses: actions/cache@v2
       with:
