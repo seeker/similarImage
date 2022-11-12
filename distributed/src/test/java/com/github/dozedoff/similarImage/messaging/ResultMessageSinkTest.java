@@ -109,7 +109,7 @@ public class ResultMessageSinkTest {
 		cut.stop();
 		Mockito.reset(collector);
 
-		when(consumer.receive(anyLong())).thenThrow(new ActiveMQException("test"));
+		lenient().when(consumer.receive(anyLong())).thenThrow(new ActiveMQException("test"));
 
 		cut = new ResultMessageSink(session, collector);
 
