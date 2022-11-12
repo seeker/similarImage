@@ -19,7 +19,7 @@ package com.github.dozedoff.similarImage.duplicate;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.hasItem;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.math.BigInteger;
 import java.util.Collections;

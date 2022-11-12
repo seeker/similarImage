@@ -19,7 +19,7 @@ package com.github.dozedoff.similarImage.gui;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;

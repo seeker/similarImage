@@ -20,7 +20,7 @@ package com.github.dozedoff.similarImage.messaging;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;

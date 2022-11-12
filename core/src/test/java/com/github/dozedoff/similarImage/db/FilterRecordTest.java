@@ -18,7 +18,7 @@
 package com.github.dozedoff.similarImage.db;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.verify;
 
 import org.junit.Before;

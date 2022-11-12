@@ -18,7 +18,7 @@
 package com.github.dozedoff.similarImage.util;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.awt.image.BufferedImage;
 import java.nio.file.Files;
