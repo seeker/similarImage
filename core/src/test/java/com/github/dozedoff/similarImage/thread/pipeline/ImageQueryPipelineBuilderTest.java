@@ -17,25 +17,29 @@
  */
 package com.github.dozedoff.similarImage.thread.pipeline;
 
+import org.junit.Rule;
+import org.mockito.junit.MockitoRule;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.quality.Strictness;
+
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.mockito.Mockito.verify;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.db.Tag;
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 
-@RunWith(MockitoJUnitRunner.class)
 public class ImageQueryPipelineBuilderTest {
+	public @Rule MockitoRule mockito = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+
 	private static final int DISTANCE = 42;
 
 	@Mock

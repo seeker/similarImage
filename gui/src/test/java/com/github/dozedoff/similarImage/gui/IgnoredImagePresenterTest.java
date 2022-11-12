@@ -22,6 +22,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -32,11 +33,13 @@ import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
+import org.mockito.quality.Strictness;
 
 import com.github.dozedoff.similarImage.db.IgnoreRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
@@ -44,8 +47,9 @@ import com.github.dozedoff.similarImage.db.repository.IgnoreRepository;
 import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 
 
-@RunWith(MockitoJUnitRunner.class)
 public class IgnoredImagePresenterTest {
+	public @Rule MockitoRule mockito = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+
 	private static final int CONCURRENT_TIMEOUT = 2000;
 
 	@Mock
@@ -66,7 +70,7 @@ public class IgnoredImagePresenterTest {
 		ignoreA = new IgnoreRecord(imageA);
 		ignoreB = new IgnoreRecord(imageA);
 
-		when(ignoreRepository.getAll()).thenReturn(Arrays.asList(ignoreA, ignoreB));
+		lenient().when(ignoreRepository.getAll()).thenReturn(Arrays.asList(ignoreA, ignoreB));
 	}
 
 	@Test

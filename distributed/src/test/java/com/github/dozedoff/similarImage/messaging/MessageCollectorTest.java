@@ -17,6 +17,11 @@
  */
 package com.github.dozedoff.similarImage.messaging;
 
+import org.junit.Rule;
+import org.mockito.junit.MockitoRule;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.quality.Strictness;
+
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -29,14 +34,13 @@ import java.util.List;
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.class)
 public class MessageCollectorTest {
+	public @Rule MockitoRule mockito = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+
 	private static final int MESSAGE_THRESHOLD = 5;
 
 	@Mock

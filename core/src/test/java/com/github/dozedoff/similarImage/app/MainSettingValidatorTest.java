@@ -17,16 +17,20 @@
  */
 package com.github.dozedoff.similarImage.app;
 
+import org.junit.Rule;
+import org.mockito.junit.MockitoRule;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.quality.Strictness;
+
 import static org.mockito.Mockito.when;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.class)
 public class MainSettingValidatorTest {
+	public @Rule MockitoRule mockito = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+
 	@Mock
 	private MainSetting mainSetting;
 

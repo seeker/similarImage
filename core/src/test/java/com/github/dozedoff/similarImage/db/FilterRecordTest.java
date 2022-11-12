@@ -17,15 +17,18 @@
  */
 package com.github.dozedoff.similarImage.db;
 
+import org.junit.Rule;
+import org.mockito.junit.MockitoRule;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.quality.Strictness;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.verify;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.db.repository.FilterRepository;
 import com.github.dozedoff.similarImage.util.StringUtil;
@@ -33,8 +36,9 @@ import com.github.dozedoff.similarImage.util.StringUtil;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
 
-@RunWith(MockitoJUnitRunner.class)
 public class FilterRecordTest {
+	public @Rule MockitoRule mockito = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+
 	private static final String GUARD_MSG = "Guard condition failed";
 
 	private static final Tag TEST_TAG_ONE = new Tag("dontPanic");

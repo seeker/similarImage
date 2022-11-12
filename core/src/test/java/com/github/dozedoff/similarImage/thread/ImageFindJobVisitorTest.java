@@ -17,9 +17,15 @@
  */
 package com.github.dozedoff.similarImage.thread;
 
+import org.junit.Rule;
+import org.mockito.junit.MockitoRule;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.quality.Strictness;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import java.nio.file.DirectoryStream.Filter;
@@ -30,15 +36,14 @@ import java.util.LinkedList;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.handler.HashHandler;
 import com.github.dozedoff.similarImage.io.Statistics;
 
-@RunWith(MockitoJUnitRunner.class)
 public class ImageFindJobVisitorTest {
+	public @Rule MockitoRule mockito = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+
 	@Mock
 	private Filter<Path> fileFilter;
 
@@ -61,7 +66,7 @@ public class ImageFindJobVisitorTest {
 	@Before
 	public void setUp() throws Exception {
 		when(fileFilter.accept(any())).thenReturn(true);
-		when(handler.handle(path)).thenReturn(true);
+		lenient().when(handler.handle(path)).thenReturn(true);
 
 		handlers = new LinkedList<HashHandler>();
 		handlers.add(handler);

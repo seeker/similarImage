@@ -21,6 +21,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atMost;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -32,15 +33,17 @@ import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
+import org.mockito.quality.Strictness;
 
-//FIXME Silent runner is just a band-aid to get the tests to run
-@RunWith(MockitoJUnitRunner.Silent.class)
 public class ResultMessageSinkTest {
+	public @Rule MockitoRule mockito = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+
 	private static final int VERIFY_TIMEOUT = 500;
 	private static final int TEST_TIMEOUT = 2000;
 
@@ -60,7 +63,7 @@ public class ResultMessageSinkTest {
 
 	@Before
 	public void setUp() throws Exception {
-		when(consumer.receive(anyLong())).thenReturn(message, (ClientMessage) null);
+		lenient().when(consumer.receive(anyLong())).thenReturn(message, (ClientMessage) null);
 		when(session.createConsumer(anyString(), anyString())).thenReturn(consumer);
 
 		cut = new ResultMessageSink(session, collector);

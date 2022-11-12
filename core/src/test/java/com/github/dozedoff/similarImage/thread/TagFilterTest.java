@@ -17,6 +17,11 @@
  */
 package com.github.dozedoff.similarImage.thread;
 
+import org.junit.Rule;
+import org.mockito.junit.MockitoRule;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.quality.Strictness;
+
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
@@ -27,10 +32,8 @@ import java.util.Arrays;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
@@ -42,8 +45,9 @@ import com.github.dozedoff.similarImage.util.StringUtil;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 
-@RunWith(MockitoJUnitRunner.class)
 public class TagFilterTest {
+	public @Rule MockitoRule mockito = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+
 	private static final String PATH1 = "foo";
 	private static final String PATH2 = "bar";
 	private static final int DISTANCE = 0;
@@ -85,9 +89,6 @@ public class TagFilterTest {
 
 		recordSearch = new RecordSearch();
 		recordSearch.build(Arrays.asList(new ImageRecord[] { image1, image2 }));
-		
-		when(filterRepository.getAll()).thenReturn(Arrays.asList(new FilterRecord[] { filter1, filter2 }));
-		when(filterRepository.getByTag(TAG)).thenReturn(Arrays.asList(new FilterRecord[] { filter1 }));
 	}
 
 	@Test
@@ -99,11 +100,15 @@ public class TagFilterTest {
 
 	@Test
 	public void testMatchingTag() throws Exception {
+		when(filterRepository.getByTag(TAG)).thenReturn(Arrays.asList(new FilterRecord[] { filter1 }));
+
 		assertThat(cut.getFilterMatches(recordSearch, TAG, DISTANCE).get(1L), hasItem(image1));
 	}
 
 	@Test
 	public void testMatchingTagSecondImageNotIncluded() throws Exception {
+		when(filterRepository.getByTag(TAG)).thenReturn(Arrays.asList(new FilterRecord[] { filter1 }));
+
 		assertThat(cut.getFilterMatches(recordSearch, TAG, DISTANCE).get(1L), not(hasItem(image2)));
 	}
 }

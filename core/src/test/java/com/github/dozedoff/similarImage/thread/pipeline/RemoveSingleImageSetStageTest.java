@@ -17,21 +17,25 @@
  */
 package com.github.dozedoff.similarImage.thread.pipeline;
 
+import org.junit.Rule;
+import org.mockito.junit.MockitoRule;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.quality.Strictness;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 
-@RunWith(MockitoJUnitRunner.class)
 public class RemoveSingleImageSetStageTest {
+	public @Rule MockitoRule mockito = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+
 	private static final long HASH_A = 0;
 	private static final long HASH_B = 1;
 

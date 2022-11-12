@@ -17,9 +17,14 @@
  */
 package com.github.dozedoff.similarImage.thread.pipeline;
 
+import org.junit.Rule;
+import org.mockito.junit.MockitoRule;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.quality.Strictness;
+
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
@@ -27,9 +32,7 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.ImageRecord;
@@ -39,8 +42,9 @@ import com.github.dozedoff.similarImage.db.repository.RepositoryException;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 
-@RunWith(MockitoJUnitRunner.class)
 public class GroupByTagStageTest {
+	public @Rule MockitoRule mockito = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+
 	private static final Tag TAG = new Tag("foo");
 	private static final long HASH_A = 0;
 	private static final long HASH_B = 1;

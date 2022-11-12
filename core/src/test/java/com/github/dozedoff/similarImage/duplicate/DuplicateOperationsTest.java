@@ -17,9 +17,14 @@
  */
 package com.github.dozedoff.similarImage.duplicate;
 
+import org.junit.Rule;
+import org.mockito.junit.MockitoRule;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.quality.Strictness;
+
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
@@ -38,11 +43,9 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.db.FilterRecord;
 import com.github.dozedoff.similarImage.db.IgnoreRecord;
@@ -57,8 +60,9 @@ import com.github.dozedoff.similarImage.result.Result;
 import com.github.dozedoff.similarImage.result.ResultGroup;
 import com.google.common.jimfs.Jimfs;
 
-@RunWith(MockitoJUnitRunner.class)
 public class DuplicateOperationsTest {
+	public @Rule MockitoRule mockito = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+
 	private static final String GUARD_MSG = "Guard condition failed";
 
 	private static final long TEST_HASH = 42L;

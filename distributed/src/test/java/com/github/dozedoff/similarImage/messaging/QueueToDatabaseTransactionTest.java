@@ -23,6 +23,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -39,13 +40,15 @@ import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.apache.activemq.artemis.api.core.client.ClientProducer;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
+import org.mockito.quality.Strictness;
 
 import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.similarImage.db.ImageRecord;
@@ -54,8 +57,9 @@ import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 import com.j256.ormlite.misc.TransactionManager;
 
-@RunWith(MockitoJUnitRunner.class)
 public class QueueToDatabaseTransactionTest {
+	public @Rule MockitoRule mockito = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+
 	private static final int TEST_MESSAGE_SIZE = 5;
 	private static final String EXCEPTION_MESSAGE = "Testing";
 
@@ -99,14 +103,14 @@ public class QueueToDatabaseTransactionTest {
 
 	@Before
 	public void setUp() throws Exception {
-		when(message.getBodyBuffer()).thenReturn(buffer);
-		when(buffer.readLong()).thenReturn(UUID_MOST, UUID_LEAST, HASH);
-		when(pendingRepository.getByUUID(UUID_MOST, UUID_LEAST))
+		lenient().when(message.getBodyBuffer()).thenReturn(buffer);
+		lenient().when(buffer.readLong()).thenReturn(UUID_MOST, UUID_LEAST, HASH);
+		lenient().when(pendingRepository.getByUUID(UUID_MOST, UUID_LEAST))
 				.thenReturn(new PendingHashImage(PATH, UUID_MOST, UUID_LEAST));
 		
-		when(session.createMessage(anyBoolean())).thenReturn(sendMessage);
+		lenient().when(session.createMessage(anyBoolean())).thenReturn(sendMessage);
 		when(session.createProducer(anyString())).thenReturn(producer);
-		when(sendMessage.getBodyBuffer()).thenReturn(buffer);
+		lenient().when(sendMessage.getBodyBuffer()).thenReturn(buffer);
 
 		setUpMessages();
 

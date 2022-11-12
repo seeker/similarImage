@@ -21,18 +21,21 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
+import org.mockito.quality.Strictness;
 
 import com.github.dozedoff.similarImage.thread.ImageFindJobVisitor;
 
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
 
 
-@RunWith(MockitoJUnitRunner.class)
 public class ArgumentPasrserTest {
+	public @Rule MockitoRule mockito = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+
 	private static final String LOCAL_SUBCOMMAND = "local";
 	private static final String NODE_SUBCOMMAND = "node";
 

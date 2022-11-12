@@ -21,7 +21,7 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.lenient;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -30,17 +30,20 @@ import java.util.List;
 import java.util.UUID;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
+import org.mockito.quality.Strictness;
 
 import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.similarImage.db.PendingHashImage;
 import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 
-@RunWith(MockitoJUnitRunner.class)
-public class RepositoryNodeTest extends MessagingBaseTest {
+public class RepositoryNodeTestIT extends MessagingBaseTest {
+	public @Rule MockitoRule mockito = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+
 	private static final Path PATH = Paths.get("foo");
 	private static final UUID UUID = new UUID(42L, 24L);
 
@@ -57,7 +60,7 @@ public class RepositoryNodeTest extends MessagingBaseTest {
 
 	@Before
 	public void setUp() throws Exception {
-		when(pendingRepository.getAll()).thenReturn(Arrays.asList(new PendingHashImage(PATH, UUID)));
+		lenient().when(pendingRepository.getAll()).thenReturn(Arrays.asList(new PendingHashImage(PATH, UUID)));
 
 		metrics = new MetricRegistry();
 		cut = new RepositoryNode(session, pendingRepository, taskMessageHandler, metrics);

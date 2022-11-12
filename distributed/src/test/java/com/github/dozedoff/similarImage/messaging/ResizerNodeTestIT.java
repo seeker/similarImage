@@ -24,6 +24,7 @@ import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import java.awt.image.BufferedImage;
@@ -46,10 +47,12 @@ import org.apache.activemq.artemis.api.core.client.ClientProducer;
 import org.apache.activemq.artemis.api.core.client.MessageHandler;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
+import org.mockito.quality.Strictness;
 
 import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
@@ -59,8 +62,9 @@ import com.github.dozedoff.similarImage.messaging.MessageFactory.MessageProperty
 import com.github.dozedoff.similarImage.messaging.MessageFactory.TaskType;
 import com.google.common.io.BaseEncoding;
 
-@RunWith(MockitoJUnitRunner.class)
-public class ResizerNodeTest extends MessagingBaseTest {
+public class ResizerNodeTestIT extends MessagingBaseTest {
+	public @Rule MockitoRule mockito = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+
 	private static final Duration MESSAGE_TIMEOUT = Duration.ofSeconds(2);
 	
 	private static final String PATH = "bar";
@@ -96,7 +100,7 @@ public class ResizerNodeTest extends MessagingBaseTest {
 
 	@Before
 	public void setUp() throws Exception {
-		when(resizer.resize(nullable(BufferedImage.class))).thenReturn(new byte[0]);
+		lenient().when(resizer.resize(nullable(BufferedImage.class))).thenReturn(new byte[0]);
 		when(queryMessage.pendingImagePaths()).thenReturn(Arrays.asList(PATH));
 		when(is.read()).thenReturn(-1);
 

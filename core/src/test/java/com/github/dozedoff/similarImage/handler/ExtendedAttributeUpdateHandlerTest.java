@@ -17,6 +17,11 @@
  */
 package com.github.dozedoff.similarImage.handler;
 
+import org.junit.Rule;
+import org.mockito.junit.MockitoRule;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.quality.Strictness;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -31,17 +36,16 @@ import java.nio.file.Path;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.google.common.jimfs.Jimfs;
 
-@RunWith(MockitoJUnitRunner.class)
 public class ExtendedAttributeUpdateHandlerTest {
+	public @Rule MockitoRule mockito = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+
 	private static final String TEST_FILE_PREFIX = ExtendedAttributeUpdateHandlerTest.class.getSimpleName();
 
 	@Mock

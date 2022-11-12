@@ -23,15 +23,16 @@ import static org.mockito.Mockito.when;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
 import org.apache.activemq.artemis.api.core.client.ClientSessionFactory;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
+import org.mockito.quality.Strictness;
 
-import com.github.dozedoff.similarImage.messaging.ArtemisSession;
-
-@RunWith(MockitoJUnitRunner.class)
 public class ArtemisSessionModuleTest {
+	public @Rule MockitoRule mockito = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+
 	@Mock
 	private ClientSessionFactory factory;
 
@@ -42,14 +43,13 @@ public class ArtemisSessionModuleTest {
 
 	@Before
 	public void setUp() throws Exception {
-		when(factory.createSession()).thenReturn(session);
-		when(factory.createTransactedSession()).thenReturn(session);
-
 		cut = new ArtemisSession(factory);
 	}
 
 	@Test
 	public void testNormalSessionCreated() throws Exception {
+		when(factory.createSession()).thenReturn(session);
+
 		cut.getSession();
 
 		verify(factory).createSession();
@@ -57,6 +57,8 @@ public class ArtemisSessionModuleTest {
 
 	@Test
 	public void testNormalSessionStarted() throws Exception {
+		when(factory.createSession()).thenReturn(session);
+
 		cut.getSession();
 
 		verify(session).start();
@@ -64,6 +66,8 @@ public class ArtemisSessionModuleTest {
 
 	@Test
 	public void testTransactedSessionCreated() throws Exception {
+		when(factory.createTransactedSession()).thenReturn(session);
+
 		cut.getTransactedSession();
 
 		verify(factory).createTransactedSession();
@@ -71,6 +75,8 @@ public class ArtemisSessionModuleTest {
 
 	@Test
 	public void testTransactedSessionStarted() throws Exception {
+		when(factory.createTransactedSession()).thenReturn(session);
+
 		cut.getTransactedSession();
 
 		verify(session).start();

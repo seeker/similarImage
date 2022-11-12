@@ -18,25 +18,26 @@
 package com.github.dozedoff.similarImage.cli;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.when;
+import static org.hamcrest.Matchers.closeTo;
 
 import java.util.Locale;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
+import org.mockito.quality.Strictness;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.similarImage.io.Statistics;
 
-//FIXME Silent runner is just a band-aid to get the tests to run
-@RunWith(MockitoJUnitRunner.Silent.class)
 public class ProgressCalcTest {
+	public @Rule MockitoRule mockito = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+
 	private static final int TOTAL_FILE_COUNT = 210;
 	private static final int PROCESSED_FILE_COUNT = 30;
 	private static final int FAILED_FILE_COUNT = 20;
@@ -55,10 +56,6 @@ public class ProgressCalcTest {
 
 	@Before
 	public void setUp() throws Exception {
-		when(statistics.getFoundFiles()).thenReturn(TOTAL_FILE_COUNT);
-		when(statistics.getProcessedFiles()).thenReturn(PROCESSED_FILE_COUNT);
-		when(statistics.getFailedFiles()).thenReturn(FAILED_FILE_COUNT);
-
 		metrics = new MetricRegistry();
 
 		cut = new ProgressCalc(metrics);

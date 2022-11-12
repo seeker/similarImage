@@ -17,9 +17,16 @@
  */
 package com.github.dozedoff.similarImage.io;
 
+import org.junit.Rule;
+import org.mockito.junit.MockitoRule;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.quality.Strictness;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.nio.file.Path;
@@ -28,13 +35,11 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
-//FIXME Silent runner is just a band-aid to get the tests to run
-@RunWith(MockitoJUnitRunner.Silent.class)
 public class ExtendedAttributeDirectoryCacheTest {
+	public @Rule MockitoRule mockito = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+
 	private static final String PATH = "/foo/bar";
 	private static final String PATH_ROOT = "/baz";
 
@@ -50,7 +55,7 @@ public class ExtendedAttributeDirectoryCacheTest {
 
 	@Before
 	public void setUp() throws Exception {
-		when(eaQuery.isEaSupported(any(Path.class))).thenReturn(true);
+		lenient().when(eaQuery.isEaSupported(any(Path.class))).thenReturn(true);
 
 		subDirectory = Paths.get(PATH);
 		rootDirectory = Paths.get(PATH_ROOT);
@@ -63,10 +68,9 @@ public class ExtendedAttributeDirectoryCacheTest {
 	@Test
 	public void testIsEaSupportedUseCache() throws Exception {
 		assertThat(cut.isEaSupported(subDirectory), is(true));
-
-		when(eaQuery.isEaSupported(any(Path.class))).thenReturn(false);
-
 		assertThat(cut.isEaSupported(subDirectory), is(true));
+		
+		verify(eaQuery).isEaSupported(any());
 	}
 
 	@Test

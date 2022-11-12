@@ -22,23 +22,21 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.awt.image.BufferedImage;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
+import org.mockito.quality.Strictness;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.result.Result;
@@ -46,9 +44,9 @@ import com.github.dozedoff.similarImage.result.ResultGroup;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
 
-//FIXME Silent runner is just a band-aid to get the tests to run
-@RunWith(MockitoJUnitRunner.Silent.class)
 public class ResultPresenterTest {
+	public @Rule MockitoRule mockito = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+
 	private static final long HASH = 42L;
 
 	@Mock
@@ -72,14 +70,7 @@ public class ResultPresenterTest {
 
 	@Before
 	public void setUp() throws Exception {
-		MockitoAnnotations.initMocks(this);
-
 		result = new Result(resultGroup, new ImageRecord(testImage.toString(), HASH));
-
-		when(view.getView()).thenReturn(new JPanel());
-
-		when(opMenu.getMenu()).thenReturn(new JPopupMenu());
-
 		thumbnailCache = CacheBuilder.newBuilder().softValues().build(new ThumbnailCacheLoader());
 		duplicateEntryController = new ResultPresenter(result, thumbnailCache);
 		duplicateEntryController.setView(view);

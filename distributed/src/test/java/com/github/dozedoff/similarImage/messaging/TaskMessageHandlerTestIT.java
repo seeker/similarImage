@@ -25,17 +25,20 @@ import java.util.UUID;
 
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
+import org.mockito.quality.Strictness;
 
 import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
 import com.github.dozedoff.similarImage.db.repository.PendingHashImageRepository;
 
-@RunWith(MockitoJUnitRunner.class)
-public class TaskMessageHandlerTest extends MessagingBaseTest {
+public class TaskMessageHandlerTestIT extends MessagingBaseTest {
+	public @Rule MockitoRule mockito = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+
 	private static final String TEST_PATH = "foo";
 	private static final UUID UUID = new UUID(99, 100);
 

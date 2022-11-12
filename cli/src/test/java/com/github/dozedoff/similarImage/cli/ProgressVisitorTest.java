@@ -23,7 +23,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,10 +30,12 @@ import java.nio.file.Path;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
+import org.mockito.quality.Strictness;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Meter;
@@ -43,8 +44,9 @@ import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.google.common.jimfs.Jimfs;
 
 
-@RunWith(MockitoJUnitRunner.class)
 public class ProgressVisitorTest {
+	public @Rule MockitoRule mockito = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+
 	private static Path path;
 	private static Path pathNonImage;
 	private static final String TEST_DIRECTORY = "baz";
@@ -83,9 +85,6 @@ public class ProgressVisitorTest {
 
 	@Before
 	public void setUp() throws Exception {
-		setCorrupt(false);
-		setValid(true);
-		
 		metrics = new MetricRegistry();
 
 		cut = new ProgressVisitor(metrics, hashAttribute);
@@ -96,28 +95,22 @@ public class ProgressVisitorTest {
 
 	}
 
-	private void setValid(boolean isValid) {
-		when(hashAttribute.areAttributesValid(any(Path.class))).thenReturn(isValid);
-	}
-
-	private void setCorrupt(boolean isCorrupt) throws IOException {
-		when(hashAttribute.isCorrupted(any(Path.class))).thenReturn(isCorrupt);
-	}
-
-	private void visitTestFile() throws IOException {
-		cut.visitFile(path, null);
-	}
-
 	@Test
 	public void testProcessedFileProcessedCount() throws Exception {
-		visitTestFile();
+		when(hashAttribute.isCorrupted(any(Path.class))).thenReturn(false);
+		when(hashAttribute.areAttributesValid(any(Path.class))).thenReturn(true);
+
+		cut.visitFile(path, null);
 
 		assertThat(processedFiles.getCount(), is(1L));
 	}
 
 	@Test
 	public void testProcessedFileFoundCount() throws Exception {
-		visitTestFile();
+		when(hashAttribute.isCorrupted(any(Path.class))).thenReturn(false);
+		when(hashAttribute.areAttributesValid(any(Path.class))).thenReturn(true);
+
+		cut.visitFile(path, null);
 
 		assertThat(foundFiles.getCount(), is(1L));
 	}
@@ -131,70 +124,73 @@ public class ProgressVisitorTest {
 
 	@Test
 	public void testProcessedFileFailedCount() throws Exception {
-		visitTestFile();
+		when(hashAttribute.isCorrupted(any(Path.class))).thenReturn(false);
+		when(hashAttribute.areAttributesValid(any(Path.class))).thenReturn(true);
+
+		cut.visitFile(path, null);
 
 		assertThat(failedFiles.getCount(), is(0L));
 	}
 
 	@Test
 	public void testCorruptFileProcessedCount() throws Exception {
-		setCorrupt(true);
+		when(hashAttribute.isCorrupted(any(Path.class))).thenReturn(true);
 
-		visitTestFile();
+		cut.visitFile(path, null);
 
 		assertThat(processedFiles.getCount(), is(0L));
 	}
 
 	@Test
 	public void testCorruptFileFailedCount() throws Exception {
-		setCorrupt(true);
+		when(hashAttribute.isCorrupted(any(Path.class))).thenReturn(true);
 
-		visitTestFile();
+		cut.visitFile(path, null);
 
 		assertThat(failedFiles.getCount(), is(1L));
 	}
 
 	@Test
 	public void testCorruptFileFoundCount() throws Exception {
-		setCorrupt(true);
+		when(hashAttribute.isCorrupted(any(Path.class))).thenReturn(true);
 
-		visitTestFile();
+		cut.visitFile(path, null);
 
 		assertThat(foundFiles.getCount(), is(1L));
 	}
 
 	@Test
 	public void testUnprocessedFileFoundCount() throws Exception {
-		setValid(false);
+		when(hashAttribute.areAttributesValid(any(Path.class))).thenReturn(false);
 
-		visitTestFile();
+		cut.visitFile(path, null);
 
 		assertThat(foundFiles.getCount(), is(1L));
 	}
 
 	@Test
 	public void testUnprocessedFileFailedCount() throws Exception {
-		setValid(false);
+		when(hashAttribute.areAttributesValid(any(Path.class))).thenReturn(false);
 
-		visitTestFile();
+		cut.visitFile(path, null);
 
 		assertThat(failedFiles.getCount(), is(0L));
 	}
 
 	@Test
 	public void testUnprocessedFileProcessedCount() throws Exception {
-		setValid(false);
+		when(hashAttribute.areAttributesValid(any(Path.class))).thenReturn(false);
 
-		visitTestFile();
+		cut.visitFile(path, null);
 
 		assertThat(processedFiles.getCount(), is(0L));
 	}
 
 	@Test
 	public void testProcessedFilesPerSecond() throws Exception {
-		setValid(true);
+		when(hashAttribute.areAttributesValid(any(Path.class))).thenReturn(true);
 
-		visitTestFile();
+		cut.visitFile(path, null);
 
 		assertThat(filesPerSecond.getMeanRate(), is(not(0.0)));
 	}

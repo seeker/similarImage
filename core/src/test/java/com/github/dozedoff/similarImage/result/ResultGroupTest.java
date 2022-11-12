@@ -17,6 +17,11 @@
  */
 package com.github.dozedoff.similarImage.result;
 
+import org.junit.Rule;
+import org.mockito.junit.MockitoRule;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.quality.Strictness;
+
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
@@ -32,16 +37,15 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
 
 import nl.jqno.equalsverifier.EqualsVerifier;
 
-@RunWith(MockitoJUnitRunner.class)
 public class ResultGroupTest {
+	public @Rule MockitoRule mockito = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+
 	private static final long HASH = 42;
 	private static final String PATH_A = "foo";
 	private static final String PATH_B = "bar";

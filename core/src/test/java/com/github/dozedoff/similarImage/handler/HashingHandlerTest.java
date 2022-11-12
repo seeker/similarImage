@@ -17,6 +17,11 @@
  */
 package com.github.dozedoff.similarImage.handler;
 
+import org.junit.Rule;
+import org.mockito.junit.MockitoRule;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.quality.Strictness;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -28,10 +33,8 @@ import java.util.concurrent.ExecutorService;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import com.github.dozedoff.commonj.hash.ImagePHash;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
@@ -39,8 +42,9 @@ import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.io.Statistics;
 import com.github.dozedoff.similarImage.thread.ImageHashJob;
 
-@RunWith(MockitoJUnitRunner.class)
 public class HashingHandlerTest {
+	public @Rule MockitoRule mockito = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+
 	@Mock
 	private HashAttribute hashAttribute;
 

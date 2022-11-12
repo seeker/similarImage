@@ -24,6 +24,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import java.awt.image.BufferedImage;
@@ -41,17 +42,20 @@ import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.apache.activemq.artemis.api.core.client.ClientProducer;
 import org.apache.activemq.artemis.api.core.client.MessageHandler;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
+import org.mockito.quality.Strictness;
 
 import com.codahale.metrics.MetricRegistry;
 import com.github.dozedoff.commonj.hash.ImagePHash;
 
-@RunWith(MockitoJUnitRunner.class)
-public class HasherNodeTest extends MessagingBaseTest {
+public class HasherNodeTestIT extends MessagingBaseTest {
+	public @Rule MockitoRule mockito = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+
 	private static final String TEST_ADDRESS_REQUEST = "test_request";
 	private static final String TEST_ADDRESS_RESULT = "test_result";
 	private static final long TEST_HASH = 42L;
@@ -74,7 +78,7 @@ public class HasherNodeTest extends MessagingBaseTest {
 	
 	@Before
 	public void setUp() throws Exception {
-		when(hasher.getLongHash(nullable(BufferedImage.class))).thenReturn(TEST_HASH);
+		lenient().when(hasher.getLongHash(nullable(BufferedImage.class))).thenReturn(TEST_HASH);
 		messageFactory = new MessageFactory(session);
 		hashRequestMessage = messageFactory.hashRequestMessage(TEST_DATA, TEST_UUID);
 		metrics = new MetricRegistry();

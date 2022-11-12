@@ -17,6 +17,11 @@
  */
 package com.github.dozedoff.similarImage.thread;
 
+import org.junit.Rule;
+import org.mockito.junit.MockitoRule;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.quality.Strictness;
+
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 
@@ -28,18 +33,17 @@ import javax.swing.DefaultListModel;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.result.GroupList;
 import com.github.dozedoff.similarImage.result.ResultGroup;
 import com.google.common.collect.Lists;
 
-@RunWith(MockitoJUnitRunner.class)
 public class GroupListPopulatorTest {
+	public @Rule MockitoRule mockito = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+
 	GroupListPopulator glp;
 	private static final int GROUP_COUNT = 5;
 	private GroupList grouplist;

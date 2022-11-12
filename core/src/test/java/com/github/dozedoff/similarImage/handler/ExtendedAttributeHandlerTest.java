@@ -17,6 +17,11 @@
  */
 package com.github.dozedoff.similarImage.handler;
 
+import org.junit.Rule;
+import org.mockito.junit.MockitoRule;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.quality.Strictness;
+
 import static com.google.common.jimfs.Feature.FILE_CHANNEL;
 import static com.google.common.jimfs.Feature.LINKS;
 import static com.google.common.jimfs.Feature.SYMBOLIC_LINKS;
@@ -24,6 +29,7 @@ import static com.google.common.jimfs.PathNormalization.CASE_FOLD_ASCII;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -38,11 +44,9 @@ import javax.management.InvalidAttributeValueException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import com.github.dozedoff.similarImage.db.ImageRecord;
 import com.github.dozedoff.similarImage.db.repository.ImageRepository;
@@ -54,9 +58,9 @@ import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.google.common.jimfs.PathType;
 
-//FIXME Silent runner is just a band-aid to get the tests to run 
-@RunWith(MockitoJUnitRunner.Silent.class)
 public class ExtendedAttributeHandlerTest {
+	public @Rule MockitoRule mockito = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+
 	@Mock
 	private HashAttribute hashAttribute;
 
@@ -84,8 +88,8 @@ public class ExtendedAttributeHandlerTest {
 		testFile = fs.getPath(ExtendedAttributeHandlerTest.class.getSimpleName());
 		Files.createFile(testFile);
 
-		when(hashAttribute.areAttributesValid(testFile)).thenReturn(true);
-		when(eaQuery.isEaSupported(any(Path.class))).thenReturn(true);
+		lenient().when(hashAttribute.areAttributesValid(testFile)).thenReturn(true);
+		lenient().when(eaQuery.isEaSupported(any(Path.class))).thenReturn(true);
 	}
 
 	@After
@@ -129,7 +133,6 @@ public class ExtendedAttributeHandlerTest {
 	@Test
 	public void testHandleCorruptFileIsHandled() throws Exception {
 		when(eaQuery.isEaSupported(testFile)).thenReturn(true);
-		when(hashAttribute.areAttributesValid(testFile)).thenReturn(false);
 		ExtendedAttribute.setExtendedAttribute(testFile, ExtendedAttributeHandler.CORRUPT_EA_NAMESPACE, "");
 
 		assertThat(cut.handle(testFile), is(true));
@@ -137,8 +140,6 @@ public class ExtendedAttributeHandlerTest {
 
 	@Test
 	public void testHandleCorruptFileNotStored() throws Exception {
-		when(eaQuery.isEaSupported(testFile)).thenReturn(true);
-		when(hashAttribute.areAttributesValid(testFile)).thenReturn(true);
 		ExtendedAttribute.setExtendedAttribute(testFile, ExtendedAttributeHandler.CORRUPT_EA_NAMESPACE, "");
 
 		verify(imageRepository, never()).store(any(ImageRecord.class));

@@ -1,11 +1,11 @@
 package com.github.dozedoff.similarImage.messaging;
 
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.timeout;
-import static org.awaitility.Awaitility.await;
+import static org.mockito.Mockito.verify;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,18 +21,21 @@ import org.apache.activemq.artemis.api.core.client.ClientProducer;
 import org.apache.activemq.artemis.api.core.client.MessageHandler;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
+import org.mockito.quality.Strictness;
 
 import com.github.dozedoff.similarImage.io.ExtendedAttributeQuery;
 import com.github.dozedoff.similarImage.io.HashAttribute;
 import com.github.dozedoff.similarImage.messaging.ArtemisQueue.QueueAddress;
 import com.github.dozedoff.similarImage.messaging.MessageFactory.MessageProperty;
 
-@RunWith(MockitoJUnitRunner.class)
-public class StorageNodeTest extends MessagingBaseTest {
+public class StorageNodeTestIT extends MessagingBaseTest {
+	public @Rule MockitoRule mockito = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+
 	private static final long MOCKITO_TIMEOUT = 2000;
 	
 	private static final Path PATH = Paths.get("foo");
