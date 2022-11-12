@@ -16,12 +16,12 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<dagger-version>2.44</dagger-version>
+		<dagger-version>2.44.1</dagger-version>
 		<sqlite-driver-version> 3.39.4.0</sqlite-driver-version>
 		<logback-version> 1.4.4</logback-version>
 		<ormlite-version>6.1</ormlite-version>
 		<imageio-version>3.9.3</imageio-version>
-		<flyway-version>9.7.0</flyway-version>
+		<flyway-version>9.8.1</flyway-version>
 		<java-version>11</java-version>
 	</properties>
 
