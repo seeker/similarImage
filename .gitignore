@@ -19,6 +19,13 @@ keystore.jks
 # Maven generated files
 target/
 
+# Gradle
+.gradle
+**/build/
+!src/**/build/
+!gradle-wrapper.jar
+!gradle-wrapper.properties
+
 # Files generated during tests
 distributed/testing/
 
